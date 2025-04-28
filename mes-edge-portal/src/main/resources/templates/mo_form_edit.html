@@ -1,0 +1,268 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+
+    <form class="layui-form layui-form-pane" action="" id="line-edit-form" lay-filter="line-edit-form">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="common.order.code"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="selfCode" autocomplete="off"
+                           class="layui-input lay-unable-edit era-detail-disabled">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="common.tenantId"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="tenantId" autocomplete="off"
+                           class="layui-input era-detail-disabled">
+                </div>
+            </div>
+
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="bom.name"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="productName" autocomplete="off" lay-verify="required"
+                           class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="bom.code"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="productCode" autocomplete="off" lay-verify="required"
+                           class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline era-detail-hidden">
+                <button type="button" id="form-select-bom-btn"
+                        class="layui-btn layui-btn-primary layui-border-blue "
+                        lang-i18n="select.bom"></button>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="mo.num"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="num" id="num" autocomplete="off" lay-verify="required"
+                           class="layui-input era-detail-disabled"
+                           onKeyUp="this.value = input_limit_int(this.value)">
+                </div>
+            </div>
+            <div class="layui-inline" id="weight-input">
+                <label class="layui-form-label" lang-i18n="mo.weight"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="weight" id="weight" autocomplete="off" lay-verify="required"
+                           class="layui-input era-detail-disabled"
+                           onKeyUp="this.value = input_limit_float(this.value)">
+                </div>
+            </div>
+            <!--            <div class="layui-inline">-->
+            <!--                <label class="layui-form-label" lang-i18n="mps.execTime"></label>-->
+            <!--                <div class="layui-input-block">-->
+            <!--                    <input type="text" class="layui-input" name="execTime" id="execTime">-->
+            <!--                </div>-->
+            <!--            </div>-->
+        </div>
+    </form>
+    <div class="layui-form-item">
+        <table class="layui-hide" id="tb-line-detail"></table>
+    </div>
+    <div class="layui-form-item">
+        <table class="layui-hide" id="tb-mps-tf"></table>
+    </div>
+    <div class="layui-form era-detail-hidden" style="position: fixed; bottom: 5%; right: 5%">
+        <button type="button" class="layui-btn" id="line-edit-button" lang-i18n="common.msg.confirm">确认</button>
+        <button type="button" class="layui-btn layui-btn-primary" onclick="closeWindow()">close</button>
+    </div>
+</div>
+<script type="text/html" id="bom-toolbar">
+    <div class="layui-btn-container" style="font-weight: bold;text-align: center;">
+        <span>{{ i18np.prop('menu.bom') }}</span>
+    </div>
+</script>
+<script type="text/html" id="tf-toolbar">
+    <div class="layui-btn-container" style="font-weight: bold;text-align: center;">
+        <span>{{ i18np.prop('mps.tf.name') }}</span>
+        {{# if (tfDatas.length>0) { }}
+        <span>[{{ current_row_data.lineName }}]</span>
+        {{# } }}
+    </div>
+</script>
+<script th:inline="none">
+    var current_row_data = {};
+    var details = [];
+    var tfDatas = [];
+    var table;
+    var form;
+    layui.use(["form", "layer", "table"], function () {
+        form = layui.form;
+        table = layui.table;
+
+        let page_type = layui.url().search.page_type;
+        let id = layui.url().search.id;
+
+        if (id != null) {
+            current_row_data.id = id;
+            var param = {
+                "id": current_row_data.id
+            }
+            get(router.mo_id, param, function (result) {
+                current_row_data = result;
+                details = result.detailDtoList;
+                form.val("line-edit-form", {
+                    "productName": result.productName,
+                    "selfCode": result.selfCode,
+                    "productCode": result.productCode,
+                    "num": result.num,
+                    "weight": result.weight,
+                    "tenantId": result.tenantId,
+                    // "execTime": result.execTime
+                });
+                if (current_row_data.lineCode !== null) {
+                    var req = {
+                        "code": current_row_data.lineCode
+                    };
+                    get(router.line_code, req, function (result) {
+                        current_row_data.lineName = result.name;
+                        tfDatas = result.tfs;
+                        reloadTFTb();
+                    })
+                }
+                reloadTb();
+            })
+            if (current_row_data.selfCode !== "") {
+                $(".lay-unable-edit").attr("disabled", "block");
+            }
+
+        } else {
+            form.val("line-edit-form", {
+                "productName": "",
+                "selfCode": "",
+                "productCode": "",
+                "num": 1,
+                "weight": 0,
+                "tenantId": "0"
+            });
+            current_row_data = {};
+            details = [];
+        }
+
+        var page_params = {
+            default_param: {
+                cols: [[
+                    {field: 'matName', title: i18np.prop("material.name")},
+                    {field: 'matCode', title: i18np.prop("material.code")},
+                    // {field: 'attribute', title: i18np.prop("bomd.attribute")},
+                    // {field: 'matScale', title: i18np.prop("common.scale")},
+                    {
+                        field: 'matNum',
+                        title: i18np.prop("material.num"),
+                        edit: 'text',
+                        style: 'color: red;'
+                    },
+
+                    {
+                        field: 'priority',
+                        title: i18np.prop("common.priority"),
+                        edit: 'text',
+                        style: 'color: red;'
+                    }
+                ]]
+            },
+            detail_param: {
+                cols: [[
+                    {field: 'matName', title: i18np.prop("material.name")},
+                    {field: 'matCode', title: i18np.prop("material.code")},
+                    // {field: 'attribute', title: i18np.prop("bomd.attribute")},
+                    // {field: 'matScale', title: i18np.prop("common.scale")},
+                    {field: 'matNum', title: i18np.prop("material.num")},
+                    {field: 'priority', title: i18np.prop("common.priority")}
+                ]]
+            }
+        }
+        var page = page_params.default_param
+        if (page_type === '1') {
+            $('.layui-input').attr("disabled", "block");
+            $('.era-detail-hidden').hide();
+            page = page_params.detail_param;
+        }
+
+        table.render({
+            elem: '#tb-line-detail',
+            defaultToolbar: '',
+            toolbar: '#bom-toolbar',
+            css: [ // 设置单元格样式
+                // 取消默认的溢出隐藏，并设置适当高度
+                '.layui-table-cell{height: 50px; line-height: 40px;}'
+            ].join(''),
+            cols: page.cols,
+            page: false, // 是否显示分页
+            height: "full",
+            loading: false,
+        });
+
+        table.render({
+            elem: '#tb-mps-tf',
+            defaultToolbar: '',
+            toolbar: '#tf-toolbar',
+            cols: [[
+                {field: 'selfCode', title: i18np.prop('mps.tf.code')},
+                {field: 'name', title: i18np.prop('mps.tf.name')},
+                {field: 'duration', title: i18np.prop("mps.tf.duration")},
+                {field: 'temperature', title: i18np.prop("mps.tf.temperature")},
+            ]],
+            page: false, // 是否显示分页
+            height: "full",
+            loading: false,
+            done: function (res) {
+                let data = res.data;
+                layui.each(data, function (i) {
+                    if (data[i].status === 1) {
+                        let trs = $('div[lay-table-id=tb-mps-tf] .layui-table-body tr');
+                        layui.each(trs, function (j) {
+                            if (trs.eq(j).data('index') === i) {
+                                trs.eq(j).addClass('layui-table-highlight');
+                            }
+                        });
+                    } else if (data[i].status === 4) {
+                        let trs = $('div[lay-table-id=tb-mps-tf] .layui-table-body tr');
+                        layui.each(trs, function (j) {
+                            if (trs.eq(j).data('index') === i) {
+                                trs.eq(j).addClass('layui-table-error-highlight');
+                            }
+                        });
+                    }
+                })
+            }
+        });
+    });
+
+    function reloadTb() {
+        table.reload('tb-line-detail', {
+            data: details
+        })
+    }
+
+    function reloadTFTb() {
+        table.reload('tb-mps-tf', {
+            data: tfDatas
+        })
+    }
+</script>
+</body>
+</html>

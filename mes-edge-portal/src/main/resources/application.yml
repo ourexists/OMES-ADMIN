@@ -1,0 +1,86 @@
+server:
+  port: 10010
+  servlet:
+    context-path: /
+
+spring:
+  messages:
+    basename: i18n/messages
+  thymeleaf:
+    cache: false
+  mvc:
+    static-path-pattern: static/**
+  application:
+    name: mes-edge
+  config:
+    location: classpath:/,file:config/
+  profiles:
+    include: db-mysql
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: ALWAYS
+    time-zone: GMT+8
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+  main:
+    allow-bean-definition-overriding: true
+
+management:
+  endpoint:
+    health:
+      show-details: never
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      base-path: ${server.servlet.context-path}
+      exposure:
+        include:
+          - "health"
+          - "shutdown"
+security:
+  oauth2:
+    resource:
+      jwk:
+        key-set-uri:
+ribbon:
+  restclient:
+    enabled: true
+  okhttp:
+    enabled: true
+era:
+  log:
+    level: info
+    file:
+      path: log/
+  permission:
+    ignore:
+      auth_check:
+        - /expose/**
+        - /
+        - /templates/**
+        - /view/**
+      header_check:
+        - /
+        - /templates/**
+        - /view/**
+        - /expose/**
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 20000
+        readTimeout: 10000
+
+#logging:
+#  level:
+#    org:
+#      springframework:
+#        ws: TRACE
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

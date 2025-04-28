@@ -1,0 +1,273 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/mps_form_edit.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <div class="layui-form-item" style="padding-right: 10%">
+        <button type="button" style="float: right;" class="layui-btn layui-btn-primary refresh">
+            <i class="layui-icon layui-icon-refresh"></i>
+        </button>
+    </div>
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form"
+          lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="mo.code"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="moCode" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="mps.batch"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="batch" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="bom.code"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="productCode" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="bom.name"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="productName" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="line.name"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="line" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="mps.execTime"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="execTime" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="mo.num"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="num" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="mps.weight"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="weight" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <input style="text-align: center;" type="text" name="status" autocomplete="off" class="layui-input"
+                   disabled>
+        </div>
+        <div class="layui-form-item">
+            <table class="layui-hide" id="tb-mps-detail"></table>
+        </div>
+        <div class="layui-form-item">
+            <table class="layui-hide" id="tb-mps-tf"></table>
+        </div>
+    </form>
+</div>
+<script type="text/html" id="bom-toolbar">
+    <div class="layui-btn-container" style="font-weight: bold;text-align: center;">
+        {{ i18np.prop('menu.bom') }}
+    </div>
+</script>
+<script type="text/html" id="tf-toolbar">
+    <div class="layui-btn-container" style="font-weight: bold;text-align: center;">
+        {{ i18np.prop('mps.tf.name') }}
+    </div>
+</script>
+<script type="text/html" id="tf-tool">
+    <div class="layui-clear-space">
+        {{# if ((current_row_data.status===1 || current_row_data.status==3) && d.status===0 && d.type===1) { }}
+        <a class="layui-btn layui-btn-sm layui-btn-warm" lay-event="tfStart">
+            <i class="layui-icon layui-icon-play"></i>
+        </a>
+        {{# } }}
+    </div>
+</script>
+<script th:inline="none">
+    var current_row_data = {};
+    var table,
+        form;
+    layui.use(['form', 'layer', 'laydate', 'table'], function () {
+        table = layui.table;
+        form = layui.form;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+
+        let id = layui.url().search.id;
+
+        laydate.render({
+            elem: '#execTime',
+            lang: localStorage.getItem("language")
+        });
+
+        if (id != null) {
+            current_row_data.id = id;
+            reloadAll();
+        } else {
+            form.val("common-edit-form", {
+                "moCode": "",
+                "tenantId": 0,
+                "num": 0,
+                "productName": "",
+                "productCode": "",
+                "sequence": 0,
+                "execTime": ""
+            });
+        }
+
+        table.render({
+            elem: '#tb-mps-detail',
+            defaultToolbar: '',
+            toolbar: '#bom-toolbar',
+            cols: [[
+                {field: 'matName', title: i18np.prop("material.name")},
+                {field: 'matCode', title: i18np.prop("material.code")},
+                {field: 'matNum', title: i18np.prop("material.num")},
+                {field: 'devNo', title: i18np.prop("mps.devNo")},
+                {field: 'priority', title: i18np.prop("common.priority")},
+            ]],
+            page: false, // 是否显示分页
+            height: "full",
+            loading: false
+        });
+
+        table.render({
+            elem: '#tb-mps-tf',
+            defaultToolbar: '',
+            toolbar: '#tf-toolbar',
+            cols: [[
+                {field: 'selfCode', title: i18np.prop('mps.tf.code')},
+                {field: 'name', title: i18np.prop('mps.tf.name')},
+                {field: 'duration', title: i18np.prop("mps.tf.duration")},
+                {field: 'temperature', title: i18np.prop("mps.tf.temperature")},
+                {field: 'statusDesc', title: i18np.prop("mps.tf.status")},
+                {field: 'property', title: i18np.prop("mps.tf.property")},
+                {field: 'typeDesc', title: i18np.prop("mps.tf.type")},
+                {field: 'startTime', title: i18np.prop("mps.tf.start_time")},
+                {field: 'endTime', title: i18np.prop("mps.tf.end_time")},
+                {field: 'startTemperature', title: i18np.prop("mps.tf.startTemperature")},
+                {field: 'endTemperature', title: i18np.prop("mps.tf.endTemperature")},
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 200,
+                    minWidth: 125,
+                    templet: '#tf-tool'
+                }
+            ]],
+            page: false, // 是否显示分页
+            height: "full",
+            loading: false,
+            done: function (res) {
+                let data = res.data;
+                layui.each(data, function (i) {
+                    if (data[i].status === 1) {
+                        let trs = $('div[lay-table-id=tb-mps-tf] .layui-table-body tr');
+                        layui.each(trs, function (j) {
+                            if (trs.eq(j).data('index') === i) {
+                                trs.eq(j).addClass('layui-table-highlight');
+                            }
+                        });
+                    } else if (data[i].status === 4) {
+                        let trs = $('div[lay-table-id=tb-mps-tf] .layui-table-body tr');
+                        layui.each(trs, function (j) {
+                            if (trs.eq(j).data('index') === i) {
+                                trs.eq(j).addClass('layui-table-error-highlight');
+                            }
+                        });
+                    }
+                })
+            }
+        });
+
+        table.on('tool(tb-mps-tf)', function (obj) { // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            if (obj.event === 'tfStart') {
+                get(router.mps_startTF, {"tfId": data.id}, function () {
+                    reloadAll();
+                });
+            }
+        });
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            current_row_data.sequence = field.sequence;
+            current_row_data.execTime = field.execTime;
+            post(router.mps_edit,
+                current_row_data,
+                function () {
+                    closeWindow();
+                    parent.reloadTb();
+                },
+                function (code, msg) {
+                    layer.alert(msg, {
+                        title: 'error'
+                    });
+                }
+            )
+            return false;
+        });
+
+        $('.refresh').click(function () {
+            reloadAll();
+        })
+    });
+
+
+    function reloadAll() {
+        get(router.mps_id, {"id": current_row_data.id}, function (result) {
+            current_row_data = result;
+            form.val("common-edit-form", {
+                "moCode": current_row_data.moCode,
+                "productName": current_row_data.moDto == null ? "" : current_row_data.moDto.productName,
+                "productCode": current_row_data.moDto == null ? "" : current_row_data.moDto.productCode,
+                "weight": current_row_data.weight,
+                "sequence": current_row_data.sequence,
+                "execTime": current_row_data.execTime,
+                "line": current_row_data.lineVo == null ? "" : current_row_data.lineVo.name,
+                "batch": current_row_data.batch,
+                "num": current_row_data.num,
+                "status": current_row_data.statusDesc,
+            });
+            reloadTb();
+            reloadTFTb();
+        })
+    }
+
+    function reloadTb() {
+        table.reload('tb-mps-detail', {
+            data: current_row_data.details
+        })
+    }
+
+    function reloadTFTb() {
+        table.reload('tb-mps-tf', {
+            data: current_row_data.tfs
+        })
+    }
+</script>
+</body>
+</html>

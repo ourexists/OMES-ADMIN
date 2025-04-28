@@ -1,0 +1,80 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+
+<script th:inline="none">
+    var table;
+    var tbData;
+    layui.use(['form', 'table', 'dropdown', 'layer'], function () {
+        table = layui.table;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+
+        let sync_id = layui.url().search.sync_id;
+
+        let params = {
+            "id": sync_id,
+        }
+        get(router.sync_id, params, function (result) {
+            tbData = result.resources == null ? [] : result.resources;
+            reloadTb();
+        })
+        var page_params = {
+            default_param: {
+                cols: [[
+                    {field: 'id', title: 'ID'},
+                    {field: 'point', title: i18np.prop('sync.resource.point')},
+                    {field: 'status', title: i18np.prop('sync.resource.status')},
+                    {field: 'reqData', title: i18np.prop('sync.resource.reqData')},
+                    {field: 'respData', title: i18np.prop('sync.resource.respData')},
+                    {field: 'excep', title: i18np.prop('sync.resource.excep')},
+                ]],
+                toolbar: '#tb-toolbar',
+                defaultToolbar: [],
+            }
+        }
+
+        let page = page_params.default_param;
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            headers: getCommonHeader(),
+            defaultToolbar: page.defaultToolbar,
+            cols: page.cols,
+            page: false,
+            height: 'full'
+        });
+
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+    });
+
+    function reloadTb() {
+        table.reloadData('tb-common', {
+            data: tbData
+        });
+    }
+
+
+</script>
+</body>
+</html>
