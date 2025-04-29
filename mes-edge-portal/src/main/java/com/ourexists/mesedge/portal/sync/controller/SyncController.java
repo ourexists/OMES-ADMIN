@@ -10,14 +10,14 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.portal.sync.manager.SyncManager;
-import com.ourexists.mesedge.sync.enums.SyncStatusEnum;
+import com.ourexists.era.txflow.TxManager;
+import com.ourexists.era.txflow.model.TxStatusEnum;
+import com.ourexists.mesedge.portal.sync.SyncBeanUtils;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
 import com.ourexists.mesedge.sync.feign.SyncFeign;
 import com.ourexists.mesedge.sync.model.SyncDto;
 import com.ourexists.mesedge.sync.model.SyncVo;
 import com.ourexists.mesedge.sync.model.query.SyncPageQuery;
-import com.ourexists.mesedge.sync.pojo.Sync;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,7 @@ public class SyncController {
     private SyncFeign syncFeign;
 
     @Autowired
-    private List<SyncManager> syncManagers;
+    private List<TxManager> txManagers;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -66,7 +66,7 @@ public class SyncController {
     @GetMapping("breakpointProcess")
     public JsonResponseEntity<Boolean> breakpointProcess(@RequestParam String id) {
         //说明传入的id有误不处理
-        SyncDto sync = null;
+        SyncDto sync;
         try {
             sync = RemoteHandleUtils.getDataFormResponse(syncFeign.selectById(id));
         } catch (EraCommonException e) {
@@ -75,9 +75,9 @@ public class SyncController {
         if (sync == null) {
             return JsonResponseEntity.success(true);
         }
-        for (SyncManager syncManager : syncManagers) {
-            if (syncManager.syncTx().equals(sync.getSyncTx())) {
-                syncManager.breakpointProcess(Sync.wrap(sync));
+        for (TxManager txManager : txManagers) {
+            if (txManager.txName().equals(sync.getSyncTx())) {
+                txManager.breakpointProcess(SyncBeanUtils.wrapTx(sync));
             }
         }
         return JsonResponseEntity.success(true);
@@ -97,7 +97,7 @@ public class SyncController {
     @GetMapping("status")
     public JsonResponseEntity<List<MapDto>> status() {
         List<MapDto> r = new ArrayList<>();
-        for (SyncStatusEnum value : SyncStatusEnum.values()) {
+        for (TxStatusEnum value : TxStatusEnum.values()) {
             r.add(new MapDto().setId(value.name()).setName(value.name()));
         }
         return JsonResponseEntity.success(r);

@@ -6,12 +6,12 @@ package com.ourexists.mesedge.portal.sync.manager.pull;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.era.txflow.*;
 import com.ourexists.mesedge.line.feign.TFFeign;
 import com.ourexists.mesedge.line.model.TFVo;
 import com.ourexists.mesedge.line.pojo.Line;
@@ -26,16 +26,10 @@ import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.mps.model.MPSFlowDto;
 import com.ourexists.mesedge.mps.model.MPSTFDto;
 import com.ourexists.mesedge.portal.flow.MpsFlowManager;
-import com.ourexists.mesedge.portal.sync.manager.AbstractSyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncManager;
-import com.ourexists.mesedge.portal.sync.manager.Transfer;
+import com.ourexists.mesedge.portal.sync.manager.*;
 import com.ourexists.mesedge.portal.third.YGApi;
 import com.ourexists.mesedge.portal.third.model.resp.Order;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
-import com.ourexists.mesedge.sync.pojo.Sync;
-import com.ourexists.mesedge.sync.service.SyncResourceService;
-import com.ourexists.mesedge.sync.service.SyncService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +42,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class MoPullSyncManager extends SyncManager {
+public class MoPullTxManager extends TxManager {
 
     @Autowired
     private MOFeign moFeign;
@@ -68,19 +62,19 @@ public class MoPullSyncManager extends SyncManager {
     @Autowired
     private YGApi ygApi;
 
-    public MoPullSyncManager(SyncService syncService, SyncResourceService syncResourceService) {
-        super(syncService, syncResourceService);
+    public MoPullTxManager(TxStore txStore) {
+        super(txStore);
     }
 
     @Override
-    public String syncTx() {
+    public String txName() {
         return SyncTxEnum.MO_PULL.name();
     }
 
     @Override
-    protected List<SyncFlow> flows() {
-        List<SyncFlow> r = new ArrayList<>();
-        r.add(new AbstractSyncFlow(syncResourceService) {
+    protected List<TxBranchFlow> flows() {
+        List<TxBranchFlow> r = new ArrayList<>();
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "RmoteReq";
@@ -92,9 +86,9 @@ public class MoPullSyncManager extends SyncManager {
             }
 
             @Override
-            protected void doSync(Transfer transfer) {
+            protected void doExec(TxTransfer txTransfer) {
                 //远程请求订单接口
-                List<Order> orders = ygApi.selectOrder(transfer.getStartTime(), transfer.getEndTime());
+                List<Order> orders = ygApi.selectOrder(txTransfer.getTx().getPartStartTimestamp(), txTransfer.getTx().getPartEndTimestamp());
                 //处理数据启停区间
                 if (CollectionUtil.isBlank(orders)) {
                     return;
@@ -121,8 +115,8 @@ public class MoPullSyncManager extends SyncManager {
                             maxId = id;
                         }
                     }
-                    if (StringUtils.isNotEmpty(transfer.getLastPartMax())) {
-                        BigInteger last = new BigInteger(transfer.getLastPartMax());
+                    if (StringUtils.isNotEmpty(txTransfer.getTx().getPreMax())) {
+                        BigInteger last = new BigInteger(txTransfer.getTx().getPreMax());
                         if (id.compareTo(last) > 0) {
                             enabled.add(order);
                         }
@@ -130,13 +124,14 @@ public class MoPullSyncManager extends SyncManager {
                         enabled.add(order);
                     }
                 }
-                //更新当前分片数据区间
-                syncService.update(new LambdaUpdateWrapper<Sync>().set(Sync::getPartMin, minId).set(Sync::getPartMax, maxId).eq(Sync::getId, transfer.getSyncId()));
                 //请求结果存入data
-                transfer.setJsonData(JSON.toJSONString(enabled));
+                txTransfer.setJsonData(JSON.toJSONString(enabled));
+                txTransfer.getTx()
+                        .setPartMin(minId.toString())
+                        .setPartMax(maxId.toString());
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "CreateMO";
@@ -148,12 +143,12 @@ public class MoPullSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
-                if (StringUtils.isBlank(transfer.getJsonData())) {
+            public void doExec(TxTransfer txTransfer) {
+                if (StringUtils.isBlank(txTransfer.getJsonData())) {
                     return;
                 }
                 //数据处理转换
-                List<Order> orders = JSON.parseArray(transfer.getJsonData(), Order.class);
+                List<Order> orders = JSON.parseArray(txTransfer.getJsonData(), Order.class);
                 if (CollectionUtil.isBlank(orders)) {
                     return;
                 }
@@ -225,10 +220,10 @@ public class MoPullSyncManager extends SyncManager {
                 } catch (EraCommonException e) {
                     throw new BusinessException(e.getMessage());
                 }
-                transfer.setJsonData(JSON.toJSONString(mpsFlowDtos));
+                txTransfer.setJsonData(JSON.toJSONString(mpsFlowDtos));
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "GenMPS";
@@ -240,20 +235,20 @@ public class MoPullSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
-                if (StringUtils.isBlank(transfer.getJsonData())) {
+            public void doExec(TxTransfer txTransfer) {
+                if (StringUtils.isBlank(txTransfer.getJsonData())) {
                     return;
                 }
-                List<MPSFlowDto> flowDtos = JSONArray.parseArray(transfer.getJsonData(), MPSFlowDto.class);
+                List<MPSFlowDto> flowDtos = JSONArray.parseArray(txTransfer.getJsonData(), MPSFlowDto.class);
                 if (CollectionUtil.isBlank(flowDtos)) {
                     return;
                 }
                 mpsFlowManager.doFlowBatch(flowDtos);
                 List<String> moCodes = flowDtos.stream().map(MPSFlowDto::getMoCode).collect(Collectors.toList());
-                transfer.setJsonData(JSON.toJSONString(moCodes));
+                txTransfer.setJsonData(JSON.toJSONString(moCodes));
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "JoinQue";
@@ -265,11 +260,11 @@ public class MoPullSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
-                if (StringUtils.isBlank(transfer.getJsonData())) {
+            public void doExec(TxTransfer txTransfer) {
+                if (StringUtils.isBlank(txTransfer.getJsonData())) {
                     return;
                 }
-                List<String> moCodes = JSONArray.parseArray(transfer.getJsonData(), String.class);
+                List<String> moCodes = JSONArray.parseArray(txTransfer.getJsonData(), String.class);
                 if (CollectionUtil.isBlank(moCodes)) {
                     return;
                 }

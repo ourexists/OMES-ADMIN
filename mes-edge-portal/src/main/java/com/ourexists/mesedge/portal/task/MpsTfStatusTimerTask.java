@@ -15,8 +15,9 @@ import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.mps.feign.MPSTFFeign;
 import com.ourexists.mesedge.mps.model.MPSDto;
 import com.ourexists.mesedge.mps.model.MPSTFVo;
-import com.ourexists.mesedge.portal.sync.manager.push.PlanNotifySyncManager;
+import com.ourexists.mesedge.portal.sync.manager.push.PlanNotifyTxManager;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
+import com.ourexists.mesedge.sync.feign.SyncFeign;
 import com.ourexists.mesedge.sync.service.SyncResourceService;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
@@ -36,49 +37,48 @@ public class MpsTfStatusTimerTask extends TimerTask {
     private MPSFeign mpsFeign;
 
     @Autowired
-    private PlanNotifySyncManager planNotifySyncManager;
+    private PlanNotifyTxManager planNotifySyncManager;
 
     @Autowired
-    private SyncResourceService syncResourceService;
+    private SyncFeign syncFeign;
 
     @Override
     public void doRun() {
-        List<MPSDto> mpsList;
         try {
-            mpsList = RemoteHandleUtils.getDataFormResponse(mpsFeign.selectByStatus(MPSStatusEnum.EXECING));
-        } catch (EraCommonException e) {
-            log.error(e.getMessage(), e);
-            return;
-        }
-        for (MPSDto mps : mpsList) {
-            List<MPSTFVo> mpstfs = mps.getTfs();
-            if (CollectionUtil.isNotBlank(mpstfs)) {
-                for (int i = 0; i < mpstfs.size(); i++) {
-                    MPSTFVo mpstf = mpstfs.get(i);
-                    if (i == 0 && mpstf.getStatus().equals(MPSTFStatusEnum.EXEC.getCode())) {
-                        if (!syncResourceService.existSync(SyncTxEnum.PLAN_START, mpstf.getMoCode())) {
-                            planNotifySyncManager.execute(mpstf.getMoCode());
-                        }
-                    }
-                    if (mpstf.getStatus().equals(MPSTFStatusEnum.COMMON.getCode())
-                            || mpstf.getStatus().equals(MPSTFStatusEnum.EXEC.getCode())) {
-                        //按顺序一直向下走，直到当前流程为其它状态
-                        if (mpstf.getType().equals(TFTypeEnum.NO_ACTION.getCode())) {
-                            try {
-                                RemoteHandleUtils.getDataFormResponse(mpstfFeign.updateStatus(mpstf.getId(), MPSTFStatusEnum.COMPLETE));
-                            } catch (EraCommonException e) {
-                                log.error(e.getMessage(), e);
-                                return;
+            List<MPSDto> mpsList = RemoteHandleUtils.getDataFormResponse(mpsFeign.selectByStatus(MPSStatusEnum.EXECING));
+            for (MPSDto mps : mpsList) {
+                List<MPSTFVo> mpstfs = mps.getTfs();
+                if (CollectionUtil.isNotBlank(mpstfs)) {
+                    for (int i = 0; i < mpstfs.size(); i++) {
+                        MPSTFVo mpstf = mpstfs.get(i);
+                        if (i == 0 && mpstf.getStatus().equals(MPSTFStatusEnum.EXEC.getCode())) {
+                            Boolean exist = RemoteHandleUtils.getDataFormResponse(syncFeign.existSyncResource(SyncTxEnum.PLAN_START.name(), mpstf.getMoCode()));
+                            if (!exist) {
+                                planNotifySyncManager.execute(mpstf.getMoCode());
                             }
-                        } else {
+                        }
+                        if (mpstf.getStatus().equals(MPSTFStatusEnum.COMMON.getCode())
+                                || mpstf.getStatus().equals(MPSTFStatusEnum.EXEC.getCode())) {
+                            //按顺序一直向下走，直到当前流程为其它状态
+                            if (mpstf.getType().equals(TFTypeEnum.NO_ACTION.getCode())) {
+                                try {
+                                    RemoteHandleUtils.getDataFormResponse(mpstfFeign.updateStatus(mpstf.getId(), MPSTFStatusEnum.COMPLETE));
+                                } catch (EraCommonException e) {
+                                    log.error(e.getMessage(), e);
+                                    return;
+                                }
+                            } else {
+                                break;
+                            }
+                        } else if (!mpstf.getStatus().equals(MPSTFStatusEnum.COMPLETE.getCode())) {
+                            //当前流程处于其它状态,直接终止
                             break;
                         }
-                    } else if (!mpstf.getStatus().equals(MPSTFStatusEnum.COMPLETE.getCode())) {
-                        //当前流程处于其它状态,直接终止
-                        break;
                     }
                 }
             }
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
         }
     }
 }

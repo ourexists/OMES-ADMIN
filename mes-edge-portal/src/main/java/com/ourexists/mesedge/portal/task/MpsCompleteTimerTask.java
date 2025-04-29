@@ -10,7 +10,7 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.mps.enums.MPSStatusEnum;
 import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.mps.model.MPSDto;
-import com.ourexists.mesedge.portal.sync.manager.push.MpsPushSyncManager;
+import com.ourexists.mesedge.portal.sync.manager.push.MpsPushTxManager;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ public class MpsCompleteTimerTask extends TimerTask {
     private MPSFeign mpsFeign;
 
     @Autowired
-    private MpsPushSyncManager mpsPushSyncManager;
+    private MpsPushTxManager mpsPushSyncManager;
 
     @Override
     public void doRun() {

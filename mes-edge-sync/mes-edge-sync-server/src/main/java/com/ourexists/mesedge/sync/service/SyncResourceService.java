@@ -5,7 +5,6 @@
 package com.ourexists.mesedge.sync.service;
 
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
-import com.ourexists.mesedge.sync.enums.SyncStatusEnum;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
 import com.ourexists.mesedge.sync.pojo.SyncResource;
 
@@ -17,8 +16,6 @@ import java.util.List;
  * @since 1.0.0
  */
 public interface SyncResourceService extends IMyBatisPlusService<SyncResource> {
-
-    void updateStatus(String id, SyncStatusEnum syncStatusEnum, String respData, String execp);
 
     SyncResource getLastFlow(String syncId);
 

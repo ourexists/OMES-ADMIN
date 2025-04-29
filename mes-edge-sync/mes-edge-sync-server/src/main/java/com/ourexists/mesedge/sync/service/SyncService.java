@@ -6,7 +6,6 @@ package com.ourexists.mesedge.sync.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
-import com.ourexists.mesedge.sync.enums.SyncStatusEnum;
 import com.ourexists.mesedge.sync.model.query.SyncPageQuery;
 import com.ourexists.mesedge.sync.pojo.Sync;
 
@@ -20,7 +19,7 @@ import java.util.Date;
 public interface SyncService extends IMyBatisPlusService<Sync> {
 
 
-    void updateStatus(String id, SyncStatusEnum syncStatusEnum);
+    void updateStatus(String id, String status);
 
     Page<Sync> selectByPage(SyncPageQuery dto);
 

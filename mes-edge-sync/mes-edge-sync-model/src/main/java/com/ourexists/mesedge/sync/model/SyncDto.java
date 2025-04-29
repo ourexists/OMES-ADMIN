@@ -38,4 +38,10 @@ public class SyncDto extends BaseDto {
 
     @Schema(description = "分片最大值")
     private String partMax;
+
+    @Schema(description = "上一分片的最小值")
+    private String preMin;
+
+    @Schema(description = "上一分片的最大值")
+    private String preMax;
 }

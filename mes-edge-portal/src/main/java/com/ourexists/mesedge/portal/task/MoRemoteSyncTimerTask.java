@@ -5,7 +5,7 @@
 package com.ourexists.mesedge.portal.task;
 
 import com.ourexists.era.framework.core.utils.DateUtil;
-import com.ourexists.mesedge.portal.sync.manager.pull.MoPullSyncManager;
+import com.ourexists.mesedge.portal.sync.manager.pull.MoPullTxManager;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import java.util.Date;
 public class MoRemoteSyncTimerTask extends TimerTask {
 
     @Autowired
-    private MoPullSyncManager moPullSyncManager;
+    private MoPullTxManager moPullSyncManager;
 
     @Override
     public void doRun() {

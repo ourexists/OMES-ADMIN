@@ -10,17 +10,12 @@ import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.era.txflow.*;
 import com.ourexists.mesedge.line.feign.LineFeign;
 import com.ourexists.mesedge.line.model.LineVo;
 import com.ourexists.mesedge.line.model.TFVo;
-import com.ourexists.mesedge.portal.sync.manager.AbstractSyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncManager;
-import com.ourexists.mesedge.portal.sync.manager.Transfer;
 import com.ourexists.mesedge.portal.sync.ocpua.OpcUaContext;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
-import com.ourexists.mesedge.sync.service.SyncResourceService;
-import com.ourexists.mesedge.sync.service.SyncService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +26,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class LinePushSyncManager extends SyncManager {
+public class LinePushTxManager extends TxManager {
 
     @Autowired
     private OpcUaContext opcUaContext;
@@ -39,19 +34,19 @@ public class LinePushSyncManager extends SyncManager {
     @Autowired
     private LineFeign lineFeign;
 
-    public LinePushSyncManager(SyncService syncService, SyncResourceService syncResourceService) {
-        super(syncService, syncResourceService);
+    public LinePushTxManager(TxStore txStore) {
+        super(txStore);
     }
 
     @Override
-    public String syncTx() {
+    public String txName() {
         return SyncTxEnum.LINE_PUSH.name();
     }
 
     @Override
-    protected List<SyncFlow> flows() {
-        List<SyncFlow> r = new ArrayList<>();
-        r.add(new AbstractSyncFlow(syncResourceService) {
+    protected List<TxBranchFlow> flows() {
+        List<TxBranchFlow> r = new ArrayList<>();
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "Query_TFS";
@@ -63,8 +58,8 @@ public class LinePushSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
-                JSONObject jo = JSON.parseObject(transfer.getJsonData());
+            public void doExec(TxTransfer txTransfer) {
+                JSONObject jo = JSON.parseObject(txTransfer.getJsonData());
                 String lineId = jo.getString("lineId");
                 LineVo lineVo;
                 try {
@@ -77,10 +72,10 @@ public class LinePushSyncManager extends SyncManager {
                     return;
                 }
                 jo.put("lineVo", lineVo);
-                transfer.setJsonData(jo.toJSONString());
+                txTransfer.setJsonData(jo.toJSONString());
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "write_line";
@@ -92,8 +87,8 @@ public class LinePushSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
-                JSONObject jo = JSON.parseObject(transfer.getJsonData());
+            public void doExec(TxTransfer txTransfer) {
+                JSONObject jo = JSON.parseObject(txTransfer.getJsonData());
                 LineVo lineVo = jo.getObject("lineVo", LineVo.class);
                 if (lineVo.getMapDb() == null || lineVo.getMapDb() == -1 || StringUtils.isBlank(lineVo.getMapOffset())) {
                     return;
@@ -112,7 +107,7 @@ public class LinePushSyncManager extends SyncManager {
                 }
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "write_flow";
@@ -124,11 +119,11 @@ public class LinePushSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
-                JSONObject jo = JSON.parseObject(transfer.getJsonData());
+            public void doExec(TxTransfer txTransfer) {
+                JSONObject jo = JSON.parseObject(txTransfer.getJsonData());
                 LineVo lineVo = jo.getObject("lineVo", LineVo.class);
                 String serverName = jo.getString("serverName");
-                transfer.setJsonData(lineVo.getId());
+                txTransfer.setJsonData(lineVo.getId());
                 List<TFVo> tfs = lineVo.getTfs();
                 if (CollectionUtil.isBlank(tfs)) {
                     return;
@@ -151,7 +146,7 @@ public class LinePushSyncManager extends SyncManager {
 
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
                 return "update_S7";
@@ -163,9 +158,9 @@ public class LinePushSyncManager extends SyncManager {
             }
 
             @Override
-            public void doSync(Transfer transfer) {
+            public void doExec(TxTransfer txTransfer) {
                 try {
-                    RemoteHandleUtils.getDataFormResponse(lineFeign.updatePushTime(transfer.getJsonData()));
+                    RemoteHandleUtils.getDataFormResponse(lineFeign.updatePushTime(txTransfer.getJsonData()));
                 } catch (EraCommonException e) {
                     throw new BusinessException(e.getMessage());
                 }

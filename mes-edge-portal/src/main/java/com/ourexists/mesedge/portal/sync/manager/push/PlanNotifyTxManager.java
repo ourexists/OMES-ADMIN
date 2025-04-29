@@ -4,14 +4,10 @@
 
 package com.ourexists.mesedge.portal.sync.manager.push;
 
-import com.ourexists.mesedge.portal.sync.manager.AbstractSyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncManager;
-import com.ourexists.mesedge.portal.sync.manager.Transfer;
+import com.ourexists.era.txflow.*;
+import com.ourexists.mesedge.portal.sync.manager.*;
 import com.ourexists.mesedge.portal.third.YGApi;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
-import com.ourexists.mesedge.sync.service.SyncResourceService;
-import com.ourexists.mesedge.sync.service.SyncService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,24 +15,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class PlanNotifySyncManager extends SyncManager {
+public class PlanNotifyTxManager extends TxManager {
 
     @Autowired
     private YGApi ygApi;
 
-    public PlanNotifySyncManager(SyncService syncService, SyncResourceService syncResourceService) {
-        super(syncService, syncResourceService);
+    public PlanNotifyTxManager(TxStore txStore) {
+        super(txStore);
     }
 
     @Override
-    public String syncTx() {
+    public String txName() {
         return SyncTxEnum.PLAN_START.name();
     }
 
     @Override
-    protected List<SyncFlow> flows() {
-        List<SyncFlow> r = new ArrayList<>();
-        r.add(new AbstractSyncFlow(syncResourceService) {
+    protected List<TxBranchFlow> flows() {
+        List<TxBranchFlow> r = new ArrayList<>();
+        r.add(new AbstractTxBranchFlow(txStore) {
 
             @Override
             public String point() {
@@ -49,8 +45,8 @@ public class PlanNotifySyncManager extends SyncManager {
             }
 
             @Override
-            protected void doSync(Transfer transfer) {
-                String moCode = transfer.getJsonData();
+            protected void doExec(TxTransfer txTransfer) {
+                String moCode = txTransfer.getJsonData();
 
                 ygApi.startPlan(moCode);
             }

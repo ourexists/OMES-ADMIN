@@ -12,7 +12,7 @@ import com.ourexists.mesedge.line.feign.LineFeign;
 import com.ourexists.mesedge.line.model.ResetLineTFDto;
 import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.portal.line.service.LineFlowService;
-import com.ourexists.mesedge.portal.sync.manager.push.LinePushSyncManager;
+import com.ourexists.mesedge.portal.sync.manager.push.LinePushTxManager;
 import com.ourexists.mesedge.portal.sync.ocpua.OpcUaContext;
 import com.ourexists.mesedge.sync.feign.ConnectFeign;
 import com.ourexists.mesedge.sync.model.ConnectDto;
@@ -35,7 +35,7 @@ public class LineFlowServiceImpl implements LineFlowService {
     private ConnectFeign connectFeign;
 
     @Autowired
-    private LinePushSyncManager linePushSyncManager;
+    private LinePushTxManager linePushSyncManager;
 
     @Autowired
     private LineFeign lineFeign;

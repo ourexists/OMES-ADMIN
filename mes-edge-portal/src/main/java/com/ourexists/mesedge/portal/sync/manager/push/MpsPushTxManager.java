@@ -4,20 +4,16 @@
 
 package com.ourexists.mesedge.portal.sync.manager.push;
 
+import com.ourexists.era.txflow.*;
 import com.ourexists.mesedge.mps.enums.MPSStatusEnum;
 import com.ourexists.mesedge.mps.pojo.MPS;
 import com.ourexists.mesedge.mps.pojo.MPSTF;
 import com.ourexists.mesedge.mps.service.MPSService;
 import com.ourexists.mesedge.mps.service.MPSTFService;
-import com.ourexists.mesedge.portal.sync.manager.AbstractSyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncFlow;
-import com.ourexists.mesedge.portal.sync.manager.SyncManager;
-import com.ourexists.mesedge.portal.sync.manager.Transfer;
+import com.ourexists.mesedge.portal.sync.manager.*;
 import com.ourexists.mesedge.portal.third.YGApi;
 import com.ourexists.mesedge.portal.third.model.req.CompleteReq;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
-import com.ourexists.mesedge.sync.service.SyncResourceService;
-import com.ourexists.mesedge.sync.service.SyncService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class MpsPushSyncManager extends SyncManager {
+public class MpsPushTxManager extends TxManager {
 
     @Autowired
     private YGApi ygApi;
@@ -37,19 +33,19 @@ public class MpsPushSyncManager extends SyncManager {
     @Autowired
     private MPSTFService mpstfService;
 
-    public MpsPushSyncManager(SyncService syncService, SyncResourceService syncResourceService) {
-        super(syncService, syncResourceService);
+    public MpsPushTxManager(TxStore txStore) {
+        super(txStore);
     }
 
     @Override
-    public String syncTx() {
+    public String txName() {
         return SyncTxEnum.MPS_PUSH.name();
     }
 
     @Override
-    protected List<SyncFlow> flows() {
-        List<SyncFlow> r = new ArrayList<>();
-        r.add(new AbstractSyncFlow(syncResourceService) {
+    protected List<TxBranchFlow> flows() {
+        List<TxBranchFlow> r = new ArrayList<>();
+        r.add(new AbstractTxBranchFlow(txStore) {
 
             @Override
             public String point() {
@@ -62,12 +58,12 @@ public class MpsPushSyncManager extends SyncManager {
             }
 
             @Override
-            protected void doSync(Transfer transfer) {
-                String mpsId = transfer.getJsonData();
+            protected void doExec(TxTransfer txTransfer) {
+                String mpsId = txTransfer.getJsonData();
                 mpsService.updateStatus(mpsId, MPSStatusEnum.FILE);
             }
         });
-        r.add(new AbstractSyncFlow(syncResourceService) {
+        r.add(new AbstractTxBranchFlow(txStore) {
 
             @Override
             public String point() {
@@ -80,8 +76,8 @@ public class MpsPushSyncManager extends SyncManager {
             }
 
             @Override
-            protected void doSync(Transfer transfer) {
-                String mpsId = transfer.getJsonData();
+            protected void doExec(TxTransfer txTransfer) {
+                String mpsId = txTransfer.getJsonData();
                 if (StringUtils.isBlank(mpsId)) {
                     return;
                 }

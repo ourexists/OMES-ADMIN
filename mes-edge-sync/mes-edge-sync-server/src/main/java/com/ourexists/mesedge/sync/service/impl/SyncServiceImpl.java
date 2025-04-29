@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.mesedge.sync.enums.SyncStatusEnum;
 import com.ourexists.mesedge.sync.mapper.SyncMapper;
 import com.ourexists.mesedge.sync.model.query.SyncPageQuery;
 import com.ourexists.mesedge.sync.pojo.Sync;
@@ -30,8 +29,8 @@ public class SyncServiceImpl extends AbstractMyBatisPlusService<SyncMapper, Sync
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateStatus(String id, SyncStatusEnum syncStatusEnum) {
-        this.update(new LambdaUpdateWrapper<Sync>().set(Sync::getStatus, syncStatusEnum.name()).eq(Sync::getId, id));
+    public void updateStatus(String id, String status) {
+        this.update(new LambdaUpdateWrapper<Sync>().set(Sync::getStatus, status).eq(Sync::getId, id));
     }
 
     @Override

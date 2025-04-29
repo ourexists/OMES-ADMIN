@@ -7,27 +7,16 @@ package com.ourexists.mesedge.sync.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.mesedge.sync.enums.SyncStatusEnum;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
 import com.ourexists.mesedge.sync.mapper.SyncResourceMapper;
 import com.ourexists.mesedge.sync.pojo.SyncResource;
 import com.ourexists.mesedge.sync.service.SyncResourceService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class SyncResourceServiceImpl extends AbstractMyBatisPlusService<SyncResourceMapper, SyncResource> implements SyncResourceService {
-
-    @Override
-    public void updateStatus(String id, SyncStatusEnum syncStatusEnum, String respData, String execp) {
-        this.update(new LambdaUpdateWrapper<SyncResource>()
-                .set(SyncResource::getStatus, syncStatusEnum.name())
-                .set(StringUtils.isNotEmpty(respData), SyncResource::getRespData, respData)
-                .set(StringUtils.isNotEmpty(respData), SyncResource::getExcep, execp)
-                .eq(SyncResource::getId, id));
-    }
 
     @Override
     public SyncResource getLastFlow(String syncId) {
