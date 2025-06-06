@@ -11,7 +11,7 @@ layui.define(["jquery", "i18n"], function (exports) {
     i18np.load = function (lang) {
         i18n.properties({
             name: "message", // 资源文件名称
-            path: "/static/i18n", // 资源文件所在目录路径
+            path: "/i18n", // 资源文件所在目录路径
             mode: "map", // 模式：变量或 Map
             language: lang, // 对应的语言
             cache: false,
