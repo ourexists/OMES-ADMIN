@@ -6,7 +6,9 @@ package com.ourexists.mesedge.task.viewer;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
+import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.mesedge.task.feign.TaskFeign;
 import com.ourexists.mesedge.task.model.TaskDto;
@@ -16,22 +18,19 @@ import com.ourexists.mesedge.task.pojo.Task;
 import com.ourexists.mesedge.task.process.TimerTaskManager;
 import com.ourexists.mesedge.task.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-//@Tag(name = "任务管理")
-//@RestController
-//@RequestMapping("/task")
-@Component
-public class TaskViewer implements TaskFeign {
+@Tag(name = "任务管理")
+@RestController
+@RequestMapping("/task")
+public class TaskViewer {
 
     @Autowired
     private TaskService taskService;
@@ -82,8 +81,21 @@ public class TaskViewer implements TaskFeign {
         return JsonResponseEntity.success(true);
     }
 
-    @Override
+    @Operation(summary = "所有的定时任务2", description = "所有的定时任务")
+    @GetMapping("getAllTimerTask")
     public JsonResponseEntity<Set<String>> getAllTimerTask() {
         return JsonResponseEntity.success(timerTaskManager.getAllTimerTask().keySet());
+    }
+
+    @Operation(summary = "所有的定时任务", description = "所有的定时任务")
+    @GetMapping("timerTask")
+    public JsonResponseEntity<List<MapDto>> timerTask() {
+        List<MapDto> r = new ArrayList<>();
+        if (CollectionUtil.isNotBlank(timerTaskManager.getAllTimerTask().keySet())) {
+            for (String s : timerTaskManager.getAllTimerTask().keySet()) {
+                r.add(new MapDto().setId(s).setName(s));
+            }
+        }
+        return JsonResponseEntity.success(r);
     }
 }

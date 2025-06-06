@@ -31,7 +31,7 @@ layui.define(["jquery"], function (exports) {
      *      number of sites, such as: http://www.iso.ch/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html
      *
      * Sample usage for a bundles/Messages.properties bundle:
-     * $.i18n.properties({
+     * $.message.properties({
      *      name:      'Messages',
      *      language:  'en_US',
      *      path:      'bundles'
