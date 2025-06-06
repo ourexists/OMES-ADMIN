@@ -1,0 +1,318 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16" id="query-form" lay-filter="query-form">
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="moCode" id="moCode" value="" placeholder=""
+                       class="layui-input"
+                       lay-affix="clear" lang-i18n="mo.code">
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="productName" id="productName" value="" placeholder=""
+                       class="layui-input"
+                       lay-affix="clear" lang-i18n="bom.name">
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="productCode" id="productCode" placeholder=""
+                       lay-affix="clear" class="layui-input" lang-i18n="bom.code">
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="status" id="status">
+                    <option value="" lang-i18n="common.status"></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="tb-common-search" lang-i18n="common.search">
+                Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        {{# if (d.status===0) { }}
+        <a class="layui-btn layui-btn-xs " lay-event="joinQue">{{ i18np.prop('mps.queue.join') }}</a>
+        {{# } }}
+        <a class="layui-btn layui-btn-xs layui-bg-orange" lay-event="detail">{{ i18np.prop('common.detail') }}</a>
+        {{# if (d.status===0 || d.status===1) { }}
+        <a class="layui-btn layui-btn-xs layui-bg-red" lay-event="del">{{ i18np.prop('common.delete') }}</a>
+        {{# } }}
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="joinQueBatch">
+            {{ i18np.prop('mps.queue.join') }}
+        </button>
+        <button class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">
+            {{ i18np.prop('common.delete.batch') }}
+        </button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
+            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
+            <i class="layui-icon layui-icon-down layui-font-12"></i>
+        </button>
+        <button class="layui-btn layui-btn-primary layui-border layui-btn-radius" lay-event="queue">
+            {{ i18np.prop('mps.queue.sort') }}
+        </button>
+    </div>
+</script>
+
+<script th:inline="javascript">
+    var current_row_data;
+    var current_tree_node;
+    var table;
+
+    layui.use(['form', 'table', 'dropdown', 'layer', 'util'], function () {
+        table = layui.table;
+        var form = layui.form,
+            dropdown = layui.dropdown,
+            layer = layui.layer;
+
+        let moCode = layui.url().search.moCode;
+        form.val("query-form", {
+            'moCode': moCode
+        })
+
+        get(router.mps_status, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#status').append(new Option(item.name, item.id));//往下拉菜单里添加元素
+                form.render();
+            })
+        })
+
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            url: initRequestUrl(router.mps_page),
+            headers: getCommonHeader(),
+            method: 'POST',
+            contentType: 'application/json',
+            loading: false,
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', title: '', fixed: true}, // 单选框
+                {field: 'id', title: 'ID'},
+                {field: 'statusDesc', title: i18np.prop('common.status')},
+                {field: 'moCode', title: i18np.prop('mo.code')},
+                {
+                    field: 'productName', title: i18np.prop('bom.name'), templet: function (d) {
+                        return d.moDto == null ? '' : d.moDto.productName;
+                    }
+                },
+                // {
+                //     field: 'productCode', title: i18np.prop('bom.code'), templet: function (d) {
+                //         return d.moDto == null ? '' : d.moDto.productCode;
+                //     }
+                // },
+                // {field: 'sequence', title: i18np.prop('mps.sequence')},
+                {field: 'batch', title: i18np.prop("mps.batch")},
+                {field: 'num', title: i18np.prop("mo.num")},
+                {field: 'weight', title: i18np.prop("mps.weight")},
+                {
+                    field: 'line',
+                    title: i18np.prop("line.name"),
+                    templet: function (d) {
+                        return d.lineVo == null ? '' : d.lineVo.name
+                    }
+                },
+                {field: 'execTime', title: i18np.prop('mps.execTime')},
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 200,
+                    minWidth: 125,
+                    templet: '#tb-tool'
+                }
+            ]],
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-common', {
+                                    lineStyle: null // 恢复单行
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-common', {
+                                    // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            where: {
+                queryMO: true,
+                queryLine: true,
+                moCode: moCode,
+                productName: '',
+                productCode: '',
+            },
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "count": res.pagination.total,
+                    "data": res.data,
+                };
+            },
+            limit: 10,
+            limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    var getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+                case 'joinQueBatch':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    var ids = [];
+                    $.each(data, function (i, n) {
+                        ids.push(n.id);
+                    });
+                    post(router.mps_join_que_batch, ids, function (result) {
+                        reloadTb();
+                    }, function (code, msg) {
+                        layer.msg(msg);
+                    });
+                    break;
+                case 'deleteBatch':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    var ids = [];
+                    $.each(data, function (i, n) {
+                        ids.push(n.id);
+                    });
+                    delWindow(router.mps_del, ids, reloadTb);
+                    break;
+                case 'queue':
+                    openWindow('mps.queue.sort', '/view/mps_queue');
+                    break;
+            }
+        });
+
+        // 触发单元格工具事件
+        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            current_row_data = data;
+            if (obj.event === 'del') {
+                delWindow(router.mps_del, [data.id], reloadTb);
+            } else if (obj.event === 'detail') {
+                current_tree_node = obj.data;
+                parent.openIndexTab('/view/mps_form_edit?id=' + data.id, 'mps_detail' + obj.data.id, i18np.prop('mps.detail') + '[' + obj.data.id + ']')
+            } else if (obj.event === 'joinQue') {
+                var param = {
+                    'id': data.id,
+                    'type': 0
+                }
+                post(router.mps_join_que, param, function (result) {
+                    reloadTb();
+                }, function (code, msg) {
+                    layer.msg(msg);
+                });
+            }
+        });
+
+        // 搜索提交
+        form.on('submit(tb-common-search)', function (data) {
+            reloadTb();
+            return false; // 阻止默认 form 跳转
+        });
+    })
+    ;
+
+    function reloadTb() {
+        table.reloadData('tb-common', {
+            page: {
+                curr: 1 // 重新从第 1 页开始
+            },
+            where: {
+                productName: $('#productName').val(),
+                productCode: $('#productCode').val(),
+                moCode: $('#moCode').val(),
+                status: $('#status').val(),
+                queryMO: true,
+                queryLine: true
+            },
+        });
+    }
+</script>
+</body>
+</html>

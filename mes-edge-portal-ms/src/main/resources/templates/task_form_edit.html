@@ -1,0 +1,96 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="task.name"></label>
+            <div class="layui-input-block">
+                <input type="text" name="name" autocomplete="off" placeholder="请输入" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="task.cron"></label>
+            <div class="layui-input-block">
+                <input type="text" name="cron" autocomplete="off" placeholder="请输入" lay-verify="required"
+                       class="layui-input " lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="task.type"></label>
+            <div class="layui-input-block">
+                <select name="type" id="type" class="lay-unable-edit">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <button class="layui-btn" lay-submit lay-filter="material-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = {};
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form,
+            layer = layui.layer;
+
+
+        get(router.task_type, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#type').append(new Option(item.name, item.selfCode));//往下拉菜单里添加元素
+            })
+            form.render();
+        });
+
+        let id = layui.url().search.id;
+        if (id != null) {
+            get(router.task_id, {'id': id}, function (re) {
+                current_row_data = re;
+                form.val("common-edit-form", {
+                    "name": current_row_data.name,
+                    "cron": current_row_data.cron,
+                    "type": current_row_data.type,
+                });
+                $(".lay-unable-edit").attr("disabled", "block");
+                form.render();
+            })
+        }
+
+        // 提交事件
+        form.on('submit(material-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            current_row_data.name = field.name;
+            current_row_data.cron = field.cron;
+            current_row_data.type = field.type;
+
+            post(router.task_edit, current_row_data, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

@@ -46,4 +46,6 @@ public class ConnectDto {
     private String suffix;
 
     private String protocol;
+
+    private Boolean enabled;
 }

@@ -1,0 +1,182 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">* </span><span
+                    lang-i18n="mps.tf.name"></span></label>
+            <div class="layui-input-block">
+                <input type="text" name="name" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">* </span><span
+                    lang-i18n="mps.tf.code"></span></label>
+            <div class="layui-input-block">
+                <input type="text" name="selfCode" autocomplete="off" lay-verify="required"
+                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">* </span><span
+                    lang-i18n="mps.tf.type"></span></label>
+            <div class="layui-input-block">
+                <select name="type" id="type">
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="mps.tf.property"></label>
+            <div class="layui-input-block">
+                <input type="text" name="property" autocomplete="off" class="layui-input"
+                       lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="mps.tf.mapDb"></label>
+            <div class="layui-input-block">
+                <input type="text" name="mapDb" autocomplete="off"
+                       onKeyUp="this.value = input_limit_int(this.value)"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="mps.tf.offset"></label>
+            <div class="layui-input-block">
+                <input type="text" name="mapOffset" autocomplete="off"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="mps.tf.duration"></label>
+            <div class="layui-input-block">
+                <input type="text" name="duration" autocomplete="off"
+                       lay-verify="number" onKeyUp="this.value = input_limit_int(this.value)"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="mps.tf.temperature"></label>
+            <div class="layui-input-block">
+                <input type="text" name="temperature" autocomplete="off"
+                       lay-verify="number" onKeyUp="this.value = input_limit_float(this.value)"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <!--        <div class="layui-form-item" hidden="hidden">-->
+        <!--            <label class="layui-form-label" lang-i18n="mps.tf.pre"></label>-->
+        <!--            <div class="layui-input-block">-->
+        <!--                <input type="text" name="pre" autocomplete="off"-->
+        <!--                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">-->
+        <!--            </div>-->
+        <!--        </div>-->
+        <!--        <div class="layui-form-item" hidden="hidden">-->
+        <!--            <label class="layui-form-label" lang-i18n="mps.tf.next"></label>-->
+        <!--            <div class="layui-input-block">-->
+        <!--                <input type="text" name="nex" autocomplete="off"-->
+        <!--                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">-->
+        <!--            </div>-->
+        <!--        </div>-->
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = {};
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+
+        let id = layui.url().search.id;
+        if (id != null) {
+            $(".lay-unable-edit").attr("disabled", "block");
+            $('.lay-detail-hidden').hide();
+            var param = {
+                "id": id,
+            }
+            get(router.tf_id, param, function (data) {
+                current_row_data = data;
+                if (current_row_data != null) {
+                    form.val("common-edit-form", {
+                        "name": current_row_data.name,
+                        "selfCode": current_row_data.selfCode,
+                        "property": current_row_data.property,
+                        "mapDb": current_row_data.mapDb,
+                        "mapOffset": current_row_data.mapOffset,
+                        "duration": current_row_data.duration,
+                        "pre": current_row_data.pre,
+                        "nex": current_row_data.nex,
+                        "type": current_row_data.type,
+                        "temperature": current_row_data.temperature,
+                    });
+                }
+            })
+        } else {
+            form.val("common-edit-form", {
+                "name": "",
+                "type": "1",
+                "selfCode": "",
+                "property": "",
+                "mapDb": "",
+                "mapOffset": "",
+                "duration": "",
+                "pre": "",
+                "nex": "",
+                "temperature": "",
+            });
+            current_row_data.lineId = layui.url().search.line_id
+        }
+
+        get(router.tf_type, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#type').append(new Option(item.name, item.id));//往下拉菜单里添加元素
+            })
+            form.render();
+        });
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            current_row_data.name = field.name;
+            current_row_data.selfCode = field.selfCode;
+            current_row_data.property = field.property;
+            current_row_data.mapDb = field.mapDb;
+            current_row_data.mapOffset = field.mapOffset;
+            current_row_data.duration = field.duration;
+            current_row_data.pre = field.pre;
+            current_row_data.nex = field.nex;
+            current_row_data.type = field.type;
+            current_row_data.temperature = field.temperature;
+
+            post(router.tf_edit, current_row_data, function () {
+                closeWindow()
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

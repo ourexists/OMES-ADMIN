@@ -1,0 +1,3 @@
+FROM openjdk:8u252-jdk
+ADD /target/*.jar mes-edge-portal-dts.jar
+ENTRYPOINT java -jar $CATALINA_OPTS -Dnacos.use.cloud.namespace.parsing=false -Dnacos.use.endpoint.parsing.rule=false -Duser.timezone=GMT+08 -Dspring.profiles.active=$ylcloud_env mes-edge.jar

@@ -1,0 +1,15 @@
+version: '3.8'
+name: 'mes'
+services:
+  mes_edge:
+    image: mes-edge:1.0.0
+    container_name: mes-edge
+    volumes:
+      - ${MOUNT_PATH}\log\:/var/log/server
+      - ${MOUNT_PATH}\config\:/config/
+    ports:
+      - "10013:10010"
+    env_file:
+      - config.env
+    restart: on-failure:3
+    network_mode: bridge

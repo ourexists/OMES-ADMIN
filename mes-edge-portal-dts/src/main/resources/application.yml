@@ -1,0 +1,106 @@
+server:
+  port: 10013
+  servlet:
+    context-path: /
+
+spring:
+  messages:
+    basename: i18n/messages
+  thymeleaf:
+    cache: false
+  mvc:
+    static-path-pattern: static/**
+  application:
+    name: mes-edge-portal-dts
+  config:
+    location: classpath:/,file:config/
+  profiles:
+    include: db-mysql
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: ALWAYS
+    time-zone: GMT+8
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+    stream:
+      rabbit:
+        bindings:
+          plc_event_input:
+            consumer:
+              acknowledge-mode: none          # 确认模式（none, auto, manual）
+              auto-bind-dlq: true             # 自动绑定死信队列
+              max-concurrency: 10
+              prefetch: 1                 # 设置每个消费者的预取数量
+              binding-routing-key: emqx_r
+      bindings:
+        plc_event_input:
+          content-type: application/json
+          destination: emqx
+  rabbitmq:
+    host: ${mq_host}
+    port: ${mq_port}
+    username: ${mq_username}
+    password: ${mq_password}
+    virtual-host: /
+  main:
+    allow-bean-definition-overriding: true
+
+management:
+  endpoint:
+    health:
+      show-details: never
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      base-path: ${server.servlet.context-path}
+      exposure:
+        include:
+          - "health"
+          - "shutdown"
+security:
+  oauth2:
+    resource:
+      jwk:
+        key-set-uri:
+ribbon:
+  restclient:
+    enabled: true
+  okhttp:
+    enabled: true
+era:
+  log:
+    level: info
+    file:
+      path: log/
+  permission:
+    ignore:
+      auth_check:
+        - /expose/**
+        - /
+        - /templates/**
+        - /view/**
+      header_check:
+        - /
+        - /templates/**
+        - /view/**
+        - /expose/**
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 20000
+        readTimeout: 10000
+
+#logging:
+#  level:
+#    org:
+#      springframework:
+#        ws: TRACE
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true

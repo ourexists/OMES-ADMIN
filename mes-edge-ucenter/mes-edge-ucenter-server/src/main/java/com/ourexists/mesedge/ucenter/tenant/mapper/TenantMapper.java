@@ -29,7 +29,7 @@ public interface TenantMapper extends BaseMapper<Tenant> {
             "a.county_code as countyCode, a.street_code as streetCode, a.area_fullname as areaFullname, a.tenant_coo as tenantCoo," +
             "a.management as management, a.manage_num as manageNum, a.logo as logo ";
 
-    @Select("select " + FIELD + " from p_ucenter_tenant a right join r_ucenter_tenant_acc b " +
+    @Select("select " + FIELD + " from r_ucenter_tenant_acc b left join p_ucenter_tenant a " +
             "on a.tenant_code = b.tenant_id " +
             "and b.acc_id = #{accId} " +
             "where a.del_flag = 0 " +
@@ -38,18 +38,18 @@ public interface TenantMapper extends BaseMapper<Tenant> {
             "and a.expire_time >= #{date} ")
     List<Tenant> tenantToWhichTheAccBelong(String accId, Date date);
 
-    @Select("select " + FIELD + " from p_ucenter_tenant a right join r_ucenter_tenant_acc b " +
+    @Select("select " + FIELD + " from r_ucenter_tenant_acc b left join p_ucenter_tenant a " +
             "on a.tenant_code = b.tenant_id  " +
             "where b.acc_id = #{accId} and a.settled_time <= #{date} and a.expire_time >= #{date} and a.del_flag = 0")
     List<Tenant> availableTenantToWhichTheAccBelong(String accId, Date date);
 
 
-    @Select("select " + FIELD + ", b.acc_id as userId, b.role from p_ucenter_tenant a right join r_ucenter_tenant_acc b " +
+    @Select("select " + FIELD + ", b.acc_id as userId, b.role from r_ucenter_tenant_acc b left join  p_ucenter_tenant a " +
             "on a.tenant_code = b.tenant_id " +
             "where b.acc_id = #{accId} and a.settled_time <= #{date} and a.expire_time >= #{date} and a.del_flag = 0")
     List<TenantUVo> availableTenantRoleWhichTheAccBelong(String accId, Date date);
 
-    @Select("select " + FIELD + ", b.acc_id as userId, b.role from p_ucenter_tenant a right join r_ucenter_tenant_acc b " +
+    @Select("select " + FIELD + ", b.acc_id as userId, b.role from r_ucenter_tenant_acc b left join p_ucenter_tenant a " +
             "on a.tenant_code = b.tenant_id " +
             "where b.acc_id in " +
             "<foreach item='accId' collection='accIds' separator=',' open='(' close=')'>" +
