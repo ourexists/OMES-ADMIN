@@ -9,15 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class ViewController {
-    @RequestMapping("/")
-    public String index() {
-        return "index";
-    }
-
-    @RequestMapping("/view/login")
-    public String login() {
-        return "login";
-    }
 
     @RequestMapping("/view/material_tables")
     public String material_tables() {
@@ -94,16 +85,6 @@ public class ViewController {
         return "line_down";
     }
 
-    @RequestMapping("/view/task_tables")
-    public String task_tables() {
-        return "task_tables";
-    }
-
-    @RequestMapping("/view/task_form_edit")
-    public String task_form_edit() {
-        return "task_form_edit";
-    }
-
     @RequestMapping("/view/line_form_edit")
     public String line_form_edit() {
         return "line_form_edit";
@@ -132,20 +113,5 @@ public class ViewController {
     @RequestMapping("/view/line_flow_edit")
     public String line_flow_edit() {
         return "line_flow_edit";
-    }
-
-    @RequestMapping("/view/sync_tables")
-    public String sync_tables() {
-        return "sync_tables";
-    }
-
-    @RequestMapping("/view/sync_resource")
-    public String sync_resource() {
-        return "sync_resource";
-    }
-
-    @RequestMapping("/view/sync_form_edit")
-    public String sync_form_edit() {
-        return "sync_form_edit";
     }
 }

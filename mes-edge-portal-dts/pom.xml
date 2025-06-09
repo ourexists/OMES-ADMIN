@@ -28,21 +28,6 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ourexists.mes-edge</groupId>
-            <artifactId>mes-edge-ucenter-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.ourexists.mes-edge</groupId>
             <artifactId>mes-edge-task-server</artifactId>
             <version>1.0.0-SNAPSHOT</version>
@@ -52,38 +37,9 @@
             <artifactId>mes-edge-sync-server</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
-
         <dependency>
-            <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-orm-mybatisplus</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-txflow</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-webmvc</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-oauth2</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.ourexists.era</groupId>
-                    <artifactId>era-framework-cache</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.milo</groupId>

@@ -8,13 +8,11 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
-import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.DateUtil;
-import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.portal.third.model.req.CompleteReq;
 import com.ourexists.mesedge.portal.third.model.resp.Order;
-import com.ourexists.mesedge.sync.feign.ConnectFeign;
-import com.ourexists.mesedge.sync.model.ConnectDto;
+import com.ourexists.mesedge.sync.pojo.Connect;
+import com.ourexists.mesedge.sync.service.ConnectService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +32,7 @@ public class YGApi {
     private RestTemplate restTemplate;
 
     @Autowired
-    private ConnectFeign connectFeign;
+    private ConnectService connectFeign;
 
     public static final String SERVER_NAME = "YG_API";
 
@@ -91,12 +89,12 @@ public class YGApi {
     }
 
     private String getUri() {
-        ConnectDto connect;
-        try {
-            connect = RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(SERVER_NAME));
-        } catch (EraCommonException e) {
-            throw new BusinessException(e.getMessage());
-        }
+        Connect connect = connectFeign.getConnect(SERVER_NAME);
+//        try {
+//            connect = RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(SERVER_NAME));
+//        } catch (EraCommonException e) {
+//            throw new BusinessException(e.getMessage());
+//        }
         String uri = connect.getHost() + ":" + connect.getPort();
         if (StringUtils.isNotBlank(connect.getSuffix())) {
             uri += "/" + connect.getSuffix();

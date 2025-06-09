@@ -15,9 +15,8 @@ import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.mps.feign.MPSTFFeign;
 import com.ourexists.mesedge.mps.model.MPSDto;
 import com.ourexists.mesedge.mps.model.MPSTFVo;
-import com.ourexists.mesedge.portal.sync.manager.push.PlanNotifyTxManager;
+import com.ourexists.mesedge.portal.sync.push.PlanNotifyTxManager;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
-import com.ourexists.mesedge.sync.feign.SyncFeign;
 import com.ourexists.mesedge.sync.service.SyncResourceService;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +39,7 @@ public class MpsTfStatusTimerTask extends TimerTask {
     private PlanNotifyTxManager planNotifySyncManager;
 
     @Autowired
-    private SyncFeign syncFeign;
+    private SyncResourceService syncFeign;
 
     @Override
     public void doRun() {
@@ -52,7 +51,7 @@ public class MpsTfStatusTimerTask extends TimerTask {
                     for (int i = 0; i < mpstfs.size(); i++) {
                         MPSTFVo mpstf = mpstfs.get(i);
                         if (i == 0 && mpstf.getStatus().equals(MPSTFStatusEnum.EXEC.getCode())) {
-                            Boolean exist = RemoteHandleUtils.getDataFormResponse(syncFeign.existSyncResource(SyncTxEnum.PLAN_START.name(), mpstf.getMoCode()));
+                            Boolean exist = syncFeign.existSync(SyncTxEnum.PLAN_START, mpstf.getMoCode());
                             if (!exist) {
                                 planNotifySyncManager.execute(mpstf.getMoCode());
                             }

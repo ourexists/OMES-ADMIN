@@ -12,10 +12,10 @@ import com.ourexists.mesedge.line.feign.LineFeign;
 import com.ourexists.mesedge.line.model.ResetLineTFDto;
 import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.portal.line.service.LineFlowService;
-import com.ourexists.mesedge.portal.sync.manager.push.LinePushTxManager;
 import com.ourexists.mesedge.portal.s7.ocpua.OpcUaContext;
-import com.ourexists.mesedge.sync.feign.ConnectFeign;
-import com.ourexists.mesedge.sync.model.ConnectDto;
+import com.ourexists.mesedge.portal.sync.push.LinePushTxManager;
+import com.ourexists.mesedge.sync.pojo.Connect;
+import com.ourexists.mesedge.sync.service.ConnectService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class LineFlowServiceImpl implements LineFlowService {
     private OpcUaContext opcUaContext;
 
     @Autowired
-    private ConnectFeign connectFeign;
+    private ConnectService connectFeign;
 
     @Autowired
     private LinePushTxManager linePushSyncManager;
@@ -56,12 +56,7 @@ public class LineFlowServiceImpl implements LineFlowService {
 
     @Override
     public void downloadS7(String lineId, String serverName) {
-        ConnectDto connect = null;
-        try {
-            connect = RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(serverName));
-        } catch (EraCommonException e) {
-            throw new BusinessException(e.getMessage());
-        }
+        Connect connect = connectFeign.getConnect(serverName);
         if (connect == null) {
             return;
         }

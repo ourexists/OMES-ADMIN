@@ -4,13 +4,15 @@
 
 package com.ourexists.mesedge.sync.view;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
+import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
+import com.ourexists.era.txflow.TxManager;
+import com.ourexists.era.txflow.model.TxStatusEnum;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;
-import com.ourexists.mesedge.sync.feign.SyncFeign;
+import com.ourexists.mesedge.sync.manager.SyncBeanUtils;
 import com.ourexists.mesedge.sync.model.SyncDto;
 import com.ourexists.mesedge.sync.model.SyncResourceDto;
 import com.ourexists.mesedge.sync.model.SyncResourceVo;
@@ -21,32 +23,36 @@ import com.ourexists.mesedge.sync.pojo.SyncResource;
 import com.ourexists.mesedge.sync.service.SyncResourceService;
 import com.ourexists.mesedge.sync.service.SyncService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-//@Tag(name = "数据同步")
-//@RestController
-//@RequestMapping("/sync")
-@Component
-public class SyncViewer implements SyncFeign {
+@Tag(name = "数据同步")
+@RestController
+@RequestMapping("/sync")
+public class SyncViewer {
 
-    @Autowired
     private SyncService service;
 
-    @Autowired
     private SyncResourceService syncResourceService;
 
+    private List<TxManager> txManagers;
+
+    public SyncViewer(SyncService service,
+                      SyncResourceService syncResourceService,
+                      List<TxManager> txManagers) {
+        this.service = service;
+        this.syncResourceService = syncResourceService;
+        this.txManagers = txManagers;
+    }
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -131,6 +137,44 @@ public class SyncViewer implements SyncFeign {
     public JsonResponseEntity<Boolean> existSyncResource(@RequestParam String syncTx,
                                                          @RequestParam String reqData) {
         return JsonResponseEntity.success(syncResourceService.existSync(SyncTxEnum.valueOf(syncTx), reqData));
+    }
+
+
+    @Operation(summary = "断点重入", description = "断点重入")
+    @GetMapping("breakpointProcess")
+    public JsonResponseEntity<Boolean> breakpointProcess(@RequestParam String id) {
+        //说明传入的id有误不处理
+        SyncVo syncVo = Sync.covert(this.service.getById(id));
+        if (syncVo == null) {
+            return JsonResponseEntity.success(true);
+        }
+        syncVo.setResources(SyncResource.covert(syncResourceService.selectBySyncId(id)));
+        for (TxManager txManager : txManagers) {
+            if (txManager.txName().equals(syncVo.getSyncTx())) {
+                txManager.breakpointProcess(SyncBeanUtils.wrapTx(syncVo));
+            }
+        }
+        return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "事务", description = "事务")
+    @GetMapping("syncTx")
+    public JsonResponseEntity<List<MapDto>> syncTx() {
+        List<MapDto> r = new ArrayList<>();
+        for (SyncTxEnum value : SyncTxEnum.values()) {
+            r.add(new MapDto().setId(value.name()).setName(value.name()));
+        }
+        return JsonResponseEntity.success(r);
+    }
+
+    @Operation(summary = "状态", description = "状态")
+    @GetMapping("status")
+    public JsonResponseEntity<List<MapDto>> status() {
+        List<MapDto> r = new ArrayList<>();
+        for (TxStatusEnum value : TxStatusEnum.values()) {
+            r.add(new MapDto().setId(value.name()).setName(value.name()));
+        }
+        return JsonResponseEntity.success(r);
     }
 
 }

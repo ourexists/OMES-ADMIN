@@ -103,7 +103,7 @@ var router = {
     "qa_edit": "/qa/addOrUpdate",
     "qa_id": "/qa/selectById",
     "qa_check": "/qa/check",
-    "s7_all": "/plc/getAll",
+    "s7_all": "/connect/opcUa",
     "task_page": "/task/selectByPage",
     "task_id": "/task/selectById",
     "task_del": "/task/delete",

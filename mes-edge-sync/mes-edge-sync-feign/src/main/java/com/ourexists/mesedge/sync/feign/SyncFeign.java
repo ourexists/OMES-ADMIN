@@ -5,6 +5,7 @@
 package com.ourexists.mesedge.sync.feign;
 
 import com.ourexists.era.framework.core.model.dto.IdsDto;
+import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.sync.model.SyncDto;
 import com.ourexists.mesedge.sync.model.SyncResourceDto;
@@ -64,5 +65,17 @@ public interface SyncFeign {
     @GetMapping("existSyncResource")
     JsonResponseEntity<Boolean> existSyncResource(@RequestParam String syncTx,
                                                   @RequestParam String reqData);
+
+    @Operation(summary = "断点重入", description = "断点重入")
+    @GetMapping("breakpointProcess")
+    JsonResponseEntity<Boolean> breakpointProcess(@RequestParam String id);
+
+    @Operation(summary = "事务", description = "事务")
+    @GetMapping("syncTx")
+    JsonResponseEntity<List<MapDto>> syncTx();
+
+    @Operation(summary = "状态", description = "状态")
+    @GetMapping("status")
+    JsonResponseEntity<List<MapDto>> status();
 
 }
