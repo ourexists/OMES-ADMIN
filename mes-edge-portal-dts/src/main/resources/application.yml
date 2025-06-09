@@ -5,7 +5,7 @@ server:
 
 spring:
   messages:
-    basename: static/i18n/i18n
+    basename: static/i18n/message
   thymeleaf:
     cache: false
   mvc:

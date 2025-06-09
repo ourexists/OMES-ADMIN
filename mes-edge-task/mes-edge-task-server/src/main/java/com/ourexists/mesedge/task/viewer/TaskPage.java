@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-public class TaskViewPage {
+public class TaskPage {
 
     @RequestMapping("/view/task_tables")
     public String task_tables() {
