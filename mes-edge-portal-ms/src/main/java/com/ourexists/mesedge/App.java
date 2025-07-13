@@ -5,8 +5,10 @@
 package com.ourexists.mesedge;
 
 import com.ourexists.era.framework.oauth2.EnableEraMixOauth2Server;
+import javafx.application.Application;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -25,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 @EnableAsync
 @PropertySource(value = {"file:config/config.properties"})
 public class App {
+
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
@@ -35,5 +38,4 @@ public class App {
         restTemplate.getMessageConverters().set(1, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         return restTemplate;
     }
-
 }

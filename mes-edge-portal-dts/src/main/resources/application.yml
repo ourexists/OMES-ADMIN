@@ -24,28 +24,36 @@ spring:
     loadbalancer:
       retry:
         enabled: true
-    stream:
-      rabbit:
-        bindings:
-          plc_event_input:
-            consumer:
-              acknowledge-mode: none          # 确认模式（none, auto, manual）
-              auto-bind-dlq: true             # 自动绑定死信队列
-              max-concurrency: 10
-              prefetch: 1                 # 设置每个消费者的预取数量
-              binding-routing-key: emqx_r
-      bindings:
-        plc_event_input:
-          content-type: application/json
-          destination: emqx
-  rabbitmq:
-    host: ${mq_host}
-    port: ${mq_port}
-    username: ${mq_username}
-    password: ${mq_password}
-    virtual-host: /
+#    stream:
+#      rabbit:
+#        bindings:
+#          plc_event_input:
+#            consumer:
+#              acknowledge-mode: none          # 确认模式（none, auto, manual）
+#              auto-bind-dlq: true             # 自动绑定死信队列
+#              max-concurrency: 10
+#              prefetch: 1                 # 设置每个消费者的预取数量
+#              binding-routing-key: emqx_r
+#      bindings:
+#        plc_event_input:
+#          content-type: application/json
+#          destination: emqx
+#  rabbitmq:
+#    host: ${mq_host}
+#    port: ${mq_port}
+#    username: ${mq_username}
+#    password: ${mq_password}
+#    virtual-host: /
   main:
     allow-bean-definition-overriding: true
+
+mqtt:
+  server-uri:
+    - tcp://localhost:1883
+  username: ms-dts
+  password: P2c6wkaN5WZPJcGEedaF
+  client-id: mqtt-dts
+  input-topic: fxx/fb
 
 management:
   endpoint:
@@ -78,8 +86,8 @@ era:
   permission:
     ignore:
       auth_check:
-        - /expose/**
         - /
+        - /expose/**
         - /templates/**
         - /view/**
       header_check:
