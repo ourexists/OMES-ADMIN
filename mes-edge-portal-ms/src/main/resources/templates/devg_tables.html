@@ -1,0 +1,273 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="name" id="name" value="" placeholder="名称"
+                       class="layui-input"
+                       lay-affix="clear" lang-i18n="line.name">
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="selfCode" id="selfCode" placeholder="编码"
+                       lay-affix="clear" class="layui-input" lang-i18n="line.code">
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="ebs-material-search" lang-i18n="common.search">Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-bg-blue" lay-event="flow">{{ i18np.prop('devg.flow') }}</a>
+        <a class="layui-btn layui-btn-xs" lay-event="edit">{{ i18np.prop('common.edit') }}</a>
+        <a class="layui-btn layui-btn-xs layui-bg-red" lay-event="del">{{ i18np.prop('common.delete') }}</a>
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-add-1"></i>
+        </a>
+        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">
+            <i class="layui-icon layui-icon-delete"></i>
+        </a>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
+            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
+            <i class="layui-icon layui-icon-down layui-font-12"></i>
+        </button>
+    </div>
+</script>
+<script type="text/html" id="tb-add-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="add">{{ i18np.prop('common.add') }}</button>
+    </div>
+</script>
+<script type="text/html" id="tb-select-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs" lay-event="select">{{ i18np.prop('common.select') }}</a>
+    </div>
+</script>
+<script type="text/html" id="tb-select-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-border-red layui-btn-fluid layui-btn-primary" lay-event="select_multi">{{
+            i18np.prop('common.sure.select') }}
+        </button>
+    </div>
+</script>
+
+<script th:inline="none">
+    var table
+    var current_row_data
+    layui.use(['form', 'table', 'dropdown', 'layer'], function () {
+        table = layui.table;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+
+        var page_params = {
+            default_param: {
+                cols: [[
+                    {type: 'checkbox', title: '', fixed: true}, // 单选框
+                    {field: 'name', title: i18np.prop('devg.name')},
+                    {field: 'selfCode', title: i18np.prop('devg.code')},
+                    {
+                        fixed: 'right',
+                        title: i18np.prop('common.operate'),
+                        width: 200,
+                        minWidth: 125,
+                        templet: '#tb-tool'
+                    }
+                ]],
+                toolbar: '#tb-toolbar',
+                defaultToolbar: ['filter', 'exports', 'print'],
+            },
+            select_param: {
+                cols: [[
+                    {field: 'name', title: i18np.prop('devg.name')},
+                    {field: 'selfCode', title: i18np.prop('devg.code')},
+                    {
+                        fixed: 'right',
+                        title: i18np.prop('common.operate'),
+                        width: 200,
+                        minWidth: 125,
+                        templet: '#tb-select-tool'
+                    }
+                ]],
+                toolbar: '#tb-add-toolbar',
+                defaultToolbar: ''
+            }
+        }
+
+        let page_type = layui.url().search.page_type;
+
+        let page;
+        if (page_type != null && page_type === '2') {
+            page = page_params.select_param;
+        } else {
+            page = page_params.default_param;
+        }
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            url: initRequestUrl(router.devg_page),
+            method: 'POST',
+            contentType: 'application/json',
+            headers: getCommonHeader(),
+            toolbar: page.toolbar,
+            defaultToolbar: page.defaultToolbar,
+            cols: page.cols,
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-common', {
+                                    lineStyle: null // 恢复单行
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-common', {
+                                    // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "count": res.pagination.total,
+                    "data": res.data,
+                };
+            },
+            limit: 10,
+            limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    var getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+                case 'add':
+                    current_row_data = null;
+                    openWindow("common.add", '/view/devg_form_edit');
+                    break;
+                case 'deleteBatch':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    var ids = [];
+                    $.each(data, function (i, n) {
+                        ids.push(n.id);
+                    });
+                    delWindow(router.devg_del, ids, reloadTb);
+                    break;
+            }
+        });
+
+        // 触发单元格工具事件
+        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            if (obj.event === 'edit') {
+                current_row_data = data;
+                openWindow("common.edit", '/view/devg_form_edit?id=' + data.id);
+            } else if (obj.event === 'del') {
+                delWindow(router.devg_del, [data.id], reloadTb);
+            } else if (obj.event === 'select') {
+                parent.selectLine(obj.data);
+                closeWindow();
+            } else if (obj.event === 'flow') {
+                parent.openIndexTab('/view/devg_flow?id=' + data.id, 'devg_flow' + data.id, i18np.prop('devg.flow') + '[' + data.name + ']');
+            }
+        });
+
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+
+        // 搜索提交
+        form.on('submit(ebs-material-search)', function (data) {
+            reloadTb();
+            return false; // 阻止默认 form 跳转
+        });
+    });
+
+    function reloadTb() {
+        table.reloadData('tb-common', {
+            page: {
+                curr: 1 // 重新从第 1 页开始
+            },
+            where: {
+                name: $('#name').val(),
+                selfCode: $('#selfCode').val()
+            },
+        });
+    }
+
+
+</script>
+</body>
+</html>

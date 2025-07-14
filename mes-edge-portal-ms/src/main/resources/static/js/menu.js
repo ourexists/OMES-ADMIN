@@ -38,11 +38,11 @@ var menu = [
                 'name': 'menu.mps',
                 'path': '/view/mps_tables'
             },
-            {
-                'id': 23,
-                'name': 'menu.qa',
-                'path': '/view/qa_tables'
-            },
+            // {
+            //     'id': 23,
+            //     'name': 'menu.qa',
+            //     'path': '/view/qa_tables'
+            // },
         ]
     },
     {
@@ -53,6 +53,11 @@ var menu = [
                 'id': 31,
                 'name': 'menu.line',
                 'path': '/view/line_tables'
+            },
+            {
+                'id': 32,
+                'name': 'menu.deviceC',
+                'path': '/view/devg_tables'
             }
         ]
     },
