@@ -148,4 +148,24 @@ public class ViewController {
     public String sync_form_edit() {
         return "sync_form_edit";
     }
+
+    @RequestMapping("/view/devg_tables")
+    public String devg_tables() {
+        return "devg_tables";
+    }
+
+    @RequestMapping("/view/devg_form_edit")
+    public String devg_form_edit() {
+        return "devg_form_edit";
+    }
+
+    @RequestMapping("/view/devg_flow")
+    public String devg_flow() {
+        return "devg_flow";
+    }
+
+    @RequestMapping("/view/dev_form_edit")
+    public String dev_form_edit() {
+        return "dev_form_edit";
+    }
 }

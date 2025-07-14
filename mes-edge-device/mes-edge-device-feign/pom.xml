@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.ourexists.mes-edge</groupId>
         <artifactId>mes-edge-device</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>mes-edge-device-feign</artifactId>

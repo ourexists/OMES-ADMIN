@@ -1,0 +1,80 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="devg.name"></label>
+            <div class="layui-input-block">
+                <input type="text" name="name" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="devg.code"></label>
+            <div class="layui-input-block">
+                <input type="text" name="selfCode" autocomplete="off" lay-verify="required"
+                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = parent.current_row_data;
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form,
+            layer = layui.layer;
+
+        if (current_row_data != null) {
+            form.val("common-edit-form", {
+                "name": current_row_data.name,
+                "selfCode": current_row_data.selfCode,
+            });
+            if (current_row_data.selfCode !== "") {
+                $(".lay-unable-edit").attr("disabled", "block");
+            }
+        } else {
+            form.val("common-edit-form", {
+                "name": "",
+                "code": "",
+            });
+            current_row_data = {}
+        }
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            current_row_data.name = field.name;
+            current_row_data.selfCode = field.selfCode;
+
+            post(router.devg_edit, current_row_data, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

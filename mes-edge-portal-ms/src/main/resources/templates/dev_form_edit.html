@@ -1,0 +1,177 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">* </span><span
+                    lang-i18n="dev.name"></span></label>
+            <div class="layui-input-block">
+                <input type="text" name="name" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">* </span><span
+                    lang-i18n="dev.code"></span></label>
+            <div class="layui-input-block">
+                <input type="text" name="selfCode" autocomplete="off" lay-verify="required"
+                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label"><span style="color:red">* </span><span
+                        lang-i18n="dev.type"></span></label>
+                <div class="layui-input-block">
+                    <select name="type" id="type"></select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="dev.localization"></label>
+                <div class="layui-input-block">
+                    <select name="localization" id="localization"></select>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="material.name"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="matName" autocomplete="off" lay-verify="required"
+                           class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="material.code"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="matCode" autocomplete="off" lay-verify="required"
+                           class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-inline era-detail-hidden">
+                <button type="button" id="form-select-mat-btn"
+                        class="layui-btn layui-btn-primary layui-border-blue "
+                        lang-i18n="mps.select.mat"></button>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="dev.maxCapacity"></label>
+            <div class="layui-input-block">
+                <input type="text" name="maxCapacity" autocomplete="off"
+                       onKeyUp="this.value = input_limit_float(this.value)"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = {};
+    var form
+    layui.use(['form', 'layer'], function () {
+        form = layui.form;
+        var layer = layui.layer;
+
+        let id = layui.url().search.id;
+        if (id != null) {
+            $(".lay-unable-edit").attr("disabled", "block");
+            $('.lay-detail-hidden').hide();
+            var param = {
+                "id": id,
+            }
+            get(router.dev_id, param, function (data) {
+                current_row_data = data;
+                if (current_row_data != null) {
+                    form.val("common-edit-form", {
+                        "name": current_row_data.name,
+                        "selfCode": current_row_data.selfCode,
+                        "type": current_row_data.type,
+                        "localization": current_row_data.localization,
+                        "matName": current_row_data.materialDto == null ? '' : current_row_data.materialDto.name,
+                        "matCode": current_row_data.matCode,
+                        "maxCapacity": current_row_data.maxCapacity,
+                    });
+                }
+            })
+        } else {
+            form.val("common-edit-form", {
+                "name": "",
+                "selfCode": "",
+                "type": "0",
+                "localization": "0",
+                "matName": "",
+                "matCode": "",
+                "maxCapacity": 0.0,
+            });
+            current_row_data.dgId = layui.url().search.dgId
+            current_row_data.pcode = layui.url().search.pcode
+        }
+
+        get(router.dev_type, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#type').append(new Option(item.name, item.id));//往下拉菜单里添加元素
+            })
+            form.render();
+        });
+
+        get(router.dev_localization, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#localization').append(new Option(item.name, item.id));//往下拉菜单里添加元素
+            })
+            form.render();
+        });
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            current_row_data.name = field.name;
+            current_row_data.selfCode = field.selfCode;
+            current_row_data.type = field.type;
+            current_row_data.localization = field.localization;
+            current_row_data.matCode = field.matCode;
+            current_row_data.maxCapacity = field.maxCapacity;
+
+            post(router.dev_edit, current_row_data, function () {
+                closeWindow()
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+
+    $('#form-select-mat-btn').click(function () {
+        openWindow("mps.select.mat", "/view/material_tables?page_type=2", ['95%', '80%']);
+    })
+
+    function selectMat(result) {
+        form.val("common-edit-form", {
+            "matCode": result.selfCode,
+            "matName": result.name
+        });
+    }
+</script>
+</body>
+</html>

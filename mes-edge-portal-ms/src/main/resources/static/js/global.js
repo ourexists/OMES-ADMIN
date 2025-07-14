@@ -111,6 +111,17 @@ var router = {
     "task_type": "/task/timerTask",
     "task_stop": "/task/stop",
     "task_start": "/task/start",
+    "devg_page": "/devg/selectByPage",
+    "devg_edit": "/devg/addOrUpdate",
+    "devg_del": "/devg/delete",
+    "dev_page": "/device/tree",
+    "dev_edit": "/device/addOrUpdate",
+    "dev_del": "/device/delete",
+    "dev_type": "/device/type",
+    "dev_localization": "/device/localization",
+    "dev_id": "/device/selectById",
+    "dev_enable": "/device/enable",
+    "dev_disable": "/device/disable"
 }
 
 function getCommonHeader() {
