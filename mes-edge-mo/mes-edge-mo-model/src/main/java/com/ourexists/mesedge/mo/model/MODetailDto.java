@@ -41,4 +41,16 @@ public class MODetailDto extends BaseDto {
     @Schema(description = "优先级")
     private Integer priority;
 
+    @Schema(description = "设备码")
+    private String devNo;
+
+    @Schema(description = "设备名")
+    private String devName;
+
+    @Schema(description = "设备工艺编号")
+    private String dgCode;
+
+    @Schema(description = "设备工艺名")
+    private String dgName;
+
 }

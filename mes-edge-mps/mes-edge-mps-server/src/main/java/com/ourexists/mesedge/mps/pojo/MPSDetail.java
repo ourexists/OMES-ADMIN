@@ -34,9 +34,14 @@ public class MPSDetail extends MainEntity {
     private String matId;
 
     /**
-     * 物料量
+     * 理论量
      */
     private BigDecimal matNum;
+
+    /**
+     * 实际量
+     */
+    private BigDecimal actualNum;
 
     private Integer priority;
 
@@ -52,6 +57,12 @@ public class MPSDetail extends MainEntity {
      */
     private String devNo;
 
+
+    private String devName;
+
+    private String dgCode;
+
+    private String dgName;
 
     /**
      * 组份性质：0=主料，1=预混料（添加剂）,2=回机料,3=油,4=水
@@ -82,6 +93,9 @@ public class MPSDetail extends MainEntity {
     public static MPSDetail wrap(MPSDetailDto source) {
         MPSDetail target = new MPSDetail();
         BeanUtil.copyProperties(source, target);
+        if (target.getActualNum() == null) {
+            target.setActualNum(target.getMatNum());
+        }
         return target;
     }
 

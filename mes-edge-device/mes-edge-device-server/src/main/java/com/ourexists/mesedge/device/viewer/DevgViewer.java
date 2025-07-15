@@ -50,7 +50,7 @@ public class DevgViewer implements DevgFeign {
     @Operation(summary = "删除", description = "删除")
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
-        service.removeByIds(idsDto.getIds());
+        service.delete(idsDto.getIds());
         return JsonResponseEntity.success(true);
     }
 

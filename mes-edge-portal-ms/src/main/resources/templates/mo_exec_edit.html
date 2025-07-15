@@ -129,16 +129,39 @@
                         </form>
                     </div>
                     <div style="padding: 16px;">
-                        <table class="layui-hide" id="tb-line-detail"></table>
-                        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 10%">
-                            <div class="layui-input-block">
-                                <button type="button" class="layui-btn pre"
-                                        lang-i18n="common.step.last"></button>
-                                <button class="layui-btn" id="formStep2" lay-submit lay-filter="formStep2"
-                                        lang-i18n="common.step.next">
-                                </button>
+                        <form class="layui-form layui-form-pane" action="" id="devg-form"
+                              lay-filter="devg-form">
+                            <div class="layui-form-item">
+                                <div class="layui-inline">
+                                    <label class="layui-form-label" lang-i18n="devg.name"></label>
+                                    <div class="layui-input-block">
+                                        <input type="text" name="devgName" autocomplete="off" placeholder=""
+                                               disabled class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-inline" style="display:none">
+                                    <div class="layui-input-block">
+                                        <input type="text" name="devgId" autocomplete="off" placeholder="" disabled
+                                               class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-inline era-detail-hidden">
+                                    <button type="button" id="form-select-devg-btn"
+                                            class="layui-btn layui-btn-primary layui-border-blue "
+                                            lang-i18n="select.devg"></button>
+                                </div>
                             </div>
-                        </div>
+                            <table class="layui-hide" id="tb-line-detail"></table>
+                            <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 10%">
+                                <div class="layui-input-block">
+                                    <button type="button" class="layui-btn pre"
+                                            lang-i18n="common.step.last"></button>
+                                    <button class="layui-btn" id="formStep2" lay-submit lay-filter="formStep2"
+                                            lang-i18n="common.step.next">
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                     <div style="padding: 16px;">
                         <form class="layui-form layui-form-pane" action="" id="tf-form"
@@ -147,8 +170,7 @@
                                 <div class="layui-inline">
                                     <label class="layui-form-label" lang-i18n="line.name"></label>
                                     <div class="layui-input-block">
-                                        <input type="text" name="line" autocomplete="off" placeholder=""
-                                               lay-verify="required" disabled
+                                        <input type="text" name="line" autocomplete="off" placeholder="" disabled
                                                class="layui-input">
                                     </div>
                                 </div>
@@ -264,7 +286,7 @@
             stepItems: [{
                 title: i18np.prop('mps.design')
             }, {
-                title: i18np.prop('menu.bom')
+                title: i18np.prop('devg.name')
             }, {
                 title: i18np.prop('line.name')
             }, {
@@ -283,15 +305,13 @@
                 {field: 'matName', title: i18np.prop("material.name")},
                 {field: 'matCode', title: i18np.prop("material.code")},
                 {field: 'matNum', title: i18np.prop("material.num")},
+                {field: 'devNo', title: i18np.prop("dev.code")},
+                {field: 'devName', title: i18np.prop("dev.name")},
+                {field: 'dgCode', title: i18np.prop("devg.code")},
+                {field: 'dgName', title: i18np.prop("devg.name")},
                 {
                     field: 'priority',
                     title: i18np.prop("common.priority"),
-                    edit: 'text',
-                    style: 'color: red;'
-                },
-                {
-                    field: 'devNo',
-                    title: i18np.prop("mps.devNo"),
                     edit: 'text',
                     style: 'color: red;'
                 }
@@ -371,6 +391,10 @@
             openWindow("select.line", "/view/line_tables?page_type=2", ['95%', '80%']);
         })
 
+        $('#form-select-devg-btn').click(function () {
+            openWindow("select.devg", "/view/devg_tables?page_type=2", ['95%', '80%']);
+        })
+
         form.on('submit(formStep)', function (data) {
             if (data.field.execNum > current_row_data.surplus) {
                 layer.msg(i18np.prop('mps.msg.over'));
@@ -398,9 +422,12 @@
         });
 
         form.on('submit(formStep3)', function (data) {
+            if (data.field.lineCode === null) {
+                step.next('#stepForm');
+                return false;
+            }
             parmas.line = data.field.lineCode;
             parmas.tfs = tfDatas;
-            console.info(parmas);
             post(router.mps_flow, parmas, function (result) {
                 table.reload('tb-flow-mps', {
                     data: result
@@ -453,6 +480,35 @@
             table.reload('tb-tf-detail', {
                 data: tfDatas
             })
+        })
+    }
+
+    function selectDevg(data) {
+        form.val("devg-form", {
+            "devgName": data.name,
+            "devgId": data.id
+        });
+        var param = {
+            "dgId": data.id
+        }
+        get(router.dev_dgId, param, function (result) {
+            console.info(result)
+            console.info(details)
+            $.each(details, function (index, value) {
+                value.devNo = null;
+                value.devName = null;
+                value.dgCode = null;
+                value.dgName = null;
+                $.each(result, function (i, d) {
+                    if (value.matCode === d.matCode) {
+                        value.devNo = d.selfCode;
+                        value.devName = d.name;
+                        value.dgCode = data.selfCode;
+                        value.dgName = data.name;
+                    }
+                })
+            });
+            reloadTb();
         })
     }
 </script>

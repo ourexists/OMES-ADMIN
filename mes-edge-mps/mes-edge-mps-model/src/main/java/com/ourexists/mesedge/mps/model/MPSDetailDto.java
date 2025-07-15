@@ -29,8 +29,11 @@ public class MPSDetailDto extends BaseDto {
     @Schema(description = "物料id")
     private String matId;
 
-    @Schema(description = "物料量")
+    @Schema(description = "理论值")
     private BigDecimal matNum;
+
+    @Schema(description = "实际值")
+    private BigDecimal actualNum;
 
     @Schema(description = "对应的主体id")
     private String mid;
@@ -43,6 +46,15 @@ public class MPSDetailDto extends BaseDto {
 
     @Schema(description = "设备编号")
     private String devNo;
+
+    @Schema(description = "设备名")
+    private String devName;
+
+    @Schema(description = "设备工艺编号")
+    private String dgCode;
+
+    @Schema(description = "设备工艺名")
+    private String dgName;
 
     @Schema(description = "组份性质, 0=主料，1=预混料（添加剂）,2=回机料,3=油,4=水")
     private Integer attribute;

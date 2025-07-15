@@ -36,6 +36,14 @@ public class MODetail extends MainEntity {
 
     private Integer priority;
 
+    private String devNo;
+
+    private String devName;
+
+    private String dgCode;
+
+    private String dgName;
+
     @TableLogic
     private Boolean delBit;
 

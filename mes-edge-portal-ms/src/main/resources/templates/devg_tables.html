@@ -235,7 +235,7 @@
             } else if (obj.event === 'del') {
                 delWindow(router.devg_del, [data.id], reloadTb);
             } else if (obj.event === 'select') {
-                parent.selectLine(obj.data);
+                parent.selectDevg(obj.data);
                 closeWindow();
             } else if (obj.event === 'flow') {
                 parent.openIndexTab('/view/devg_flow?id=' + data.id, 'devg_flow' + data.id, i18np.prop('devg.flow') + '[' + data.name + ']');

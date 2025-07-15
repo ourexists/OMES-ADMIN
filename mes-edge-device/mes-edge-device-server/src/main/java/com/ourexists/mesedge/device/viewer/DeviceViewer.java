@@ -88,7 +88,7 @@ public class DeviceViewer implements DeviceFeign {
             for (Device child : children) {
                 msg.append(child.getName()).append(",");
             }
-            throw new BusinessException("{common.msg.delete.existchild}", msg.substring(0, msg.length() - 1));
+            throw new BusinessException("${common.msg.delete.existchild}", msg.substring(0, msg.length() - 1));
         }
         service.removeByIds(idsDto.getIds());
         return JsonResponseEntity.success(true);

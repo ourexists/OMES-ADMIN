@@ -118,6 +118,7 @@ var router = {
     "dev_edit": "/device/addOrUpdate",
     "dev_del": "/device/delete",
     "dev_type": "/device/type",
+    "dev_dgId": "/device/selectByDgId",
     "dev_localization": "/device/localization",
     "dev_id": "/device/selectById",
     "dev_enable": "/device/enable",
@@ -175,7 +176,6 @@ function handleResponseData(data, successFunc, failFuc) {
             window.parent.location.href = '/view/login';
         })
     } else {
-        console.info(failFuc);
         if (failFuc != null) {
             failFuc(data.code, data.msg);
         } else {
@@ -267,12 +267,7 @@ function delWindow(url, ids, successFuc, failFuc) {
             var param = {
                 "ids": ids
             }
-            post(url, param, successFuc, function () {
-                layer.alert(data.msg, {
-                    title: 'error'
-                });
-                failFuc();
-            })
+            post(url, param, successFuc)
         }, function () {
             layer.close(index);
         }
