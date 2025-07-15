@@ -489,11 +489,10 @@
             "devgId": data.id
         });
         var param = {
-            "dgId": data.id
+            "dgId": data.id,
+            "status": 0,
         }
         get(router.dev_dgId, param, function (result) {
-            console.info(result)
-            console.info(details)
             $.each(details, function (index, value) {
                 value.devNo = null;
                 value.devName = null;

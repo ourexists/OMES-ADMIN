@@ -29,4 +29,6 @@ public interface MATFeign {
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
     JsonResponseEntity<List<MaterialDto>> selectByCodes(@RequestBody IdsDto idsDto);
+
+    JsonResponseEntity<List<MaterialDto>> selectByIds(@RequestBody IdsDto idsDto);
 }

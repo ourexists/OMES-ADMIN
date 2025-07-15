@@ -20,6 +20,8 @@ public interface DeviceFeign {
 
     JsonResponseEntity<List<DeviceTreeNode>> selectByDgId(@RequestParam String dgId);
 
+    JsonResponseEntity<List<DeviceTreeNode>> selectByDgIdAndStatus(@RequestParam String dgId,  @RequestParam Integer status);
+
     JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody DeviceDto dto);
 
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
@@ -27,4 +29,6 @@ public interface DeviceFeign {
     JsonResponseEntity<DeviceTreeNode> selectById(@RequestParam String id);
 
     JsonResponseEntity<Boolean> changeStatus(String id, Integer status);
+
+    JsonResponseEntity<Boolean> isUseMat(@RequestParam List<String> matCodes);
 }
