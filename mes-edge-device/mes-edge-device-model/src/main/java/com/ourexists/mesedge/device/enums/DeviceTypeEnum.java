@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum DeviceTypeEnum {
 
     cang(0, "仓"),
-    cheng(1, "秤");
+    cheng(1, "秤"),
+    gong(2, "工段");
     private Integer code;
     private String desc;
 
