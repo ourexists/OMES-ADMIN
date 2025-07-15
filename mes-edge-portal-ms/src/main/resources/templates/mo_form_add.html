@@ -535,10 +535,15 @@
             "devgId": data.id
         });
         var param = {
-            "dgId": data.id
+            "dgId": data.id,
+            "status": 0
         }
         get(router.dev_dgId, param, function (result) {
             $.each(details, function (index, value) {
+                value.devNo = null;
+                value.devName = null;
+                value.dgCode = null;
+                value.dgName = null;
                 $.each(result, function (i, d) {
                     if (value.matCode === d.matCode) {
                         value.devNo = d.selfCode;

@@ -11,6 +11,7 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.tree.TreeUtil;
+import com.ourexists.mesedge.device.enums.DeviceStatusEnum;
 import com.ourexists.mesedge.device.feign.DeviceFeign;
 import com.ourexists.mesedge.device.model.DeviceDto;
 import com.ourexists.mesedge.device.model.DeviceTreeNode;
@@ -46,10 +47,23 @@ public class DeviceViewer implements DeviceFeign {
         return JsonResponseEntity.success(nodes);
     }
 
+
     @Operation(summary = "通过设备工艺id查询", description = "通过设备工艺id查询")
     @GetMapping("selectByDgId")
     public JsonResponseEntity<List<DeviceTreeNode>> selectByDgId(@RequestParam String dgId) {
-        List<DeviceTreeNode> nodes = Device.covert(service.list(new LambdaQueryWrapper<Device>().eq(Device::getDgId, dgId)));
+        List<DeviceTreeNode> nodes = Device.covert(service.list(new LambdaQueryWrapper<Device>()
+                .eq(Device::getDgId, dgId)));
+        return JsonResponseEntity.success(nodes);
+    }
+
+    @Operation(summary = "通过设备工艺id查询", description = "通过设备工艺id查询")
+    @GetMapping("selectByDgIdAndStatus")
+    public JsonResponseEntity<List<DeviceTreeNode>> selectByDgIdAndStatus(@RequestParam String dgId,
+                                                                          @RequestParam Integer status) {
+        DeviceStatusEnum deviceStatusEnum = DeviceStatusEnum.valueof(status);
+        List<DeviceTreeNode> nodes = Device.covert(service.list(new LambdaQueryWrapper<Device>()
+                .eq(Device::getDgId, dgId)
+                .eq(Device::getStatus, deviceStatusEnum.getCode())));
         return JsonResponseEntity.success(nodes);
     }
 
@@ -105,5 +119,11 @@ public class DeviceViewer implements DeviceFeign {
     public JsonResponseEntity<Boolean> changeStatus(@RequestParam String id, @RequestParam Integer status) {
         this.service.update(new LambdaUpdateWrapper<Device>().set(Device::getStatus, status).eq(Device::getId, id));
         return JsonResponseEntity.success(true);
+    }
+
+    @Override
+    @GetMapping("isUseMat")
+    public JsonResponseEntity<Boolean> isUseMat(@RequestParam List<String> matCodes) {
+        return JsonResponseEntity.success(this.service.isUseMat(matCodes));
     }
 }

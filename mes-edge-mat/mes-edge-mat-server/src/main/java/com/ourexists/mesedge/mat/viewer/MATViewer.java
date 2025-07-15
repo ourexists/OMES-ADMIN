@@ -14,6 +14,7 @@ import com.ourexists.mesedge.mat.feign.MATFeign;
 import com.ourexists.mesedge.mat.model.MaterialDto;
 import com.ourexists.mesedge.mat.model.query.MaterialPageQuery;
 import com.ourexists.mesedge.mat.pojo.MAT;
+import com.ourexists.mesedge.mat.service.BOMDService;
 import com.ourexists.mesedge.mat.service.MATService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,10 @@ public class MATViewer implements MATFeign {
 
     @Resource
     private MATService matService;
+
+    @Resource
+    private BOMDService bomdService;
+
 
     //    @Operation(summary = "分页", description = "")
 //    @PostMapping("selectByPage")
@@ -57,6 +62,9 @@ public class MATViewer implements MATFeign {
     //    @Operation(summary = "删除", description = "")
 //    @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
+        if (bomdService.existMat(idsDto.getIds())) {
+            throw new BusinessException("${common.msg.date.use}");
+        }
         matService.removeByIds(idsDto.getIds());
         return JsonResponseEntity.success(true);
     }
@@ -65,6 +73,11 @@ public class MATViewer implements MATFeign {
     public JsonResponseEntity<List<MaterialDto>> selectByCodes(@RequestBody IdsDto idsDto) {
         List<MAT> mats = matService.list(new LambdaQueryWrapper<MAT>().in(MAT::getSelfCode, idsDto.getIds()));
         return JsonResponseEntity.success(MAT.covert(mats));
+    }
+
+    @Override
+    public JsonResponseEntity<List<MaterialDto>> selectByIds(@RequestBody IdsDto idsDto) {
+        return JsonResponseEntity.success(MAT.covert(matService.listByIds(idsDto.getIds())));
     }
 
 }

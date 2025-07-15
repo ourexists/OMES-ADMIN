@@ -7,10 +7,15 @@ package com.ourexists.mesedge.device.service;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
 import com.ourexists.mesedge.device.pojo.Device;
 
+import java.util.List;
+
 /**
  * @author pengcheng
  * @date 2022/4/2 16:19
  * @since 1.0.0
  */
 public interface DeviceService extends IMyBatisPlusService<Device> {
+
+    Boolean isUseMat(List<String> matCodes);
+
 }

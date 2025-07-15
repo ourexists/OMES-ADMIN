@@ -14,4 +14,6 @@ public interface BOMDService extends IMyBatisPlusService<BOMD> {
     List<BOMD> selectByMCode(String mcode);
 
     List<BOMD> selectByMCode(List<String> mcode);
+
+    boolean existMat(List<String> matIds);
 }

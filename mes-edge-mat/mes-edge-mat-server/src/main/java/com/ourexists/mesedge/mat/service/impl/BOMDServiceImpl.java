@@ -36,4 +36,9 @@ public class BOMDServiceImpl extends AbstractMyBatisPlusService<BOMDMapper, BOMD
                         .in(BOMD::getMcode, mcode));
     }
 
+    @Override
+    public boolean existMat(List<String> matIds) {
+        return this.count(new LambdaQueryWrapper<BOMD>().in(BOMD::getMatId, matIds)) > 0;
+    }
+
 }

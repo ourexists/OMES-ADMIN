@@ -118,7 +118,7 @@ var router = {
     "dev_edit": "/device/addOrUpdate",
     "dev_del": "/device/delete",
     "dev_type": "/device/type",
-    "dev_dgId": "/device/selectByDgId",
+    "dev_dgId": "/device/selectByDgIdAndStatus",
     "dev_localization": "/device/localization",
     "dev_id": "/device/selectById",
     "dev_enable": "/device/enable",
