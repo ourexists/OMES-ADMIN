@@ -114,14 +114,50 @@
                         </form>
                     </div>
                     <div style="padding: 16px;">
+                        <form class="layui-form layui-form-pane" action="" id="devg-form"
+                              lay-filter="devg-form">
+                            <div class="layui-form-item">
+                                <div class="layui-inline">
+                                    <label class="layui-form-label" lang-i18n="devg.name"></label>
+                                    <div class="layui-input-block">
+                                        <input type="text" name="devgName" autocomplete="off" placeholder=""
+                                               disabled class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-inline" style="display:none">
+                                    <div class="layui-input-block">
+                                        <input type="text" name="devgId" autocomplete="off" placeholder="" disabled
+                                               class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-inline era-detail-hidden">
+                                    <button type="button" id="form-select-devg-btn"
+                                            class="layui-btn layui-btn-primary layui-border-blue "
+                                            lang-i18n="select.devg"></button>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <table class="layui-hide" id="tb-devg-detail"></table>
+                            </div>
+                            <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 10%">
+                                <div class="layui-input-block">
+                                    <button type="button" class="layui-btn pre"
+                                            lang-i18n="common.step.last"></button>
+                                    <button class="layui-btn" lay-submit lay-filter="formStep2"
+                                            lang-i18n="common.step.next">
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div style="padding: 16px;">
                         <form class="layui-form layui-form-pane" action="" id="tf-form"
                               lay-filter="tf-form">
                             <div class="layui-form-item">
                                 <div class="layui-inline">
                                     <label class="layui-form-label" lang-i18n="line.name"></label>
                                     <div class="layui-input-block">
-                                        <input type="text" name="line" autocomplete="off" placeholder=""
-                                               lay-verify="required" disabled
+                                        <input type="text" name="line" autocomplete="off" placeholder="" disabled
                                                class="layui-input">
                                     </div>
                                 </div>
@@ -144,7 +180,7 @@
                                 <div class="layui-input-block">
                                     <button type="button" class="layui-btn pre"
                                             lang-i18n="common.step.last"></button>
-                                    <button class="layui-btn" lay-submit lay-filter="formStep2"
+                                    <button class="layui-btn" lay-submit lay-filter="formStep3"
                                             lang-i18n="common.complete">
                                     </button>
                                 </div>
@@ -241,6 +277,8 @@
             stepItems: [{
                 title: i18np.prop('mo.base')
             }, {
+                title: i18np.prop('devg.name')
+            }, {
                 title: i18np.prop('line.name')
             }, {
                 title: i18np.prop('common.complete')
@@ -315,6 +353,27 @@
         });
 
         table.render({
+            elem: '#tb-devg-detail',
+            defaultToolbar: '',
+            // toolbar: '#bom-toolbar',
+            css: [ // 设置单元格样式
+                // 取消默认的溢出隐藏，并设置适当高度
+                '.layui-table-cell{height: 50px; line-height: 40px;}'
+            ].join(''),
+            cols: [[
+                {field: 'matName', title: i18np.prop("material.name")},
+                {field: 'matCode', title: i18np.prop("material.code")},
+                {field: 'matNum', title: i18np.prop("material.num")},
+                {field: 'devNo', title: i18np.prop("dev.code")},
+                {field: 'devName', title: i18np.prop("dev.name")},
+                {field: 'priority', title: i18np.prop("common.priority")}
+            ]],
+            page: false, // 是否显示分页
+            height: "400px",
+            loading: false,
+        });
+
+        table.render({
             elem: '#tb-tf-detail',
             defaultToolbar: '',
             cols: [[
@@ -343,6 +402,10 @@
             openWindow("select.line", "/view/line_tables?page_type=2", ['95%', '80%']);
         })
 
+        $('#form-select-devg-btn').click(function () {
+            openWindow("select.devg", "/view/devg_tables?page_type=2", ['95%', '80%']);
+        })
+
         $("#weight").on('blur', function () {
             calcDetails();
             reloadTb();
@@ -357,10 +420,16 @@
             current_row_data.detailDtoList = details;
             current_row_data.execTime = data.field.execTime;
             step.next('#stepForm');
+            reloadDevgTb();
+            return false;
+        });
+        form.on('submit(formStep2)', function (data) {
+            current_row_data.devgId = data.field.devgId;
+            step.next('#stepForm');
             return false;
         });
 
-        form.on('submit(formStep2)', function (data) {
+        form.on('submit(formStep3)', function (data) {
             current_row_data.lineCode = data.field.lineCode;
             post(router.mo_edit, current_row_data, function () {
                 parent.reloadTb();
@@ -380,6 +449,12 @@
 
     function reloadTb() {
         table.reload('tb-line-detail', {
+            data: details
+        })
+    }
+
+    function reloadDevgTb() {
+        table.reload('tb-devg-detail', {
             data: details
         })
     }
@@ -451,6 +526,29 @@
             table.reload('tb-tf-detail', {
                 data: tfDatas
             })
+        })
+    }
+
+    function selectDevg(data) {
+        form.val("devg-form", {
+            "devgName": data.name,
+            "devgId": data.id
+        });
+        var param = {
+            "dgId": data.id
+        }
+        get(router.dev_dgId, param, function (result) {
+            $.each(details, function (index, value) {
+                $.each(result, function (i, d) {
+                    if (value.matCode === d.matCode) {
+                        value.devNo = d.selfCode;
+                        value.devName = d.name;
+                        value.dgCode = data.selfCode;
+                        value.dgName = data.name;
+                    }
+                })
+            });
+            reloadDevgTb();
         })
     }
 </script>

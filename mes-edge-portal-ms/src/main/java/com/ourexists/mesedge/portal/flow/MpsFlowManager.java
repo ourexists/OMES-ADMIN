@@ -60,11 +60,8 @@ public class MpsFlowManager {
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }
-        if (line == null) {
-            throw new BusinessException("${mo.msg.line.no}");
-        }
         List<MPSTFDto> mpstfDtos = flowDto.getTfs();
-        if (CollectionUtil.isBlank(mpstfDtos)) {
+        if (CollectionUtil.isNotBlank(mpstfDtos)) {
             mpstfDtos.forEach(mpstfDto -> {
                 mpstfDto.setId(null);
             });
@@ -124,6 +121,9 @@ public class MpsFlowManager {
                         mpsDetailDto.setId(null);
                         mpsDetailDto.setMatNum(moDetail.getMatNum().multiply(BigDecimal.valueOf(num)));
                         mpsDetailDto.setDevNo(detail.getDevNo());
+                        mpsDetailDto.setDevName(detail.getDevName());
+                        mpsDetailDto.setDgCode(detail.getDgCode());
+                        mpsDetailDto.setDgName(detail.getDgName());
                         mpsDetailDto.setPriority(detail.getPriority());
                         mpsDetailDtos.add(mpsDetailDto);
                         break;

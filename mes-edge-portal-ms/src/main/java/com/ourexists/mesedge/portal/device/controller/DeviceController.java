@@ -89,6 +89,12 @@ public class DeviceController {
         }
     }
 
+    @Operation(summary = "通过设备工艺id查询", description = "通过设备工艺id查询")
+    @GetMapping("selectByDgId")
+    public JsonResponseEntity<List<DeviceTreeNode>> selectByDgId(@RequestParam String dgId) {
+        return feign.selectByDgId(dgId);
+    }
+
     @Operation(summary = "新增或修改根据id", description = "新增或修改根据id")
     @PostMapping("addOrUpdate")
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody DeviceDto dto) {

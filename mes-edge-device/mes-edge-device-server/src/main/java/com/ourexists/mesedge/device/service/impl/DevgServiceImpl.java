@@ -12,14 +12,21 @@ import com.ourexists.mesedge.device.mapper.DevgMapper;
 import com.ourexists.mesedge.device.model.DevgDto;
 import com.ourexists.mesedge.device.model.DevgPageQuery;
 import com.ourexists.mesedge.device.pojo.Devg;
+import com.ourexists.mesedge.device.pojo.Device;
 import com.ourexists.mesedge.device.service.DevgService;
+import com.ourexists.mesedge.device.service.DeviceService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class DevgServiceImpl extends AbstractMyBatisPlusService<DevgMapper, Devg> implements DevgService {
+
+    @Autowired
+    private DeviceService deviceService;
 
     @Override
     public Page<Devg> selectByPage(DevgPageQuery dto) {
@@ -35,5 +42,12 @@ public class DevgServiceImpl extends AbstractMyBatisPlusService<DevgMapper, Devg
     @Override
     public void addOrUpdate(DevgDto dto) {
         saveOrUpdate(Devg.wrap(dto));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(List<String> ids) {
+        this.removeBatchByIds(ids);
+        deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
     }
 }

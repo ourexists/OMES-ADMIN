@@ -23,4 +23,13 @@ public class MPSFlowDetailDto {
 
     @Schema(description = "设备编号")
     private String devNo;
+
+    @Schema(description = "设备名")
+    private String devName;
+
+    @Schema(description = "设备工艺编号")
+    private String dgCode;
+
+    @Schema(description = "设备工艺名")
+    private String dgName;
 }
