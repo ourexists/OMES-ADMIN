@@ -9,6 +9,8 @@ import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
 import com.ourexists.mesedge.mat.pojo.MC;
 import com.ourexists.mesedge.mat.model.query.MaterialClassifyPageQuery;
 
+import java.util.List;
+
 /**
  * @author pengcheng
  * @date 2022/4/2 16:19
@@ -16,4 +18,6 @@ import com.ourexists.mesedge.mat.model.query.MaterialClassifyPageQuery;
  */
 public interface MCService extends IMyBatisPlusService<MC> {
     Page<MC> selectByPage(MaterialClassifyPageQuery dto);
+
+    void delete(List<String> ids);
 }
