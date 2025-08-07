@@ -1,6 +1,6 @@
 package com.ourexists.mesedge.portal.listener;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
