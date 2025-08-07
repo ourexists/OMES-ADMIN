@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge;
 
-import com.ourexists.era.framework.oauth2.EnableEraMixOauth2Server;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +19,6 @@ import java.nio.charset.StandardCharsets;
  * Hello world!
  */
 @EnableScheduling
-@EnableEraMixOauth2Server
 @SpringBootApplication
 @EnableAsync
 @PropertySource(value = {"file:config/config.properties"})
