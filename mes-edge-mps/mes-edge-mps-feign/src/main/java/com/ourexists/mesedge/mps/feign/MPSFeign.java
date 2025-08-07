@@ -11,11 +11,11 @@ import com.ourexists.mesedge.mps.model.ChangePriorityDto;
 import com.ourexists.mesedge.mps.model.MPSDto;
 import com.ourexists.mesedge.mps.model.MPSQueueOperateDto;
 import com.ourexists.mesedge.mps.model.query.MPSPageQuery;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 //@Tag(name = "生产计划")

@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.mat.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
@@ -12,6 +11,7 @@ import com.ourexists.mesedge.mat.model.BOMDDto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class BOMD extends MainEntity {
             return null;
         }
         BOMDDto target = new BOMDDto();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -70,7 +70,7 @@ public class BOMD extends MainEntity {
 
     public static BOMD wrap(BOMDDto source) {
         BOMD target = new BOMD();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

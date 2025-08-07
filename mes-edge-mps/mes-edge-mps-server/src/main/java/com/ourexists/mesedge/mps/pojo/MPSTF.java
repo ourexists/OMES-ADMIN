@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.mps.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.mps.model.MPSTFVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -63,7 +63,7 @@ public class MPSTF extends MainEntity {
             return null;
         }
         MPSTFVo target = new MPSTFVo();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -78,7 +78,7 @@ public class MPSTF extends MainEntity {
 
     public static <T extends MPSTFDto> MPSTF wrap(T source) {
         MPSTF target = new MPSTF();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

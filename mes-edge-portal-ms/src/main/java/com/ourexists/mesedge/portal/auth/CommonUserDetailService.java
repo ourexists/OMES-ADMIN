@@ -6,9 +6,9 @@ package com.ourexists.mesedge.portal.auth;
 
 import com.ourexists.era.framework.core.user.TenantInfo;
 import com.ourexists.era.framework.core.user.UserInfo;
-import com.ourexists.era.framework.oauth2.EraUser;
-import com.ourexists.era.framework.oauth2.authority.ApiPermission;
-import com.ourexists.era.framework.oauth2.authority.DefaultApiPermission;
+import com.ourexists.era.oauth2.core.EraUser;
+import com.ourexists.era.oauth2.core.authority.ApiPermission;
+import com.ourexists.era.oauth2.core.authority.DefaultApiPermission;
 import com.ourexists.mesedge.ucenter.account.AccVo;
 import com.ourexists.mesedge.ucenter.enums.AccStatusEnum;
 import com.ourexists.mesedge.ucenter.permission.PermissionApiDetailDto;

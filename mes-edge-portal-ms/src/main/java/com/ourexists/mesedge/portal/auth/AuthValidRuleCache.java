@@ -17,18 +17,18 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 @Component
-public class AuthCacheManager {
+public class AuthValidRuleCache {
 
     public static final Integer ACCOUNT_WRONG_LOCK_DURATION_HOUR = 24;
 
-    public static final Integer CAPTCHA_EXPIRE_MINUTES = 1;
+    public static final Integer CAPTCHA_EXPIRE_MINUTES = 3;
 
     private Cache<String, String> captchaCache;
 
     private Cache<String, Long> wrongCache;
 
 
-    public AuthCacheManager() {
+    public AuthValidRuleCache() {
         captchaCache = CacheBuilder.newBuilder().expireAfterWrite(CAPTCHA_EXPIRE_MINUTES, TimeUnit.MINUTES).build();
         wrongCache = CacheBuilder.newBuilder().expireAfterWrite(ACCOUNT_WRONG_LOCK_DURATION_HOUR, TimeUnit.HOURS).build();
     }

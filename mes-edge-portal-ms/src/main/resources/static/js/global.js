@@ -41,7 +41,7 @@ var client = {
 
 var router = {
     "captcha": "/open/captcha",
-    "auth_token": "/oauth/token",
+    "auth_token": "/oauth2/token",
     "mat_page": "/mat/selectByPage",
     "mat_edit": "/mat/addOrUpdate",
     "mat_del": "/mat/delete",
@@ -134,21 +134,28 @@ function getCommonHeader() {
 }
 
 function initRequestUrl(url) {
-    return url + "?lang=" + localStorage.getItem(store.language) + "&client_id=" + client.id + "&client_secret=" + client.sc + "&grant_type=" + client.grant_type;
+    return url + "?lang=" + localStorage.getItem(store.language);
 }
 
 function auth(url, param, successFunc, failFuc) {
     let req_url = initRequestUrl(url);
-    if (param != null) {
-        layui.each(param, function (index, item) {
-            req_url += "&" + index + "=" + item;
-        })
-    }
+    // if (param != null) {
+    //     layui.each(param, function (index, item) {
+    //         req_url += "&" + index + "=" + item;
+    //     })
+    // }
+    const basicAuth = btoa(client.id + ":" + client.sc);
     $.ajax({
         url: req_url,
         type: "POST",
+        data: param,
         dataType: "json",
-        headers: getCommonHeader(),
+        headers: {
+            "Authorization": `Basic ${basicAuth}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+            'x-era-platform': 'mse-edge',
+            'x-route-tenant': 0
+        },
         async: false,
         contentType: "application/json",
         success: function (data) {

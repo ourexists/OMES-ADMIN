@@ -3,7 +3,7 @@
  */
 package com.ourexists.mesedge.portal.auth.captcha;
 
-import com.ourexists.era.framework.oauth2.token.EraAuthenticationToken;
+import com.ourexists.era.oauth2.core.token.EraAuthenticationToken;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;

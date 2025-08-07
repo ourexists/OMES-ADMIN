@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.line.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class TF extends EraEntity {
             return null;
         }
         TFVo target = new TFVo();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -72,7 +72,7 @@ public class TF extends EraEntity {
 
     public static TF wrap(TFDto source) {
         TF target = new TF();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

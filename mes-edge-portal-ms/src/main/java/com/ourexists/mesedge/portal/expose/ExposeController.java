@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Tag(name = "对外暴露接口")
@@ -43,7 +44,7 @@ public class ExposeController {
         try {
             MPSDto mpsDto = RemoteHandleUtils.getDataFormResponse(mpsFeign.selectByCode(dto.getMpsCode()));
             if (mpsDto == null) {
-                return JsonResponseEntity.success();
+                return JsonResponseEntity.success(new ArrayList<>());
             }
             return JsonResponseEntity.success(mpsDto.getTfs());
         } catch (EraCommonException e) {

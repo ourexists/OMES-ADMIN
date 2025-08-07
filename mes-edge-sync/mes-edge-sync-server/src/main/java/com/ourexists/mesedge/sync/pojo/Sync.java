@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.sync.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.sync.model.SyncVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,7 +69,7 @@ public class Sync extends EraEntity {
             return null;
         }
         SyncVo target = new SyncVo();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -84,7 +84,7 @@ public class Sync extends EraEntity {
 
     public static Sync wrap(SyncDto source) {
         Sync target = new Sync();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

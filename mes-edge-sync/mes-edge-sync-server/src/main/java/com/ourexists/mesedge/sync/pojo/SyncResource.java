@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.sync.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.sync.model.SyncResourceVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public class SyncResource extends MainEntity {
             return null;
         }
         SyncResourceVo target = new SyncResourceVo();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -74,7 +74,7 @@ public class SyncResource extends MainEntity {
 
     public static <T extends SyncResourceDto> SyncResource wrap(T source) {
         SyncResource target = new SyncResource();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

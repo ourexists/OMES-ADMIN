@@ -4,8 +4,8 @@
 
 package com.ourexists.mesedge.portal.sync.manager.pull;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
@@ -26,7 +26,6 @@ import com.ourexists.mesedge.mps.feign.MPSFeign;
 import com.ourexists.mesedge.mps.model.MPSFlowDto;
 import com.ourexists.mesedge.mps.model.MPSTFDto;
 import com.ourexists.mesedge.portal.flow.MpsFlowManager;
-import com.ourexists.mesedge.portal.sync.manager.*;
 import com.ourexists.mesedge.portal.third.YGApi;
 import com.ourexists.mesedge.portal.third.model.resp.Order;
 import com.ourexists.mesedge.sync.enums.SyncTxEnum;

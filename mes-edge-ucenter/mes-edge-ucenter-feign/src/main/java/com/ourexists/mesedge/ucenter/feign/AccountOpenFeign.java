@@ -8,10 +8,10 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.ucenter.account.AccPageQuery;
 import com.ourexists.mesedge.ucenter.account.AccVo;
 import com.ourexists.mesedge.ucenter.account.PhonesVo;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.Valid;
 import java.util.List;
 
 //@Tag(name = "会员列表")

@@ -91,9 +91,11 @@
         // 提交事件
         form.on('submit(auth)', function (data) {
             const param = {
+                'client_id': client.id,
                 'username': data.field.username,
                 'password': data.field.password,
-                'captcha': uuid + '-' + data.field.captcha
+                'captcha': uuid + '-' + data.field.captcha,
+                'grant_type': client.grant_type
             };
             window.auth(router.auth_token, param, function (result) {
                 var token = result.token_type + ' ' + result.access_token
