@@ -5,10 +5,10 @@ package com.ourexists.mesedge.ucenter.role;
 
 import com.ourexists.era.framework.core.model.dto.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotBlank;
 
 /**
  * @author pengcheng

@@ -7,7 +7,7 @@ package com.ourexists.mesedge.ucenter.viewer;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.tree.TreeUtil;
-import com.ourexists.era.framework.oauth2.AccRole;
+import com.ourexists.era.oauth2.core.OAuth2Role;
 import com.ourexists.mesedge.ucenter.feign.PermissionFeign;
 import com.ourexists.mesedge.ucenter.permission.*;
 import com.ourexists.mesedge.ucenter.permission.pojo.Permission;
@@ -100,7 +100,7 @@ public class PermissionViewer implements PermissionFeign {
 //    @Operation(summary = "系统当前用户的权限树")
 //    @GetMapping("/currentAccPermissionTree")
     public JsonResponseEntity<List<PermissionTreeNode>> currentAccPermissionTree() {
-        if (UserContext.getTenant().getRole().equals(AccRole.ADMIN.name())) {
+        if (UserContext.getTenant().getRole().equals(OAuth2Role.ADMIN.name())) {
             List<Permission> permissionList = permissionService.selectPermissionWhichTenantHold(
                     UserContext.getTenant().getTenantId(),
                     UserContext.getPlatForm());

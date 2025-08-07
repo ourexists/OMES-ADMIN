@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.mps.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.mps.model.MPSDto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class MPS extends MainEntity {
             return null;
         }
         MPSDto target = new MPSDto();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -82,7 +82,7 @@ public class MPS extends MainEntity {
 
     public static MPS wrap(MPSDto source) {
         MPS target = new MPS();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

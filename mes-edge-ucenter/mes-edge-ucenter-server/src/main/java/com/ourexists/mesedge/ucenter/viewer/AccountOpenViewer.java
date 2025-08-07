@@ -14,12 +14,12 @@ import com.ourexists.mesedge.ucenter.account.PhonesVo;
 import com.ourexists.mesedge.ucenter.account.pojo.Account;
 import com.ourexists.mesedge.ucenter.account.service.AccountService;
 import com.ourexists.mesedge.ucenter.feign.AccountOpenFeign;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.Valid;
 import java.util.List;
 
 //@Tag(name = "会员列表")

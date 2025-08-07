@@ -37,7 +37,7 @@
 
         <dependency>
             <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-orm-mybatisplus</artifactId>
+            <artifactId>era-framework-orm-mybatis</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>

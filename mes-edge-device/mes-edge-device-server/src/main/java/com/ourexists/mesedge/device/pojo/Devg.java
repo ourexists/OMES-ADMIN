@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.device.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
@@ -12,6 +11,7 @@ import com.ourexists.mesedge.device.model.DevgDto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public class Devg extends MainEntity {
             return null;
         }
         DevgDto target = new DevgDto();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -48,7 +48,7 @@ public class Devg extends MainEntity {
 
     public static Devg wrap(DevgDto source) {
         Devg target = new Devg();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

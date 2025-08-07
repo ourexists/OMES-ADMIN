@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.mat.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.mat.model.MaterialDto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ public class MAT extends MainEntity {
             return null;
         }
         MaterialDto target = new MaterialDto();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -54,7 +54,7 @@ public class MAT extends MainEntity {
 
     public static MAT wrap(MaterialDto source) {
         MAT target = new MAT();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

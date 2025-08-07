@@ -4,7 +4,7 @@
 
 package com.ourexists.mesedge.mps.enums;
 
-import com.ourexists.era.framework.webmvc.I18nUtil;
+import com.ourexists.era.framework.webserver.enhance.I18nUtil;
 import lombok.Getter;
 
 @Getter

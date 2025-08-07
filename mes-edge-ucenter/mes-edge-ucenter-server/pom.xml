@@ -27,19 +27,18 @@
         </dependency>
         <dependency>
             <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-oauth2</artifactId>
-            <scope>provided</scope>
+            <artifactId>era-framework-webserver-authorization</artifactId>
             <exclusions>
                 <exclusion>
-                    <groupId>com.ourexists.era</groupId>
-                    <artifactId>era-framework-cache</artifactId>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-redis</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
 
         <dependency>
             <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-orm-mybatisplus</artifactId>
+            <artifactId>era-framework-orm-mybatis</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

@@ -20,7 +20,7 @@
         </dependency>
         <dependency>
             <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-webmvc</artifactId>
+            <artifactId>era-framework-webserver-enhance</artifactId>
             <scope>provided</scope>
         </dependency>
     </dependencies>

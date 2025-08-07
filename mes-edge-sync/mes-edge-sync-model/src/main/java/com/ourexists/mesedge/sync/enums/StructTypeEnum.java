@@ -4,7 +4,10 @@
 
 package com.ourexists.mesedge.sync.enums;
 
-import cn.hutool.core.date.DateUtil;
+
+import com.ourexists.era.framework.core.utils.DateUtil;
+
+import java.text.ParseException;
 
 public enum StructTypeEnum {
 
@@ -19,7 +22,7 @@ public enum StructTypeEnum {
     STRING,
     DATE;
 
-    public static Object parse(String value, StructTypeEnum structTypeEnum) {
+    public static Object parse(String value, StructTypeEnum structTypeEnum) throws ParseException {
         switch (structTypeEnum) {
             case BIT:
                 return Boolean.parseBoolean(value);
@@ -40,7 +43,7 @@ public enum StructTypeEnum {
             case STRING:
                 return value;
             case DATE:
-                return DateUtil.parse(value);
+                return DateUtil.dateParser(value);
             default:
                 return value;
         }

@@ -9,13 +9,13 @@
     <parent>
         <groupId>com.ourexists.era</groupId>
         <artifactId>era-parent</artifactId>
-        <version>1.1.0-SNAPSHOT</version>
+        <version>2024.0.1.0-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
     <properties>
-        <era-framework.version>1.1.0-SNAPSHOT</era-framework.version>
-        <era-framework-dependencies.version>1.1.0-SNAPSHOT</era-framework-dependencies.version>
+        <era-framework.version>2024.0.1.0-SNAPSHOT</era-framework.version>
+        <era-framework-dependencies.version>2024.0.1.0-SNAPSHOT</era-framework-dependencies.version>
         <mybatis-spring-boot.version>2.1.4</mybatis-spring-boot.version>
         <mybatis.version>3.5.6</mybatis.version>
         <mybatis-plus-starter.version>3.5.2</mybatis-plus-starter.version>
@@ -27,6 +27,11 @@
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.37</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.mes-edge</groupId>
@@ -75,16 +80,12 @@
         </dependency>
         <dependency>
             <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-orm-mybatisplus</artifactId>
+            <artifactId>era-framework-orm-mybatis</artifactId>
         </dependency>
         <dependency>
             <groupId>com.ourexists.era</groupId>
             <artifactId>era-framework-txflow</artifactId>
             <version>1.1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-webmvc</artifactId>
         </dependency>
 
         <dependency>
@@ -93,14 +94,9 @@
         </dependency>
         <dependency>
             <groupId>com.ourexists.era</groupId>
-            <artifactId>era-framework-oauth2</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.ourexists.era</groupId>
-                    <artifactId>era-framework-cache</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>era-framework-webserver-authorization</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.eclipse.milo</groupId>
             <artifactId>sdk-client</artifactId>
@@ -139,7 +135,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <fork>true</fork>
                     <layout>ZIP</layout>
                     <executable>true</executable>
                 </configuration>

@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.task.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.task.model.TaskVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +53,7 @@ public class Task extends MainEntity {
             return null;
         }
         TaskVo target = new TaskVo();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -68,7 +68,7 @@ public class Task extends MainEntity {
 
     public static <T extends TaskDto> Task wrap(T source) {
         Task target = new Task();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

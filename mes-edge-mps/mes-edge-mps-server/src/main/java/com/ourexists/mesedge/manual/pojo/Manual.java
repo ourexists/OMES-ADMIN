@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.manual.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.mps.model.QAVo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class Manual extends EraEntity {
             return null;
         }
         QAVo target = new QAVo();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -54,7 +54,7 @@ public class Manual extends EraEntity {
 
     public static <T extends QADto> Manual wrap(T source) {
         Manual target = new Manual();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

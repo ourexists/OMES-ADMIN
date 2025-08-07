@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.mat.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.mat.model.BOMTreeNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ public class BOMC extends MainEntity {
             return null;
         }
         BOMTreeNode target = new BOMTreeNode();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -58,7 +58,7 @@ public class BOMC extends MainEntity {
 
     public static BOMC wrap(BOMCDto source) {
         BOMC target = new BOMC();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

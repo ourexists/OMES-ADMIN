@@ -15,8 +15,8 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.TenantInfo;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
-import com.ourexists.era.framework.oauth2.AccRole;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
+import com.ourexists.era.oauth2.core.OAuth2Role;
 import com.ourexists.mesedge.ucenter.account.AccVo;
 import com.ourexists.mesedge.ucenter.account.pojo.Account;
 import com.ourexists.mesedge.ucenter.account.service.AccountService;
@@ -28,6 +28,7 @@ import com.ourexists.mesedge.ucenter.tenant.pojo.Tenant;
 import com.ourexists.mesedge.ucenter.tenant.service.TenantAccService;
 import com.ourexists.mesedge.ucenter.tenant.service.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -210,7 +210,7 @@ public class TenantViewer implements TenantFeign {
     @PostMapping("/mountByPhones")
     public JsonResponseEntity<List<AccVo>> mountByPhones(@Valid @RequestBody TenantSettlePhones tenantSettlePhones) {
         if (StringUtils.isEmpty(tenantSettlePhones.getRole())) {
-            tenantSettlePhones.setRole(AccRole.COMMON.name());
+            tenantSettlePhones.setRole(OAuth2Role.COMMON.name());
         }
         List<Account> accounts = accountService.list(new LambdaQueryWrapper<Account>().eq(Account::getPlatform, tenantSettlePhones.getPlatform()).in(Account::getMobile, tenantSettlePhones.getPhones()));
         List<String> accIds = accounts.stream().map(Account::getId).collect(Collectors.toList());

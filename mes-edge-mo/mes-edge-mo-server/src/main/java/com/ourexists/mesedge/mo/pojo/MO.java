@@ -4,7 +4,6 @@
 
 package com.ourexists.mesedge.mo.pojo;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
@@ -13,6 +12,7 @@ import com.ourexists.mesedge.mo.model.MODto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class MO extends EraEntity {
             return null;
         }
         MODto target = new MODto();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 
@@ -74,7 +74,7 @@ public class MO extends EraEntity {
 
     public static MO wrap(MODto source) {
         MO target = new MO();
-        BeanUtil.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target);
         return target;
     }
 

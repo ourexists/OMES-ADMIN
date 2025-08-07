@@ -16,12 +16,12 @@ import com.ourexists.mesedge.mat.model.query.MaterialPageQuery;
 import com.ourexists.mesedge.mat.pojo.MAT;
 import com.ourexists.mesedge.mat.service.BOMDService;
 import com.ourexists.mesedge.mat.service.MATService;
+import jakarta.annotation.Resource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.annotation.Resource;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 

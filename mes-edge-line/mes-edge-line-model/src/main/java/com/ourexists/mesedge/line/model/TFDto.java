@@ -6,11 +6,11 @@ package com.ourexists.mesedge.line.model;
 
 import com.ourexists.era.framework.core.model.dto.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotEmpty;
 import java.math.BigDecimal;
 
 @Getter

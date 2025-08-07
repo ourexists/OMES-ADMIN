@@ -4,7 +4,7 @@
 
 package com.ourexists.mesedge.portal.third.model.resp;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Getter;
 import lombok.Setter;
 

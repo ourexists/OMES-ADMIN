@@ -17,10 +17,10 @@ import com.ourexists.mesedge.task.model.query.TaskPageQuery;
 import com.ourexists.mesedge.task.pojo.Task;
 import com.ourexists.mesedge.task.process.TimerTaskManager;
 import com.ourexists.mesedge.task.service.TaskService;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Service

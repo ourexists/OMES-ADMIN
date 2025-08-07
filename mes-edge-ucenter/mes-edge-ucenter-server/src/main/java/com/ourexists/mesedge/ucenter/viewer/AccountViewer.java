@@ -19,6 +19,7 @@ import com.ourexists.mesedge.ucenter.enums.AccStatusEnum;
 import com.ourexists.mesedge.ucenter.feign.AccountFeign;
 import com.ourexists.mesedge.ucenter.tenant.TenantUVo;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -27,7 +28,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 

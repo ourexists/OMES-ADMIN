@@ -62,11 +62,13 @@ era:
         - /
         - /templates/**
         - /view/**
-      header_check:
+      api_check:
         - /
         - /templates/**
         - /view/**
         - /expose/**
+  token:
+    store-type: Db
 feign:
   client:
     config:
@@ -79,6 +81,11 @@ feign:
 #    org:
 #      springframework:
 #        ws: TRACE
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
 springdoc:
   api-docs:
     enabled: true

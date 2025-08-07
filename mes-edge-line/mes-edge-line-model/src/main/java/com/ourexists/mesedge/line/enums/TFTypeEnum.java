@@ -4,7 +4,7 @@
 
 package com.ourexists.mesedge.line.enums;
 
-import com.ourexists.era.framework.webmvc.I18nUtil;
+import com.ourexists.era.framework.webserver.enhance.I18nUtil;
 import lombok.Getter;
 
 @Getter
@@ -12,7 +12,8 @@ public enum TFTypeEnum {
 
     SYSTEM(0, "${tf.type.system}"),
     QA(2, "${tf.type.qa}"),
-    NO_ACTION(1, "${tf.type.no_action}"),;
+    NO_ACTION(1, "${tf.type.no_action}"),
+    ;
 
     private final Integer code;
 

@@ -17,6 +17,7 @@ import com.ourexists.mesedge.mps.pojo.MPSTF;
 import com.ourexists.mesedge.mps.service.MPSService;
 import com.ourexists.mesedge.mps.service.MPSTFService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ import java.util.List;
 @Service
 public class MPSTFServiceImpl extends AbstractMyBatisPlusService<MPSTFMapper, MPSTF> implements MPSTFService {
 
+    @Lazy
     @Autowired
     private MPSService mpsService;
 

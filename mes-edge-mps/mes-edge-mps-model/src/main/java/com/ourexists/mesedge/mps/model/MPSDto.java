@@ -7,11 +7,11 @@ package com.ourexists.mesedge.mps.model;
 import com.ourexists.era.framework.core.model.dto.BaseDto;
 import com.ourexists.mesedge.mps.enums.MPSStatusEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;

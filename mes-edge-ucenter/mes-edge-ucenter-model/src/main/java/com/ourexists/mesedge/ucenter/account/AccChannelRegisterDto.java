@@ -6,11 +6,11 @@ package com.ourexists.mesedge.ucenter.account;
 
 import com.ourexists.era.framework.core.model.dto.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
 import java.util.Date;
 
 /**

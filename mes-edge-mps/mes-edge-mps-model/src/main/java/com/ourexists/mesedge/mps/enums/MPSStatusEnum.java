@@ -4,7 +4,7 @@
 
 package com.ourexists.mesedge.mps.enums;
 
-import com.ourexists.era.framework.webmvc.I18nUtil;
+import com.ourexists.era.framework.webserver.enhance.I18nUtil;
 import lombok.Getter;
 
 @Getter
@@ -14,7 +14,8 @@ public enum MPSStatusEnum {
     WAIT_EXEC(1, 0, "${mps.status.wait.exec}"),
     EXECING(2, 1, "${mps.status.execing}"),
     COMPLETE(3, 2, "${mps.status.complete}"),
-    FILE(4, 3, "${mps.status.file}"),;
+    FILE(4, 3, "${mps.status.file}"),
+    ;
 
     private Integer code;
 
