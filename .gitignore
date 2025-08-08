@@ -97,3 +97,5 @@ tags
 pom.xml.releaseBackup
 release.properties
 /.idea/
+
+build
