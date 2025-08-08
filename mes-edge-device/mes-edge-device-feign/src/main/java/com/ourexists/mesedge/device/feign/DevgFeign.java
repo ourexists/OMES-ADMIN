@@ -16,15 +16,15 @@ import java.util.List;
 //@RequestMapping("/mat")
 public interface DevgFeign {
 
-//    @Operation(summary = "分页", description = "")
+    //    @Operation(summary = "分页", description = "")
 //    @PostMapping("selectByPage")
     JsonResponseEntity<List<DevgDto>> selectByPage(@RequestBody DevgPageQuery dto);
 
-//    @Operation(summary = "新增或修改根据id", description = "")
+    //    @Operation(summary = "新增或修改根据id", description = "")
 //    @PostMapping("addOrUpdate")
     JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody DevgDto dto);
 
-//    @Operation(summary = "删除", description = "")
+    //    @Operation(summary = "删除", description = "")
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 

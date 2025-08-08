@@ -20,7 +20,7 @@ public interface DeviceFeign {
 
     JsonResponseEntity<List<DeviceTreeNode>> selectByDgId(@RequestParam String dgId);
 
-    JsonResponseEntity<List<DeviceTreeNode>> selectByDgIdAndStatus(@RequestParam String dgId,  @RequestParam Integer status);
+    JsonResponseEntity<List<DeviceTreeNode>> selectByDgIdAndStatus(@RequestParam String dgId, @RequestParam Integer status);
 
     JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody DeviceDto dto);
 

@@ -26,13 +26,14 @@ spring:
         enabled: true
   main:
     allow-bean-definition-overriding: true
+    allow-circular-references: true
 
 management:
   endpoint:
     health:
       show-details: never
     shutdown:
-      enabled: true
+      access: read_only
   endpoints:
     web:
       base-path: ${server.servlet.context-path}
