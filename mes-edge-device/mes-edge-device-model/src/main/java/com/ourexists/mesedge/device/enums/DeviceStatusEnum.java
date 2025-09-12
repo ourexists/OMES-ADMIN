@@ -1,12 +1,13 @@
 package com.ourexists.mesedge.device.enums;
 
+import com.ourexists.era.framework.webserver.enhance.I18nUtil;
 import lombok.Getter;
 
 @Getter
 public enum DeviceStatusEnum {
 
-    enable(0, "启用"),
-    disable(1, "禁用");
+    enable(0, "${common.status.enabled}"),
+    disable(1, "${common.status.disabled}");
     private Integer code;
     private String desc;
 
@@ -24,5 +25,9 @@ public enum DeviceStatusEnum {
             }
         }
         return DeviceStatusEnum.enable;
+    }
+
+    public String getDesc() {
+        return I18nUtil.i18nParser(desc);
     }
 }

@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum DeviceTypeEnum {
 
-    cang(0, "仓"),
-    cheng(1, "秤");
+    cang(0, "${device.type.cang}"),
+    cheng(1, "${device.type.cheng}");
     private Integer code;
     private String desc;
 
