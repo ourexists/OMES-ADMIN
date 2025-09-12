@@ -1,5 +1,6 @@
 package com.ourexists.mesedge.device.enums;
 
+import com.ourexists.era.framework.webserver.enhance.I18nUtil;
 import lombok.Getter;
 
 @Getter
@@ -24,5 +25,9 @@ public enum DeviceTypeEnum {
             }
         }
         return DeviceTypeEnum.cang;
+    }
+
+    public String getDesc() {
+        return I18nUtil.i18nParser(desc);
     }
 }
