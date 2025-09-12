@@ -66,6 +66,11 @@
                         class="layui-btn layui-btn-primary layui-border-blue "
                         lang-i18n="mps.select.mat"></button>
             </div>
+            <div class="layui-inline era-detail-hidden">
+                <button type="button" id="form-clear-mat-btn"
+                        class="layui-btn layui-btn-primary "
+                        lang-i18n="mat.select.clear"></button>
+            </div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label" lang-i18n="dev.maxCapacity"></label>
@@ -164,6 +169,13 @@
 
     $('#form-select-mat-btn').click(function () {
         openWindow("mps.select.mat", "/view/material_tables?page_type=2", ['95%', '80%']);
+    })
+
+    $('#form-clear-mat-btn').click(function () {
+        form.val("common-edit-form", {
+            "matCode": null,
+            "matName": null
+        });
     })
 
     function selectMat(result) {
