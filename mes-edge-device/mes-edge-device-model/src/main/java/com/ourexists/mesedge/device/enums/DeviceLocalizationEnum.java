@@ -1,14 +1,15 @@
 package com.ourexists.mesedge.device.enums;
 
+import com.ourexists.era.framework.webserver.enhance.I18nUtil;
 import lombok.Getter;
 
 @Getter
 public enum DeviceLocalizationEnum {
 
-    NO(0, "无"),
-    yuanliao(1, "原料仓"),
-    zaizhi(2, "在制品仓"),
-    hunhe(3, "混合仓");
+    NO(0, "${device.localization.no}"),
+    yuanliao(1, "${device.localization.yuanliao}"),
+    zaizhi(2, "${device.localization.zaizhi}"),
+    hunhe(3, "${device.localization.hunhe}");
 
     private Integer code;
     private String desc;
@@ -27,5 +28,9 @@ public enum DeviceLocalizationEnum {
             }
         }
         return DeviceLocalizationEnum.NO;
+    }
+
+    public String getDesc() {
+        return I18nUtil.i18nParser(desc);
     }
 }
