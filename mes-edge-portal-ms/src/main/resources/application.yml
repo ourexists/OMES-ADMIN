@@ -64,6 +64,7 @@ era:
         - /templates/**
         - /view/**
       api_check:
+        - /expose/**
         - /
         - /templates/**
         - /view/**

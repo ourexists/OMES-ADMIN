@@ -17,43 +17,43 @@ var menu = [
                 'name': 'menu.material',
                 'path': '/view/material_tables'
             },
-            {
-                'id': 13,
-                'name': 'menu.bom',
-                'path': '/view/bom_tree'
-            },
-        ]
-    },
-    {
-        'id': 2,
-        'name': 'menu.central.product',
-        'children': [
-            {
-                'id': 21,
-                'name': 'menu.mo',
-                'path': '/view/mo_tables'
-            },
-            {
-                'id': 22,
-                'name': 'menu.mps',
-                'path': '/view/mps_tables'
-            },
             // {
-            //     'id': 23,
-            //     'name': 'menu.qa',
-            //     'path': '/view/qa_tables'
+            //     'id': 13,
+            //     'name': 'menu.bom',
+            //     'path': '/view/bom_tree'
             // },
         ]
     },
+    // {
+    //     'id': 2,
+    //     'name': 'menu.central.product',
+    //     'children': [
+    //         {
+    //             'id': 21,
+    //             'name': 'menu.mo',
+    //             'path': '/view/mo_tables'
+    //         },
+    //         {
+    //             'id': 22,
+    //             'name': 'menu.mps',
+    //             'path': '/view/mps_tables'
+    //         },
+    //         // {
+    //         //     'id': 23,
+    //         //     'name': 'menu.qa',
+    //         //     'path': '/view/qa_tables'
+    //         // },
+    //     ]
+    // },
     {
         'id': 3,
         'name': 'menu.central.line',
         'children': [
-            {
-                'id': 31,
-                'name': 'menu.line',
-                'path': '/view/line_tables'
-            },
+            // {
+            //     'id': 31,
+            //     'name': 'menu.line',
+            //     'path': '/view/line_tables'
+            // },
             {
                 'id': 32,
                 'name': 'menu.deviceC',
@@ -65,15 +65,30 @@ var menu = [
         'id': 4,
         'name': 'menu.central.data',
         'children': [
+            // {
+            //     'id': 41,
+            //     'name': 'menu.sync',
+            //     'path': '/view/sync_tables'
+            // },
+            // {
+            //     'id': 42,
+            //     'name': 'menu.task',
+            //     'path': '/view/task_tables'
+            // },
             {
-                'id': 41,
-                'name': 'menu.sync',
-                'path': '/view/sync_tables'
+                'id': 43,
+                'name': 'menu.matcount',
+                'path': '/view/matcount_tables'
             },
             {
-                'id': 42,
-                'name': 'menu.task',
-                'path': '/view/task_tables'
+                'id': 44,
+                'name': 'menu.produtcount',
+                'path': '/view/produtcount_tables'
+            },
+            {
+                'id': 45,
+                'name': 'menu.processcount',
+                'path': '/view/fzdata_tables'
             }
         ]
     }

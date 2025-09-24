@@ -168,4 +168,24 @@ public class ViewController {
     public String dev_form_edit() {
         return "dev_form_edit";
     }
+
+    @RequestMapping("/view/matcount_tables")
+    public String matcount_tables() {
+        return "matcount_tables";
+    }
+
+    @RequestMapping("/view/produtcount_tables")
+    public String produtcount_tables() {
+        return "produtcount_tables";
+    }
+
+    @RequestMapping("/view/fzdata_tables")
+    public String fzdata_tables() {
+        return "fzdata_tables";
+    }
+
+    @RequestMapping("/view/fzdata_detail")
+    public String fzdata_detail() {
+        return "fzdata_detail";
+    }
 }
