@@ -37,6 +37,7 @@
         <module>mes-edge-sync</module>
         <module>mes-edge-task</module>
         <module>mes-edge-ucenter</module>
+        <module>mes-edge-report</module>
     </modules>
 
     <parent>

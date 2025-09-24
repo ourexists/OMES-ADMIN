@@ -122,7 +122,12 @@ var router = {
     "dev_localization": "/device/localization",
     "dev_id": "/device/selectById",
     "dev_enable": "/device/enable",
-    "dev_disable": "/device/disable"
+    "dev_disable": "/device/disable",
+    "report_mat": "/report/matCount",
+    "fzdata_page": "/fzdata/selectByPage",
+    "imrecord_page": "/lmrecord/selectByPage",
+    "fzdata_allpf": "/fzdata/allPFName",
+    "report_product": "/report/productionCount",
 }
 
 function getCommonHeader() {
