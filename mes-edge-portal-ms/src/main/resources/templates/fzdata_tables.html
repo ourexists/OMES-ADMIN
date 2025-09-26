@@ -245,6 +245,7 @@
         table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
             var data = obj.data; // 获得当前行数据
             if (obj.event === 'detail') {
+                current_row_data = data;
                 openWindow('common.detail', '/view/fzdata_detail?id=' + data.no)
             }
         });

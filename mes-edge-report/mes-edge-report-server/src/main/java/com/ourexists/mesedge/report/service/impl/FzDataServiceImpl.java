@@ -24,7 +24,7 @@ public class FzDataServiceImpl extends AbstractMyBatisPlusService<FzDataMapper, 
     public Page<FzData> selectByPage(FzDataPageQuery dto) {
         LambdaQueryWrapper<FzData> qw = new LambdaQueryWrapper<FzData>()
                 .between(dto.getStartDate() != null && dto.getEndDate() != null, FzData::getRq, dto.getStartDate(), dto.getEndDate())
-                .like(StringUtils.isNotEmpty(dto.getPfName()), FzData::getPf, dto.getPfName())
+                .eq(StringUtils.isNotEmpty(dto.getPfName()), FzData::getPf, dto.getPfName())
                 .eq(StringUtils.isNotEmpty(dto.getBh()), FzData::getBh, dto.getBh())
                 .eq(StringUtils.isNotEmpty(dto.getLine()), FzData::getLine, dto.getLine())
                 .inSql(StringUtils.isNotEmpty(dto.getMatName()), FzData::getNo, "select FZ_ID from lm_record where LM like '%" + dto.getMatName() + "%'")
