@@ -10,29 +10,111 @@
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+    <script src="../static/js/tableExport.min.js"></script>
 </head>
 <body>
 <div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="matName" id="matName">
+                    <option value="" lang-i18n="report.matName"></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="bh" id="bh">
+                    <option value="" lang-i18n="report.bh"></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="line" id="line">
+                    <option value="" lang-i18n="report.line"></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="common-search" lang-i18n="common.search">Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
     <table class="layui-hide" id="tb-common"></table>
 </div>
 <script type="text/html" id="tb-common-toolbar">
-    <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
-            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
-            <i class="layui-icon layui-icon-down layui-font-12"></i>
-        </button>
+    <div class="layui-row">
+        <div class="layui-col-xs12">
+            <button class="layui-btn layui-btn-sm layui-btn-primary" lay-event="exportCsv">
+                <i class="layui-icon layui-icon-export"></i>
+            </button>
+        </div>
+    </div>
+    <div class="layui-row">
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('report.pfName') }}</span><span>: </span><span>{{= row.pf }}</span>
+        </div>
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('fzdata.pno') }}</span><span>: </span><span>{{= row.pno }}</span>
+        </div>
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('fzdata.time') }}</span><span>: </span><span>{{= row.rq }}</span>
+        </div>
     </div>
 </script>
 
 <script th:inline="none">
     var table;
     var tbData;
+    var row
     layui.use(['form', 'table', 'dropdown', 'layer'], function () {
         table = layui.table;
+        var form = layui.form;
         var dropdown = layui.dropdown;
-
         let no = layui.url().search.id;
 
+        row = parent.current_row_data;
+        var p = {
+            'requirePage': false,
+        }
+        post(router.mat_page, p, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#matName').append(new Option(item.name, item.name));
+            })
+            form.render();
+        });
+
+        var customTitleRow = [
+            [i18np.prop('report.pfName') + ': ' + row.pf],
+            [i18np.prop('fzdata.pno') + ': ' + row.pno],
+            [i18np.prop('fzdata.time') + ': ' + row.rq],
+            [i18np.prop('fzdata.tank'), i18np.prop('fzdata.lm'), i18np.prop('fzdata.ll'), i18np.prop('fzdata.sj'), i18np.prop('fzdata.wc')]
+        ];
+        var customTitleRow2 =
+            i18np.prop('report.pfName') + ': ' + row.pf + '<br>'
+            + i18np.prop('fzdata.pno') + ': ' + row.pno + '<br>'
+            + i18np.prop('fzdata.time') + ': ' + row.rq + '<br>';
 
         // 创建表格实例
         table.render({
@@ -41,7 +123,7 @@
             headers: getCommonHeader(),
             method: 'POST',
             toolbar: '#tb-common-toolbar',
-            defaultToolbar: ['filter', 'exports', 'print'],
+            defaultToolbar: ['filter', 'print'],
             cols: [[
                 {field: 'LAY_INDEX', title: 'NO'},
                 {field: 'tank', title: i18np.prop('fzdata.tank')},
@@ -50,6 +132,7 @@
                 {field: 'sj', title: i18np.prop('fzdata.sj')},
                 {field: 'wc', title: i18np.prop('fzdata.wc')},
             ]],
+            customTitleRow: customTitleRow2,
             page: false,
             height: 'full'
         });
@@ -66,6 +149,66 @@
         var tableInst = table.getOptions('tb-common');
         tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
             dropdown.close('dropdown-table-tool');
+        });
+
+
+        table.on('toolbar(tb-common)', function (obj) {
+            switch (obj.event) {
+                case 'exportCsv':
+                    // 获取表格数据
+                    var exportData = tbData.map(function (item) {
+                        return {
+                            "Tank": item.tank,
+                            "LM": item.lm,
+                            "LL": item.ll,
+                            "SJ": item.sj,
+                            "WC": item.wc
+                        };
+                    });
+                    // 合并自定义大标题行和表格数据
+                    var combinedData = customTitleRow.concat(exportData);
+                    // 创建一个临时表格，导出数据
+                    var $tempTable = $('<table id="tempExportTable" style="display:none;"></table>');
+                    var $thead = $('<thead><tr></tr></thead>');
+                    var $tbody = $('<tbody></tbody>');
+
+                    // 添加表格数据
+                    combinedData.forEach(function (rowData) {
+                        var $row = $('<tr></tr>');
+                        Object.values(rowData).forEach(function (cell) {
+                            $row.append('<td>' + cell + '</td>');
+                        });
+                        $tbody.append($row);
+                    });
+
+                    $tempTable.append($thead).append($tbody);
+                    $('body').append($tempTable);
+
+                    // 合并自定义大标题行和表格数据
+                    $('#tempExportTable').tableExport({
+                        type: 'csv',  // 导出类型：'csv' 或 'excel'
+                    })
+
+                    $tempTable.remove();
+                    break
+            }
+
+        })
+
+        // 搜索提交
+        form.on('submit(common-search)', function (data) {
+            let params = {
+                "fzId": no,
+                "requirePage": false,
+                "matName": $('#matName').val(),
+                "bh": $('#bh').val(),
+                "line": $('#line').val(),
+            }
+            post(router.imrecord_page, params, function (result) {
+                tbData = result == null ? [] : result;
+                reloadTb();
+            })
+            return false; // 阻止默认 form 跳转
         });
     });
 

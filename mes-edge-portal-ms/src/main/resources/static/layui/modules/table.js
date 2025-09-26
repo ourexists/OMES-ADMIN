@@ -757,7 +757,6 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
             '*.layui-hide{display: none}',
           '</style>'].join('')
           var html = $(that.layHeader.html()); // 输出表头
-
           html.append(that.layMain.find('table').html()); // 输出表体
           html.append(that.layTotal.find('table').html()) // 输出合计行
 
@@ -768,6 +767,10 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
           }).remove();
           html.find('tbody>tr>td.'+ ELEM_COL_SPECIAL).remove(); // 移除表体特殊列
 
+          if (options.customTitleRow) {
+              var n=options.cols[0].length
+              html.find('thead').prepend('<th colspan="'+n+'">'+options.customTitleRow+'</th>')
+          }
           printWin.document.write(style + html.prop('outerHTML'));
           printWin.document.close();
 

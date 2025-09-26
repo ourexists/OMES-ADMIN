@@ -15,4 +15,10 @@ import java.util.Date;
 public class LmRecordPageQuery extends PageQuery {
 
     private Integer fzId;
+
+    private String matName;
+
+    private String bh;
+
+    private String line;
 }
