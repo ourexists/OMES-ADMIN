@@ -83,11 +83,15 @@
     var table;
     var tbData;
     var row
-    layui.use(['form', 'table', 'dropdown', 'layer'], function () {
+    layui.use(['form', 'table', 'dropdown', 'layer', 'util'], function () {
         table = layui.table;
         var form = layui.form;
         var dropdown = layui.dropdown;
         let no = layui.url().search.id;
+        var util = layui.util;
+
+        var totalll = 0;
+        var totalsj = 0;
 
         row = parent.current_row_data;
         var p = {
@@ -115,21 +119,33 @@
             method: 'POST',
             toolbar: '#tb-common-toolbar',
             defaultToolbar: ['filter', 'exports', 'print'],
+            totalRow: true,
+            title: "fzdata_detail_" + layui.util.toDateString((new Date()), "yyyyMMddHHmmss"),
             cols: [[
                 {field: 'LAY_INDEX', title: 'NO'},
                 {field: 'tank', title: i18np.prop('fzdata.tank')},
                 {field: 'lm', title: i18np.prop('fzdata.lm')},
-                {field: 'll', title: i18np.prop('fzdata.ll')},
-                {field: 'sj', title: i18np.prop('fzdata.sj')},
+                {field: 'll', title: i18np.prop('fzdata.ll'), totalRow: true},
+                {field: 'sj', title: i18np.prop('fzdata.sj'), totalRow: true},
                 {
-                    field: 'wc', title: i18np.prop('fzdata.wc'), templet: function (data) {
+                    field: 'wc', title: i18np.prop('fzdata.wc'), totalRow: true, templet: function (data) {
                         return parseFloat(data.wc).toFixed(1);
+                    }
+                },
+                {
+                    field: 'lls', title: i18np.prop('fzdata.lls'), templet: function (data) {
+                        return parseFloat(data.ll / totalll * 100).toFixed(1);
+                    }
+                },
+                {
+                    field: 'sjs', title: i18np.prop('fzdata.sjs'), templet: function (data) {
+                        return parseFloat(data.sj / totalsj * 100).toFixed(1);
                     }
                 },
             ]],
             customTitleRow: customTitleRow,
             page: false,
-            height: 'full'
+            height: '400px'
         });
         let params = {
             "fzId": no,
@@ -137,6 +153,10 @@
         }
         post(router.imrecord_page, params, function (result) {
             tbData = result == null ? [] : result;
+            $.each(result, function (index, item) {
+                totalll += item.ll;
+                totalsj += item.sj;
+            })
             reloadTb();
         })
 
