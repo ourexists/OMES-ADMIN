@@ -88,10 +88,6 @@
         var form = layui.form;
         var dropdown = layui.dropdown;
         let no = layui.url().search.id;
-        var util = layui.util;
-
-        var totalll = 0;
-        var totalsj = 0;
 
         row = parent.current_row_data;
         var p = {
@@ -134,12 +130,12 @@
                 },
                 {
                     field: 'lls', title: i18np.prop('fzdata.lls'), templet: function (data) {
-                        return parseFloat(data.ll / totalll * 100).toFixed(1);
+                        return parseFloat(data.lls).toFixed(1);
                     }
                 },
                 {
                     field: 'sjs', title: i18np.prop('fzdata.sjs'), templet: function (data) {
-                        return parseFloat(data.sj / totalsj * 100).toFixed(1);
+                        return parseFloat(data.sjs).toFixed(1);
                     }
                 },
             ]],
@@ -153,10 +149,6 @@
         }
         post(router.imrecord_page, params, function (result) {
             tbData = result == null ? [] : result;
-            $.each(result, function (index, item) {
-                totalll += item.ll;
-                totalsj += item.sj;
-            })
             reloadTb();
         })
 

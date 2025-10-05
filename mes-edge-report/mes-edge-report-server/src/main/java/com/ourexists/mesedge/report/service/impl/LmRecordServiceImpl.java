@@ -28,4 +28,14 @@ public class LmRecordServiceImpl extends AbstractMyBatisPlusService<LmRecordMapp
                 .orderByDesc(LmRecord::getNo);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
+
+    @Override
+    public Long selectSumll(Integer fzId) {
+        return this.baseMapper.selectSumll(fzId);
+    }
+
+    @Override
+    public Long selectSumSj(Integer fzId) {
+        return this.baseMapper.selectSumSj(fzId);
+    }
 }
