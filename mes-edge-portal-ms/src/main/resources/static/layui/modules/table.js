@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 /**
  * layui.table
  * 表格组件
@@ -757,6 +753,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
             '*.layui-hide{display: none}',
           '</style>'].join('')
           var html = $(that.layHeader.html()); // 输出表头
+
           html.append(that.layMain.find('table').html()); // 输出表体
           html.append(that.layTotal.find('table').html()) // 输出合计行
 
@@ -1760,6 +1757,9 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
     var isCheckMult = layui.type(opts.index) === 'array'; // 是否操作多个
     var isCheckAllOrMult = isCheckAll || isCheckMult; // 是否全选或多选
 
+    // treeTable 内部已处理选中，此处不再处理
+    if(options.tree && options.tree.view) return;
+
     // 全选或多选时
     if (isCheckAllOrMult) {
       that.layBox.addClass(DISABLED_TRANSITION); // 减少回流
@@ -1853,7 +1853,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
     if(isCheckAllOrMult){
       setTimeout(function(){
         that.layBox.removeClass(DISABLED_TRANSITION);
-      },100)
+      }, 100)
     }
   };
 
@@ -2837,8 +2837,6 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
       }
       rAF(cb);
     });
-
-    that.autoResize();
   }
 
   /**
@@ -2907,43 +2905,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
         ? size.width - size.paddingLeft - size.paddingRight - size.borderLeftWidth - size.borderRightWidth
         : size.width
     }
-  }
-
-  Class.prototype.autoResize = function(){
-    var that = this;
-
-    if(typeof that.resizeStrategy === 'function'){
-      that.resizeStrategy(that.elem);
-    }
-  }
-
-  Class.prototype.resizeStrategy = function(){
-    // chrome 64+
-    if(window.ResizeObserver){
-      return function(targetElem){
-        var that = this;
-        if(that.resizeObserver){
-          that.resizeObserver.disconnect();
-          that.resizeObserver = null;
-        }
-        that.resizeObserver = new ResizeObserver(function(){
-          that.resize();
-        });
-        that.resizeObserver.observe(targetElem[0]);
-      }
-    }
-
-    // IE8 支持元素 resize 事件
-    if(lay.ie === '8'){
-      return function(targetElem){
-        var that = this;
-        targetElem.off('resize.lay-table-autoresize')
-          .on('resize.lay-table-autoresize', function(){
-            that.resize();
-          })
-      }
-    }
-   }();
+  };
 
   // 全局事件
   (function(){
@@ -3208,6 +3170,12 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
       var dataMain = [];
       var dataTotal = [];
       var fieldsIsHide = {};
+      var customTitle = [];
+
+      if (config.customTitleRow) {
+        var d = config.customTitleRow.replaceAll("<br>", "\r\n")
+        customTitle.push(d);
+      }
 
       // 表头和表体
       layui.each(data, function(i1, item1){
@@ -3272,7 +3240,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function(exports){
         fieldsIsHide[o.field] || dataTotal.push('"' + (o.total || '') + '"');
       });
 
-      return dataTitle.join(',') + '\r\n' + dataMain.join('\r\n') + '\r\n' + dataTotal.join(',');
+      return customTitle.join(',')+ '\r\n' + dataTitle.join(',') + '\r\n' + dataMain.join('\r\n') + '\r\n' + dataTotal.join(',');
     }());
 
     alink.download = (opts.title || config.title || 'table_'+ (config.index || '')) + '.' + type;

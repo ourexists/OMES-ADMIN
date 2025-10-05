@@ -125,7 +125,8 @@
             elem: '#timeduration',
             range: ['#startDate', '#endDate'],
             rangeLinked: true,
-            type: 'datetime'
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
         });
 
         get(router.fzdata_allpf, null, function (result) {
@@ -169,13 +170,14 @@
         // 创建表格实例
         table.render({
             elem: '#tb-common',
-            url: initRequestUrl(router.fzdata_page),
-            headers: getCommonHeader(),
-            method: 'POST',
+            data: [],
             contentType: 'application/json',
             toolbar: default_param.toolbar,
             defaultToolbar: default_param.defaultToolbar,
             cols: default_param.cols,
+            text: {
+                none: i18np.prop('common.msg.selecttime')
+            },
             done: function () {
                 // 行模式
                 dropdown.render({
@@ -220,7 +222,7 @@
                 };
             },
             page: false,
-            height: 'full'
+            height: '450px'
         });
         // 工具栏事件
         table.on('toolbar(tb-common)', function (obj) {
@@ -258,21 +260,30 @@
 
         // 搜索提交
         form.on('submit(ebs-material-search)', function (data) {
-            reloadMaterialTb();
+            if ($('#startDate').val() == null || $('#startDate').val() == ''
+                || $('#endDate').val() == null || $('#endDate').val() == '') {
+                layer.alert(i18np.prop('common.msg.selecttime'));
+                return false;
+            }
+            reloadTb();
             return false; // 阻止默认 form 跳转
         });
     })
     ;
 
-    function reloadMaterialTb() {
+    function reloadTb() {
         table.reloadData('tb-common', {
+            url: initRequestUrl(router.fzdata_page),
+            headers: getCommonHeader(),
+            method: 'POST',
             where: {
                 matName: $('#matName').val(),
                 pfName: $('#pfName').val(),
                 bh: $('#bh').val(),
                 line: $('#line').val(),
                 startDate: $('#startDate').val(),
-                endDate: $('#endDate').val()
+                endDate: $('#endDate').val(),
+                requirePage: false
             },
         });
     }

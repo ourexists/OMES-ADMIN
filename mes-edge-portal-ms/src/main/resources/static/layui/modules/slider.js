@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 /**
  * slider 滑块组件
  */
@@ -385,7 +381,7 @@ layui.define(['jquery', 'lay'], function(exports){
     //动态赋值
     if(setValue === 'set'){
       return change((value - options.min) / (options.max - options.min) * 100 / step, i, 'done');
-    } 
+    }
 
     //滑块滑动
     sliderAct.find('.' + SLIDER_WRAP_BTN).each(function(index){
