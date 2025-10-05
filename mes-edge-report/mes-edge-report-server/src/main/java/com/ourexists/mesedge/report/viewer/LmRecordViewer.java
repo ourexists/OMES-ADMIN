@@ -39,8 +39,8 @@ public class LmRecordViewer implements LmRecordFeign {
             Long llt = this.lmRecordService.selectSumll(dto.getFzId());
             Long sjt = this.lmRecordService.selectSumSj(dto.getFzId());
             for (LmRecordDto lmRecordDto : r) {
-                lmRecordDto.setLls(lmRecordDto.getLl() / llt);
-                lmRecordDto.setSjs(lmRecordDto.getSj() / sjt);
+                lmRecordDto.setLls(lmRecordDto.getLl() * 100 / llt);
+                lmRecordDto.setSjs(lmRecordDto.getSj() * 100 / sjt);
             }
         }
         return JsonResponseEntity.success(r, OrmUtils.extraPagination(page));
