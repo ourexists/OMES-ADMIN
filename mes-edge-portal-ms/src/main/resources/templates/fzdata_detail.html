@@ -65,13 +65,6 @@
 <script type="text/html" id="tb-common-toolbar">
     <div class="layui-row">
         <div class="layui-col-xs12">
-            <button class="layui-btn layui-btn-sm layui-btn-primary" lay-event="exportCsv">
-                <i class="layui-icon layui-icon-export"></i>
-            </button>
-        </div>
-    </div>
-    <div class="layui-row">
-        <div class="layui-col-xs12">
             <span>{{= i18np.prop('report.pfName') }}</span><span>: </span><span>{{= row.pf }}</span>
         </div>
         <div class="layui-col-xs12">
@@ -79,6 +72,9 @@
         </div>
         <div class="layui-col-xs12">
             <span>{{= i18np.prop('fzdata.time') }}</span><span>: </span><span>{{= row.rq }}</span>
+        </div>
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('fzdata.productTime') }}</span><span>: </span><span>{{= row.stTime }}</span><span> - </span><span>{{= row.endTime }}</span>
         </div>
     </div>
 </script>
@@ -105,16 +101,11 @@
             form.render();
         });
 
-        var customTitleRow = [
-            [i18np.prop('report.pfName') + ': ' + row.pf],
-            [i18np.prop('fzdata.pno') + ': ' + row.pno],
-            [i18np.prop('fzdata.time') + ': ' + row.rq],
-            [i18np.prop('fzdata.tank'), i18np.prop('fzdata.lm'), i18np.prop('fzdata.ll'), i18np.prop('fzdata.sj'), i18np.prop('fzdata.wc')]
-        ];
-        var customTitleRow2 =
+        var customTitleRow =
             i18np.prop('report.pfName') + ': ' + row.pf + '<br>'
             + i18np.prop('fzdata.pno') + ': ' + row.pno + '<br>'
-            + i18np.prop('fzdata.time') + ': ' + row.rq + '<br>';
+            + i18np.prop('fzdata.time') + ': ' + row.rq + '<br>'
+            + i18np.prop('fzdata.productTime') + ': ' + row.stTime + ' - ' + row.endTime;
 
         // 创建表格实例
         table.render({
@@ -123,16 +114,20 @@
             headers: getCommonHeader(),
             method: 'POST',
             toolbar: '#tb-common-toolbar',
-            defaultToolbar: ['filter', 'print'],
+            defaultToolbar: ['filter', 'exports', 'print'],
             cols: [[
                 {field: 'LAY_INDEX', title: 'NO'},
                 {field: 'tank', title: i18np.prop('fzdata.tank')},
                 {field: 'lm', title: i18np.prop('fzdata.lm')},
                 {field: 'll', title: i18np.prop('fzdata.ll')},
                 {field: 'sj', title: i18np.prop('fzdata.sj')},
-                {field: 'wc', title: i18np.prop('fzdata.wc')},
+                {
+                    field: 'wc', title: i18np.prop('fzdata.wc'), templet: function (data) {
+                        return parseFloat(data.wc).toFixed(1);
+                    }
+                },
             ]],
-            customTitleRow: customTitleRow2,
+            customTitleRow: customTitleRow,
             page: false,
             height: 'full'
         });
@@ -150,50 +145,6 @@
         tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
             dropdown.close('dropdown-table-tool');
         });
-
-
-        table.on('toolbar(tb-common)', function (obj) {
-            switch (obj.event) {
-                case 'exportCsv':
-                    // 获取表格数据
-                    var exportData = tbData.map(function (item) {
-                        return {
-                            "Tank": item.tank,
-                            "LM": item.lm,
-                            "LL": item.ll,
-                            "SJ": item.sj,
-                            "WC": item.wc
-                        };
-                    });
-                    // 合并自定义大标题行和表格数据
-                    var combinedData = customTitleRow.concat(exportData);
-                    // 创建一个临时表格，导出数据
-                    var $tempTable = $('<table id="tempExportTable" style="display:none;"></table>');
-                    var $thead = $('<thead><tr></tr></thead>');
-                    var $tbody = $('<tbody></tbody>');
-
-                    // 添加表格数据
-                    combinedData.forEach(function (rowData) {
-                        var $row = $('<tr></tr>');
-                        Object.values(rowData).forEach(function (cell) {
-                            $row.append('<td>' + cell + '</td>');
-                        });
-                        $tbody.append($row);
-                    });
-
-                    $tempTable.append($thead).append($tbody);
-                    $('body').append($tempTable);
-
-                    // 合并自定义大标题行和表格数据
-                    $('#tempExportTable').tableExport({
-                        type: 'csv',  // 导出类型：'csv' 或 'excel'
-                    })
-
-                    $tempTable.remove();
-                    break
-            }
-
-        })
 
         // 搜索提交
         form.on('submit(common-search)', function (data) {

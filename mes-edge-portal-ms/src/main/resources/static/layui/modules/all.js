@@ -1,14 +1,10 @@
-﻿/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+﻿/**
+ * 用于加载所有内置模块
+ * MIT Licensed
  */
 
-/**
- * 用于加载所有内置模块
- * MIT Licensed  
- */
- 
 layui.define(function(){
-  var mods = [] 
+  var mods = []
   var builtin = layui.cache.builtin;
 
   layui.each(builtin, function(modName){
@@ -19,9 +15,9 @@ layui.define(function(){
   return mods;
 }(), function(exports){
   "use strict";
-  
+
   var MOD_NAME = 'all';
-  
+
   // 外部接口
   var all = {
     config: {},

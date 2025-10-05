@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 /**
  * tree 树组件
  */
@@ -110,7 +106,7 @@ layui.define(['form','util'], function(exports){
     onlyIconControl: false,  // 是否仅允许节点左侧图标控制展开收缩
     isJump: false,  // 是否允许点击节点时弹出新窗口跳转
     edit: false,  // 是否开启节点的操作图标
-    extEdit: false,
+
     text: {
       defaultNodeName: '未命名', // 节点默认名称
       none: '无数据'  // 数据为空时的文本提示
@@ -457,10 +453,6 @@ layui.define(['form','util'], function(exports){
       layui.stope(e);  // 阻止节点操作
 
       var type = $(this).data("type");
-      // var addShow = $(this).data("addShow")
-      // var updateShow = $(this).data("updateShow")
-      // var deleteShow = $(this).data("deleteShow")
-      var extEdit =options.extEdit;
       var packCont = elem.children('.'+ELEM_PACK);
       var returnObj = {
         data: item,
@@ -469,20 +461,6 @@ layui.define(['form','util'], function(exports){
       };
       // 增加
       if(type == 'add'){
-        // 新增节点
-        var obj={};
-        var key = options.operate && options.operate(returnObj);
-        if (extEdit === true) {
-          if (key === null) {
-            //新增失败
-            return;
-          }
-          obj = key;
-        } else {
-          obj[customName.title] = options.text.defaultNodeName;
-          obj[customName.id] = key;
-        }
-
         // 若节点本身无子节点
         if(!packCont[0]){
           // 若开启连接线，更改图标样式
@@ -496,6 +474,13 @@ layui.define(['form','util'], function(exports){
           // 节点添加子节点容器
           elem.append('<div class="layui-tree-pack"></div>');
         };
+
+        // 新增节点
+        var key = options.operate && options.operate(returnObj);
+        var obj = {};
+
+        obj[customName.title] = options.text.defaultNodeName;
+        obj[customName.id] = key;
         that.tree(elem.children('.'+ELEM_PACK), [obj]);
 
         // 放在新增后面，因为要对元素进行操作
@@ -558,45 +543,36 @@ layui.define(['form','util'], function(exports){
 
       // 修改
       } else if(type == 'update') {
-        if (extEdit === true) {
-            var obj = options.operate && options.operate(returnObj);
-            if (obj === null) {
-                return;
-            }
-            elemMain.children('.'+ ELEM_TEXT).html(obj[customName.title]);
-            debugger
-        } else {
-            var text = elemMain.children('.'+ ELEM_TEXT).html();
-            elemMain.children('.'+ ELEM_TEXT).html('');
-            // 添加输入框，覆盖在文字上方
-            elemMain.append('<input type="text" class="layui-tree-editInput">');
-            // 获取焦点
-            elemMain.children('.layui-tree-editInput').val(util.unescape(text)).focus();
-            // 嵌入文字移除输入框
-            var getVal = function(input){
-              var textNew = util.escape(input.val().trim());
-              textNew = textNew ? textNew : options.text.defaultNodeName;
-              input.remove();
-              elemMain.children('.'+ ELEM_TEXT).html(textNew);
+        var text = elemMain.children('.'+ ELEM_TEXT).html();
+        elemMain.children('.'+ ELEM_TEXT).html('');
+        // 添加输入框，覆盖在文字上方
+        elemMain.append('<input type="text" class="layui-tree-editInput">');
+        // 获取焦点
+        elemMain.children('.layui-tree-editInput').val(util.unescape(text)).focus();
+        // 嵌入文字移除输入框
+        var getVal = function(input){
+          var textNew = util.escape(input.val().trim());
+          textNew = textNew ? textNew : options.text.defaultNodeName;
+          input.remove();
+          elemMain.children('.'+ ELEM_TEXT).html(textNew);
 
-              // 同步数据
-              returnObj.data[customName.title] = textNew;
+          // 同步数据
+          returnObj.data[customName.title] = textNew;
 
-              // 节点修改的回调
-              options.operate && options.operate(returnObj);
-            };
-            // 失去焦点
-            elemMain.children('.layui-tree-editInput').blur(function(){
-              getVal($(this));
-            });
-            // 回车
-            elemMain.children('.layui-tree-editInput').on('keydown', function(e){
-              if(e.keyCode === 13){
-                e.preventDefault();
-                getVal($(this));
-              };
-            });
-        }
+          // 节点修改的回调
+          options.operate && options.operate(returnObj);
+        };
+        // 失去焦点
+        elemMain.children('.layui-tree-editInput').blur(function(){
+          getVal($(this));
+        });
+        // 回车
+        elemMain.children('.layui-tree-editInput').on('keydown', function(e){
+          if(e.keyCode === 13){
+            e.preventDefault();
+            getVal($(this));
+          };
+        });
 
       // 删除
       } else {

@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 /**
  * laytpl 轻量模板引擎
  */

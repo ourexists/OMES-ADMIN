@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 /**
  * layui.treeTable
  * 树表组件
@@ -391,7 +387,8 @@ layui.define(['table'], function (exports) {
     layui.each(tableData, function (i1, item1) {
       var dataIndex = (parentIndex ? parentIndex + '-' : '') + i1;
       var dataNew = $.extend({}, item1);
-      dataNew[pIdKey] = item1[pIdKey] || parentId;
+
+      dataNew[pIdKey] = typeof item1[pIdKey] !== 'undefined' ? item1[pIdKey] : parentId;
       flat.push(dataNew);
       flat = flat.concat(that.treeToFlat(item1[childrenKey], item1[customName.id], dataIndex));
     });
@@ -675,7 +672,7 @@ layui.define(['table'], function (exports) {
       } else {
         var asyncSetting = treeOptions.async || {};
         var asyncUrl = asyncSetting.url || options.url;
-        if (asyncSetting.enable && trData[isParentKey] && !trData[LAY_ASYNC_STATUS]) {
+        if (asyncSetting.enable && trData[isParentKey] && (!trData[LAY_ASYNC_STATUS] || trData[LAY_ASYNC_STATUS] === 'error')) {
           trData[LAY_ASYNC_STATUS] = 'loading';
           flexIconElem.html('<i class="layui-icon layui-icon-loading layui-anim layui-anim-loop layui-anim-rotate"></i>');
 
@@ -730,6 +727,7 @@ layui.define(['table'], function (exports) {
               // 检查数据格式是否符合规范
               if (res[asyncResponse.statusName] != asyncResponse.statusCode) {
                 trData[LAY_ASYNC_STATUS] = 'error';
+                trData[LAY_EXPAND] = false;
                 // 异常处理 todo
                 flexIconElem.html('<i class="layui-icon layui-icon-refresh"></i>');
                 // 事件
@@ -740,6 +738,7 @@ layui.define(['table'], function (exports) {
             },
             error: function (e, msg) {
               trData[LAY_ASYNC_STATUS] = 'error';
+              trData[LAY_EXPAND] = false;
               // 异常处理 todo
               typeof options.error === 'function' && options.error(e, msg);
             }
@@ -1029,7 +1028,7 @@ layui.define(['table'], function (exports) {
     // 处理节点图标
     if(treeOptions.view.showIcon){
       var nodeIconElem = scopeEl.find('.layui-table-tree-nodeIcon:not(.layui-table-tree-iconCustom)');
-      var nodeIcon = isParent 
+      var nodeIcon = isParent
         ? (isExpand ? treeOptions.view.iconOpen : treeOptions.view.iconClose)
         : treeOptions.view.iconLeaf;
 
@@ -1374,7 +1373,7 @@ layui.define(['table'], function (exports) {
       indexArr.push('tr[lay-data-index="' + delNodeDataIndex + '"]');
       // 删除临时 key
       if(delNodeDataIndex.indexOf('-') !== -1){
-        delete tableCache[delNodeDataIndex]; 
+        delete tableCache[delNodeDataIndex];
       }
     })
 
@@ -1425,7 +1424,7 @@ layui.define(['table'], function (exports) {
         scopeEl: trEl,
         isExpand: nodeP[LAY_EXPAND],
         isParent: nodeP[isParentKey],
-      });  
+      });
     }
 
     // 重新适配尺寸
@@ -1590,7 +1589,7 @@ layui.define(['table'], function (exports) {
         scopeEl: trEl,
         isExpand: parentNode[LAY_EXPAND],
         isParent: parentNode[isParentKey],
-      }); 
+      });
     }
     treeTable.resize(id);
     if (focus) {
@@ -1725,7 +1724,7 @@ layui.define(['table'], function (exports) {
 
     var index = tr.data('index');
     var tableViewElem = options.elem.next();
-    
+
     tr[checked ? 'addClass' : 'removeClass'](ELEM_CHECKED); // 主体行
 
     // 右侧固定行
@@ -1761,12 +1760,12 @@ layui.define(['table'], function (exports) {
 
         // 标记父节点行背景色
         that.setRowCheckedClass(checkboxElem.closest('tr'), checked);
-        
+
         // 设置原始复选框 checked 属性值并渲染
-        form.render(checkboxElem.prop({
+        checkboxElem.prop({
           checked: checked,
           indeterminate: itemP[LAY_CHECKBOX_HALF]
-        }))
+        })
       })
     }
 
@@ -1793,12 +1792,12 @@ layui.define(['table'], function (exports) {
     }else{
       isAll = false;
     }
-    
+
     isIndeterminate = isIndeterminate && !isAll;
-    form.render(tableView.find('input[name="layTableCheckbox"][lay-filter="layTableAllChoose"]').prop({
+    tableView.find('input[name="layTableCheckbox"][lay-filter="layTableAllChoose"]').prop({
       'checked': isAll,
       indeterminate: isIndeterminate
-    }));
+    })
 
     return isAll
   }
@@ -1910,7 +1909,7 @@ layui.define(['table'], function (exports) {
 
             // 取消当前选中行背景色
             that.setRowCheckedClass(radioElem.closest('tr'), false);
-            form.render(radioElem.prop('checked', false));
+            radioElem.prop('checked', false);
           }
         }); // 取消其他的选中状态
         trData[checkName] = checked;
@@ -1918,7 +1917,7 @@ layui.define(['table'], function (exports) {
         that.setRowCheckedClass(trElem, checked);  // 标记当前选中行背景色
         that.setRowCheckedClass(trElem.siblings(), false); // 取消其他行背景色
 
-        form.render(trElem.find('input[type="radio"][lay-type="layTableRadio"]').prop('checked', checked));
+        trElem.find('input[type="radio"][lay-type="layTableRadio"]').prop('checked', checked);
       } else {
         // 切换只能用到单条，全选到这一步的时候应该是一个确定的状态
         checked = layui.type(checked) === 'boolean' ? checked : !trData[checkName]; // 状态切换，如果遇到不可操作的节点待处理 todo
@@ -1937,7 +1936,7 @@ layui.define(['table'], function (exports) {
         }).join(','));
 
         that.setRowCheckedClass(checkboxElem.closest('tr'), checked);  // 标记当前选中行背景色
-        form.render(checkboxElem.prop({checked: checked, indeterminate: false}));
+        checkboxElem.prop({checked: checked, indeterminate: false});
 
         var trDataP;
 

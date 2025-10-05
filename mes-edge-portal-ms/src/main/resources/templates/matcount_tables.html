@@ -120,7 +120,8 @@
             elem: '#timeduration',
             range: ['#startDate', '#endDate'],
             rangeLinked: true,
-            type: 'datetime'
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
         });
 
         get(router.fzdata_allpf, null, function (result) {
@@ -146,8 +147,8 @@
             cols: [[
                 {field: 'LAY_INDEX', title: 'NO'},
                 {field: 'lm', title: i18np.prop('report.matName')},
-                {field: 'll', title: i18np.prop('fzdata.ll')},
-                {field: 'sj', title: i18np.prop('fzdata.sj')},
+                {field: 'll', title: i18np.prop('fzdata.ll'), totalRow: true},
+                {field: 'sj', title: i18np.prop('fzdata.sj'), totalRow: true},
             ]],
             toolbar: '#material-toolbar',
             defaultToolbar: ['filter', 'exports', 'print'],
@@ -156,13 +157,15 @@
         // 创建表格实例
         table.render({
             elem: '#tb-ebs-material',
-            url: initRequestUrl(router.report_mat),
-            headers: getCommonHeader(),
-            method: 'POST',
+            data: [],
             contentType: 'application/json',
             toolbar: default_param.toolbar,
             defaultToolbar: default_param.defaultToolbar,
             cols: default_param.cols,
+            text: {
+                none: i18np.prop('common.msg.selecttime')
+            },
+            totalRow: true,
             done: function () {
                 // 行模式
                 dropdown.render({
@@ -204,7 +207,7 @@
                 };
             },
             page: false,
-            height: 'full'
+            height: '450px'
         });
         // 工具栏事件
         table.on('toolbar(tb-ebs-material)', function (obj) {
@@ -233,6 +236,11 @@
 
         // 搜索提交
         form.on('submit(ebs-material-search)', function (data) {
+            if ($('#startDate').val() == null || $('#startDate').val() == ''
+                || $('#endDate').val() == null || $('#endDate').val() == '') {
+                layer.alert(i18np.prop('common.msg.selecttime'));
+                return false;
+            }
             reloadMaterialTb();
             return false; // 阻止默认 form 跳转
         });
@@ -241,6 +249,9 @@
 
     function reloadMaterialTb() {
         table.reloadData('tb-ebs-material', {
+            url: initRequestUrl(router.report_mat),
+            headers: getCommonHeader(),
+            method: 'POST',
             where: {
                 matName: $('#matName').val(),
                 pfName: $('#pfName').val(),

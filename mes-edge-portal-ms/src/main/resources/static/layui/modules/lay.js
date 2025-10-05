@@ -1,8 +1,4 @@
 
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 /** lay 基础模块 | MIT Licensed */
 
 ;!function(window){ // gulp build: lay-header
@@ -603,7 +599,7 @@
       options.onTouchEnd && options.onTouchEnd(e, state);
       unbindEvents();
     }
-    
+
     var bindEvents = function(){
       targetElem.addEventListener('touchmove', onMove, lay.passiveSupported ? { passive: false} : false);
       targetElem.addEventListener('touchend', onEnd);
@@ -678,8 +674,8 @@
             }
           })
           elem[eventsCacheName] = newEvents;
-        }         
-      } 
+        }
+      }
     }
   }();
 
@@ -769,11 +765,16 @@
     }
 
     return bindEventListener(
-      scopeTarget, 
-      eventType, 
-      listener, 
+      scopeTarget,
+      eventType,
+      listener,
       lay.passiveSupported ? { passive: true, capture: useCapture } : useCapture
     );
+  }
+
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+  lay.hasOwn = function(obj, prop){
+    return hasOwnProperty.call(obj, prop);
   };
 
 
