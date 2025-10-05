@@ -6,6 +6,7 @@ package com.ourexists.mesedge.report.viewer;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.mesedge.report.feign.LmRecordFeign;
 import com.ourexists.mesedge.report.model.LmRecord;
@@ -33,7 +34,16 @@ public class LmRecordViewer implements LmRecordFeign {
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<LmRecordDto>> selectByPage(@RequestBody LmRecordPageQuery dto) {
         Page<LmRecord> page = lmRecordService.selectByPage(dto);
-        return JsonResponseEntity.success(LmRecord.covert(page.getRecords()), OrmUtils.extraPagination(page));
+        List<LmRecordDto> r = LmRecord.covert(page.getRecords());
+        if (dto.getFzId() != null && CollectionUtil.isNotBlank(r)) {
+            Long llt = this.lmRecordService.selectSumll(dto.getFzId());
+            Long sjt = this.lmRecordService.selectSumSj(dto.getFzId());
+            for (LmRecordDto lmRecordDto : r) {
+                lmRecordDto.setLls(lmRecordDto.getLl() / llt);
+                lmRecordDto.setSjs(lmRecordDto.getSj() / sjt);
+            }
+        }
+        return JsonResponseEntity.success(r, OrmUtils.extraPagination(page));
     }
 
 }

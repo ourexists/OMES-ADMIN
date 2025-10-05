@@ -18,4 +18,7 @@ public interface LmRecordService extends IMyBatisPlusService<LmRecord> {
 
     Page<LmRecord> selectByPage(LmRecordPageQuery dto);
 
+    Long selectSumll(Integer fzId);
+
+    Long selectSumSj(Integer fzId);
 }

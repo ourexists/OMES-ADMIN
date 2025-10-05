@@ -39,4 +39,8 @@ public class LmRecordDto {
 
     private Integer fzId;
 
+    private Float lls;
+
+    private Float sjs;
+
 }
