@@ -1,0 +1,138 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>MES</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/js/menu.js"></script>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header">
+        <div class="layui-logo layui-hide-xs layui-bg-black" lang-i18n="system.name"></div>
+        <ul class="layui-nav layui-layout-right">
+            <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
+                <a href="javascript:">
+                    <cite class="lan_show">简体中文</cite>
+                </a>
+                <dl class="layui-nav-child">
+                    <dd class="lang-language" onclick="changeLanguage('zh',this)"><a>简体中文</a></dd>
+                    <dd class="lang-language" onclick="changeLanguage('en', this)"><a>English</a></dd>
+                </dl>
+            </li>
+            <li class="layui-nav-item layui-hide layui-show-sm-inline-block"></li>
+            <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
+                <a href="javascript:;">
+                    <img src="//unpkg.com/outeres@0.0.10/img/layui/icon-v2.png" class="layui-nav-img">
+                    User
+                </a>
+                <dl class="layui-nav-child">
+                    <dd id="signout"><a href="javascript:;">Sign out</a></dd>
+<!--                    <dd id="system-exit"><a href="javascript:;">System Exit</a></dd>-->
+                </dl>
+            </li>
+            <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
+                <a href="javascript:">
+                    <i class="layui-icon layui-icon-more-vertical"></i>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree" id="layui-nav-tree"></ul>
+        </div>
+    </div>
+
+    <div class="layui-body">
+        <div class="layui-tab" lay-filter="tables" lay-allowclose="true">
+            <ul class="layui-tab-title"></ul>
+            <div class="layui-tab-content"></div>
+        </div>
+    </div>
+    <div class="layui-footer" style="text-align: center">
+        <!-- 底部固定区域 -->
+        @Copyright (c) 2025. created by ourexists.
+        <a class="layui-icon layui-icon-gitee" href="https://gitee.com/ourexists" target="_blank"></a>
+        <a class="layui-icon layui-icon-github" href="https://github.com/ourexists" target="_blank"></a>
+    </div>
+</div>
+<script th:inline="javascript">
+    layui.use(['element', 'layer', 'jquery'], function () {
+        var element = layui.element;
+
+        var lu = {
+            "zh": "简体中文",
+            "en": "English"
+        }
+
+        var curLang = localStorage.getItem(store.language);
+        if (curLang === null) {
+            curLang = 'zh';
+            localStorage.setItem(store.language, 'zh');
+        }
+        $('.lan_show').html(lu[curLang])
+
+        var token = localStorage.getItem(store.token_header);
+        if (token == null) {
+            window.location.href = '/view/login';
+            return
+        }
+
+        var menuHtml = '<ul class="layui-nav layui-nav-tree" id="layui-nav-tree" lay-filter="layui-nav-tree">';
+        layui.each(menu, function (i, item) {
+            menuHtml += '<li class="layui-nav-item layui-nav-itemed">' +
+                '<a href="javascript:">' + i18np.prop(item.name) + '</a>';
+            layui.each(item.children, function (j, jtem) {
+                menuHtml += '<dl class="layui-nav-child">' +
+                    '<dd><a href="javascript:" class="link-active" ' +
+                    'lay-href="' + jtem.path + '" ' +
+                    'data-id="' + jtem.id + '" ' +
+                    'data-title="' + i18np.prop(jtem.name) + '">' + i18np.prop(jtem.name) + '</a></dd>' +
+                    '</dl>'
+            })
+            menuHtml += '</li>';
+        })
+        menuHtml += '</ui>';
+
+        $('#layui-nav-tree').html(menuHtml);
+        element.render('layui-nav');
+
+        //左侧菜单点击事件
+        $('.link-active').on('click', function () {
+            var dataid = $(this);
+            openIndexTab(dataid.attr('lay-href'), dataid.attr('data-id'), dataid.attr('data-title'));
+        });
+
+        $('#system-exit').on('click', function () {
+            $.ajax({
+                url: "/shutdown",
+                type: "POST",
+                success: function (data) {
+                    location.assign('about:blank');
+                }
+            });
+        });
+
+
+        $('#signout').on('click', function () {
+            localStorage.removeItem(store.token_header);
+            window.location.href = '/view/login';
+        })
+    });
+
+    function openIndexTab(url, id, name) {
+        openTab(url, id, name, 'tables', $('.layui-tab-title li[lay-id]'))
+    }
+</script>
+</body>
+</html>

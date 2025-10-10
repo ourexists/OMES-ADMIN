@@ -48,4 +48,10 @@ public class ConnectDto {
     private String protocol;
 
     private Boolean enabled;
+
+    private Integer validType;
+
+    private String username;
+
+    private String password;
 }

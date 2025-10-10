@@ -41,6 +41,12 @@ public class Connect extends EraEntity {
 
     private String protocol;
 
+    private Integer validType;
+
+    private String username;
+
+    private String password;
+
     public static ConnectDto covert(Connect source) {
         if (source == null) {
             return null;
