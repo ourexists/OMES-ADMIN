@@ -5,9 +5,6 @@
 package com.ourexists.mesedge.portal.report;
 
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.mesedge.report.feign.FzDataFeign;
-import com.ourexists.mesedge.report.model.FzDataDto;
-import com.ourexists.mesedge.report.model.FzDataPageQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
