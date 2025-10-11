@@ -60,7 +60,6 @@ era:
     ignore:
       auth_check:
         - /expose/**
-        - /**
         - /
         - /templates/**
         - /view/**
@@ -69,7 +68,6 @@ era:
         - /
         - /templates/**
         - /view/**
-        - /**
   token:
     store-type: Db
 feign:
