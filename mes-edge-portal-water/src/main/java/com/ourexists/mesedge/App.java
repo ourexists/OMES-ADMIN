@@ -8,12 +8,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
+
 
 /**
  * Hello world!
@@ -29,9 +31,12 @@ public class App {
     }
 
     @Bean
-    public RestTemplate restTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getMessageConverters().set(1, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+    public RestTemplate restTemplate() throws Exception {
+        // 5️⃣ 构建 RestTemplate
+        RestTemplate restTemplate = new RestTemplate(new SimpleClientHttpRequestFactory());
+        restTemplate.getMessageConverters().stream()
+                .filter(c -> c instanceof StringHttpMessageConverter)
+                .forEach(c -> ((StringHttpMessageConverter) c).setDefaultCharset(StandardCharsets.UTF_8));
         return restTemplate;
     }
 }

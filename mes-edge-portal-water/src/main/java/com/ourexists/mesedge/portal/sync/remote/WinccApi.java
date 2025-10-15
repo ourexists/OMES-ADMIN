@@ -10,7 +10,6 @@ import com.alibaba.fastjson2.JSONObject;
 import com.google.common.collect.Maps;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
-import com.ourexists.era.framework.core.utils.DateUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
 import com.ourexists.mesedge.sync.enums.ConnectValidTypeEnum;
@@ -19,17 +18,33 @@ import com.ourexists.mesedge.sync.model.ConnectDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.SSLContext;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +52,6 @@ import java.util.Map;
 @Component
 public class WinccApi {
 
-    @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
@@ -47,24 +61,56 @@ public class WinccApi {
 
     public static final String ARCHIVE_PATH = "/TagLogging/Archive/datalist/values";
 
-    public Datalist pullDatalist(Date begin, Date end) {
-        ConnectDto connect = connect();
-        String url = getUri(connect) + ARCHIVE_PATH;
-        Map<String, String> uriVariables = Maps.newHashMap();
-        uriVariables.put("begin", DateUtil.dateTimeFormat(begin));
-        uriVariables.put("end", DateUtil.dateTimeFormat(end));
+    public WinccApi() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        log.info("构建rest");
+        // 1️⃣ 构建信任所有证书的 SSLContext
+        SSLContext sslContext = SSLContextBuilder.create()
+                .loadTrustMaterial(null, (chain, authType) -> true) // 信任所有
+                .build();
 
-        List<Map<String, List<String>>> body = new ArrayList<>();
+        // 2️⃣ 构建 SSL 连接工厂
+        SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactoryBuilder.create()
+                .setSslContext(sslContext)
+                .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                .build();
+
+        // 3️⃣ 构建 HttpClient
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionManager(
+                        PoolingHttpClientConnectionManagerBuilder.create()
+                                .setSSLSocketFactory(sslSocketFactory)
+                                .build()
+                )
+                .build();
+
+        // 4️⃣ 构建 RequestFactory
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        factory.setConnectTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(30));
+
+        // 5️⃣ 构建 RestTemplate
+        RestTemplate restTemplate = new RestTemplate(factory);
+        restTemplate.getMessageConverters().stream()
+                .filter(c -> c instanceof StringHttpMessageConverter)
+                .forEach(c -> ((StringHttpMessageConverter) c).setDefaultCharset(StandardCharsets.UTF_8));
+        this.restTemplate = restTemplate;
+    }
+
+    public Datalist pullDatalist(LocalDateTime begin, LocalDateTime end) {
+        ConnectDto connect = connect();
+        String url = getUri(connect) + ARCHIVE_PATH + "?begin=" + DateTimeFormatter.ISO_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_DATE_TIME.format(end) + "&maxValues=1";
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
-        for (Field field : Datalist.class.getFields()) {
+        for (Field field : Datalist.class.getDeclaredFields()) {
+            if (field.getName().equals("startTime") || field.getName().equals("endTime") || field.getName().equals("time")) {
+                continue;
+            }
             variableNames.add(field.getName());
         }
         params.put("variableNames", variableNames);
-        body.add(params);
-        log.info("【yg api调用器】[{}]开始调用", url);
-        HttpEntity<String> httpEntity = new HttpEntity<>(JSON.toJSONString(body), httpHeaders(connect));
-        ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.GET, httpEntity, String.class, uriVariables);
+        log.info("【yg api调用器】[{}]开始调用[{}]", url, JSON.toJSONString(params));
+        HttpEntity<String> httpEntity = new HttpEntity<>(JSON.toJSONString(params), httpHeaders(connect));
+        ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
         if (resp.getStatusCode() == HttpStatus.OK) {
             String msg = resp.getBody();
             log.info("【yg api调用器】[{}]调用pullDatalist成功,响应[{}]", url, msg);
@@ -73,20 +119,35 @@ public class WinccApi {
                 return null;
             }
             Datalist datalist = new Datalist();
+            Integer success = 0;
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
-                String field = jsonObject.getString("variableName").replace("_", "");
+                String error = jsonObject.getString("error");
+                if (StringUtils.isNotEmpty(error)) {
+                    continue;
+                }
+                String field = jsonObject.getString("variableName");
                 JSONArray values = jsonObject.getJSONArray("values");
                 if (values == null || values.isEmpty()) {
                     continue;
                 }
                 Float value = values.getFloat(0);
                 try {
-                    Method method = Datalist.class.getMethod("set" + field, Float.class);
-                    method.invoke(datalist, value);
-                } catch (NoSuchMethodException | SecurityException | IllegalAccessException |
+                    String setterName = "set" + field;
+                    Method setter = Arrays.stream(Datalist.class.getMethods())
+                            .filter(m -> m.getName().equalsIgnoreCase(setterName))
+                            .findFirst()
+                            .orElse(null);
+                    if (setter != null) {
+                        setter.invoke(datalist, value);
+                        success++;
+                    }
+                } catch (SecurityException | IllegalAccessException |
                          InvocationTargetException ignored) {
                 }
+            }
+            if (success == 0) {
+                return null;
             }
             return datalist;
         } else {
