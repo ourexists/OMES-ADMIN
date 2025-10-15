@@ -5,7 +5,7 @@
 package com.ourexists.mesedge.portal.task;
 
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
-import com.ourexists.era.framework.core.utils.DateUtil;
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.portal.sync.remote.WinccApi;
 import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 
 @Slf4j
@@ -29,10 +31,17 @@ public class CollectWinCCDatalistTimerTask extends TimerTask {
 
     @Override
     public void doRun() {
-        Date now = new Date();
-        Date startTime = DateUtil.getWarpSecond(now, -59);
+        UserContext.defaultTenant();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = now.minusSeconds(59);
         Datalist datalist = winccApi.pullDatalist(startTime, now);
+        if (datalist == null) {
+            return;
+        }
         try {
+            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
+            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+            datalist.setTime(new Date());
             RemoteHandleUtils.getDataFormResponse(winCCReportFeign.save(Datalist.covert(datalist)));
         } catch (EraCommonException e) {
             log.error(e.getMessage());
