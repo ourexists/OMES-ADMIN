@@ -15,7 +15,7 @@ public class Datalist {
     private Float OD11AerobicTankNitrificationAndAmmonium;
     private Float OD11AerobicTankORP1;
     private Float OD11AnaerobicTankORP;
-    private Float OD11AnaerobicTankORP1;
+    private Float OD11AerobicTankORP2;
     private Float OD11AnoxicTankDO;
     private Float OD11AnoxicTankORP;
     private Float OD11SludgeConcentrationInAerobicTank;
@@ -38,14 +38,35 @@ public class Datalist {
     private Float OD20SecondaryClarifierSludge;
     private Float OD20SludgeConcentrationInAerobicTank;
     private Float WPSflow;
-    private Float WPSinletflow1;
-    private Float WPSinletflow2;
-    private Float WPSinletflow3;
-    private Float WPSinletflow4;
-    private Float WPSinletflow5;
+    private Float WPSinletflow1 = 0f;
+    private Float WPSinletflow2 = 0f;
+    private Float WPSinletflow3 = 0f;
+    private Float WPSinletflow4 = 0f;
+    private Float WPSinletflow5 = 0f;
     private Float WPSinletph;
     private Float WPSinletss;
     private Float WPSoutletflow;
+    private Float wpsOutletFlowTotal = 0f;
+    private Float s107Cod;
+    private Float s107InNh3;
+    private Float wpsTotalFlow1 = 0f;
+    private Float wpsTotalFlow2 = 0f;
+    private Float wpsTotalFlow3 = 0f;
+    private Float wpsTotalFlow4 = 0f;
+    private Float wpsTotalFlow5 = 0f;
+    private Float wpsCoarseScreen1;
+    private Float wpsCoarseScreen2;
+    private Float wpsCoarseScreen3;
+    private Float wpsCoarseScreen4;
+    private Float wpsFineGrid1;
+    private Float wpsFineGrid2;
+    private Float wpsFineGrid3;
+    private Float wpsFineGrid4;
+    private Float s108Nh3;
+    private Float s108OutCod;
+    private Float s108OutPh;
+    private Float s108OutTn;
+    private Float s108OutTh;
     private Date startTime;
     private Date endTime;
     private Date execTime;
@@ -53,6 +74,8 @@ public class Datalist {
     public static WinCCDatalistDto covert(Datalist datalist) {
         WinCCDatalistDto dto = new WinCCDatalistDto();
         BeanUtils.copyProperties(datalist, dto);
+        dto.setWpsTotalFlowTotal(datalist.getWpsTotalFlow1() + datalist.getWpsTotalFlow2() + datalist.getWpsTotalFlow3() + datalist.getWpsTotalFlow4() + datalist.getWpsTotalFlow5());
+        dto.setWPSinletflowTotal(datalist.getWPSinletflow1() + datalist.getWPSinletflow2() + datalist.getWPSinletflow3() + datalist.getWPSinletflow4() + datalist.getWPSinletflow5());
         return dto;
     }
 }

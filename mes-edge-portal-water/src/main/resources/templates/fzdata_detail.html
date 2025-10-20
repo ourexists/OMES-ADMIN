@@ -1,0 +1,187 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/js/tableExport.min.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="matName" id="matName">
+                    <option value="" lang-i18n="report.matName"></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="bh" id="bh">
+                    <option value="" lang-i18n="report.bh"></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="line" id="line">
+                    <option value="" lang-i18n="report.line"></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="common-search" lang-i18n="common.search">Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+<script type="text/html" id="tb-common-toolbar">
+    <div class="layui-row">
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('report.pfName') }}</span><span>: </span><span>{{= row.pf }}</span>
+        </div>
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('fzdata.pno') }}</span><span>: </span><span>{{= row.pno }}</span>
+        </div>
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('fzdata.time') }}</span><span>: </span><span>{{= row.rq }}</span>
+        </div>
+        <div class="layui-col-xs12">
+            <span>{{= i18np.prop('fzdata.productTime') }}</span><span>: </span><span>{{= row.stTime }}</span><span> - </span><span>{{= row.endTime }}</span>
+        </div>
+    </div>
+</script>
+
+<script th:inline="none">
+    var table;
+    var tbData;
+    var row
+    layui.use(['form', 'table', 'dropdown', 'layer', 'util'], function () {
+        table = layui.table;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+        let no = layui.url().search.id;
+
+        row = parent.current_row_data;
+        var p = {
+            'requirePage': false,
+        }
+        post(router.mat_page, p, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#matName').append(new Option(item.name, item.name));
+            })
+            form.render();
+        });
+
+        var customTitleRow =
+            i18np.prop('report.pfName') + ': ' + row.pf + '<br>'
+            + i18np.prop('fzdata.pno') + ': ' + row.pno + '<br>'
+            + i18np.prop('fzdata.time') + ': ' + row.rq + '<br>'
+            + i18np.prop('fzdata.productTime') + ': ' + row.stTime + ' - ' + row.endTime;
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            id: 'tb-common',
+            headers: getCommonHeader(),
+            method: 'POST',
+            toolbar: '#tb-common-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            totalRow: true,
+            title: "fzdata_detail_" + layui.util.toDateString((new Date()), "yyyyMMddHHmmss"),
+            cols: [[
+                {field: 'LAY_INDEX', title: 'NO'},
+                {field: 'tank', title: i18np.prop('fzdata.tank')},
+                {field: 'lm', title: i18np.prop('fzdata.lm')},
+                {field: 'll', title: i18np.prop('fzdata.ll'), totalRow: true},
+                {field: 'sj', title: i18np.prop('fzdata.sj'), totalRow: true},
+                {
+                    field: 'wc', title: i18np.prop('fzdata.wc'), totalRow: true, templet: function (data) {
+                        return parseFloat(data.wc).toFixed(1);
+                    }
+                },
+                {
+                    field: 'lls', title: i18np.prop('fzdata.lls'), templet: function (data) {
+                        return parseFloat(data.lls).toFixed(1);
+                    }
+                },
+                {
+                    field: 'sjs', title: i18np.prop('fzdata.sjs'), templet: function (data) {
+                        return parseFloat(data.sjs).toFixed(1);
+                    }
+                },
+            ]],
+            customTitleRow: customTitleRow,
+            page: false,
+            height: '400px'
+        });
+        let params = {
+            "fzId": no,
+            "requirePage": false
+        }
+        post(router.imrecord_page, params, function (result) {
+            tbData = result == null ? [] : result;
+            reloadTb();
+        })
+
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+
+        // 搜索提交
+        form.on('submit(common-search)', function (data) {
+            let params = {
+                "fzId": no,
+                "requirePage": false,
+                "matName": $('#matName').val(),
+                "bh": $('#bh').val(),
+                "line": $('#line').val(),
+            }
+            post(router.imrecord_page, params, function (result) {
+                tbData = result == null ? [] : result;
+                reloadTb();
+            })
+            return false; // 阻止默认 form 跳转
+        });
+    });
+
+    function reloadTb() {
+        table.reloadData('tb-common', {
+            data: tbData
+        });
+    }
+
+
+</script>
+</body>
+</html>
