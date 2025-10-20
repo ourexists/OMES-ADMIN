@@ -140,7 +140,7 @@ public class WinccApi {
                 JSONObject valuer = values.getJSONObject(0);
                 Float value = valuer.getFloat("value");
                 try {
-                    String setterName = "set" + field;
+                    String setterName = "set" + getMethodName(field);
                     Method setter = Arrays.stream(Datalist.class.getMethods())
                             .filter(m -> m.getName().equalsIgnoreCase(setterName))
                             .findFirst()
@@ -162,6 +162,26 @@ public class WinccApi {
             return null;
         }
     }
+
+    /**
+     * 首字母大写(进行字母的ascii编码前移，效率是最高的)
+     *
+     * @param fieldName 需要转化的字符串
+     */
+    private static String getMethodName(String fieldName) {
+        char[] chars = fieldName.toCharArray();
+        chars[0] = toUpperCase(chars[0]);
+        return String.valueOf(chars);
+    }
+
+
+    private static char toUpperCase(char c) {
+        if (97 <= c && c <= 122) {
+            c ^= 32;
+        }
+        return c;
+    }
+
 
     private HttpHeaders httpHeaders(ConnectDto connect) {
         HttpHeaders httpHeaders = new HttpHeaders();

@@ -66,11 +66,13 @@ era:
         - /
         - /templates/**
         - /view/**
+        - /winCCReport/**
       api_check:
         - /expose/**
         - /
         - /templates/**
         - /view/**
+        - /winCCReport/**
   token:
     store-type: Db
 feign:
