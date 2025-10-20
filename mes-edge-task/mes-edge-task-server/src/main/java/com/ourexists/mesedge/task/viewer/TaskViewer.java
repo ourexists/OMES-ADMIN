@@ -4,6 +4,7 @@
 
 package com.ourexists.mesedge.task.viewer;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
@@ -50,6 +51,14 @@ public class TaskViewer implements TaskFeign {
     @GetMapping("selectById")
     public JsonResponseEntity<TaskVo> selectById(@RequestParam String id) {
         return JsonResponseEntity.success(Task.covert(taskService.getById(id)));
+    }
+
+    @Override
+    @Operation(summary = "type查詢", description = "type查詢")
+    public JsonResponseEntity<TaskVo> selectByType(String type) {
+        return JsonResponseEntity.success(
+                Task.covert(taskService.getOne(new LambdaQueryWrapper<Task>().eq(Task::getType, type).last("limit 1")))
+        );
     }
 
     @Operation(summary = "启用", description = "启用")

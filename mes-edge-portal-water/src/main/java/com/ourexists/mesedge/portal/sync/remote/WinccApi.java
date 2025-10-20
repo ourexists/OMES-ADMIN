@@ -41,7 +41,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,10 +59,9 @@ public class WinccApi {
 
     public static final String SERVER_NAME = "WINCC_API";
 
-    public static final String ARCHIVE_PATH = "/TagLogging/Archive/datalist/values";
+    public static final String ARCHIVE_PATH = "/TagLogging/Archive";
 
     public WinccApi() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        log.info("构建rest");
         // 1️⃣ 构建信任所有证书的 SSLContext
         SSLContext sslContext = SSLContextBuilder.create()
                 .loadTrustMaterial(null, (chain, authType) -> true) // 信任所有
@@ -96,9 +95,9 @@ public class WinccApi {
         this.restTemplate = restTemplate;
     }
 
-    public Datalist pullDatalist(LocalDateTime begin, LocalDateTime end) {
+    public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end) {
         ConnectDto connect = connect();
-        String url = getUri(connect) + ARCHIVE_PATH + "?begin=" + DateTimeFormatter.ISO_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_DATE_TIME.format(end) + "&maxValues=1";
+        String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end) + "&maxValues=1";
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
         for (Field field : Datalist.class.getDeclaredFields()) {
@@ -113,12 +112,19 @@ public class WinccApi {
         ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
         if (resp.getStatusCode() == HttpStatus.OK) {
             String msg = resp.getBody();
-            log.info("【yg api调用器】[{}]调用pullDatalist成功,响应[{}]", url, msg);
+            log.info("【yg api调用器】[{}]调用pullTags成功,响应[{}]", url, msg);
             JSONArray jsonArray = JSON.parseArray(msg);
             if (jsonArray == null || jsonArray.isEmpty()) {
                 return null;
             }
-            Datalist datalist = new Datalist();
+            T r;
+            try {
+                r = clazz.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                log.error("pullDatalist error", e);
+                throw new RuntimeException(e);
+            }
             Integer success = 0;
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -131,7 +137,8 @@ public class WinccApi {
                 if (values == null || values.isEmpty()) {
                     continue;
                 }
-                Float value = values.getFloat(0);
+                JSONObject valuer = values.getJSONObject(0);
+                Float value = valuer.getFloat("value");
                 try {
                     String setterName = "set" + field;
                     Method setter = Arrays.stream(Datalist.class.getMethods())
@@ -139,7 +146,7 @@ public class WinccApi {
                             .findFirst()
                             .orElse(null);
                     if (setter != null) {
-                        setter.invoke(datalist, value);
+                        setter.invoke(r, value);
                         success++;
                     }
                 } catch (SecurityException | IllegalAccessException |
@@ -149,7 +156,7 @@ public class WinccApi {
             if (success == 0) {
                 return null;
             }
-            return datalist;
+            return r;
         } else {
             log.info("【yg api调用器】[{}]调用pullDatalist网络异常,异常码[{}]", url, resp.getStatusCode());
             return null;

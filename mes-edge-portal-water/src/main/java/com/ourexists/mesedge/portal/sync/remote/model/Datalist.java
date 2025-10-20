@@ -48,7 +48,7 @@ public class Datalist {
     private Float WPSoutletflow;
     private Date startTime;
     private Date endTime;
-    private Date time;
+    private Date execTime;
 
     public static WinCCDatalistDto covert(Datalist datalist) {
         WinCCDatalistDto dto = new WinCCDatalistDto();

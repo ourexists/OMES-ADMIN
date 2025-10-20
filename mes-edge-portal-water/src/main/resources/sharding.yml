@@ -1,0 +1,35 @@
+mode:
+  type: Standalone
+  repository:
+    type: JDBC
+dataSources:
+  ds0:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    jdbcUrl: jdbc:mysql://127.0.0.1:3306/dts-ds?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    password: root
+    username: root
+
+rules:
+  - !SHARDING
+    tables:
+      t_wincc_dosing_dev:
+        actualDataNodes: ds0.%s_$->{2020..2521}_$->{01..12}
+        tableStrategy:
+          standard:
+            shardingColumn: created_time
+            shardingAlgorithmName: MONTH_PRECISE
+        keyGenerateStrategy:
+          column: id
+          keyGeneratorName: snowflake
+    shardingAlgorithms:
+      MONTH_PRECISE:
+        type: MONTH_PRECISE
+        props:
+          strategy: STANDARD
+          algorithmClassName: com.ourexists.mesedge.portal.config.MonthShardingAlgorithm
+    keyGenerators:
+      snowflake:
+        type: SNOWFLAKE
+props:
+  sql-show: false

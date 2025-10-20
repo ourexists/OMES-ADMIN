@@ -28,6 +28,9 @@ public interface TaskFeign {
 //    @GetMapping("selectById")
     JsonResponseEntity<TaskVo> selectById(@RequestParam String id);
 
+
+    JsonResponseEntity<TaskVo> selectByType(@RequestParam String type);
+
     //    @Operation(summary = "启用", description = "启用")
 //    @GetMapping("start")
     JsonResponseEntity<Boolean> start(@RequestParam String id);
