@@ -406,6 +406,7 @@
             text: {
                 none: i18np.prop('common.msg.selecttime')
             },
+
             title: "procount_" + layui.util.toDateString((new Date()), "yyyyMMddHHmmss"),
             done: function () {
                 // 行模式
@@ -436,6 +437,10 @@
                     }
                 });
             },
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
             response: {
                 statusName: 'code', //规定返回的状态码字段为code
                 statusCode: 200, //规定成功的状态码味200
@@ -447,8 +452,8 @@
                     "data": res.data,
                 };
             },
-            page: false,
-            height: '450px'
+            page: true,
+            height: '600px'
         });
         // 工具栏事件
         table.on('toolbar(tb-ebs-material)', function (obj) {
@@ -495,10 +500,6 @@
             method: 'POST',
             contentType: 'application/json',
             where: {
-                matName: $('#matName').val(),
-                pfName: $('#pfName').val(),
-                bh: $('#bh').val(),
-                line: $('#line').val(),
                 startDate: $('#startDate').val(),
                 endDate: $('#endDate').val()
             },
