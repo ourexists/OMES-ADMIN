@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("t_collect_wincc_datalist")
+@TableName("t_wincc_datalist")
 public class WinCCDatalist extends EraEntity {
 
     private Float OD11AerobicTankDO;
@@ -50,9 +50,33 @@ public class WinCCDatalist extends EraEntity {
     private Float WPSinletflow3;
     private Float WPSinletflow4;
     private Float WPSinletflow5;
+    private Float WPSinletflowTotal;
     private Float WPSinletph;
     private Float WPSinletss;
     private Float WPSoutletflow;
+    private Float wpsOutletFlowTotal;
+    private Float s107Cod;
+    private Float s107InNh3;
+    private Float wpsTotalFlow1;
+    private Float wpsTotalFlow2;
+    private Float wpsTotalFlow3;
+    private Float wpsTotalFlow4;
+    private Float wpsTotalFlow5;
+    private Float wpsTotalFlowTotal;
+    private Float wpsCoarseScreen1;
+    private Float wpsCoarseScreen2;
+    private Float wpsCoarseScreen3;
+    private Float wpsCoarseScreen4;
+    private Float wpsFineGrid1;
+    private Float wpsFineGrid2;
+    private Float wpsFineGrid3;
+    private Float wpsFineGrid4;
+    private Float s108Nh3;
+    private Float s108OutCod;
+    private Float s108OutPh;
+    private Float s108OutTn;
+    private Float s108OutTh;
+
     private Date startTime;
     private Date endTime;
     private Date execTime;
