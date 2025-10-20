@@ -47,5 +47,5 @@ public class WinCCDatalistDto {
     private Float WPSoutletflow;
     private Date startTime;
     private Date endTime;
-    private Date time;
+    private Date execTime;
 }

@@ -43,4 +43,39 @@ public class ViewController {
     public String sync_form_edit() {
         return "sync_form_edit";
     }
+
+    @RequestMapping("/view/report_datalist_tables")
+    public String report_datalist_tables() {
+        return "report_datalist_tables";
+    }
+
+    @RequestMapping("/view/report_mag_tables")
+    public String report_mag_tables() {
+        return "report_mag_tables";
+    }
+
+    @RequestMapping("/view/report_wps_tables")
+    public String report_wps_tables() {
+        return "report_wps_tables";
+    }
+
+    @RequestMapping("/view/report_dosing_tables")
+    public String report_dosing_tables() {
+        return "report_dosing_tables";
+    }
+
+    @RequestMapping("/view/report_od11_tables")
+    public String report_od11_tables() {
+        return "report_od11_tables";
+    }
+
+    @RequestMapping("/view/report_od12_tables")
+    public String report_od12_tables() {
+        return "report_od12_tables";
+    }
+
+    @RequestMapping("/view/report_od20_tables")
+    public String report_od20_tables() {
+        return "report_od20_tables";
+    }
 }
