@@ -19,6 +19,7 @@ public class Datalist {
     private Float OD11AnoxicTankDO;
     private Float OD11AnoxicTankORP;
     private Float OD11SludgeConcentrationInAerobicTank;
+    private Float OD11SecondaryClarifierSludge;
     private Float OD12AerobicTankDO;
     private Float OD12AerobicTankNitrificationAndAmmonium;
     private Float OD12AerobicTankORP1;

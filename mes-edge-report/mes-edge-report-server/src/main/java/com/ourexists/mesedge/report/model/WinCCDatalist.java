@@ -21,11 +21,12 @@ public class WinCCDatalist extends EraEntity {
     private Float OD11AerobicTankDO;
     private Float OD11AerobicTankNitrificationAndAmmonium;
     private Float OD11AerobicTankORP1;
+    private Float OD11AerobicTankORP2;
     private Float OD11AnaerobicTankORP;
-    private Float OD11AnaerobicTankORP1;
     private Float OD11AnoxicTankDO;
     private Float OD11AnoxicTankORP;
     private Float OD11SludgeConcentrationInAerobicTank;
+    private Float OD11SecondaryClarifierSludge;
     private Float OD12AerobicTankDO;
     private Float OD12AerobicTankNitrificationAndAmmonium;
     private Float OD12AerobicTankORP1;
