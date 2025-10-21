@@ -104,10 +104,14 @@ public class WinccApi {
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
-            if (field.getName().equals("startTime") || field.getName().equals("endTime") || field.getName().equals("execTime")) {
+            if (field.getName().equals("startTime") || field.getName().equals("endTime") || field.getName().equals("execTime")
+                    || field.getName().equals("id")) {
                 continue;
             }
             variableNames.add(field.getName());
+            if (alarm) {
+                variableNames.add(field.getName() + "Alarm");
+            }
         }
         params.put("variableNames", variableNames);
         log.info("【yg api调用器】[{}]开始调用[{}]", url, JSON.toJSONString(params));
