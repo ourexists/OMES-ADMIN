@@ -16,7 +16,7 @@
 <body>
 <div class="layui-tab-content" style="padding: 15px;">
     <form class="layui-form layui-row layui-col-space16">
-        <div class="layui-col-md4">
+        <div class="layui-col-md8">
             <div class="layui-form-item">
                 <div class="layui-inline">
                     <div class="layui-inline" id="timeduration">
@@ -80,8 +80,8 @@
                 // 第一行表头
                 [
                     {field: 'LAY_INDEX', title: 'NO', rowspan: 3, width: 40},
-                    {field: 'execTime', title: i18np.prop('common.time'), rowspan: 3, width: 100},
-                    {title: i18np.prop('report.datalist.inlet'), colspan: 7, rowspan: 2, align: 'center'},
+                    {field: 'execTime', title: i18np.prop('common.time'), rowspan: 3, width: 160},
+                    {title: i18np.prop('report.datalist.inlet'), colspan: 9, rowspan: 2, align: 'center'},
                     {title: i18np.prop('report.datalist.OD11'), colspan: 9, align: 'center'},
                     {title: i18np.prop('report.datalist.OD12'), colspan: 9, align: 'center'},
                     {title: i18np.prop('report.datalist.OD20'), colspan: 9, align: 'center'},
@@ -107,10 +107,13 @@
                     {title: i18np.prop('report.datalist.OD20Secondary'), colspan: 1, align: 'center'},
                 ],
                 [
-                    {field: 'wpsinletph', title: i18np.prop('report.datalist.WPSinletph'), width: 140, align: 'center'},
-                    {field: 'wpsinletss', title: i18np.prop('report.datalist.WPSinletss'), width: 140, align: 'center'},
+
                     {field: 's107Cod', title: i18np.prop('report.datalist.s107Cod'), width: 140, align: 'center'},
                     {field: 's107InNh3', title: i18np.prop('report.datalist.s107InNh3'), width: 140, align: 'center'},
+                    {field: 'inletInTn', title: i18np.prop('report.datalist.inletInTn'), width: 140, align: 'center'},
+                    {field: 'inletInTp', title: i18np.prop('report.datalist.inletInTp'), width: 140, align: 'center'},
+                    {field: 'wpsinletph', title: i18np.prop('report.datalist.WPSinletph'), width: 140, align: 'center'},
+                    {field: 'wpsinletss', title: i18np.prop('report.datalist.WPSinletss'), width: 140, align: 'center'},
                     // {
                     //     field: 'WPSinletflow1',
                     //     title: i18np.prop('report.datalist.WPSinletflow1'),
@@ -449,11 +452,14 @@
                 return {
                     "code": res.code,
                     "msg": res.msg,
+                    "count": res.pagination.total,
                     "data": res.data,
                 };
             },
+            limit: 10,
+            limits: [10, 20, 50, 100, 5000],
             page: true,
-            height: '600px'
+            height: '550px'
         });
         // 工具栏事件
         table.on('toolbar(tb-ebs-material)', function (obj) {

@@ -1,0 +1,515 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>数据表格页面</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md8">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <div class="layui-inline" id="timeduration">
+                        <div class="layui-input-inline">
+                            <input type="text" autocomplete="off" id="startDate" class="layui-input"
+                                   lang-i18n="common.starttime">
+                        </div>
+                        <div class="layui-form-mid">-</div>
+                        <div class="layui-input-inline">
+                            <input type="text" autocomplete="off" id="endDate" class="layui-input"
+                                   lang-i18n="common.endtime">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="ebs-material-search" lang-i18n="common.search">Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
+    <table class="layui-hide" id="tb-ebs-material"></table>
+</div>
+<script type="text/html" id="material-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="detail">
+            <i class="layui-icon layui-icon-eye"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="material-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
+            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
+            <i class="layui-icon layui-icon-down layui-font-12"></i>
+        </button>
+    </div>
+</script>
+
+<script th:inline="none">
+    var table
+
+    layui.use(function () {
+        table = layui.table;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+        var laydate = layui.laydate;
+
+        laydate.render({
+            elem: '#timeduration',
+            range: ['#startDate', '#endDate'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+
+
+        var default_param = {
+            cols: [
+                [
+                    {field: 'LAY_INDEX', title: 'NO', rowspan: 3, width: 40},
+                    {
+                        field: 'od11ExcessSludgePump',
+                        title: i18np.prop('report.od11.od11ExcessSludgePump'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            if (d.od11ExcessSludgePump == null) {
+                                return ''
+                            }
+                            var r = d.od11ExcessSludgePump
+                            if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11FillerPusher1',
+                        title: i18np.prop('report.od11.od11FillerPusher1'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            if (d.od11FillerPusher1 == null) {
+                                return ''
+                            }
+                            var r = d.od11FillerPusher1
+                            if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11FillerPusher2',
+                        title: i18np.prop('report.od11.od11FillerPusher2'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            if (d.od11FillerPusher2 == null) {
+                                return ''
+                            }
+                            var r = d.od11FillerPusher2
+                            if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11FillerPusher3',
+                        title: i18np.prop('report.od11.od11FillerPusher3'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            if (d.od11FillerPusher3 == null) {
+                                return ''
+                            }
+                            var r = d.od11FillerPusher3
+                            if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11FillerPusher4',
+                        title: i18np.prop('report.od11.od11FillerPusher4'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            if (d.od11FillerPusher4 == null) {
+                                return ''
+                            }
+                            var r = d.od11FillerPusher4
+                            if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11NitrifyingLiquidRefluxPump1',
+                        title: i18np.prop('report.od11.od11NitrifyingLiquidRefluxPump1'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11NitrifyingLiquidRefluxPump1
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11NitrifyingLiquidRefluxPump2',
+                        title: i18np.prop('report.od11.od11NitrifyingLiquidRefluxPump2'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11NitrifyingLiquidRefluxPump2
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11NitrifyingLiquidRefluxPump3',
+                        title: i18np.prop('report.od11.od11NitrifyingLiquidRefluxPump3'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11NitrifyingLiquidRefluxPump3
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SludgeReturnPump1',
+                        title: i18np.prop('report.od11.od11SludgeReturnPump1'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SludgeReturnPump1
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SludgeReturnPump2',
+                        title: i18np.prop('report.od11.od11SludgeReturnPump2'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SludgeReturnPump2
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SludgeReturnPump3',
+                        title: i18np.prop('report.od11.od11SludgeReturnPump3'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SludgeReturnPump3
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SubmersibleMixer1',
+                        title: i18np.prop('report.od11.od11SubmersibleMixer1'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SubmersibleMixer1
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SubmersibleMixer2',
+                        title: i18np.prop('report.od11.od11SubmersibleMixer2'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SubmersibleMixer2
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SubmersibleMixer3',
+                        title: i18np.prop('report.od11.od11SubmersibleMixer3'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SubmersibleMixer3
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SubmersibleMixer4',
+                        title: i18np.prop('report.od11.od11SubmersibleMixer4'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SubmersibleMixer4
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SubmersibleMixer5',
+                        title: i18np.prop('report.od11.od11SubmersibleMixer5'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SubmersibleMixer5
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    {
+                        field: 'od11SuctionDredge',
+                        title: i18np.prop('report.od11.od11SuctionDredge'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.od11SuctionDredge
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                ]],
+            toolbar: '#material-toolbar',
+            defaultToolbar: ['filter', 'exports'],
+        }
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-ebs-material',
+            data: [],
+            toolbar: default_param.toolbar,
+            defaultToolbar: default_param.defaultToolbar,
+            cols: default_param.cols,
+            totalRow: true,
+            text: {
+                none: i18np.prop('common.msg.selecttime')
+            },
+
+            title: "procount_" + layui.util.toDateString((new Date()), "yyyyMMddHHmmss"),
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-ebs-material', {
+                                    lineStyle: null // 恢复单行
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-ebs-material', {
+                                    // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "count": res.pagination.total,
+                    "data": res.data,
+                };
+            },
+            limit: 10,
+            limits: [10, 20, 50, 100, 5000],
+            page: true,
+            height: '600px'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-ebs-material)', function (obj) {
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    var getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+            }
+        });
+
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-ebs-material');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+
+        // 搜索提交
+        form.on('submit(ebs-material-search)', function (data) {
+            if ($('#startDate').val() == null || $('#startDate').val() == ''
+                || $('#endDate').val() == null || $('#endDate').val() == '') {
+                layer.alert(i18np.prop('common.msg.selecttime'));
+                return false;
+            }
+            reloadMaterialTb();
+            return false; // 阻止默认 form 跳转
+        });
+    })
+    ;
+
+    function reloadMaterialTb() {
+        table.reloadData('tb-ebs-material', {
+            url: initRequestUrl(router.report_od11_Page),
+            headers: getCommonHeader(),
+            method: 'POST',
+            contentType: 'application/json',
+            where: {
+                startDate: $('#startDate').val(),
+                endDate: $('#endDate').val()
+            },
+        });
+    }
+
+
+</script>
+</body>
+</html>

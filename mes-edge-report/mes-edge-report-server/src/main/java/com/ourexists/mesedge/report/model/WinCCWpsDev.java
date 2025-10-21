@@ -18,22 +18,22 @@ import java.util.List;
 @TableName("t_wincc_wps_dev")
 public class WinCCWpsDev extends EraEntity {
 
-    private Boolean wpsCirculatingCleaning1;
-    private Boolean wpsSandPump1;
-    private Boolean wpsBarScreen1;
-    private Boolean wpsMixer1;
-    private Boolean wpsSewagePump1;
-    private Boolean wpsScrewConveyor1;
-    private Boolean wpsCirculatingCleaning2;
-    private Boolean wpsSandPump2;
-    private Boolean wpsBarScreen2;
-    private Boolean wpsMixer2;
-    private Boolean wpsSewagePump2;
-    private Boolean wpsScrewConveyor2;
-    private Boolean wpsSewagePump3;
-    private Boolean wpsSewagePump4;
-    private Boolean wpsSewagePump5;
-    private Boolean wpsSandSeparator;
+    private Integer wpsCirculatingCleaning1;
+    private Integer wpsSandPump1;
+    private Integer wpsBarScreen1;
+    private Integer wpsMixer1;
+    private Integer wpsSewagePump1;
+    private Integer wpsScrewConveyor1;
+    private Integer wpsCirculatingCleaning2;
+    private Integer wpsSandPump2;
+    private Integer wpsBarScreen2;
+    private Integer wpsMixer2;
+    private Integer wpsSewagePump2;
+    private Integer wpsScrewConveyor2;
+    private Integer wpsSewagePump3;
+    private Integer wpsSewagePump4;
+    private Integer wpsSewagePump5;
+    private Integer wpsSandSeparator;
     private Date startTime;
     private Date endTime;
     private Date execTime;

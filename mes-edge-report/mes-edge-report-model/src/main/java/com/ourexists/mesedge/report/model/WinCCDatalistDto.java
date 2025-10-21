@@ -50,6 +50,8 @@ public class WinCCDatalistDto {
     private Float wpsOutletFlowTotal = 0f;
     private Float s107Cod;
     private Float s107InNh3;
+    private Float inletInTn;
+    private Float inletInTp;
     private Float wpsTotalFlow1 = 0f;
     private Float wpsTotalFlow2 = 0f;
     private Float wpsTotalFlow3 = 0f;

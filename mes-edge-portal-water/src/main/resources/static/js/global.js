@@ -124,10 +124,12 @@ var router = {
     "dev_enable": "/device/enable",
     "dev_disable": "/device/disable",
     "report_datalist_page": "/winCCReport/selectDataListByPage",
-    "fzdata_page": "/fzdata/selectByPage",
-    "imrecord_page": "/lmrecord/selectByPage",
-    "fzdata_allpf": "/fzdata/allPFName",
-    "report_product": "/report/productionCount",
+    "report_dosing_Page": "/winCCReport/selectDosingByPage",
+    "report_mag_Page": "/winCCReport/selectMagByPage",
+    "report_od11_Page": "/winCCReport/selectOd11ByPage",
+    "report_od12_Page": "/winCCReport/selectOd12ByPage",
+    "report_od20_Page": "/winCCReport/selectOd20ByPage",
+    "report_wps_Page": "/winCCReport/selectWpsByPage",
 }
 
 function getCommonHeader() {
