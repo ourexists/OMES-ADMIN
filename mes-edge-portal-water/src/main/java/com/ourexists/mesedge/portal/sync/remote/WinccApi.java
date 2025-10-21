@@ -96,6 +96,10 @@ public class WinccApi {
     }
 
     public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end) {
+        return pullTags(tagGroupName, clazz, begin, end, false);
+    }
+
+    public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end, boolean alarm) {
         ConnectDto connect = connect();
         String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end) + "&maxValues=1";
         Map<String, List<String>> params = Maps.newHashMap();
@@ -125,7 +129,7 @@ public class WinccApi {
                 log.error("pullDatalist error", e);
                 throw new RuntimeException(e);
             }
-            Integer success = 0;
+            int success = 0;
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 String error = jsonObject.getString("error");
@@ -155,6 +159,43 @@ public class WinccApi {
             }
             if (success == 0) {
                 return null;
+            }
+
+            //处理报警交集
+            if (alarm) {
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    String error = jsonObject.getString("error");
+                    if (StringUtils.isNotEmpty(error)) {
+                        continue;
+                    }
+                    String field = jsonObject.getString("variableName");
+                    if (field.endsWith("Alarm")) {
+                        JSONArray values = jsonObject.getJSONArray("values");
+                        if (values == null || values.isEmpty()) {
+                            continue;
+                        }
+                        JSONObject valuer = values.getJSONObject(0);
+                        boolean value = valuer.getBooleanValue("value");
+                        if (!value) {
+                            continue;
+                        }
+                        try {
+                            field = field.replace("Alarm", "");
+                            String setterName = "set" + getMethodName(field);
+                            Method setter = Arrays.stream(Datalist.class.getMethods())
+                                    .filter(m -> m.getName().equalsIgnoreCase(setterName))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (setter != null) {
+                                setter.invoke(r, 3);
+                                success++;
+                            }
+                        } catch (SecurityException | IllegalAccessException |
+                                 InvocationTargetException ignored) {
+                        }
+                    }
+                }
             }
             return r;
         } else {

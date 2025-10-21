@@ -77,6 +77,8 @@ public class WinCCDatalist extends EraEntity {
     private Float s108OutPh;
     private Float s108OutTn;
     private Float s108OutTh;
+    private Float inletInTn;
+    private Float inletInTp;
 
     private Date startTime;
     private Date endTime;
