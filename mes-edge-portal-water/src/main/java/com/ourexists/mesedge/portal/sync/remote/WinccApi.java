@@ -104,7 +104,7 @@ public class WinccApi {
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
-            if (field.getName().equals("startTime") || field.getName().equals("endTime") || field.getName().equals("time")) {
+            if (field.getName().equals("startTime") || field.getName().equals("endTime") || field.getName().equals("execTime")) {
                 continue;
             }
             variableNames.add(field.getName());
