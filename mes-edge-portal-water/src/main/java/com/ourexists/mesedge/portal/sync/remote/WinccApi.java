@@ -11,7 +11,6 @@ import com.google.common.collect.Maps;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
 import com.ourexists.mesedge.sync.enums.ConnectValidTypeEnum;
 import com.ourexists.mesedge.sync.feign.ConnectFeign;
 import com.ourexists.mesedge.sync.model.ConnectDto;
@@ -104,7 +103,7 @@ public class WinccApi {
         String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end) + "&maxValues=1";
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
-        for (Field field : Datalist.class.getDeclaredFields()) {
+        for (Field field : clazz.getDeclaredFields()) {
             if (field.getName().equals("startTime") || field.getName().equals("endTime") || field.getName().equals("time")) {
                 continue;
             }
@@ -126,7 +125,7 @@ public class WinccApi {
                 r = clazz.getDeclaredConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
                      NoSuchMethodException e) {
-                log.error("pullDatalist error", e);
+                log.error("pullTags error", e);
                 throw new RuntimeException(e);
             }
             int success = 0;
@@ -145,7 +144,7 @@ public class WinccApi {
                 Float value = valuer.getFloat("value");
                 try {
                     String setterName = "set" + getMethodName(field);
-                    Method setter = Arrays.stream(Datalist.class.getMethods())
+                    Method setter = Arrays.stream(clazz.getMethods())
                             .filter(m -> m.getName().equalsIgnoreCase(setterName))
                             .findFirst()
                             .orElse(null);
@@ -183,7 +182,7 @@ public class WinccApi {
                         try {
                             field = field.replace("Alarm", "");
                             String setterName = "set" + getMethodName(field);
-                            Method setter = Arrays.stream(Datalist.class.getMethods())
+                            Method setter = Arrays.stream(clazz.getMethods())
                                     .filter(m -> m.getName().equalsIgnoreCase(setterName))
                                     .findFirst()
                                     .orElse(null);
@@ -199,7 +198,7 @@ public class WinccApi {
             }
             return r;
         } else {
-            log.info("【yg api调用器】[{}]调用pullDatalist网络异常,异常码[{}]", url, resp.getStatusCode());
+            log.info("【yg api调用器】[{}]调用WINCC_REST归档网络异常,异常码[{}]", url, resp.getStatusCode());
             return null;
         }
     }
