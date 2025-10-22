@@ -119,7 +119,7 @@ public class WinccApi {
         ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
         if (resp.getStatusCode() == HttpStatus.OK) {
             String msg = resp.getBody();
-            log.info("【yg api调用器】[{}]调用pullTags成功,响应[{}]", url, msg);
+            log.info("【yg api调用器】[{}]调用pullTags成功", url);
             JSONArray jsonArray = JSON.parseArray(msg);
             if (jsonArray == null || jsonArray.isEmpty()) {
                 return null;
