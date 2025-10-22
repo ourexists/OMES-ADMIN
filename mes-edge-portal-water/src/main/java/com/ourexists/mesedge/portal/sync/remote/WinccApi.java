@@ -145,7 +145,18 @@ public class WinccApi {
                     continue;
                 }
                 JSONObject valuer = values.getJSONObject(0);
-                Float value = valuer.getFloat("value");
+                String vals = valuer.getString("value");
+                Object value;
+                try {
+                    value = Float.parseFloat(vals);
+                } catch (NumberFormatException e) {
+                    boolean b = Boolean.parseBoolean(vals);
+                    if (b) {
+                        value = 1;
+                    } else {
+                        value = 0;
+                    }
+                }
                 try {
                     String setterName = "set" + getMethodName(field);
                     Method setter = Arrays.stream(clazz.getMethods())
