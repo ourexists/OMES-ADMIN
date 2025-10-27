@@ -73,12 +73,16 @@ public class Datalist {
     private Date startTime;
     private Date endTime;
     private Date execTime;
+    private Float od12InputFowRate;
+    private Float od20InputFowRate;
+    private Float od12InputletCumulativeFlow;
+    private Float od20InputletCumulativeFlow;
 
     public static WinCCDatalistDto covert(Datalist datalist) {
         WinCCDatalistDto dto = new WinCCDatalistDto();
         BeanUtils.copyProperties(datalist, dto);
-        dto.setWpsTotalFlowTotal(datalist.getWpsTotalFlow1() + datalist.getWpsTotalFlow2() + datalist.getWpsTotalFlow3() + datalist.getWpsTotalFlow4() + datalist.getWpsTotalFlow5());
-        dto.setWPSinletflowTotal(datalist.getWPSinletflow1() + datalist.getWPSinletflow2() + datalist.getWPSinletflow3() + datalist.getWPSinletflow4() + datalist.getWPSinletflow5());
+        dto.setWpsTotalFlowTotal(datalist.getOd12InputletCumulativeFlow() + datalist.getOd20InputletCumulativeFlow());
+        dto.setWPSinletflowTotal(datalist.getOd12InputFowRate() + datalist.getOd20InputFowRate());
         return dto;
     }
 }
