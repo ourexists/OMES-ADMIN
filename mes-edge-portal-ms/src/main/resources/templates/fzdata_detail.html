@@ -138,6 +138,11 @@
                         return parseFloat(data.sjs).toFixed(1);
                     }
                 },
+                {
+                    field: 'wcs', title: i18np.prop('fzdata.wcs'), templet: function (data) {
+                        return parseFloat(data.wcs).toFixed(1);
+                    }
+                },
             ]],
             customTitleRow: customTitleRow,
             page: false,
