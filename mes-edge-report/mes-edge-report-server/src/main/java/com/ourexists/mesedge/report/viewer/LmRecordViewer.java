@@ -41,9 +41,9 @@ public class LmRecordViewer implements LmRecordFeign {
             for (LmRecordDto lmRecordDto : r) {
                 lmRecordDto.setLls(lmRecordDto.getLl() * 100 / llt);
                 lmRecordDto.setSjs(lmRecordDto.getSj() * 100 / sjt);
+                lmRecordDto.setWcs(lmRecordDto.getWc() * 100 / lmRecordDto.getLl());
             }
         }
         return JsonResponseEntity.success(r, OrmUtils.extraPagination(page));
     }
-
 }

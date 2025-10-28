@@ -43,4 +43,6 @@ public class LmRecordDto {
 
     private Float sjs;
 
+    private Float wcs;
+
 }

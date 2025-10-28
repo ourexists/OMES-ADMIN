@@ -247,8 +247,16 @@
     })
     ;
 
+    function getCustomTitle() {
+        return i18np.prop('common.msg.time') + ': ' + $('#startDate').val() + ' - ' + $('#endDate').val() + '<br>'
+            + i18np.prop('report.matName') + ': ' + $('#matName').val() + '<br>'
+            + i18np.prop('report.pfName') + ': ' + $('#pfName').val() + '<br>'
+            + i18np.prop('report.bh') + ': ' + $('#bh').val() + '<br>'
+            + i18np.prop('report.line') + ': ' + $('#line').val() + '<br>'
+    }
+
     function reloadMaterialTb() {
-        table.reloadData('tb-ebs-material', {
+        table.reload('tb-ebs-material', {
             url: initRequestUrl(router.report_product),
             headers: getCommonHeader(),
             method: 'POST',
@@ -261,6 +269,7 @@
                 startDate: $('#startDate').val(),
                 endDate: $('#endDate').val()
             },
+            customTitleRow: getCustomTitle(),
         });
     }
 

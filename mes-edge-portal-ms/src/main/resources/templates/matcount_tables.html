@@ -97,7 +97,27 @@
         </a>
     </div>
 </script>
+<!--<script type="text/html" id="tpl">-->
+<!--    <div class="layui-col-xs12">-->
+<!--        <span>{{=  i18np.prop('common.msg.time')  }}</span><span>: </span><span>{{ d.startDate }}</span><span> - </span><span>{{ d.endDate }}</span>-->
+<!--    </div>-->
+<!--    <div class="layui-col-xs12">-->
+<!--        <span>{{=  i18np.prop('report.matName')  }}</span><span>: </span><span>{{ d.matName }}</span>-->
+<!--    </div>-->
+<!--    <div class="layui-col-xs12">-->
+<!--        <span>{{=  i18np.prop('report.pfName')  }}</span><span>: </span><span>{{ d.pfName }}</span>-->
+<!--    </div>-->
+<!--    <div class="layui-col-xs12">-->
+<!--        <span>{{=  i18np.prop('report.bh')  }}</span><span>: </span><span>{{ d.bh }}</span>-->
+<!--    </div>-->
+<!--    <div class="layui-col-xs12">-->
+<!--        <span>{{=  i18np.prop('report.line')  }}</span><span>: </span><span>{{ d.line }}</span>-->
+<!--    </div>-->
+<!--</script>-->
 <script type="text/html" id="material-toolbar">
+    <!--    <div class="layui-row">-->
+    <!--        <div id="view"></div>-->
+    <!--    </div>-->
     <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
             <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
@@ -106,15 +126,19 @@
     </div>
 </script>
 
+
 <script th:inline="none">
     var current_row_data;
     var table
-
+    var laytpl
     layui.use(function () {
         table = layui.table;
         var form = layui.form;
         var dropdown = layui.dropdown;
         var laydate = layui.laydate;
+
+        laytpl = layui.laytpl;
+
 
         laydate.render({
             elem: '#timeduration',
@@ -142,6 +166,7 @@
             })
             form.render();
         });
+
 
         var default_param = {
             cols: [[
@@ -248,20 +273,34 @@
     })
     ;
 
+    function getCustomTitle() {
+        return i18np.prop('common.msg.time') + ': ' + $('#startDate').val() + ' - ' + $('#endDate').val() + '<br>'
+            + i18np.prop('report.matName') + ': ' + $('#matName').val() + '<br>'
+            + i18np.prop('report.pfName') + ': ' + $('#pfName').val() + '<br>'
+            + i18np.prop('report.bh') + ': ' + $('#bh').val() + '<br>'
+            + i18np.prop('report.line') + ': ' + $('#line').val() + '<br>'
+    }
+
     function reloadMaterialTb() {
-        table.reloadData('tb-ebs-material', {
+        var params = {
+            matName: $('#matName').val(),
+            pfName: $('#pfName').val(),
+            bh: $('#bh').val(),
+            line: $('#line').val(),
+            startDate: $('#startDate').val(),
+            endDate: $('#endDate').val()
+        };
+        table.reload('tb-ebs-material', {
             url: initRequestUrl(router.report_mat),
             headers: getCommonHeader(),
             method: 'POST',
-            where: {
-                matName: $('#matName').val(),
-                pfName: $('#pfName').val(),
-                bh: $('#bh').val(),
-                line: $('#line').val(),
-                startDate: $('#startDate').val(),
-                endDate: $('#endDate').val()
-            },
+            where: params,
+            customTitleRow: getCustomTitle(),
         });
+        // // 渲染前获取页面元素值
+        // laytpl($('#tpl').html()).render(params, function (html) {
+        //     $('#view').html(html);
+        // });
     }
 
 

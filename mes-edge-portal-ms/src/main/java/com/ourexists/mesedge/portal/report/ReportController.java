@@ -6,7 +6,10 @@ package com.ourexists.mesedge.portal.report;
 
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.report.feign.ReportFeign;
-import com.ourexists.mesedge.report.model.*;
+import com.ourexists.mesedge.report.model.MatCountQuery;
+import com.ourexists.mesedge.report.model.MatCountVo;
+import com.ourexists.mesedge.report.model.ProductionCountQuery;
+import com.ourexists.mesedge.report.model.ProductionCountVo;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
