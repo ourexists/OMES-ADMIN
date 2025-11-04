@@ -80,8 +80,17 @@
                 // 第一行表头
                 [
                     {field: 'LAY_INDEX', title: 'NO', rowspan: 3, width: 40},
-                    {field: 'execTime', title: i18np.prop('common.time'), rowspan: 3, width: 160},
-                    {title: i18np.prop('report.datalist.inlet'), colspan: 9, rowspan: 2, align: 'center'},
+                    {
+                        field: 'execTime', title: i18np.prop('common.time'), rowspan: 3, width: 160,
+                        totalRow: '合计',
+                        avgRow: '平均值',
+                        minRow: '最小值',
+                        maxRow: '最大值'
+                    },
+                    {
+                        title: i18np.prop('report.datalist.inlet'), colspan: 9, rowspan: 2, align: 'center',
+
+                    },
                     {title: i18np.prop('report.datalist.OD11'), colspan: 9, align: 'center'},
                     {title: i18np.prop('report.datalist.OD12'), colspan: 9, align: 'center'},
                     {title: i18np.prop('report.datalist.OD20'), colspan: 9, align: 'center'},
@@ -90,7 +99,11 @@
                 [
                     // {title: i18np.prop('report.datalist.inlet'), colspan: 17, align: 'center'},
                     // {title: i18np.prop('report.datalist.inletd'), colspan: 10, align: 'center'},
-                    {title: i18np.prop('report.datalist.OD11AnaerobicTank'), colspan: 1, align: 'center'},
+                    {
+                        title: i18np.prop('report.datalist.OD11AnaerobicTank'),
+                        colspan: 1,
+                        align: 'center'
+                    },
                     {title: i18np.prop('report.datalist.OD11AerobicTank1'), colspan: 3, align: 'center'},
                     {title: i18np.prop('report.datalist.OD11AnoxicTank'), colspan: 2, align: 'center'},
                     {title: i18np.prop('report.datalist.OD11AerobicTank2'), colspan: 2, align: 'center'},
@@ -108,12 +121,38 @@
                 ],
                 [
 
-                    {field: 's107Cod', title: i18np.prop('report.datalist.s107Cod'), width: 140, align: 'center'},
-                    {field: 's107InNh3', title: i18np.prop('report.datalist.s107InNh3'), width: 140, align: 'center'},
-                    {field: 'inletInTn', title: i18np.prop('report.datalist.inletInTn'), width: 140, align: 'center'},
-                    {field: 'inletInTp', title: i18np.prop('report.datalist.inletInTp'), width: 140, align: 'center'},
-                    {field: 'wpsinletph', title: i18np.prop('report.datalist.WPSinletph'), width: 140, align: 'center'},
-                    {field: 'wpsinletss', title: i18np.prop('report.datalist.WPSinletss'), width: 140, align: 'center'},
+                    {
+                        field: 's107Cod', title: i18np.prop('report.datalist.s107Cod'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
+                    },
+                    {field: 's107InNh3', title: i18np.prop('report.datalist.s107InNh3'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true},
+                    {field: 'inletInTn', title: i18np.prop('report.datalist.inletInTn'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true},
+                    {field: 'inletInTp', title: i18np.prop('report.datalist.inletInTp'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true},
+                    {field: 'wpsinletph', title: i18np.prop('report.datalist.WPSinletph'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true},
+                    {field: 'wpsinletss', title: i18np.prop('report.datalist.WPSinletss'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true},
                     // {
                     //     field: 'WPSinletflow1',
                     //     title: i18np.prop('report.datalist.WPSinletflow1'),
@@ -148,7 +187,11 @@
                         field: 'wpsinletflowTotal',
                         title: i18np.prop('report.datalist.WPSinletTotal'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     // {
                     //     field: 'wpsTotalFlow1',
@@ -184,9 +227,17 @@
                         field: 'wpsTotalFlowTotal',
                         title: i18np.prop('report.datalist.wpsTotalFlowTotal'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
-                    {field: 'wpsflow', title: i18np.prop('report.datalist.WPSflow'), width: 140, align: 'center'},
+                    {field: 'wpsflow', title: i18np.prop('report.datalist.WPSflow'), width: 140, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true},
                     // {field: 'wpsCoarseScreen1', title: i18np.prop('report.datalist.wpsCoarseScreen1'), width: 100, align: 'center'},
                     // {field: 'wpsCoarseScreen2', title: i18np.prop('report.datalist.wpsCoarseScreen2'), width: 100, align: 'center'},
                     // {field: 'wpsCoarseScreen3', title: i18np.prop('report.datalist.wpsCoarseScreen3'), width: 100, align: 'center'},
@@ -199,199 +250,335 @@
                         field: 'od11AnaerobicTankORP',
                         title: i18np.prop('report.datalist.OD11AnaerobicTankORP'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11AerobicTankORP1',
                         title: i18np.prop('report.datalist.OD11AerobicTankORP1'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11AerobicTankDO', title: i18np.prop('report.datalist.OD11AerobicTankDO'), width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11AerobicTankNitrificationAndAmmonium',
                         title: i18np.prop('report.datalist.OD11AerobicTankNitrificationAndAmmonium'), width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11AnoxicTankORP',
                         title: i18np.prop('report.datalist.OD11AnoxicTankORP'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11AnoxicTankDO',
                         title: i18np.prop('report.datalist.OD11AnoxicTankDO'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od11AerobicTankORP2',
                         title: i18np.prop('report.datalist.OD11AerobicTankORP2'),
-                        width: 100, align: 'center'
+                        width: 100, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11SludgeConcentrationInAerobicTank',
                         title: i18np.prop('report.datalist.OD11SludgeConcentrationInAerobicTank'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od11SecondaryClarifierSludge',
-                        title: i18np.prop('report.datalist.OD11SecondaryClarifierSludge'), width: 100, align: 'center'
+                        title: i18np.prop('report.datalist.OD11SecondaryClarifierSludge'), width: 100, align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od12AnaerobicTankORP',
                         title: i18np.prop('report.datalist.OD12AnaerobicTankORP'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od12AerobicTankORP1',
                         title: i18np.prop('report.datalist.OD12AerobicTankORP1'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od12AerobicTankDO', title: i18np.prop('report.datalist.OD12AerobicTankDO'), width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od12AerobicTankNitrificationAndAmmonium',
                         title: i18np.prop('report.datalist.OD12AerobicTankNitrificationAndAmmonium'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od12AnoxicTankORP',
                         title: i18np.prop('report.datalist.OD12AnoxicTankORP'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od12AnoxicTankDO',
                         title: i18np.prop('report.datalist.OD12AnoxicTankDO'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od12AerobicTankORP2',
                         title: i18np.prop('report.datalist.OD12AerobicTankORP2'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od12SludgeConcentrationInAerobicTank',
                         title: i18np.prop('report.datalist.OD12SludgeConcentrationInAerobicTank'), width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od12SecondaryClarifierSludge',
                         title: i18np.prop('report.datalist.OD12SecondaryClarifierSludge'), width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20AnaerobicTankORP',
                         title: i18np.prop('report.datalist.OD20AnaerobicTankORP'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20AerobicTankORP1',
                         title: i18np.prop('report.datalist.OD20AerobicTankORP1'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20AerobicTankDO',
                         title: i18np.prop('report.datalist.OD20AerobicTankDO'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20AerobicTankNitrificationAndAmmonium',
                         title: i18np.prop('report.datalist.OD20AerobicTankNitrificationAndAmmonium'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
 
                     {
                         field: 'od20AnoxicTankORP', title: i18np.prop('report.datalist.OD20AnoxicTankORP'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20AnoxicTankDO', title: i18np.prop('report.datalist.OD20AnoxicTankDO'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20AerobicTankORP2', title: i18np.prop('report.datalist.OD20AerobicTankORP2'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20SludgeConcentrationInAerobicTank',
                         title: i18np.prop('report.datalist.OD20SludgeConcentrationInAerobicTank'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'od20SecondaryClarifierSludge',
                         title: i18np.prop('report.datalist.OD20SecondaryClarifierSludge'),
                         width: 100,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 's108OutCod',
                         title: i18np.prop('report.datalist.s108OutCod'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 's108Nh3',
                         title: i18np.prop('report.datalist.s108Nh3'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 's108OutTn',
                         title: i18np.prop('report.datalist.s108OutTn'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 's108OutTh',
                         title: i18np.prop('report.datalist.s108OutTh'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 's108OutPh',
                         title: i18np.prop('report.datalist.s108OutPh'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'wpsoutletflow',
                         title: i18np.prop('report.datalist.WPSoutletflow'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                     {
                         field: 'wpsOutletFlowTotal',
                         title: i18np.prop('report.datalist.wpsOutletFlowTotal'),
                         width: 140,
-                        align: 'center'
+                        align: 'center',
+                        totalRow: true,
+                        avgRow: true,
+                        minRow: true,
+                        maxRow: true
                     },
                 ]],
             toolbar: '#material-toolbar',
@@ -406,10 +593,12 @@
             defaultToolbar: default_param.defaultToolbar,
             cols: default_param.cols,
             totalRow: true,
+            avgRow: true,
+            minRow: true,
+            maxRow: true,
             text: {
                 none: i18np.prop('common.msg.selecttime')
             },
-
             title: "procount_" + layui.util.toDateString((new Date()), "yyyyMMddHHmmss"),
             done: function () {
                 // 行模式
@@ -453,12 +642,13 @@
                     "code": res.code,
                     "msg": res.msg,
                     "count": res.pagination.total,
-                    "data": res.data,
+                    "data": res.data.results,
+                    "totalRow": res.data.totalRow
                 };
             },
-            limit: 10,
-            limits: [10, 20, 50, 100, 5000],
-            page: true,
+            // limit: 10,
+            // limits: [10, 20, 50, 100, 5000],
+            page: false,
             height: '550px'
         });
         // 工具栏事件
@@ -506,6 +696,7 @@
             method: 'POST',
             contentType: 'application/json',
             where: {
+                requirePage: false,
                 startDate: $('#startDate').val(),
                 endDate: $('#endDate').val()
             },

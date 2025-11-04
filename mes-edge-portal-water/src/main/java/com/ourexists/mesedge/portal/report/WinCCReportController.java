@@ -21,7 +21,7 @@ public class WinCCReportController {
 
     @Operation(summary = "分页查询数据报表", description = "分页查询数据报表")
     @PostMapping("selectDataListByPage")
-    public JsonResponseEntity<List<WinCCDatalistDto>> selectDataListByPage(@RequestBody WinCCDatalistPageQuery dto) {
+    public JsonResponseEntity<WinCCDatalistResDto> selectDataListByPage(@RequestBody WinCCDatalistPageQuery dto) throws IllegalAccessException {
         return winCCReportFeign.selectDataListByPage(dto);
     }
 

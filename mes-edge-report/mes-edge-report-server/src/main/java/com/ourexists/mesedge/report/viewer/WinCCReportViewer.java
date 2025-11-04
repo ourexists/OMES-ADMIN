@@ -2,6 +2,7 @@ package com.ourexists.mesedge.report.viewer;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
 import com.ourexists.mesedge.report.model.*;
@@ -9,6 +10,7 @@ import com.ourexists.mesedge.report.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 @Component
@@ -40,9 +42,64 @@ public class WinCCReportViewer implements WinCCReportFeign {
         return JsonResponseEntity.success(true);
     }
 
-    public JsonResponseEntity<List<WinCCDatalistDto>> selectDataListByPage(WinCCDatalistPageQuery dto) {
+    public JsonResponseEntity<WinCCDatalistResDto> selectDataListByPage(WinCCDatalistPageQuery dto) {
         Page<WinCCDatalist> page = winCCDatalistService.selectByPage(dto);
-        return JsonResponseEntity.success(WinCCDatalist.covert(page.getRecords()), OrmUtils.extraPagination(page));
+        WinCCDatalistResDto resDto = new WinCCDatalistResDto();
+        resDto.setResults(WinCCDatalist.covert(page.getRecords()));
+
+        WinCCDataTotalRowDto totalRowDto = new WinCCDataTotalRowDto();
+        WinCCDatalistDto total = new WinCCDatalistDto();
+        WinCCDatalistDto avg = new WinCCDatalistDto();
+        WinCCDatalistDto max = new WinCCDatalistDto();
+        WinCCDatalistDto min = new WinCCDatalistDto();
+        int size = page.getRecords().size();
+        if (CollectionUtil.isNotBlank(resDto.getResults())) {
+            for (WinCCDatalistDto result : resDto.getResults()) {
+                Field[] fields = WinCCDatalistDto.class.getDeclaredFields();
+                for (Field field : fields) {
+                    field.setAccessible(true);
+                    if (field.getType().isAssignableFrom(Float.class)) {
+                        try {
+                            Float val = (Float) field.get(result);
+                            if (val == null) {
+                                continue;
+                            }
+                            Float totalNum = (Float) field.get(total);
+                            if (totalNum == null) {
+                                totalNum = val;
+                            } else {
+                                totalNum += val;
+                            }
+                            float avgNum = totalNum / size;
+                            Float maxNum = (Float) field.get(max);
+                            if (maxNum == null) {
+                                maxNum = val;
+                            } else {
+                                maxNum = Math.max(maxNum, val);
+                            }
+                            Float minNum = (Float) field.get(min);
+                            if (minNum == null) {
+                                minNum = val;
+                            } else {
+                                minNum = Math.min(minNum, val);
+                            }
+                            field.set(total, totalNum);
+                            field.set(avg, avgNum);
+                            field.set(max, maxNum);
+                            field.set(min, minNum);
+                        } catch (IllegalAccessException ignored) {
+                        }
+                    }
+                    field.setAccessible(false);
+                }
+            }
+        }
+        totalRowDto.setTotal(total);
+        totalRowDto.setMax(max);
+        totalRowDto.setAvg(avg);
+        totalRowDto.setMin(min);
+        resDto.setTotalRow(totalRowDto);
+        return JsonResponseEntity.success(resDto, OrmUtils.extraPagination(page));
     }
 
     public JsonResponseEntity<Boolean> saveDosing(WinCCDosingDevDto dto) {

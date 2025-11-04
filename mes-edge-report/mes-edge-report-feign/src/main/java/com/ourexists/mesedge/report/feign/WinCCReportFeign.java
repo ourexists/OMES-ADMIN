@@ -9,7 +9,7 @@ public interface WinCCReportFeign {
 
     JsonResponseEntity<Boolean> saveDataList(WinCCDatalistDto winCCDatalistDto);
 
-    JsonResponseEntity<List<WinCCDatalistDto>> selectDataListByPage(WinCCDatalistPageQuery dto);
+    JsonResponseEntity<WinCCDatalistResDto> selectDataListByPage(WinCCDatalistPageQuery dto) throws IllegalAccessException;
 
     JsonResponseEntity<Boolean> saveDosing(WinCCDosingDevDto dto);
 
