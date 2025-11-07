@@ -17,4 +17,6 @@ public class WinCCDatalistPageQuery extends PageQuery {
     private Date startDate;
 
     private Date endDate;
+
+    private Integer interval;
 }
