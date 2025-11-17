@@ -39,7 +39,7 @@ public class CollectWinCCMagTimerTask extends TimerTask {
         LocalDateTime startTime = now.minusSeconds(59);
         ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCMagDevDto datalist = winccApi.pullTags("magDev", WinCCMagDevDto.class, startGMT, nowGMT, true);
+        WinCCMagDevDto datalist = winccApi.pullTags("magDev", WinCCMagDevDto.class, startGMT, nowGMT, true, WinCCDevConstants.MAG_CACHE);
         if (datalist == null) {
             return;
         }

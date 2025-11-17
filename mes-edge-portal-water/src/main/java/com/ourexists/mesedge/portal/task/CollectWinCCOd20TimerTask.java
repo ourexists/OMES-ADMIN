@@ -39,7 +39,7 @@ public class CollectWinCCOd20TimerTask extends TimerTask {
         LocalDateTime startTime = now.minusSeconds(59);
         ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCOd20DevDto datalist = winccApi.pullTags("od20Dev", WinCCOd20DevDto.class, startGMT, nowGMT, true);
+        WinCCOd20DevDto datalist = winccApi.pullTags("od20Dev", WinCCOd20DevDto.class, startGMT, nowGMT, true, WinCCDevConstants.OD20_CACHE);
         if (datalist == null) {
             return;
         }

@@ -30,6 +30,7 @@ public class CollectWinCCDosingTimerTask extends TimerTask {
     @Autowired
     private WinCCReportFeign winCCReportFeign;
 
+
     @Override
     public void doRun() {
         UserContext.defaultTenant();
@@ -39,7 +40,7 @@ public class CollectWinCCDosingTimerTask extends TimerTask {
         LocalDateTime startTime = now.minusSeconds(59);
         ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCDosingDevDto datalist = winccApi.pullTags("dosingDev", WinCCDosingDevDto.class, startGMT, nowGMT, true);
+        WinCCDosingDevDto datalist = winccApi.pullTags("dosingDev", WinCCDosingDevDto.class, startGMT, nowGMT, true, WinCCDevConstants.DOSING_CACHE);
         if (datalist == null) {
             return;
         }

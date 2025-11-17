@@ -11,6 +11,7 @@ import com.google.common.collect.Maps;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.sync.enums.ConnectValidTypeEnum;
 import com.ourexists.mesedge.sync.feign.ConnectFeign;
 import com.ourexists.mesedge.sync.model.ConnectDto;
@@ -60,6 +61,10 @@ public class WinccApi {
 
     public static final String ARCHIVE_PATH = "/TagLogging/Archive";
 
+    @Autowired
+    private CacheUtils cacheUtils;
+
+
     public WinccApi() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         // 1️⃣ 构建信任所有证书的 SSLContext
         SSLContext sslContext = SSLContextBuilder.create()
@@ -95,10 +100,14 @@ public class WinccApi {
     }
 
     public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end) {
-        return pullTags(tagGroupName, clazz, begin, end, false);
+        return pullTags(tagGroupName, clazz, begin, end, false, null);
     }
 
-    public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end, boolean alarm) {
+    public <T> T pullTags(String tagGroupName, Class<T> clazz,
+                          ZonedDateTime begin,
+                          ZonedDateTime end,
+                          boolean isDevice,
+                          String deviceCacheName) {
         ConnectDto connect = connect();
         String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end) + "&maxValues=1";
         Map<String, List<String>> params = Maps.newHashMap();
@@ -109,7 +118,7 @@ public class WinccApi {
                 continue;
             }
             variableNames.add(field.getName());
-            if (alarm) {
+            if (isDevice) {
                 variableNames.add(field.getName() + "Alarm");
             }
         }
@@ -157,6 +166,10 @@ public class WinccApi {
                         value = 0;
                     }
                 }
+                //代表设备，进行本地实时缓存
+                if (isDevice) {
+                    cacheUtils.put(deviceCacheName, field, value);
+                }
                 try {
                     String setterName = "set" + getMethodName(field);
                     Method setter = Arrays.stream(clazz.getMethods())
@@ -176,7 +189,7 @@ public class WinccApi {
             }
 
             //处理报警交集
-            if (alarm) {
+            if (isDevice) {
                 for (int i = 0; i < jsonArray.size(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     String error = jsonObject.getString("error");
@@ -194,8 +207,10 @@ public class WinccApi {
                         if (!value) {
                             continue;
                         }
+                        field = field.replace("Alarm", "");
+                        //代表设备，进行本地报警缓存
+                        cacheUtils.put(deviceCacheName+"_alarm", field, value);
                         try {
-                            field = field.replace("Alarm", "");
                             String setterName = "set" + getMethodName(field);
                             Method setter = Arrays.stream(clazz.getMethods())
                                     .filter(m -> m.getName().equalsIgnoreCase(setterName))
