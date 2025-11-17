@@ -153,7 +153,10 @@
                 {field: 'LAY_INDEX', title: 'NO'},
                 {field: 'pf', title: i18np.prop('report.pfName')},
                 {field: 'rq', title: i18np.prop('fzdata.time')},
-                {field: 'pno', title: i18np.prop('fzdata.pno')},
+                {field: 'pno', title: i18np.prop('fzdata.pno'), exportTemplet: function(d, obj){
+                        // 返回 select 选中值
+                        return "'"+d.pno;
+                    }},
                 {field: 'oper', title: i18np.prop('fzdata.oper')},
                 {
                     fixed: 'right',
