@@ -1,6 +1,7 @@
 package com.ourexists.mesedge.portal.report;
 
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.mesedge.portal.config.MqttSender;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
 import com.ourexists.mesedge.report.model.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,5 +60,16 @@ public class WinCCReportController {
     @PostMapping("selectWpsByPage")
     public JsonResponseEntity<List<WinCCWpsDevDto>> selectWpsByPage(@RequestBody WinCCWpsPageQuery dto) {
         return winCCReportFeign.selectWpsByPage(dto);
+    }
+
+
+    @Autowired
+    private MqttSender mqttSender;
+
+    @Operation(summary = "分页查询提升泵房设备数据", description = "分页查询提升泵房设备数据")
+    @PostMapping("test")
+    public JsonResponseEntity<Boolean> test() {
+        mqttSender.send("fxx/fb", "dsdsdsdd");
+        return JsonResponseEntity.success(true);
     }
 }
