@@ -11,8 +11,10 @@ import com.ourexists.mesedge.portal.sync.remote.WinccApi;
 import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
 import com.ourexists.mesedge.task.process.task.TimerTask;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -29,6 +31,9 @@ public class CollectWinCCDatalistTimerTask extends TimerTask {
 
     @Autowired
     private WinCCReportFeign winCCReportFeign;
+
+    @Resource(name = "mqttOutboundChannel")
+    private MessageChannel messageChannel;
 
     @Override
     public void doRun() {

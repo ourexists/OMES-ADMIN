@@ -82,7 +82,7 @@ public class Datalist {
         WinCCDatalistDto dto = new WinCCDatalistDto();
         BeanUtils.copyProperties(datalist, dto);
         dto.setWpsTotalFlowTotal(datalist.getOd12InputletCumulativeFlow() + datalist.getOd20InputletCumulativeFlow());
-        dto.setWPSinletflowTotal(datalist.getOd12InputFowRate() + datalist.getOd20InputFowRate());
+        dto.setWPSinletflowTotal(datalist.getOd12InputFowRate() + datalist.getOd20InputFowRate() * 3.6f);
         return dto;
     }
 }
