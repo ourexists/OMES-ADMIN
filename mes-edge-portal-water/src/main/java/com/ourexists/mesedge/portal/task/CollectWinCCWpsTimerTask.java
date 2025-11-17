@@ -39,7 +39,7 @@ public class CollectWinCCWpsTimerTask extends TimerTask {
         LocalDateTime startTime = now.minusSeconds(59);
         ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCWpsDevDto datalist = winccApi.pullTags("wpsDev", WinCCWpsDevDto.class, startGMT, nowGMT, true);
+        WinCCWpsDevDto datalist = winccApi.pullTags("wpsDev", WinCCWpsDevDto.class, startGMT, nowGMT, true, WinCCDevConstants.WPS_CACHE);
         if (datalist == null) {
             return;
         }
