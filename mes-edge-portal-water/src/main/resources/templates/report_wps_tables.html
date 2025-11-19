@@ -152,7 +152,8 @@
                             }
                         }
                     },
-                    {field: 'wpsMixer1', title: i18np.prop('report.wps.wpsMixer1'), width: 140, align: 'center',
+                    {
+                        field: 'wpsMixer1', title: i18np.prop('report.wps.wpsMixer1'), width: 140, align: 'center',
                         templet: function (d) {
                             var r = d.wpsMixer1
                             if (r == null) {
@@ -164,8 +165,10 @@
                             } else {
                                 return i18np.prop('report.common.stop')
                             }
-                        }},
-                    {field: 'wpsMixer2', title: i18np.prop('report.wps.wpsMixer2'), width: 140, align: 'center',
+                        }
+                    },
+                    {
+                        field: 'wpsMixer2', title: i18np.prop('report.wps.wpsMixer2'), width: 140, align: 'center',
                         templet: function (d) {
                             var r = d.wpsMixer2
                             if (r == null) {
@@ -177,7 +180,8 @@
                             } else {
                                 return i18np.prop('report.common.stop')
                             }
-                        }},
+                        }
+                    },
                     {
                         field: 'wpsSewagePump1',
                         title: i18np.prop('report.wps.wpsSewagePump1'),
@@ -347,6 +351,25 @@
                         align: 'center',
                         templet: function (d) {
                             var r = d.wpsSandSeparator
+                            if (r == null) {
+                                return ''
+                            } else if (r == 1) {
+                                return i18np.prop('report.common.run')
+                            } else if (r == 3) {
+                                return i18np.prop('report.common.alarm')
+                            } else {
+                                return i18np.prop('report.common.stop')
+                            }
+                        }
+                    },
+                    ,
+                    {
+                        field: 'wpsChongxiPump',
+                        title: i18np.prop('report.wps.wpsChongxiPump'),
+                        width: 140,
+                        align: 'center',
+                        templet: function (d) {
+                            var r = d.wpsChongxiPump
                             if (r == null) {
                                 return ''
                             } else if (r == 1) {

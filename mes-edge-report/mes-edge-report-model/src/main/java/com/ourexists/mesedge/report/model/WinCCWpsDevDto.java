@@ -29,6 +29,7 @@ public class WinCCWpsDevDto {
     private Integer wpsCirculatingCleaning1;
     private Integer wpsCirculatingCleaning2;
     private Integer wpsSandSeparator;
+    private Integer wpsChongxiPump;
     private Date startTime;
     private Date endTime;
     private Date execTime;

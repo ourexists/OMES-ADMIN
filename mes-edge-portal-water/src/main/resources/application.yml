@@ -83,15 +83,8 @@ feign:
         readTimeout: 10000
 mqtt:
   server-uri:
-    - tcp://127.0.0.1:1883
-#  username: ms-dts
-#  password: P2c6wkaN5WZPJcGEedaF
+    - ${mqtt_server}
   client-id: ds-dts
-#logging:
-#  level:
-#    org:
-#      springframework:
-#        ws: TRACE
 logging:
   level:
     org:
