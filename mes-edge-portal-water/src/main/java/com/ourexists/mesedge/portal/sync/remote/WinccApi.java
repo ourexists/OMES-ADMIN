@@ -167,6 +167,9 @@ public class WinccApi {
                     }
                 }
                 //代表设备，进行本地实时缓存
+                if (field.contains("Alarm")) {
+                    continue;
+                }
                 if (isDevice) {
                     cacheUtils.put(deviceCacheName, field, value);
                 }
@@ -204,12 +207,16 @@ public class WinccApi {
                         }
                         JSONObject valuer = values.getJSONObject(0);
                         boolean value = valuer.getBooleanValue("value");
+                        //PAM搅拌机报警反的
+                        if (field.contains("pamBlender")) {
+                            value = !value;
+                        }
                         if (!value) {
                             continue;
                         }
                         field = field.replace("Alarm", "");
                         //代表设备，进行本地报警缓存
-                        cacheUtils.put(deviceCacheName+"_alarm", field, value);
+                        cacheUtils.put(deviceCacheName + "_alarm", field, value);
                         try {
                             String setterName = "set" + getMethodName(field);
                             Method setter = Arrays.stream(clazz.getMethods())

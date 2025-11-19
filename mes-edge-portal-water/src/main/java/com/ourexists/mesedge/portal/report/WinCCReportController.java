@@ -65,6 +65,12 @@ public class WinCCReportController {
         return winCCReportFeign.selectWpsByPage(dto);
     }
 
+    @Operation(summary = "分页查询中水设备数据", description = "分页查询中水设备数据")
+    @PostMapping("selectZsByPage")
+    public JsonResponseEntity<List<WinCCZsDevDto>> selectWpsByPage(@RequestBody WinCCZsPageQuery dto) {
+        return winCCReportFeign.selectZsByPage(dto);
+    }
+
     @Autowired
     private CacheUtils cacheUtils;
 

@@ -2,7 +2,6 @@ package com.ourexists.mesedge.report.viewer;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
 import com.ourexists.mesedge.report.model.*;
@@ -10,7 +9,6 @@ import com.ourexists.mesedge.report.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 @Component
@@ -36,6 +34,9 @@ public class WinCCReportViewer implements WinCCReportFeign {
 
     @Autowired
     private WinCCWpsDevService winCCWpsDevService;
+
+    @Autowired
+    private WinCCZsDevService winCCZsDevService;
 
     public JsonResponseEntity<Boolean> saveDataList(WinCCDatalistDto winCCDatalistDto) {
         winCCDatalistService.save(WinCCDatalist.wrap(winCCDatalistDto));
@@ -162,5 +163,15 @@ public class WinCCReportViewer implements WinCCReportFeign {
     public JsonResponseEntity<List<WinCCWpsDevDto>> selectWpsByPage(WinCCWpsPageQuery dto) {
         Page<WinCCWpsDev> page = winCCWpsDevService.selectByPage(dto);
         return JsonResponseEntity.success(WinCCWpsDev.covert(page.getRecords()), OrmUtils.extraPagination(page));
+    }
+
+    public JsonResponseEntity<Boolean> saveZs(WinCCZsDevDto dto) {
+        winCCZsDevService.save(WinCCZsDev.wrap(dto));
+        return JsonResponseEntity.success(true);
+    }
+
+    public JsonResponseEntity<List<WinCCZsDevDto>> selectZsByPage(WinCCZsPageQuery dto) {
+        Page<WinCCZsDev> page = winCCZsDevService.selectByPage(dto);
+        return JsonResponseEntity.success(WinCCZsDev.covert(page.getRecords()), OrmUtils.extraPagination(page));
     }
 }
