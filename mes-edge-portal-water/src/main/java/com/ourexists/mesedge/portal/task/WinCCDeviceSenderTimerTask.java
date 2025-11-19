@@ -39,8 +39,7 @@ public class WinCCDeviceSenderTimerTask extends TimerTask {
 
             //设备态推送
             JSONObject devJO = new JSONObject(deviceMap);
-            devJO.put("_groupName", cacheName);
-            mqttSender.send("data/dts/" + cacheName + "/Cbox", devJO.toJSONString());
+            mqttSender.send("data/dev/" + cacheName, devJO.toJSONString());
 
             //合计
             totalRun += count.getRun();
@@ -48,16 +47,15 @@ public class WinCCDeviceSenderTimerTask extends TimerTask {
             totalAlarm += count.getAlarm();
 
             //单设备态统计
-            jo.put(cacheName + "run", count.getRun());
-            jo.put(cacheName + "stop", count.getStop());
-            jo.put(cacheName + "alarm", count.getAlarm());
+            jo.put(cacheName + "_run", count.getRun());
+            jo.put(cacheName + "_stop", count.getStop());
+            jo.put(cacheName + "_alarm", count.getAlarm());
         }
 
         jo.put("totalRun", totalRun);
         jo.put("totalStop", totalStop);
         jo.put("totalAlarm", totalAlarm);
-        jo.put("_groupName", "devcount");
-        mqttSender.send("data/dts/datalist/Cbox", jo.toString());
+        mqttSender.send("data/count", jo.toString());
     }
 
     private WinccDeviceCount count(String cacheName) {
@@ -81,11 +79,13 @@ public class WinCCDeviceSenderTimerTask extends TimerTask {
         ConcurrentMap<Object, Object> alarmCacheMap = alarmCache.asMap();
         int alarm = 0;
         for (Map.Entry<Object, Object> entry : alarmCacheMap.entrySet()) {
-            Integer val = (Integer) entry.getValue();
-            device.put(entry.getKey().toString() + "_alarm", val);
-            if (val == 1) {
+            Boolean val = (Boolean) entry.getValue();
+            int r = 0;
+            if (val) {
                 alarm++;
+                r = 1;
             }
+            device.put(entry.getKey().toString() + "_alarm", r);
         }
         winccDeviceCount.setRun(run);
         winccDeviceCount.setStop(stop);

@@ -1,17 +1,20 @@
 package com.ourexists.mesedge.portal.report;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.mesedge.portal.config.MqttSender;
+import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
 import com.ourexists.mesedge.report.model.*;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+
+import static com.ourexists.mesedge.portal.task.WinCCDevConstants.CACHE_LIST;
 
 @RestController
 @RequestMapping("/winCCReport")
@@ -62,14 +65,30 @@ public class WinCCReportController {
         return winCCReportFeign.selectWpsByPage(dto);
     }
 
-
     @Autowired
-    private MqttSender mqttSender;
+    private CacheUtils cacheUtils;
 
-    @Operation(summary = "分页查询提升泵房设备数据", description = "分页查询提升泵房设备数据")
-    @PostMapping("test")
-    public JsonResponseEntity<Boolean> test() {
-        mqttSender.send("fxx/fb", "dsdsdsdd");
-        return JsonResponseEntity.success(true);
+    @Operation(summary = "实时设备运行", description = "实时设备运行")
+    @GetMapping("realtimeDevRun")
+    public JsonResponseEntity<Map<String, Map<Object, Object>>> realtimeDevRun() {
+        Map<String, Map<Object, Object>> r = new HashMap<>();
+        for (String cacheName : CACHE_LIST) {
+            Cache<Object, Object> runCache = cacheUtils.nativeCache(cacheName);
+            ConcurrentMap<Object, Object> runCacheMap = runCache.asMap();
+            r.put(cacheName, runCacheMap);
+        }
+        return JsonResponseEntity.success(r);
+    }
+
+    @Operation(summary = "实时设备报警", description = "实时设备报警")
+    @GetMapping("realtimeDevAlarm")
+    public JsonResponseEntity<Map<String, Map<Object, Object>>> realtimeDevAlarm() {
+        Map<String, Map<Object, Object>> r = new HashMap<>();
+        for (String cacheName : CACHE_LIST) {
+            Cache<Object, Object> runCache = cacheUtils.nativeCache(cacheName + "_alarm");
+            ConcurrentMap<Object, Object> runCacheMap = runCache.asMap();
+            r.put(cacheName, runCacheMap);
+        }
+        return JsonResponseEntity.success(r);
     }
 }
