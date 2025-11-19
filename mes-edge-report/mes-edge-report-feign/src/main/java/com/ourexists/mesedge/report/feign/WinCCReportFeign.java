@@ -34,4 +34,8 @@ public interface WinCCReportFeign {
     JsonResponseEntity<Boolean> saveWps(WinCCWpsDevDto dto);
 
     JsonResponseEntity<List<WinCCWpsDevDto>> selectWpsByPage(WinCCWpsPageQuery dto);
+
+    JsonResponseEntity<Boolean> saveZs(WinCCZsDevDto dto);
+
+    JsonResponseEntity<List<WinCCZsDevDto>> selectZsByPage(WinCCZsPageQuery dto);
 }

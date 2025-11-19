@@ -17,5 +17,7 @@ public interface WinCCDevConstants {
 
     String OD20_CACHE = "od20";
 
-    List<String> CACHE_LIST = Arrays.asList(WPS_CACHE, MAG_CACHE, DOSING_CACHE, OD11_CACHE, OD12_CACHE, OD20_CACHE);
+    String ZS_CACHE = "zs";
+
+    List<String> CACHE_LIST = Arrays.asList(WPS_CACHE, MAG_CACHE, DOSING_CACHE, OD11_CACHE, OD12_CACHE, OD20_CACHE, ZS_CACHE);
 }
