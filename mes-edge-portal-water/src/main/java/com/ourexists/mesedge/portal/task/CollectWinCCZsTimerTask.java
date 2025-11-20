@@ -22,7 +22,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Slf4j
-@Component("CollectWinCCWps")
+@Component("CollectWinCCZs")
 public class CollectWinCCZsTimerTask extends TimerTask {
 
     @Autowired
@@ -34,19 +34,11 @@ public class CollectWinCCZsTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        LocalDateTime now = LocalDateTime.now();
-        ZonedDateTime nowGMT = LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        LocalDateTime startTime = now.minusSeconds(59);
-        ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCZsDevDto datalist = winccApi.pullTags("zsDev", WinCCZsDevDto.class, startGMT, nowGMT, true, WinCCDevConstants.WPS_CACHE);
+        WinCCZsDevDto datalist = winccApi.pullTags("zsDev", WinCCZsDevDto.class,true, WinCCDevConstants.ZS_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
             datalist.setExecTime(new Date());
             RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveZs(datalist));
         } catch (EraCommonException e) {

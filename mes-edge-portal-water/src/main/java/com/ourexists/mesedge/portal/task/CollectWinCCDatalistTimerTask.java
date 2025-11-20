@@ -5,9 +5,8 @@
 package com.ourexists.mesedge.portal.task;
 
 import com.alibaba.fastjson2.JSON;
-import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.portal.config.MqttSender;
 import com.ourexists.mesedge.portal.sync.remote.WinccApi;
 import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
@@ -23,6 +22,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
+import static com.ourexists.mesedge.portal.task.WinCCDevConstants.DATA_CACHE;
+
 @Slf4j
 @Component("CollectWinCCDatalist")
 public class CollectWinCCDatalistTimerTask extends TimerTask {
@@ -31,33 +32,21 @@ public class CollectWinCCDatalistTimerTask extends TimerTask {
     private WinccApi winccApi;
 
     @Autowired
-    private WinCCReportFeign winCCReportFeign;
+    private MqttSender mqttSender;
 
     @Autowired
-    private MqttSender mqttSender;
+    private CacheUtils cacheUtils;
 
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        LocalDateTime now = LocalDateTime.now();
-        ZonedDateTime nowGMT = LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        LocalDateTime startTime = now.minusSeconds(59);
-        ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        Datalist datalist = winccApi.pullTags("dataList", Datalist.class, startGMT, nowGMT);
+        Datalist datalist = winccApi.pullTags("dataList", Datalist.class);
         if (datalist == null) {
             return;
         }
-        try {
-            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setExecTime(new Date());
-            WinCCDatalistDto r = Datalist.covert(datalist);
-            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveDataList(r));
-            mqttSender.send("data/datalist", JSON.toJSONString(r));
-        } catch (EraCommonException e) {
-            log.error(e.getMessage());
-        }
+        datalist.setExecTime(new Date());
+        WinCCDatalistDto r = Datalist.covert(datalist);
+        cacheUtils.put(DATA_CACHE, "dataList", r);
+        mqttSender.send("data/datalist", JSON.toJSONString(r));
     }
 }

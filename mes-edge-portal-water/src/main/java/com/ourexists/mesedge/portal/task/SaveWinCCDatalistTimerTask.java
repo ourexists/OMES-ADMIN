@@ -7,9 +7,9 @@ package com.ourexists.mesedge.portal.task;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.portal.sync.remote.WinccApi;
+import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
-import com.ourexists.mesedge.report.model.WinCCMagDevDto;
+import com.ourexists.mesedge.report.model.WinCCDatalistDto;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,26 +17,28 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
-@Slf4j
-@Component("CollectWinCCMag")
-public class CollectWinCCMagTimerTask extends TimerTask {
+import static com.ourexists.mesedge.portal.task.WinCCDevConstants.DATA_CACHE;
 
-    @Autowired
-    private WinccApi winccApi;
+@Slf4j
+@Component("SaveWinCCDatalist")
+public class SaveWinCCDatalistTimerTask extends TimerTask {
 
     @Autowired
     private WinCCReportFeign winCCReportFeign;
 
+    @Autowired
+    private CacheUtils cacheUtils;
+
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        WinCCMagDevDto datalist = winccApi.pullTags("magDev", WinCCMagDevDto.class, true, WinCCDevConstants.MAG_CACHE);
-        if (datalist == null) {
+        WinCCDatalistDto r =cacheUtils.get(DATA_CACHE, "dataList");
+        if (r == null) {
             return;
         }
+        r.setExecTime(new Date());
         try {
-            datalist.setExecTime(new Date());
-            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveMag(datalist));
+            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveDataList(r));
         } catch (EraCommonException e) {
             log.error(e.getMessage());
         }
