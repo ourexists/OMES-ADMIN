@@ -2,27 +2,26 @@
  * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
  */
 
-package com.ourexists.mesedge.portal.task;
+package com.ourexists.mesedge.portal.task.timer;
 
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.portal.sync.remote.WinccApi;
+import com.ourexists.mesedge.portal.config.CacheUtils;
+import com.ourexists.mesedge.portal.sync.remote.model.Od11DevVari;
+import com.ourexists.mesedge.portal.task.WinCCDevConstants;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
-import com.ourexists.mesedge.report.model.WinCCWpsDevDto;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-
 @Slf4j
-@Component("CollectWinCCWps")
-public class CollectWinCCWpsTimerTask extends TimerTask {
+@Component("StoreWinCCOd11")
+public class StoreWinCCOd11TimerTask extends TimerTask {
 
     @Autowired
-    private WinccApi winccApi;
+    private CacheUtils cacheUtils;
 
     @Autowired
     private WinCCReportFeign winCCReportFeign;
@@ -30,13 +29,12 @@ public class CollectWinCCWpsTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        WinCCWpsDevDto datalist = winccApi.pullTags("wpsDev", WinCCWpsDevDto.class, true, WinCCDevConstants.WPS_CACHE);
+        Od11DevVari datalist = cacheUtils.get("realtime", WinCCDevConstants.OD11_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setExecTime(new Date());
-            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveWps(datalist));
+            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveOd11(Od11DevVari.covert(datalist)));
         } catch (EraCommonException e) {
             log.error(e.getMessage());
         }

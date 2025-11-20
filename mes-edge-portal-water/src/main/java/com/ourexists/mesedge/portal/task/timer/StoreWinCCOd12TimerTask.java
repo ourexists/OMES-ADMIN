@@ -2,45 +2,39 @@
  * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
  */
 
-package com.ourexists.mesedge.portal.task;
+package com.ourexists.mesedge.portal.task.timer;
 
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.portal.sync.remote.WinccApi;
+import com.ourexists.mesedge.portal.config.CacheUtils;
+import com.ourexists.mesedge.portal.sync.remote.model.Od12DevVari;
+import com.ourexists.mesedge.portal.task.WinCCDevConstants;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
-import com.ourexists.mesedge.report.model.WinCCDosingDevDto;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
-
 @Slf4j
-@Component("CollectWinCCDosing")
-public class CollectWinCCDosingTimerTask extends TimerTask {
+@Component("StoreWinCCOd12")
+public class StoreWinCCOd12TimerTask extends TimerTask {
 
     @Autowired
-    private WinccApi winccApi;
+    private CacheUtils cacheUtils;
 
     @Autowired
     private WinCCReportFeign winCCReportFeign;
 
-
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        WinCCDosingDevDto datalist = winccApi.pullTags("dosingDev", WinCCDosingDevDto.class,true, WinCCDevConstants.DOSING_CACHE);
+        Od12DevVari datalist = cacheUtils.get("realtime", WinCCDevConstants.OD12_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setExecTime(new Date());
-            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveDosing(datalist));
+            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveOd12(Od12DevVari.covert(datalist)));
         } catch (EraCommonException e) {
             log.error(e.getMessage());
         }
