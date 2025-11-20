@@ -12,6 +12,7 @@ import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.portal.config.CacheUtils;
+import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
 import com.ourexists.mesedge.sync.enums.ConnectValidTypeEnum;
 import com.ourexists.mesedge.sync.feign.ConnectFeign;
 import com.ourexists.mesedge.sync.model.ConnectDto;
@@ -41,8 +42,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,6 +59,12 @@ public class WinccApi {
     public static final String SERVER_NAME = "WINCC_API";
 
     public static final String ARCHIVE_PATH = "/TagLogging/Archive";
+
+    public static final String TAG_PATH = "/tagManagement/Values";
+
+    public static final String DEV_RUN = ".2RunState";
+
+    public static final String DEV_ALARM = ".3Alarm";
 
     @Autowired
     private CacheUtils cacheUtils;
@@ -99,28 +104,157 @@ public class WinccApi {
         this.restTemplate = restTemplate;
     }
 
-    public <T> T pullTags(String tagGroupName, Class<T> clazz) {
-        return pullTags(tagGroupName, clazz, null, null, false, null);
+    public <T> T pullTags(Class<T> clazz) {
+        return pullTags(clazz, false, null);
     }
 
-    public <T> T pullTags(String tagGroupName, Class<T> clazz, boolean isDevice, String deviceCacheName) {
-        return pullTags(tagGroupName, clazz, null, null, isDevice, deviceCacheName);
-    }
-
-    public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end) {
-        return pullTags(tagGroupName, clazz, begin, end, false, null);
-    }
-
-    public <T> T pullTags(String tagGroupName, Class<T> clazz,
-                          ZonedDateTime begin,
-                          ZonedDateTime end,
+    public <T> T pullTags(Class<T> clazz,
                           boolean isDevice,
                           String deviceCacheName) {
         ConnectDto connect = connect();
-        String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?maxValues=1";
-        if (begin != null && end != null) {
-            url += "&begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end);
+        String url = getUri(connect) + TAG_PATH;
+        Map<String, List<String>> params = Maps.newHashMap();
+        List<String> variableNames = new ArrayList<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            WinCCVari ano = field.getAnnotation(WinCCVari.class);
+            String fieldName;
+            if (ano == null || StringUtils.isBlank(ano.value())) {
+                fieldName = field.getName();
+            } else {
+                fieldName = ano.value();
+            }
+            if (isDevice) {
+                fieldName += DEV_RUN;
+            }
+            variableNames.add(fieldName);
+            if (isDevice) {
+                variableNames.add(fieldName + DEV_ALARM);
+            }
         }
+        params.put("variableNames", variableNames);
+        log.info("【yg api调用器】[{}]开始调用[{}]", url, JSON.toJSONString(params));
+        HttpEntity<String> httpEntity = new HttpEntity<>(JSON.toJSONString(params), httpHeaders(connect));
+        ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
+        if (resp.getStatusCode() == HttpStatus.OK) {
+            String msg = resp.getBody();
+            log.info("【yg api调用器】[{}]调用pullTags成功", url);
+            JSONArray jsonArray = JSON.parseArray(msg);
+            if (jsonArray == null || jsonArray.isEmpty()) {
+                return null;
+            }
+            T r;
+            try {
+                r = clazz.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                log.error("pullTags error", e);
+                throw new RuntimeException(e);
+            }
+            int success = 0;
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String error = jsonObject.getString("error");
+                if (StringUtils.isNotEmpty(error)) {
+                    continue;
+                }
+                String field = jsonObject.getString("variableName");
+                //这里不处理报警相关内容
+                if (field.endsWith(DEV_ALARM)) {
+                    continue;
+                }
+
+                Integer dataType = jsonObject.getInteger("dataType");
+                if (dataType == null) {
+                    continue;
+                }
+                Object value = null;
+                if (dataType == 1) {
+                    boolean b = jsonObject.getBooleanValue("value");
+                    if (b) {
+                        value = 1;
+                    } else {
+                        value = 0;
+                    }
+                } else if (dataType == 4) {
+                    value = jsonObject.getFloatValue("value");
+                }
+                //代表设备，进行本地实时缓存
+                if (isDevice) {
+                    field = field.replace(DEV_RUN, "");
+                    cacheUtils.put(deviceCacheName, field, value);
+                }
+
+                try {
+                    setValForAnno(r, field, value);
+                    success++;
+                } catch (IllegalAccessException e) {
+                    log.error("", e);
+                }
+            }
+            if (success == 0) {
+                return null;
+            }
+
+            //处理报警交集
+            if (isDevice) {
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                    String error = jsonObject.getString("error");
+                    if (StringUtils.isNotEmpty(error)) {
+                        continue;
+                    }
+                    String field = jsonObject.getString("variableName");
+                    if (field.endsWith(DEV_ALARM)) {
+                        boolean value = jsonObject.getBooleanValue("value");
+                        //PAM搅拌机报警反的
+                        if (field.contains("pamBlender")) {
+                            value = !value;
+                        }
+                        if (!value) {
+                            continue;
+                        }
+                        field = field.replace(DEV_ALARM, "");
+                        //代表设备，进行本地报警缓存
+                        cacheUtils.put(deviceCacheName + "_alarm", field, value);
+                        try {
+                            setValForAnno(r, field, 3);
+                        } catch (IllegalAccessException e) {
+                            log.error("", e);
+                        }
+                    }
+                }
+            }
+            return r;
+        } else {
+            log.info("【yg api调用器】[{}]调用WINCC_REST网络异常,异常码[{}]", url, resp.getStatusCode());
+            return null;
+        }
+    }
+
+    private static <T> void setValForAnno(T r, String annoVal, Object value) throws IllegalAccessException {
+        for (Field field : r.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            WinCCVari ano = field.getAnnotation(WinCCVari.class);
+            String fieldName;
+            if (ano == null || StringUtils.isBlank(ano.value())) {
+                fieldName = field.getName();
+            } else {
+                fieldName = ano.value();
+            }
+            if (fieldName.equals(annoVal)) {
+                field.set(r, value);
+                field.setAccessible(false);
+                break;
+            }
+        }
+    }
+
+    public <T> T pullArchive(String tagGroupName,
+                             Class<T> clazz,
+                             boolean isDevice,
+                             String deviceCacheName) {
+        ConnectDto connect = connect();
+        String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?maxValues=1";
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
@@ -134,12 +268,10 @@ public class WinccApi {
             }
         }
         params.put("variableNames", variableNames);
-        log.info("【yg api调用器】[{}]开始调用[{}]", url, JSON.toJSONString(params));
         HttpEntity<String> httpEntity = new HttpEntity<>(JSON.toJSONString(params), httpHeaders(connect));
         ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
         if (resp.getStatusCode() == HttpStatus.OK) {
             String msg = resp.getBody();
-            log.info("【yg api调用器】[{}]调用pullTags成功", url);
             JSONArray jsonArray = JSON.parseArray(msg);
             if (jsonArray == null || jsonArray.isEmpty()) {
                 return null;
@@ -218,10 +350,6 @@ public class WinccApi {
                         }
                         JSONObject valuer = values.getJSONObject(0);
                         boolean value = valuer.getBooleanValue("value");
-                        //PAM搅拌机报警反的
-                        if (field.contains("pamBlender")) {
-                            value = !value;
-                        }
                         if (!value) {
                             continue;
                         }
@@ -297,7 +425,6 @@ public class WinccApi {
     }
 
     private ConnectDto connect() {
-        ConnectDto connect;
         try {
             return RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(SERVER_NAME));
         } catch (EraCommonException e) {

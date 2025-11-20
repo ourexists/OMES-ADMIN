@@ -2,8 +2,9 @@
  * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
  */
 
-package com.ourexists.mesedge.portal.task;
+package com.ourexists.mesedge.portal.task.timer;
 
+import com.ourexists.mesedge.portal.task.FunMapper;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

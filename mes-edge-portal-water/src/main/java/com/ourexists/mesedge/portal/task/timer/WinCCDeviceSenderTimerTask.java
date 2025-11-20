@@ -1,9 +1,10 @@
-package com.ourexists.mesedge.portal.task;
+package com.ourexists.mesedge.portal.task.timer;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.portal.config.MqttSender;
+import com.ourexists.mesedge.portal.task.WinccDeviceCount;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
