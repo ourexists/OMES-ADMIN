@@ -15,9 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Slf4j
@@ -33,19 +30,11 @@ public class CollectWinCCOd11TimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        LocalDateTime now = LocalDateTime.now();
-        ZonedDateTime nowGMT = LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        LocalDateTime startTime = now.minusSeconds(59);
-        ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCOd11DevDto datalist = winccApi.pullTags("od11Dev", WinCCOd11DevDto.class, startGMT, nowGMT, true, WinCCDevConstants.OD11_CACHE);
+        WinCCOd11DevDto datalist = winccApi.pullTags("od11Dev", WinCCOd11DevDto.class, true, WinCCDevConstants.OD11_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
             datalist.setExecTime(new Date());
             RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveOd11(datalist));
         } catch (EraCommonException e) {

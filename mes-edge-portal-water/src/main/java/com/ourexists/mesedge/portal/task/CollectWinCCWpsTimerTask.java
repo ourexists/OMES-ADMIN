@@ -15,9 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Date;
 
 @Slf4j
@@ -33,19 +30,11 @@ public class CollectWinCCWpsTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        LocalDateTime now = LocalDateTime.now();
-        ZonedDateTime nowGMT = LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        LocalDateTime startTime = now.minusSeconds(59);
-        ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCWpsDevDto datalist = winccApi.pullTags("wpsDev", WinCCWpsDevDto.class, startGMT, nowGMT, true, WinCCDevConstants.WPS_CACHE);
+        WinCCWpsDevDto datalist = winccApi.pullTags("wpsDev", WinCCWpsDevDto.class, true, WinCCDevConstants.WPS_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
             datalist.setExecTime(new Date());
             RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveWps(datalist));
         } catch (EraCommonException e) {

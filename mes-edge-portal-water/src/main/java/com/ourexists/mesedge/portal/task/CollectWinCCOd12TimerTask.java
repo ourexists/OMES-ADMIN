@@ -33,19 +33,11 @@ public class CollectWinCCOd12TimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        LocalDateTime now = LocalDateTime.now();
-        ZonedDateTime nowGMT = LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        LocalDateTime startTime = now.minusSeconds(59);
-        ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCOd12DevDto datalist = winccApi.pullTags("od12Dev", WinCCOd12DevDto.class, startGMT, nowGMT, true, WinCCDevConstants.OD12_CACHE);
+        WinCCOd12DevDto datalist = winccApi.pullTags("od12Dev", WinCCOd12DevDto.class,true, WinCCDevConstants.OD12_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
             datalist.setExecTime(new Date());
             RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveOd12(datalist));
         } catch (EraCommonException e) {

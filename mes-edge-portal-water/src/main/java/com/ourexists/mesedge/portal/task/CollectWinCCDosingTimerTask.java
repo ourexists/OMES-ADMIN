@@ -34,19 +34,11 @@ public class CollectWinCCDosingTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        LocalDateTime now = LocalDateTime.now();
-        ZonedDateTime nowGMT = LocalDateTime.now().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        LocalDateTime startTime = now.minusSeconds(59);
-        ZonedDateTime startGMT = startTime.atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneId.of("GMT"));
-        WinCCDosingDevDto datalist = winccApi.pullTags("dosingDev", WinCCDosingDevDto.class, startGMT, nowGMT, true, WinCCDevConstants.DOSING_CACHE);
+        WinCCDosingDevDto datalist = winccApi.pullTags("dosingDev", WinCCDosingDevDto.class,true, WinCCDevConstants.DOSING_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setStartTime(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()));
-            datalist.setEndTime(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
             datalist.setExecTime(new Date());
             RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveDosing(datalist));
         } catch (EraCommonException e) {

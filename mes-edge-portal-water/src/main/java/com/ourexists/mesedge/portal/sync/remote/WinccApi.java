@@ -99,6 +99,14 @@ public class WinccApi {
         this.restTemplate = restTemplate;
     }
 
+    public <T> T pullTags(String tagGroupName, Class<T> clazz) {
+        return pullTags(tagGroupName, clazz, null, null, false, null);
+    }
+
+    public <T> T pullTags(String tagGroupName, Class<T> clazz, boolean isDevice, String deviceCacheName) {
+        return pullTags(tagGroupName, clazz, null, null, isDevice, deviceCacheName);
+    }
+
     public <T> T pullTags(String tagGroupName, Class<T> clazz, ZonedDateTime begin, ZonedDateTime end) {
         return pullTags(tagGroupName, clazz, begin, end, false, null);
     }
@@ -109,7 +117,10 @@ public class WinccApi {
                           boolean isDevice,
                           String deviceCacheName) {
         ConnectDto connect = connect();
-        String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end) + "&maxValues=1";
+        String url = getUri(connect) + ARCHIVE_PATH + "/" + tagGroupName + "/values?maxValues=1";
+        if (begin != null && end != null) {
+            url += "&begin=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(begin) + "&end=" + DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(end);
+        }
         Map<String, List<String>> params = Maps.newHashMap();
         List<String> variableNames = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
