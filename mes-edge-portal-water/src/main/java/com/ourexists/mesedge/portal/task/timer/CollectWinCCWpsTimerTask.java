@@ -7,6 +7,7 @@ package com.ourexists.mesedge.portal.task.timer;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.portal.sync.remote.WinccApi;
+import com.ourexists.mesedge.portal.sync.remote.constants.StructureTypeEnum;
 import com.ourexists.mesedge.portal.sync.remote.model.WpsDevVari;
 import com.ourexists.mesedge.portal.task.WinCCDevConstants;
 import com.ourexists.mesedge.task.process.task.TimerTask;
@@ -27,7 +28,7 @@ public class CollectWinCCWpsTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        WpsDevVari datalist = winccApi.pullTags(WpsDevVari.class, true, WinCCDevConstants.WPS_CACHE);
+        WpsDevVari datalist = winccApi.pullTags(WpsDevVari.class, StructureTypeEnum.dev, WinCCDevConstants.WPS_CACHE);
         if (datalist == null) {
             return;
         }

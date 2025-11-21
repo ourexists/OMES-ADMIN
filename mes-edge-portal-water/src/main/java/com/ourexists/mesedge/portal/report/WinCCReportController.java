@@ -74,6 +74,18 @@ public class WinCCReportController {
     @Autowired
     private CacheUtils cacheUtils;
 
+    @Operation(summary = "清除实时数据缓存", description = "清除实时数据缓存")
+    @GetMapping("clearCache")
+    public JsonResponseEntity<Map<String, Map<Object, Object>>> clearCache() {
+        Map<String, Map<Object, Object>> r = new HashMap<>();
+        for (String cacheName : CACHE_LIST) {
+            cacheUtils.clear(cacheName);
+            cacheUtils.clear(cacheName + "_alarm");
+        }
+        return JsonResponseEntity.success(r);
+    }
+
+
     @Operation(summary = "实时设备运行", description = "实时设备运行")
     @GetMapping("realtimeDevRun")
     public JsonResponseEntity<Map<String, Map<Object, Object>>> realtimeDevRun() {

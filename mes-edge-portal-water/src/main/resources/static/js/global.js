@@ -130,6 +130,7 @@ var router = {
     "report_od12_Page": "/winCCReport/selectOd12ByPage",
     "report_od20_Page": "/winCCReport/selectOd20ByPage",
     "report_wps_Page": "/winCCReport/selectWpsByPage",
+    "report_zs_Page": "/winCCReport/selectZsByPage",
 }
 
 function getCommonHeader() {

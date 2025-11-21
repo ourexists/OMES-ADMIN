@@ -12,7 +12,7 @@ import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.portal.config.CacheUtils;
-import com.ourexists.mesedge.portal.sync.remote.model.Datalist;
+import com.ourexists.mesedge.portal.sync.remote.constants.StructureTypeEnum;
 import com.ourexists.mesedge.sync.enums.ConnectValidTypeEnum;
 import com.ourexists.mesedge.sync.feign.ConnectFeign;
 import com.ourexists.mesedge.sync.model.ConnectDto;
@@ -69,7 +69,6 @@ public class WinccApi {
     @Autowired
     private CacheUtils cacheUtils;
 
-
     public WinccApi() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         // 1️⃣ 构建信任所有证书的 SSLContext
         SSLContext sslContext = SSLContextBuilder.create()
@@ -105,15 +104,12 @@ public class WinccApi {
     }
 
     public <T> T pullTags(Class<T> clazz) {
-        return pullTags(clazz, false, null);
+        return pullTags(clazz, StructureTypeEnum.def, null);
     }
 
-    public <T> T pullTags(Class<T> clazz,
-                          boolean isDevice,
-                          String deviceCacheName) {
-        ConnectDto connect = connect();
-        String url = getUri(connect) + TAG_PATH;
-        Map<String, List<String>> params = Maps.newHashMap();
+
+    private <T> List<String> generateVariableNames(Class<T> clazz,
+                                                   StructureTypeEnum structureType) {
         List<String> variableNames = new ArrayList<>();
         for (Field field : clazz.getDeclaredFields()) {
             WinCCVari ano = field.getAnnotation(WinCCVari.class);
@@ -123,15 +119,42 @@ public class WinccApi {
             } else {
                 fieldName = ano.value();
             }
-            if (isDevice) {
+            if (StructureTypeEnum.dev.equals(structureType)) {
+                variableNames.add(fieldName + DEV_ALARM);
                 fieldName += DEV_RUN;
             }
             variableNames.add(fieldName);
-            if (isDevice) {
-                variableNames.add(fieldName + DEV_ALARM);
-            }
         }
-        params.put("variableNames", variableNames);
+        return variableNames;
+    }
+
+
+    private Object parseValue(JSONObject jsonObject) {
+        Integer dataType = jsonObject.getInteger("dataType");
+        if (dataType == null) {
+            return null;
+        }
+        Object value = null;
+        if (dataType == 1) {
+            boolean b = jsonObject.getBooleanValue("value");
+            if (b) {
+                value = 1;
+            } else {
+                value = 0;
+            }
+        } else if (dataType == 4) {
+            value = jsonObject.getFloatValue("value");
+        }
+        return value;
+    }
+
+    public <T> T pullTags(Class<T> clazz,
+                          StructureTypeEnum structureType,
+                          String cacheName) {
+        ConnectDto connect = connect();
+        String url = getUri(connect) + TAG_PATH;
+        Map<String, List<String>> params = Maps.newHashMap();
+        params.put("variableNames", generateVariableNames(clazz, structureType));
         log.info("【yg api调用器】[{}]开始调用[{}]", url, JSON.toJSONString(params));
         HttpEntity<String> httpEntity = new HttpEntity<>(JSON.toJSONString(params), httpHeaders(connect));
         ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, httpEntity, String.class);
@@ -167,25 +190,22 @@ public class WinccApi {
                 if (dataType == null) {
                     continue;
                 }
-                Object value = null;
-                if (dataType == 1) {
-                    boolean b = jsonObject.getBooleanValue("value");
-                    if (b) {
-                        value = 1;
-                    } else {
-                        value = 0;
-                    }
-                } else if (dataType == 4) {
-                    value = jsonObject.getFloatValue("value");
+                Object value = parseValue(jsonObject);
+                if (value == null) {
+                    continue;
                 }
                 //代表设备，进行本地实时缓存
-                if (isDevice) {
+                if (StructureTypeEnum.dev.equals(structureType)) {
                     field = field.replace(DEV_RUN, "");
-                    cacheUtils.put(deviceCacheName, field, value);
                 }
-
                 try {
-                    setValForAnno(r, field, value);
+                    String fieldName = setValForAnno(r, field, value);
+                    if (fieldName == null) {
+                        continue;
+                    }
+                    if (StructureTypeEnum.dev.equals(structureType)) {
+                        cacheUtils.put(cacheName, fieldName, value);
+                    }
                     success++;
                 } catch (IllegalAccessException e) {
                     log.error("", e);
@@ -196,7 +216,7 @@ public class WinccApi {
             }
 
             //处理报警交集
-            if (isDevice) {
+            if (StructureTypeEnum.dev.equals(structureType)) {
                 for (int i = 0; i < jsonArray.size(); i++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(i);
                     String error = jsonObject.getString("error");
@@ -207,18 +227,26 @@ public class WinccApi {
                     if (field.endsWith(DEV_ALARM)) {
                         boolean value = jsonObject.getBooleanValue("value");
                         //PAM搅拌机报警反的
-                        if (field.contains("pamBlender")) {
+                        if (field.contains("PAM_Blender")) {
                             value = !value;
                         }
+                        field = field.replace(DEV_ALARM, "");
+                        String fieldName = getFieldNameForAnno(r, field);
+                        if (fieldName == null) {
+                            continue;
+                        }
+                        //代表设备，进行本地报警缓存
+                        cacheUtils.put(cacheName + "_alarm", fieldName, value);
                         if (!value) {
                             continue;
                         }
-                        field = field.replace(DEV_ALARM, "");
-                        //代表设备，进行本地报警缓存
-                        cacheUtils.put(deviceCacheName + "_alarm", field, value);
                         try {
+                            Field f = r.getClass().getDeclaredField(fieldName);
+                            f.setAccessible(true);
+                            f.set(r, 3);
+                            f.setAccessible(false);
                             setValForAnno(r, field, 3);
-                        } catch (IllegalAccessException e) {
+                        } catch (IllegalAccessException | NoSuchFieldException e) {
                             log.error("", e);
                         }
                     }
@@ -231,7 +259,34 @@ public class WinccApi {
         }
     }
 
-    private static <T> void setValForAnno(T r, String annoVal, Object value) throws IllegalAccessException {
+    private static <T> String getFieldNameForAnno(T r, String annoVal) {
+        String realFieldName = null;
+        for (Field field : r.getClass().getDeclaredFields()) {
+            WinCCVari ano = field.getAnnotation(WinCCVari.class);
+            String fieldName;
+            if (ano == null || StringUtils.isBlank(ano.value())) {
+                fieldName = field.getName();
+            } else {
+                fieldName = ano.value();
+            }
+            if (fieldName.equals(annoVal)) {
+                realFieldName = field.getName();
+            }
+        }
+        return realFieldName;
+    }
+
+    /**
+     * 返回设置的缓存名称
+     * @param r
+     * @param annoVal
+     * @param value
+     * @return
+     * @param <T>
+     * @throws IllegalAccessException
+     */
+    private static <T> String setValForAnno(T r, String annoVal, Object value) throws IllegalAccessException {
+        String realFieldName = null;
         for (Field field : r.getClass().getDeclaredFields()) {
             field.setAccessible(true);
             WinCCVari ano = field.getAnnotation(WinCCVari.class);
@@ -242,11 +297,12 @@ public class WinccApi {
                 fieldName = ano.value();
             }
             if (fieldName.equals(annoVal)) {
+                realFieldName = field.getName();
                 field.set(r, value);
                 field.setAccessible(false);
-                break;
             }
         }
+        return realFieldName;
     }
 
     public <T> T pullArchive(String tagGroupName,

@@ -78,4 +78,9 @@ public class ViewController {
     public String report_od20_tables() {
         return "report_od20_tables";
     }
+
+    @RequestMapping("/view/report_zs_tables")
+    public String report_zs_tables() {
+        return "report_zs_tables";
+    }
 }

@@ -7,8 +7,9 @@ package com.ourexists.mesedge.portal.task.timer;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.portal.sync.remote.WinccApi;
+import com.ourexists.mesedge.portal.sync.remote.constants.StructureTypeEnum;
+import com.ourexists.mesedge.portal.sync.remote.model.ZsDevVari;
 import com.ourexists.mesedge.portal.task.WinCCDevConstants;
-import com.ourexists.mesedge.report.model.WinCCZsDevDto;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class CollectWinCCZsTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        WinCCZsDevDto datalist = winccApi.pullArchive("zsDev", WinCCZsDevDto.class, true, WinCCDevConstants.ZS_CACHE);
+        ZsDevVari datalist = winccApi.pullTags(ZsDevVari.class, StructureTypeEnum.dev, WinCCDevConstants.ZS_CACHE);
         if (datalist == null) {
             return;
         }
