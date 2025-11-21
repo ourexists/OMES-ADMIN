@@ -8,6 +8,7 @@ import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.portal.sync.remote.WinccApi;
 import com.ourexists.mesedge.portal.sync.remote.model.DosingDevVari;
+import com.ourexists.mesedge.portal.sync.remote.constants.StructureTypeEnum;
 import com.ourexists.mesedge.portal.task.WinCCDevConstants;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class CollectWinCCDosingTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        DosingDevVari datalist = winccApi.pullTags(DosingDevVari.class, true, WinCCDevConstants.DOSING_CACHE);
+        DosingDevVari datalist = winccApi.pullTags(DosingDevVari.class, StructureTypeEnum.dev, WinCCDevConstants.DOSING_CACHE);
         if (datalist == null) {
             return;
         }

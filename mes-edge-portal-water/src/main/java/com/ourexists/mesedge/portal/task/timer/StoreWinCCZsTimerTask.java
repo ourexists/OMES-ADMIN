@@ -8,6 +8,7 @@ import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.portal.config.CacheUtils;
+import com.ourexists.mesedge.portal.sync.remote.model.ZsDevVari;
 import com.ourexists.mesedge.portal.task.WinCCDevConstants;
 import com.ourexists.mesedge.report.feign.WinCCReportFeign;
 import com.ourexists.mesedge.report.model.WinCCZsDevDto;
@@ -31,13 +32,12 @@ public class StoreWinCCZsTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        WinCCZsDevDto datalist = cacheUtils.get("realtime", WinCCDevConstants.ZS_CACHE);
+        ZsDevVari datalist = cacheUtils.get("realtime", WinCCDevConstants.ZS_CACHE);
         if (datalist == null) {
             return;
         }
         try {
-            datalist.setExecTime(new Date());
-            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveZs(datalist));
+            RemoteHandleUtils.getDataFormResponse(winCCReportFeign.saveZs(ZsDevVari.covert(datalist)));
         } catch (EraCommonException e) {
             log.error(e.getMessage());
         }

@@ -8,6 +8,7 @@ import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.mesedge.portal.config.CacheUtils;
 import com.ourexists.mesedge.portal.sync.remote.WinccApi;
 import com.ourexists.mesedge.portal.sync.remote.model.MagDevVari;
+import com.ourexists.mesedge.portal.sync.remote.constants.StructureTypeEnum;
 import com.ourexists.mesedge.portal.task.WinCCDevConstants;
 import com.ourexists.mesedge.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class CollectWinCCMagTimerTask extends TimerTask {
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        MagDevVari datalist = winccApi.pullTags(MagDevVari.class, true, WinCCDevConstants.MAG_CACHE);
+        MagDevVari datalist = winccApi.pullTags(MagDevVari.class, StructureTypeEnum.dev, WinCCDevConstants.MAG_CACHE);
         if (datalist == null) {
             return;
         }

@@ -58,6 +58,11 @@ var menu = [
                 'name': 'menu.od20',
                 'path': '/view/report_od20_tables'
             },
+            {
+                'id': 37,
+                'name': 'menu.zs',
+                'path': '/view/report_zs_tables'
+            },
         ]
     }
 ];
