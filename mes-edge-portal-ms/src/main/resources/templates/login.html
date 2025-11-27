@@ -100,11 +100,17 @@
             window.auth(router.auth_token, param, function (result) {
                 var token = result.token_type + ' ' + result.access_token
                 localStorage.setItem(store.token_header, token);
-                if (redirect == null) {
-                    window.location.href = '/';
-                } else {
-                    window.location.href = redirect;
-                }
+                get(router.current_user, null, function (result) {
+                    localStorage.setItem(store.user_info, JSON.stringify(result))
+                    if (redirect == null) {
+                        window.location.href = '/';
+                    } else {
+                        window.location.href = redirect;
+                    }
+                }, function (code, msg) {
+                    layer.msg(msg);
+                    getCaptcha();
+                })
             }, function (code, msg) {
                 layer.msg(msg);
                 getCaptcha();

@@ -32,11 +32,11 @@
             <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
                 <a href="javascript:;">
                     <img src="//unpkg.com/outeres@0.0.10/img/layui/icon-v2.png" class="layui-nav-img">
-                    User
+                    <span class="username">User</span>
                 </a>
                 <dl class="layui-nav-child">
                     <dd id="signout"><a href="javascript:;">Sign out</a></dd>
-<!--                    <dd id="system-exit"><a href="javascript:;">System Exit</a></dd>-->
+                    <!--                    <dd id="system-exit"><a href="javascript:;">System Exit</a></dd>-->
                 </dl>
             </li>
             <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
@@ -83,10 +83,13 @@
         $('.lan_show').html(lu[curLang])
 
         var token = localStorage.getItem(store.token_header);
-        if (token == null) {
+        var userInfo = localStorage.getItem(store.user_info);
+        if (token == null || userInfo == null) {
             window.location.href = '/view/login';
             return
         }
+        var u = JSON.parse(userInfo);
+        $('.username').html(u.nickName)
 
         var menuHtml = '<ul class="layui-nav layui-nav-tree" id="layui-nav-tree" lay-filter="layui-nav-tree">';
         layui.each(menu, function (i, item) {
@@ -126,6 +129,7 @@
 
         $('#signout').on('click', function () {
             localStorage.removeItem(store.token_header);
+            localStorage.removeItem(store.user_info);
             window.location.href = '/view/login';
         })
     });
