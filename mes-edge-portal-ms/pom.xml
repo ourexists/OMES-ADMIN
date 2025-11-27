@@ -13,9 +13,6 @@
     <properties>
         <era-framework.version>2024.0.1.0-SNAPSHOT</era-framework.version>
         <era-framework-dependencies.version>2024.0.1.0-SNAPSHOT</era-framework-dependencies.version>
-        <mybatis-spring-boot.version>2.1.4</mybatis-spring-boot.version>
-        <mybatis.version>3.5.6</mybatis.version>
-        <mybatis-plus-starter.version>3.5.2</mybatis-plus-starter.version>
     </properties>
 
     <dependencies>

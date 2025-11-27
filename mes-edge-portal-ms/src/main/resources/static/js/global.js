@@ -15,6 +15,7 @@ var $ = layui.jquery;
 
 var store = {
     token_header: 'mes-token',
+    user_info:'user_info',
     language: 'mes-lang'
 }
 
@@ -42,6 +43,7 @@ var client = {
 var router = {
     "captcha": "/open/captcha",
     "auth_token": "/oauth2/token",
+    "current_user": "/acc/currentUser",
     "mat_page": "/mat/selectByPage",
     "mat_edit": "/mat/addOrUpdate",
     "mat_del": "/mat/delete",
