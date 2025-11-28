@@ -130,6 +130,15 @@ var router = {
     "imrecord_page": "/lmrecord/selectByPage",
     "fzdata_allpf": "/fzdata/allPFName",
     "report_product": "/report/productionCount",
+    "platform_all": "/platform/getAll",
+    "platform_del": "/platform/delete",
+    "platform_edit": "/platform/addOrUpdate",
+    "account_page": "/acc/selectByPage",
+    "account_register": "/acc/register",
+    "account_edit": "/acc/modify",
+    "account_del": "/acc/delete",
+    "account_invoke": "/acc/invoke",
+    "account_frozen": "/acc/frozen"
 }
 
 function getCommonHeader() {

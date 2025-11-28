@@ -1,0 +1,158 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+
+            <label class="layui-form-label" lang-i18n="common.username" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="text" name="accName" autocomplete="off" lay-verify="required"
+                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item lay-hide-edit">
+            <label class="layui-form-label" lang-i18n="common.password" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="text" name="password" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="account.nickName" style="font-weight: bold "></label>
+                <div class="layui-input-block">
+                    <input type="text" name="nickName" autocomplete="off" lay-verify="required"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="account.mobile"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="mobile" autocomplete="off" lay-verify="phone"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="account.email"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="email" autocomplete="off" lay-verify="email"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="account.userName"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="userName" autocomplete="off"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="account.idCard"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="idCard" autocomplete="off" lay-verify="phone"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="account.sex"></label>
+            <div class="layui-input-block">
+                <input type="radio" name="sex" value="1" lang-i18n="common.male" checked>
+                <input type="radio" name="sex" value="2" lang-i18n="common.female">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="account.settledTime"></label>
+            <div class="layui-input-block">
+                <input type="text" name="settledTime" id="settledTime" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="account.expireTime"></label>
+            <div class="layui-input-block">
+                <input type="text" name="expireTime" id="expireTime" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = parent.current_row_data;
+    var selected_tree_node = parent.selected_tree_node;
+    layui.use(['form', 'layer', 'laydate'], function () {
+        var form = layui.form,
+            layer = layui.layer,
+            laydate = layui.laydate;
+
+        // 英文版
+        laydate.render({
+            elem: '#settledTime',
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+
+        laydate.render({
+            elem: '#expireTime',
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+        if (current_row_data != null) {
+            form.val("common-edit-form", Object.assign({}, current_row_data));
+            if (current_row_data.selfCode !== "") {
+                $(".lay-unable-edit").attr("disabled", "block");
+                $(".lay-hide-edit").hide()
+            }
+        } else {
+            form.val("common-edit-form", {});
+            current_row_data = {}
+        }
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var url = router.account_edit;
+            if (Object.keys(current_row_data).length === 0) {
+                url = router.account_register;
+                current_row_data.source = 'platform';
+            }
+            var field = data.field; // 获取表单字段值
+            for (let key in field) {
+                current_row_data[key] = field[key];
+            }
+            if (selected_tree_node != null) {
+                current_row_data.platform = selected_tree_node.code;
+            }
+
+            post(url, current_row_data, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

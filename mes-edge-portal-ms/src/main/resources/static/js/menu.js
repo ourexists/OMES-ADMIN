@@ -76,5 +76,21 @@ var menu = [
                 'path': '/view/task_tables'
             },
         ]
+    },
+    {
+        'id': 5,
+        'name': 'menu.central.system',
+        'children': [
+            {
+                'id': 51,
+                'name': 'menu.account',
+                'path': '/view/account_tables'
+            },
+            {
+                'id': 52,
+                'name': 'menu.task',
+                'path': '/view/task_tables'
+            },
+        ]
     }
 ];
