@@ -188,4 +188,19 @@ public class ViewController {
     public String fzdata_detail() {
         return "fzdata_detail";
     }
+
+    @RequestMapping("/view/account_tables")
+    public String account_tables() {
+        return "account_tables";
+    }
+
+    @RequestMapping("/view/platform_form_edit")
+    public String platform_form_edit() {
+        return "platform_form_edit";
+    }
+
+    @RequestMapping("/view/account_form_edit")
+    public String account_form_edit() {
+        return "account_form_edit";
+    }
 }

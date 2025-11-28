@@ -5,7 +5,6 @@ package com.ourexists.mesedge.ucenter.account;
 
 import com.ourexists.era.framework.core.model.vo.BaseVo;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
-import com.ourexists.mesedge.ucenter.enums.AccChannelEnum;
 import com.ourexists.mesedge.ucenter.permission.PermissionApiDetailDto;
 import com.ourexists.mesedge.ucenter.tenant.TenantUVo;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -117,23 +116,7 @@ public class AccVo extends BaseVo {
 
     private Integer perfection;
 
-    private String openid;
-
-    private Integer gender;
-
     private String detail;
-
-    public String getOpenid() {
-        if (AccChannelEnum.wechat_applet.name().equals(this.source)
-                || AccChannelEnum.wechat_official.name().equals(this.source)) {
-            return this.sourceId;
-        }
-        return null;
-    }
-
-    public Integer getGender() {
-        return this.sex;
-    }
 
     public Map<String, String> getTenantRoles() {
         if (CollectionUtil.isNotBlank(this.tenantVos)) {

@@ -42,7 +42,7 @@ public class TenantOpenController {
     @GetMapping("/all")
     @Operation(summary = "所有租户信息")
     public JsonResponseEntity<List<TenantVo>> all() {
-        UserContext.setTenant(new TenantInfo().setTenantId(CommonConstant.SYSTEM_TENANT));
+        UserContext.defaultTenant();
         return tenantFeign.all();
     }
 }
