@@ -21,14 +21,17 @@ public class PermissionDto extends BaseDto {
     private static final long serialVersionUID = 1008279127393993888L;
     private String id;
 
-    @Schema(description ="编号")
+    @Schema(description = "编号")
     private String code;
 
-    @Schema(description ="父权限编号")
+    @Schema(description = "父权限编号")
     private String pcode;
 
-    @Schema(description ="权限名称")
+    @Schema(description = "权限名称")
     private String name;
+
+    @Schema(description = "i18n描述")
+    private String i18n;
 
     @Schema(description = "权限策略", allowableValues = "0:启用并显示, 1:启用但不显示, 2:禁用")
     private Integer strategy;
@@ -36,27 +39,27 @@ public class PermissionDto extends BaseDto {
     @Schema(description = "菜单图标")
     private String icon;
 
-    @Schema(description ="组件")
+    @Schema(description = "组件")
     private String component;
 
-    @Schema(description ="跳转网页链接")
+    @Schema(description = "跳转网页链接")
     private String url;
 
-    @Schema(description ="菜单排序")
+    @Schema(description = "菜单排序")
     private Double sortNo;
 
     @Schema(description = "类型", allowableValues = "0:菜单权限,1:按钮权限,2:其它")
     private Integer type;
 
-    @Schema(description ="是否路缓存页面")
-    private Boolean keepAlive;
+    @Schema(description = "是否路缓存页面")
+    private Boolean keepAlive = true;
 
-    @Schema(description ="描述")
+    @Schema(description = "描述")
     private String description;
 
     @Schema(description = "外链菜单打开方式", allowableValues = "0:内部打开,1:外部打开")
     private Integer internalOrExternal;
 
-    @Schema(description ="归属平台(下级不用传入)")
+    @Schema(description = "归属平台(下级不用传入)")
     private String platform;
 }

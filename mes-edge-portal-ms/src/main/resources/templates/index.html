@@ -68,53 +68,62 @@
 </div>
 <script th:inline="javascript">
     layui.use(['element', 'layer', 'jquery'], function () {
-        var element = layui.element;
+        let element = layui.element;
 
-        var lu = {
+        let lu = {
             "zh": "简体中文",
             "en": "English"
         }
 
-        var curLang = localStorage.getItem(store.language);
+        let curLang = localStorage.getItem(store.language);
         if (curLang === null) {
             curLang = 'zh';
             localStorage.setItem(store.language, 'zh');
         }
         $('.lan_show').html(lu[curLang])
 
-        var token = localStorage.getItem(store.token_header);
-        var userInfo = localStorage.getItem(store.user_info);
+        let token = localStorage.getItem(store.token_header);
+        let userInfo = localStorage.getItem(store.user_info);
         if (token == null || userInfo == null) {
             window.location.href = '/view/login';
             return
         }
-        var u = JSON.parse(userInfo);
+        let u = JSON.parse(userInfo);
         $('.username').html(u.nickName)
 
-        var menuHtml = '<ul class="layui-nav layui-nav-tree" id="layui-nav-tree" lay-filter="layui-nav-tree">';
-        layui.each(menu, function (i, item) {
-            menuHtml += '<li class="layui-nav-item layui-nav-itemed">' +
-                '<a href="javascript:">' + i18np.prop(item.name) + '</a>';
-            layui.each(item.children, function (j, jtem) {
-                menuHtml += '<dl class="layui-nav-child">' +
-                    '<dd><a href="javascript:" class="link-active" ' +
-                    'lay-href="' + jtem.path + '" ' +
-                    'data-id="' + jtem.id + '" ' +
-                    'data-title="' + i18np.prop(jtem.name) + '">' + i18np.prop(jtem.name) + '</a></dd>' +
-                    '</dl>'
+        let menuS = localStorage.getItem(store.menu);
+        let menu = JSON.parse(menuS);
+        if (menu != null) {
+            let menuHtml = '<ul class="layui-nav layui-nav-tree" id="layui-nav-tree" lay-filter="layui-nav-tree">';
+            layui.each(menu, function (i, item) {
+                if (item.type == 0 && item.strategy == 0) {
+                    let name = item.name
+                    if (item.i18n != null) {
+                        name = i18np.prop(item.i18n);
+                    }
+                    menuHtml += '<li class="layui-nav-item layui-nav-itemed">';
+                    if (item.url == null) {
+                        menuHtml += '<a href="javascript:">' + name + '</a>';
+                    } else {
+                        menuHtml += '<a href="javascript:" class="link-active" ' +
+                            'lay-href="' + item.url + '" ' +
+                            'data-id="' + item.code + '" ' +
+                            'data-title="' + name + '">' + name + '</a>';
+                    }
+                    menuHtml = child(item.children, menuHtml);
+                    menuHtml += '</li>';
+                }
             })
-            menuHtml += '</li>';
-        })
-        menuHtml += '</ui>';
+            menuHtml += '</ui>';
+            $('#layui-nav-tree').html(menuHtml);
+            element.render('layui-nav');
 
-        $('#layui-nav-tree').html(menuHtml);
-        element.render('layui-nav');
-
-        //左侧菜单点击事件
-        $('.link-active').on('click', function () {
-            var dataid = $(this);
-            openIndexTab(dataid.attr('lay-href'), dataid.attr('data-id'), dataid.attr('data-title'));
-        });
+            //左侧菜单点击事件
+            $('.link-active').on('click', function () {
+                var dataid = $(this);
+                openIndexTab(dataid.attr('lay-href'), dataid.attr('data-id'), dataid.attr('data-title'));
+            });
+        }
 
         $('#system-exit').on('click', function () {
             $.ajax({
@@ -130,9 +139,35 @@
         $('#signout').on('click', function () {
             localStorage.removeItem(store.token_header);
             localStorage.removeItem(store.user_info);
+            localStorage.removeItem(store.menu);
             window.location.href = '/view/login';
         })
+
     });
+
+    function child(children, menuHtml) {
+        layui.each(children, function (j, item) {
+            let name = item.name
+            if (item.i18n != null) {
+                name = i18np.prop(item.i18n);
+            }
+            menuHtml += '<dl class="layui-nav-child"><dd>';
+            if (item.url == null) {
+                menuHtml += '<a href="javascript:">' + name + '</a>';
+            } else {
+                menuHtml += '<a href="javascript:" class="link-active" ' +
+                    'lay-href="' + item.url + '" ' +
+                    'data-id="' + item.code + '" ' +
+                    'data-title="' + name + '">' + name + '</a>';
+            }
+            if (Object.keys(item.children).length > 0) {
+                menuHtml = child(item.children, menuHtml)
+            }
+            menuHtml += ' </dd></dl>';
+        })
+        return menuHtml;
+    }
+
 
     function openIndexTab(url, id, name) {
         openTab(url, id, name, 'tables', $('.layui-tab-title li[lay-id]'))

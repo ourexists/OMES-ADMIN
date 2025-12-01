@@ -203,4 +203,14 @@ public class ViewController {
     public String account_form_edit() {
         return "account_form_edit";
     }
+
+    @RequestMapping("/view/permission_tables")
+    public String permission_tables() {
+        return "permission_tables";
+    }
+
+    @RequestMapping("/view/permission_form_edit")
+    public String permission_form_edit() {
+        return "permission_form_edit";
+    }
 }

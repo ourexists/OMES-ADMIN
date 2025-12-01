@@ -9,6 +9,7 @@ import com.ourexists.era.framework.core.utils.tree.TreeUtil;
 import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
 import com.ourexists.mesedge.ucenter.permission.PermissionDto;
 import com.ourexists.mesedge.ucenter.permission.PermissionTreeNode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -43,6 +44,11 @@ public class Permission extends MainEntity {
      * 权限名称
      */
     private String name;
+
+    /**
+     * i18n
+     */
+    private String i18n;
 
     /**
      * 权限策略
