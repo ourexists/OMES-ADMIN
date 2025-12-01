@@ -15,8 +15,9 @@ var $ = layui.jquery;
 
 var store = {
     token_header: 'mes-token',
-    user_info:'user_info',
-    language: 'mes-lang'
+    user_info: 'user_info',
+    language: 'mes-lang',
+    menu: 'menu'
 }
 
 layui.use(['i18np'], function () {
@@ -138,7 +139,14 @@ var router = {
     "account_edit": "/acc/modify",
     "account_del": "/acc/delete",
     "account_invoke": "/acc/invoke",
-    "account_frozen": "/acc/frozen"
+    "account_frozen": "/acc/frozen",
+    "permission_in_platform": "/permission/selectPermissionTreeInPlatform",
+    "permission_type": "/permission/permissionType",
+    "permission_strategy": "/permission/permissionStrategy",
+    "permission_edit": "/permission/modify",
+    "permission_add": "/permission/add",
+    "currentAccPermissionTree": "/permission/currentAccPermissionTree",
+    "permission_del": "/permission/delete"
 }
 
 function getCommonHeader() {

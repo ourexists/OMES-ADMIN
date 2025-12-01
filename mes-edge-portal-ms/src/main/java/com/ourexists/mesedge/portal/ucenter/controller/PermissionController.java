@@ -5,6 +5,8 @@
 package com.ourexists.mesedge.portal.ucenter.controller;
 
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.mesedge.ucenter.enums.PermissionStrategyEnum;
+import com.ourexists.mesedge.ucenter.enums.PermissionTypeEnum;
 import com.ourexists.mesedge.ucenter.feign.PermissionFeign;
 import com.ourexists.mesedge.ucenter.permission.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author pengcheng
@@ -132,5 +136,25 @@ public class PermissionController {
     @GetMapping("/selectAll")
     public JsonResponseEntity<List<PermissionApiDetailDto>> selectAll() {
         return permissionFeign.selectAll();
+    }
+
+    @Operation(summary = "所有权限类型")
+    @GetMapping("/permissionType")
+    public JsonResponseEntity<Map<Integer, String>> permissionType() {
+        Map<Integer, String> result = new HashMap<>();
+        for (PermissionTypeEnum value : PermissionTypeEnum.values()) {
+            result.put(value.getCode(), value.name());
+        }
+        return JsonResponseEntity.success(result);
+    }
+
+    @Operation(summary = "所有权限策略")
+    @GetMapping("/permissionStrategy")
+    public JsonResponseEntity<Map<Integer, String>> permissionStrategy() {
+        Map<Integer, String> result = new HashMap<>();
+        for (PermissionStrategyEnum value : PermissionStrategyEnum.values()) {
+            result.put(value.getCode(), value.name());
+        }
+        return JsonResponseEntity.success(result);
     }
 }

@@ -18,19 +18,14 @@
     <div class="layui-col-sm12 layui-col-md4 layui-col-lg3">
         <div class="layui-card">
             <div class="layui-card-body mini-bar" id="ltTree">
-                <div class="layui-btn-container" id="lef_tree_opera">
-                    <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="addroot">
-                        <i class="layui-icon layui-icon-add-1"></i>
-                    </a>
-                    <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="reload">
-                        <i class="layui-icon layui-icon-refresh"></i>
-                    </a>
-                </div>
                 <div class="layui-inline">
                     <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
                 </div>
-                <a class="layui-btn layui-btn-primary" id="tree_query">
+                <a class="layui-btn layui-btn-sm layui-btn-primary" id="tree_query">
                     <i class="layui-icon layui-icon-search"></i>
+                </a>
+                <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="reload">
+                    <i class="layui-icon layui-icon-refresh"></i>
                 </a>
                 <div id="left-tree"></div>
             </div>
@@ -169,7 +164,7 @@
         // })
 
         let view_operate = {
-            'treeEdit': ['update', 'del'],
+            'treeEdit': [],
             'tbDefaultToolbar': ['filter', 'exports', 'print'],
             'tbToolbar': '#tb-toolbar',
             'tbCols': [[
@@ -354,9 +349,6 @@
                 openWindow('common.edit', '/view/account_form_edit', ['95%', '80%']);
             } else if (obj.event === 'del') {
                 delWindow(router.account_del, [data.id], reloadTb);
-            } else if (obj.event === 'select') {
-                parent.selectBom(obj.data);
-                closeWindow();
             } else if (obj.event === 'invoke') {
                 get(router.account_invoke, {accId: data.id}, function () {
                     reloadTb();
