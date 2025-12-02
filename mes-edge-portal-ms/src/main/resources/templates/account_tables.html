@@ -88,6 +88,9 @@
             <i class="layui-icon layui-icon-play"></i>
         </a>
         {{# } }}
+        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="assign">
+            <i class="layui-icon layui-icon-auz"></i>
+        </a>
         <a class="layui-btn layui-btn-xs  layui-btn-primary layui-bg-red" lay-event="del">
             <i class="layui-icon layui-icon-delete"></i>
         </a>
@@ -112,8 +115,6 @@
             <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
             <i class="layui-icon layui-icon-down layui-font-12"></i>
         </button>
-        <!--        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">{{ i18np.prop('common.row.data') }}</button>-->
-        <!--        <button class="layui-btn layui-btn-sm" lay-event="getData">{{ i18np.prop('common.page.data') }}</button>-->
     </div>
 </script>
 
@@ -124,44 +125,13 @@
     var table;
     var tree;
 
-    layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
+    layui.use(function () {
         table = layui.table;
         tree = layui.tree;
         var form = layui.form;
         var dropdown = layui.dropdown;
         var layer = layui.layer;
         var util = layui.util;
-
-        let page_type = layui.url().search.page_type;
-
-        if (current_row_data != null) {
-            form.val("tb-search-form", {
-                "name": current_row_data.name,
-                "selfCode": current_row_data.selfCode,
-                "type": current_row_data.type,
-                "detailName": current_row_data.detailName
-            });
-        } else {
-            form.val("tb-search-form", {
-                "name": "",
-                "selfCode": "",
-                "type": "",
-                "detailName": ""
-            });
-        }
-
-        // get(router.bom_type, null, function (result) {
-        //     $.each(result, function (index, item) {
-        //         if (current_row_data != null
-        //             && current_row_data.attribute != null
-        //             && item.id === current_row_data.attribute.toString()) {
-        //             $('#type').append(new Option(item.name, item.id, false, true));
-        //         } else {
-        //             $('#type').append(new Option(item.name, item.id));
-        //         }
-        //     })
-        //     form.render();
-        // })
 
         let view_operate = {
             'treeEdit': [],
@@ -186,25 +156,6 @@
             ]]
         }
 
-        if (page_type != null && page_type === '1') {
-            view_operate = {
-                'treeEdit': null,
-                'tbDefaultToolbar': [],
-                'tbToolbar': null,
-                'tbCols': [[
-                    {field: 'name', title: i18np.prop('bom.name')},
-                    {field: 'selfCode', title: i18np.prop('bom.code')},
-                    {field: 'typeDesc', title: i18np.prop('bom.type')},
-                    {
-                        fixed: 'right',
-                        width: 200,
-                        minWidth: 125,
-                        templet: '#tb-select-tool'
-                    }
-                ]]
-            }
-        }
-
         get(router.platform_all, null, function (result) {
             tree.render({
                 elem: '#left-tree',
@@ -223,20 +174,6 @@
                     //获取当前点击的节点数据
                     selected_tree_node = obj.data;
                     reloadTb();
-                },
-                operate: function (obj) {
-                    var type = obj.type; // 得到操作类型：add、edit、del
-                    var new_tree_node;
-                    // Ajax 操作
-                    if (type === 'update') { // 修改节点
-                        current_tree_node = obj.data;
-                        openWindow('common.edit', '/view/platform_form_edit', ['50%', '30%'], function () {
-                            return new_tree_node;
-                        })
-                        return null;
-                    } else if (type === 'del') { // 删除节点
-                        delTreeNode(router.platform_del, [obj.data.id], null, reloadTree);
-                    }
                 }
             });
         }, function (code, msg) {
@@ -357,6 +294,8 @@
                 get(router.account_frozen, {accId: data.id}, function () {
                     reloadTb();
                 })
+            } else if (obj.event === 'assign') {
+                openWindow('role.assign', '/view/account_assign?id=' + data.id, ['50%', '60%'])
             }
         });
         // table 滚动时移除内部弹出的元素
@@ -384,10 +323,6 @@
         });
 
         util.event('lay-on', {
-            addroot: function (othis) {
-                current_tree_node = {};
-                openWindow('common.add', '/view/platform_form_edit', ['50%', '30%']);
-            },
             reload: function () {
                 reloadTree();
             }
@@ -399,6 +334,7 @@
             url: initRequestUrl(router.account_page),
             where: {
                 platform: selected_tree_node.code,
+                accRole: 'COMMON',
                 accName: $('#accName').val(),
                 mobile: $('#mobile').val(),
             },

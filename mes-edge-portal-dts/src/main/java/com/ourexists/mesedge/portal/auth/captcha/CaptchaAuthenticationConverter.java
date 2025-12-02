@@ -15,11 +15,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
  */
 public class CaptchaAuthenticationConverter implements EraAuthenticationConverter {
 
-    private static final String GRANT_TYPE = "captcha";
-
-    private static final String PARAMETER_USERNAME = "username";
-
-    private static final String PARAMETER_PASSWORD = "password";
+    public static final String GRANT_TYPE = "captcha";
 
     private static final String PARAMETER_CAPTCHA = "captcha";
 
@@ -29,9 +25,10 @@ public class CaptchaAuthenticationConverter implements EraAuthenticationConverte
         if (!GRANT_TYPE.equals(grantType)) {
             return null;
         }
-        String username = request.getParameter(PARAMETER_USERNAME);
-        String password = request.getParameter(PARAMETER_PASSWORD);
+        String clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+        String username = request.getParameter(OAuth2ParameterNames.USERNAME);
+        String password = request.getParameter(OAuth2ParameterNames.PASSWORD);
         String captcha = request.getParameter(PARAMETER_CAPTCHA);
-        return new CaptchaAuthenticationToken(username, password, captcha);
+        return new CaptchaAuthenticationToken(clientId, username, password, captcha);
     }
 }

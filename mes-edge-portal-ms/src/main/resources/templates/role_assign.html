@@ -1,0 +1,119 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div id="common-tree"></div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    let tree;
+    let id;
+    layui.use(function () {
+        var form = layui.form;
+        tree = layui.tree;
+        id = layui.url().search.id;
+
+        tree.render({
+            elem: '#common-tree',
+            showCheckbox: true,  // 是否显示复选框
+            id: 'common-tree',
+            contact: false,
+            customName: {
+                "title": "name",
+            }
+        });
+
+        reloadTree();
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var checkData = tree.getChecked('common-tree');
+            var ids = collectNodeId(checkData);
+            post(router.permission_assignToRole, {
+                "id": id,
+                "permissionIds": ids
+            }, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+
+        function collectNodeId(nodes) {
+            var ids = [];
+            layui.each(nodes, function (i, item) {
+                ids.push(item.id);
+                if (Object.keys(nodes).length > 0) {
+                    var childIds = collectNodeId(item.children);
+                    childIds.forEach(id => ids.push(id))
+                }
+            });
+            return ids;
+        }
+    });
+
+
+    function reloadTree() {
+        get(router.platform_all, null, function (result) {
+            let treeData = [];
+            let promises = [];
+            layui.each(result, function (i, item) {
+                let promise = new Promise((resolve, reject) => {
+                    get(router.permission_tree, {tenantId: client.tenantId, platform: item.code}, function (r) {
+                        var rootNode = {
+                            id: item.id,
+                            code: item.code,
+                            name: item.name,
+                            children: r,
+                            checked: true,
+                            spread: true,
+                            disabled: true
+                        }
+                        treeData.push(rootNode);
+                        resolve();
+                    })
+                })
+                promises.push(promise);
+            });
+            Promise.all(promises).then(() => {
+                // 更新树形结构
+                tree.reload('common-tree', {
+                    data: treeData
+                });
+                get(router.role_permission, {roleId: id}, function (r) {
+                    var checkedIds = [];
+                    if (Object.keys(r).length > 0) {
+                        r.forEach(item => checkedIds.push(item.id))
+                    }
+                    tree.setChecked('common-tree', checkedIds);
+                });
+            }).catch(error => {
+                console.error('请求出错', error);
+            });
+        });
+    }
+</script>
+</body>
+</html>

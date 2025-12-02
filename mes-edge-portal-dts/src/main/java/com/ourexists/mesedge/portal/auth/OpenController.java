@@ -28,14 +28,14 @@ import java.io.IOException;
 public class OpenController {
 
     @Autowired
-    private AuthValidRuleCache authCacheManager;
+    private AuthValidRuleCache authValidRuleCache;
 
     @Operation(summary = "验证码")
     @GetMapping("/captcha")
     public JsonResponseEntity<Boolean> captcha(@RequestParam String uuid,
                                                HttpServletResponse response) {
         CircleCaptcha lineCaptcha = CaptchaUtil.createCircleCaptcha(100, 50);
-        authCacheManager.setCaptcha(uuid, lineCaptcha.getCode());
+        authValidRuleCache.setCaptcha(uuid, lineCaptcha.getCode());
         try (ServletOutputStream out = response.getOutputStream()) {
             lineCaptcha.write(out);
         } catch (IOException e) {

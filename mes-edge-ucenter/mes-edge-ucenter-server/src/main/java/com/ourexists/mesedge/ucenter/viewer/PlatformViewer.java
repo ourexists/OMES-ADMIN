@@ -3,6 +3,7 @@
  */
 package com.ourexists.mesedge.ucenter.viewer;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.ucenter.feign.PlatformFeign;
@@ -37,7 +38,7 @@ public class PlatformViewer implements PlatformFeign {
     @Operation(summary = "分页查询")
     @GetMapping("/getAll")
     public JsonResponseEntity<List<PlatformDto>> getAll() {
-        List<Platform> platforms = service.list();
+        List<Platform> platforms = service.list(new LambdaQueryWrapper<Platform>().orderByAsc(Platform::getId));
         return JsonResponseEntity.success(Platform.covert(platforms));
     }
 

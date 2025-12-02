@@ -38,7 +38,9 @@ layui.use(['i18np'], function () {
 var client = {
     id: 'mes',
     sc: 'admin123',
-    grant_type: 'captcha'
+    grant_type: 'captcha',
+    tenantId: 0,
+    platform: 'mes-edge'
 }
 
 var router = {
@@ -146,14 +148,23 @@ var router = {
     "permission_edit": "/permission/modify",
     "permission_add": "/permission/add",
     "currentAccPermissionTree": "/permission/currentAccPermissionTree",
-    "permission_del": "/permission/delete"
+    "permission_del": "/permission/delete",
+    "permission_tree": "/permission/selectTenantPermissionTreeInPlatform",
+    "permission_assignToRole": "/permission/assignToRolePermissionTree",
+    "role_page": "/role/selectByPage",
+    "role_edit": "/role/addOrUpdate",
+    "role_del": "/role/delete",
+    "role_permission": "/permission/selectRolePermission",
+    "role_accHoldOnly": "/role/selectRoleWhichAccHoldOnly",
+    "role_bindAcc": "/role/bindAcc",
+
 }
 
 function getCommonHeader() {
     return {
         'Authorization': localStorage.getItem(store.token_header),
-        'x-era-platform': 'mse-edge',
-        'x-route-tenant': 0
+        'x-era-platform': client.platform,
+        'x-route-tenant': client.tenantId
     };
 }
 
@@ -177,7 +188,7 @@ function auth(url, param, successFunc, failFuc) {
         headers: {
             "Authorization": `Basic ${basicAuth}`,
             "Content-Type": "application/x-www-form-urlencoded",
-            'x-era-platform': 'mse-edge',
+            'x-era-platform': client.platform,
             'x-route-tenant': 0
         },
         async: false,
