@@ -124,7 +124,7 @@ public class PermissionServiceImpl extends AbstractMyBatisPlusService<Permission
             //系统租户查询所有
             r = this.list(
                     new LambdaQueryWrapper<Permission>()
-                            .eq(!StringUtils.isEmpty(platform), Permission::getPlatform, platform)
+                            .eq(StringUtils.hasText(platform), Permission::getPlatform, platform)
                             .orderByAsc(Permission::getSortNo)
                             .orderByAsc(Permission::getId));
         } else {

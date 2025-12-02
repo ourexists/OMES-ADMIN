@@ -99,7 +99,7 @@ layui.define(['form','util'], function(exports){
   // 默认配置
   Class.prototype.config = {
     data: [],  // 数据
-
+    contact: true,//是否父子级联
     showCheckbox: false,  // 是否显示复选框
     showLine: true,  // 是否开启连接线
     accordion: false,  // 是否开启手风琴模式
@@ -368,15 +368,17 @@ layui.define(['form','util'], function(exports){
     if(elemCheckbox.prop('disabled')) return;
 
     // 同步子节点选中状态
-    if(typeof item[customName.children] === 'object' || elem.find('.'+ELEM_PACK)[0]){
-      var elemCheckboxs = elem.find('.'+ ELEM_PACK).find('input[same="layuiTreeCheck"]');
-      elemCheckboxs.each(function(index){
-        if(this.disabled) return; // 不可点击则跳过
-        var children = item[customName.children][index];
-        if(children) that.updateFieldValue(children, 'checked', checked);
-        that.updateFieldValue(this, 'checked', checked);
-      });
-    };
+    if (options.contact) {
+        if(typeof item[customName.children] === 'object' || elem.find('.'+ELEM_PACK)[0]){
+          var elemCheckboxs = elem.find('.'+ ELEM_PACK).find('input[same="layuiTreeCheck"]');
+          elemCheckboxs.each(function(index){
+            if(this.disabled) return; // 不可点击则跳过
+            var children = item[customName.children][index];
+            if(children) that.updateFieldValue(children, 'checked', checked);
+            that.updateFieldValue(this, 'checked', checked);
+          });
+        }
+    }
 
     // 同步父节点选中状态
     var setParentsChecked = function(thisNodeElem){

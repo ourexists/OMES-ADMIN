@@ -213,4 +213,24 @@ public class ViewController {
     public String permission_form_edit() {
         return "permission_form_edit";
     }
+
+    @RequestMapping("/view/role_tables")
+    public String role_tables() {
+        return "role_tables";
+    }
+
+    @RequestMapping("/view/role_form_edit")
+    public String role_form_edit() {
+        return "role_form_edit";
+    }
+
+    @RequestMapping("/view/role_assign")
+    public String role_assign() {
+        return "role_assign";
+    }
+
+    @RequestMapping("/view/account_assign")
+    public String account_assign() {
+        return "account_assign";
+    }
 }

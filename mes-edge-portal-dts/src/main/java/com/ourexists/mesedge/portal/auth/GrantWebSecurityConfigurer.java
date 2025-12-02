@@ -16,6 +16,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.AntPathMatcher;
 
 @Configuration
@@ -31,8 +34,11 @@ public class GrantWebSecurityConfigurer {
     @Bean
     public CaptchaAuthenticationProvider CaptchaAuthenticationProvider(UserDetailsService userDetailsService,
                                                                        AuthValidRuleCache authValidRuleCache,
-                                                                       PasswordEncoder passwordEncoder) {
-        return new CaptchaAuthenticationProvider(userDetailsService, authValidRuleCache, passwordEncoder);
+                                                                       PasswordEncoder passwordEncoder,
+                                                                       RegisteredClientRepository registeredClientRepository,
+                                                                       OAuth2TokenGenerator<?> tokenGenerator,
+                                                                       OAuth2AuthorizationService authorizationService) {
+        return new CaptchaAuthenticationProvider(userDetailsService, authValidRuleCache, passwordEncoder, registeredClientRepository, tokenGenerator, authorizationService);
     }
 
     @Bean

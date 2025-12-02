@@ -242,11 +242,11 @@
                 openWindow('common.add.node', '/view/permission_form_edit?pcode=' + data.code, ['80%', '60%']);
             }
         });
-        // // table 滚动时移除内部弹出的元素
-        // var tableInst = treeTable.getOptions('tb-common');
-        // tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
-        //     dropdown.close('dropdown-table-tool');
-        // });
+        // table 滚动时移除内部弹出的元素
+        var tableInst = treeTable.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
 
         // 搜索提交
         form.on('submit(tb-common-search)', function (data) {
