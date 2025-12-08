@@ -3,7 +3,9 @@
  */
 package com.ourexists.mesedge.message.timer;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.ourexists.mesedge.core.NotifyPusher;
+import com.ourexists.mesedge.message.enums.NotifyStatusEnum;
 import com.ourexists.mesedge.message.pojo.Notify;
 import com.ourexists.mesedge.message.service.NotifyService;
 import jakarta.annotation.PostConstruct;
@@ -11,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -32,6 +36,13 @@ public class NotifyTimerManager {
     public void init() {
         scheduler.setPoolSize(50);
         scheduler.initialize();
+
+        List<Notify> notifyList = notifyService.list(new LambdaUpdateWrapper<Notify>().eq(Notify::getStatus, NotifyStatusEnum.PROGRESS.getCode()));
+        if (!CollectionUtils.isEmpty(notifyList)) {
+            notifyList.forEach(notify -> {
+                addTask(notify.getId(), notify.getStep());
+            });
+        }
     }
 
     /**
