@@ -157,7 +157,13 @@ var router = {
     "role_permission": "/permission/selectRolePermission",
     "role_accHoldOnly": "/role/selectRoleWhichAccHoldOnly",
     "role_bindAcc": "/role/bindAcc",
-
+    "notify_page": "/notify/selectByPage",
+    "notify_status": "/notify/notifyStatus",
+    "message_type": "/notify/messageTypes",
+    "notify_edit": "/notify/addOrUpdate",
+    "notify_start": "/notify/start",
+    "notify_complete": "/notify/complete",
+    "notify_del": "/notify/delete"
 }
 
 function getCommonHeader() {

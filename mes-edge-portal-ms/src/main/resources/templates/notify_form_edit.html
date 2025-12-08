@@ -1,0 +1,137 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="notify.title"></label>
+            <div class="layui-input-block">
+                <input type="text" name="title" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label" lang-i18n="notify.content"></label>
+            <div class="layui-input-block">
+                <textarea class="layui-textarea" name="context"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="notify.type"></label>
+                <div class="layui-input-block">
+                    <select name="type" id="type">
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="notify.interval"></label>
+                <div class="layui-input-block">
+                    <input type="text" lay-affix="number" name="step" lang-i18n="common.placeholder" step="1"
+                           min="0" max="100"
+                           class="layui-input" lay-verify="required"/>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label" lang-i18n="notify.platforms"></label>
+            <div class="layui-input-block platformInput"></div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = parent.current_row_data;
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form,
+            layer = layui.layer;
+
+        get(router.message_type, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#type').append(new Option(item, index));
+            })
+            form.render();
+        });
+
+        get(router.platform_all, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#platform').append(new Option(item.name, item.code));
+            })
+            form.render();
+        });
+
+        get(router.platform_all, null, function (r) {
+            var checkedHtml = "";
+            layui.each(r, function (i, item) {
+                var isChecked = false;
+                if (current_row_data !== null && current_row_data.platforms != null) {
+                    current_row_data.platforms.forEach(it => {
+                        if (it === item.code) {
+                            isChecked = true;
+                        }
+                    })
+                }
+                checkedHtml += "<input type='checkbox' value='" + item.code + "' title='" + item.name + "' lay-filter='role-checkbox-filter' ";
+                if (isChecked) {
+                    checkedHtml += " checked ";
+                }
+                checkedHtml += "'>";
+            })
+            $('.platformInput').html(checkedHtml);
+            form.render();
+        });
+
+        if (current_row_data != null) {
+            form.val("common-edit-form", Object.assign({}, current_row_data));
+            $(".lay-unable-edit").attr("disabled", "block");
+        } else {
+            // form.val("common-edit-form", {});
+            form.val("common-edit-form", {
+                "step": 0
+            });
+            current_row_data = {}
+        }
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            var platforms = [];
+            $('.platformInput input[type=checkbox]:checked').each(function () {
+                platforms.push($(this).val());
+            });
+            for (let key in field) {
+                current_row_data[key] = field[key];
+            }
+            current_row_data.platforms = platforms;
+            post(router.notify_edit, current_row_data, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>
