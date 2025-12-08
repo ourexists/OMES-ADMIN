@@ -233,4 +233,14 @@ public class ViewController {
     public String account_assign() {
         return "account_assign";
     }
+
+    @RequestMapping("/view/notify_tables")
+    public String notify_tables() {
+        return "notify_tables";
+    }
+
+    @RequestMapping("/view/notify_form_edit")
+    public String notify_form_edit() {
+        return "notify_form_edit";
+    }
 }
