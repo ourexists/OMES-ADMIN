@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @Schema
@@ -25,5 +27,11 @@ public class MessagePageQuery extends PageQuery {
 
     @Schema(description = "阅读状态")
     private Integer readStatus;
+
+    @Schema(description = "创建的开始时间")
+    private Date createdTimeStart;
+
+    @Schema(description = "创建的结束时间")
+    private Date createdTimeEnd;
 
 }

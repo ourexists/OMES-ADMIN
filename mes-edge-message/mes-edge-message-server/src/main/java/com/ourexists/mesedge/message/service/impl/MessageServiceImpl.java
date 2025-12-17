@@ -36,6 +36,8 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
         LambdaQueryWrapper<Message> qw = new LambdaQueryWrapper<Message>()
                 .eq(dto.getType() != null, Message::getType, dto.getType())
                 .eq(StringUtils.hasText(dto.getPlatform()), Message::getPlatform, dto.getPlatform())
+                .ge(dto.getCreatedTimeStart() != null, Message::getCreatedTime, dto.getCreatedTimeStart())
+                .lt(dto.getCreatedTimeEnd() != null, Message::getCreatedTime, dto.getCreatedTimeEnd())
                 .inSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.read.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where acc_id=" + dto.getAccId())
                 .notInSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.unread.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where acc_id=" + dto.getAccId())
                 .orderByDesc(Message::getId);
