@@ -4,9 +4,7 @@
 
 package com.ourexists.mesedge.portal.ucenter.controller;
 
-import com.ourexists.era.framework.core.constants.CommonConstant;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.era.framework.core.user.TenantInfo;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.mesedge.ucenter.feign.TenantFeign;
 import com.ourexists.mesedge.ucenter.tenant.TenantPageQuery;
@@ -42,7 +40,7 @@ public class TenantOpenController {
     @GetMapping("/all")
     @Operation(summary = "所有租户信息")
     public JsonResponseEntity<List<TenantVo>> all() {
-        UserContext.setTenant(new TenantInfo().setTenantId(CommonConstant.SYSTEM_TENANT));
+        UserContext.defaultTenant();
         return tenantFeign.all();
     }
 }

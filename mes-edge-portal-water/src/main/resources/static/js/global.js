@@ -15,7 +15,9 @@ var $ = layui.jquery;
 
 var store = {
     token_header: 'mes-token',
-    language: 'mes-lang'
+    user_info: 'user_info',
+    language: 'mes-lang',
+    menu: 'menu'
 }
 
 layui.use(['i18np'], function () {
@@ -36,12 +38,15 @@ layui.use(['i18np'], function () {
 var client = {
     id: 'mes',
     sc: 'admin123',
-    grant_type: 'captcha'
+    grant_type: 'captcha',
+    tenantId: 0,
+    platform: 'mes-edge'
 }
 
 var router = {
     "captcha": "/open/captcha",
     "auth_token": "/oauth2/token",
+    "current_user": "/acc/currentUser",
     "mat_page": "/mat/selectByPage",
     "mat_edit": "/mat/addOrUpdate",
     "mat_del": "/mat/delete",
@@ -123,6 +128,42 @@ var router = {
     "dev_id": "/device/selectById",
     "dev_enable": "/device/enable",
     "dev_disable": "/device/disable",
+    "report_mat": "/report/matCount",
+    "fzdata_page": "/fzdata/selectByPage",
+    "imrecord_page": "/lmrecord/selectByPage",
+    "fzdata_allpf": "/fzdata/allPFName",
+    "report_product": "/report/productionCount",
+    "platform_all": "/platform/getAll",
+    "platform_del": "/platform/delete",
+    "platform_edit": "/platform/addOrUpdate",
+    "account_page": "/acc/selectByPage",
+    "account_register": "/acc/register",
+    "account_edit": "/acc/modify",
+    "account_del": "/acc/delete",
+    "account_invoke": "/acc/invoke",
+    "account_frozen": "/acc/frozen",
+    "permission_in_platform": "/permission/selectPermissionTreeInPlatform",
+    "permission_type": "/permission/permissionType",
+    "permission_strategy": "/permission/permissionStrategy",
+    "permission_edit": "/permission/modify",
+    "permission_add": "/permission/add",
+    "currentAccPermissionTree": "/permission/currentAccPermissionTree",
+    "permission_del": "/permission/delete",
+    "permission_tree": "/permission/selectTenantPermissionTreeInPlatform",
+    "permission_assignToRole": "/permission/assignToRolePermissionTree",
+    "role_page": "/role/selectByPage",
+    "role_edit": "/role/addOrUpdate",
+    "role_del": "/role/delete",
+    "role_permission": "/permission/selectRolePermission",
+    "role_accHoldOnly": "/role/selectRoleWhichAccHoldOnly",
+    "role_bindAcc": "/role/bindAcc",
+    "notify_page": "/notify/selectByPage",
+    "notify_status": "/notify/notifyStatus",
+    "message_type": "/notify/messageTypes",
+    "notify_edit": "/notify/addOrUpdate",
+    "notify_start": "/notify/start",
+    "notify_complete": "/notify/complete",
+    "notify_del": "/notify/delete",
     "report_datalist_page": "/winCCReport/selectDataListByPage",
     "report_dosing_Page": "/winCCReport/selectDosingByPage",
     "report_mag_Page": "/winCCReport/selectMagByPage",
@@ -136,8 +177,8 @@ var router = {
 function getCommonHeader() {
     return {
         'Authorization': localStorage.getItem(store.token_header),
-        'x-era-platform': 'mse-edge',
-        'x-route-tenant': 0
+        'x-era-platform': client.platform,
+        'x-route-tenant': client.tenantId
     };
 }
 
@@ -161,7 +202,7 @@ function auth(url, param, successFunc, failFuc) {
         headers: {
             "Authorization": `Basic ${basicAuth}`,
             "Content-Type": "application/x-www-form-urlencoded",
-            'x-era-platform': 'mse-edge',
+            'x-era-platform': client.platform,
             'x-route-tenant': 0
         },
         async: false,

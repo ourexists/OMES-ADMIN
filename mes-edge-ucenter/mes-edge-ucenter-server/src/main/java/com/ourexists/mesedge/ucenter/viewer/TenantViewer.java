@@ -200,7 +200,7 @@ public class TenantViewer implements TenantFeign {
     @Operation(summary = "根据tenantId或者tenantCode（非主键id）批量查询租户信息")
     @GetMapping("/selectListByTenantCode")
     public JsonResponseEntity<List<TenantVo>> selectListByTenantCode(@RequestParam("tenantIds") List<String> tenantIds) {
-        UserContext.setTenant(new TenantInfo().setTenantId(CommonConstant.SYSTEM_TENANT));
+        UserContext.defaultTenant();
         List<Tenant> res = tenantService.list(new LambdaQueryWrapper<Tenant>().in(Tenant::getTenantCode, tenantIds));
         return JsonResponseEntity.success(Tenant.covert(res));
     }
