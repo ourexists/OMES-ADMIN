@@ -83,4 +83,49 @@ public class ViewController {
     public String report_zs_tables() {
         return "report_zs_tables";
     }
+
+    @RequestMapping("/view/account_tables")
+    public String account_tables() {
+        return "account_tables";
+    }
+
+    @RequestMapping("/view/platform_form_edit")
+    public String platform_form_edit() {
+        return "platform_form_edit";
+    }
+
+    @RequestMapping("/view/account_form_edit")
+    public String account_form_edit() {
+        return "account_form_edit";
+    }
+
+    @RequestMapping("/view/permission_tables")
+    public String permission_tables() {
+        return "permission_tables";
+    }
+
+    @RequestMapping("/view/permission_form_edit")
+    public String permission_form_edit() {
+        return "permission_form_edit";
+    }
+
+    @RequestMapping("/view/role_tables")
+    public String role_tables() {
+        return "role_tables";
+    }
+
+    @RequestMapping("/view/role_form_edit")
+    public String role_form_edit() {
+        return "role_form_edit";
+    }
+
+    @RequestMapping("/view/role_assign")
+    public String role_assign() {
+        return "role_assign";
+    }
+
+    @RequestMapping("/view/account_assign")
+    public String account_assign() {
+        return "account_assign";
+    }
 }

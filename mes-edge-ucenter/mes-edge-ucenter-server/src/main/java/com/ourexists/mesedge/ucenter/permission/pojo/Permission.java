@@ -45,6 +45,11 @@ public class Permission extends MainEntity {
     private String name;
 
     /**
+     * i18n
+     */
+    private String i18n;
+
+    /**
      * 权限策略
      * 0:启用并显示
      * 1:启用但不显示

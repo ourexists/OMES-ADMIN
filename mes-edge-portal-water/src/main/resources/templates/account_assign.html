@@ -1,0 +1,85 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item roleInput">
+
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    let tree;
+    let id;
+    layui.use(function () {
+        let form = layui.form;
+        tree = layui.tree;
+        id = layui.url().search.id;
+        var holdRole = [];
+        let promise = new Promise((resolve, reject) => {
+            get(router.role_accHoldOnly, {accId: id}, function (r) {
+                holdRole = r;
+                resolve();
+            })
+        });
+        promise.then(() => {
+            post(router.role_page, {requirePage: false}, function (r) {
+                var roleHtml = "";
+                layui.each(r, function (i, item) {
+                    var isChecked = false;
+                    holdRole.forEach(it => {
+                        if (it.id === item.id) {
+                            isChecked = true;
+                        }
+                    })
+                    roleHtml += "<input type='checkbox' value='" + item.id + "' title='" + item.name + "' lay-filter='role-checkbox-filter' ";
+                    if (isChecked) {
+                        roleHtml += " checked ";
+                    }
+                    roleHtml += "'>";
+                })
+                $('.roleInput').html(roleHtml);
+                form.render();
+            });
+        })
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var roleIds = [];
+            $('.roleInput input[type=checkbox]:checked').each(function () {
+                roleIds.push($(this).val());
+            });
+            post(router.role_bindAcc, {
+                "accId": id,
+                "roleIds": roleIds
+            }, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

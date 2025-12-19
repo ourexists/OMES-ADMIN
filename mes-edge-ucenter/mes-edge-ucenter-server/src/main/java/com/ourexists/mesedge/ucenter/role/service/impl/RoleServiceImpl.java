@@ -46,10 +46,10 @@ public class RoleServiceImpl extends AbstractMyBatisPlusService<RoleMapper, Role
     @Override
     public Page<Role> selectByPage(RolePageQuery pageQuery) {
         LambdaQueryWrapper<Role> wrapper = new LambdaQueryWrapper<Role>()
-                .eq(pageQuery.getType() != null, Role::getType, pageQuery.getType())
-                .eq(!StringUtils.isEmpty(pageQuery.getCode()), Role::getCode, pageQuery.getCode())
-                .eq(!StringUtils.isEmpty(pageQuery.getTenantId()), Role::getTenantId, pageQuery.getTenantId())
-                .like(!StringUtils.isEmpty(pageQuery.getName()), Role::getName, pageQuery.getName())
+//                .eq(pageQuery.getType() != null, Role::getType, pageQuery.getType())
+                .eq(StringUtils.hasText(pageQuery.getCode()), Role::getCode, pageQuery.getCode())
+                .eq(StringUtils.hasText(pageQuery.getTenantId()), Role::getTenantId, pageQuery.getTenantId())
+                .like(StringUtils.hasText(pageQuery.getName()), Role::getName, pageQuery.getName())
                 .in(CollectionUtil.isNotBlank(pageQuery.getIds()), Role::getId, pageQuery.getIds())
                 .orderByDesc(Role::getId);
         return this.page(new Page<>(pageQuery.getPage(), pageQuery.getPageSize()), wrapper);
