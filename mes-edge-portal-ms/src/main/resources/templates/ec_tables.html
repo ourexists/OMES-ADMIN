@@ -126,10 +126,12 @@
             loading: false,
             toolbar: '#tb-toolbar',
             defaultToolbar: ['filter', 'exports', 'print'],
+            totalRow: true,
             cols: [[]],
             text: {
                 none: i18np.prop('common.msg.selecttime')
             },
+
             done: function () {
                 // 行模式
                 dropdown.render({
@@ -166,7 +168,8 @@
                 return {
                     "code": res.code,
                     "msg": res.msg,
-                    "data": res.data,
+                    "data": res.data.data,
+                    "totalRow": res.data.calc
                 };
             },
             page: false,
@@ -178,25 +181,25 @@
                 layer.msg(i18np.prop("bomc.msg.select"));
                 return;
             }
-            var id = obj.config.id;
-            var checkStatus = table.checkStatus(id);
+            let id = obj.config.id;
+            let checkStatus = table.checkStatus(id);
             switch (obj.event) {
                 case 'getCheckData':
-                    var data = checkStatus.data;
+                    let data = checkStatus.data;
                     if (data.length === 0) {
                         return layer.msg(i18np.prop('common.msg.least.one'));
                     }
                     layer.alert(layui.util.escape(JSON.stringify(data)));
                     break;
                 case 'getData':
-                    var getData = table.getData(id);
+                    let getData = table.getData(id);
                     layer.alert(layui.util.escape(JSON.stringify(getData)));
                     break;
             }
         });
 
         // table 滚动时移除内部弹出的元素
-        var tableInst = table.getOptions('tb-common');
+        let tableInst = table.getOptions('tb-common');
         tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
             dropdown.close('dropdown-table-tool');
         });
@@ -204,7 +207,8 @@
         // 搜索提交
         form.on('submit(tb-common-search)', function (data) {
             let field = data.field;
-            if (selected_tree_node !== null && field.startDate !== null && field.endDate !== null) {
+            if (selected_tree_node !== null && field.startDate !== null && field.endDate !== null
+                && field.startDate !== '' && field.endDate !== '') {
                 reloadTb();
             }
             return false; // 阻止默认 form 跳转
@@ -228,8 +232,11 @@
     });
 
     function reloadTb() {
-        table.reloadData('tb-common', {
+        let title = i18np.prop('workshop.name') + ":" + selected_tree_node.name + "<br>"
+            + i18np.prop('workshop.name') + ":" + $('#startDate').val() + " ~ " + $('#endDate').val();
+        table.reload('tb-common', {
             url: initRequestUrl(router.ecrecord_page),
+            customTitleRow: title,
             where: {
                 attrIds: attrIds,
                 startTime: $('#startDate').val(),
@@ -243,27 +250,36 @@
             let tbCols = []
             let col = [];
             if (r.length > 0) {
-                col.push({field: 'time', title: i18np.prop("common.time"), fixed: 'left'})
+                col.push({
+                    field: 'time',
+                    title: i18np.prop("common.time"),
+                    fixed: 'left',
+                    totalRow: i18np.prop("ec.calc")
+                })
                 r.forEach(e => {
-                    let k = {field: e.id, title: e.name}
+                    let k = {field: e.id, title: e.name, totalRow: true}
                     attrIds.push(e.id);
                     col.push(k);
                 });
             }
             tbCols.push(col)
-            if ($('#startDate').val() != null && $('#endDate').val() != null) {
+            if ($('#startDate').val() == null || $('#startDate').val() == ''
+                || $('#endDate').val() == null || $('#endDate').val() == '') {
                 table.reload('tb-common', {
                     cols: tbCols,
+                })
+            } else {
+                let title = i18np.prop('workshop.name') + ":" + selected_tree_node.name + "\r"
+                    + i18np.prop('workshop.name') + ":" + $('#startDate').val() + "-" + $('#endDate').val();
+                table.reload('tb-common', {
+                    cols: tbCols,
+                    customTitleRow: title,
                     url: initRequestUrl(router.ecrecord_page),
                     where: {
                         attrIds: attrIds,
                         startTime: $('#startDate').val(),
                         endTime: $('#endDate').val(),
                     },
-                })
-            } else {
-                table.reload('tb-common', {
-                    cols: tbCols
                 })
             }
         })
