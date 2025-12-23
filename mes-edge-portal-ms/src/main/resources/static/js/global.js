@@ -169,6 +169,7 @@ var router = {
     "workshop_edit": "/workshop/addOrUpdate",
     "ecattr_page": "/ecattr/selectByPage",
     "ecattr_insert": "/ecattr/insertBatch",
+    "ecrecord_page": "/ec_record/selectByCondition",
 }
 
 function getCommonHeader() {

@@ -33,35 +33,22 @@
     </div>
     <div class="layui-col-sm12 layui-col-md9 layui-col-lg9" style="padding: 15px;">
         <form class="layui-form layui-row layui-col-space16">
-            <div class="layui-col-md4">
-                <div class="layui-input-wrap">
-                    <div class="layui-input-prefix">
-                        <i class="layui-icon layui-icon-auz"></i>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <div class="layui-inline" id="timeduration">
+                        <div class="layui-input-inline">
+                            <input type="text" autocomplete="off" id="startDate" name="startDate"
+                                   class="layui-input"
+                                   placeholder="startTime" lang-i18n="common.starttime">
+                        </div>
+                        <div class="layui-form-mid">-</div>
+                        <div class="layui-input-inline">
+                            <input type="text" autocomplete="off" id="endDate" name="endDate" class="layui-input"
+                                   placeholder="endTime" lang-i18n="common.endtime">
+                        </div>
                     </div>
-                    <input type="text" name="accName" id="accName" value="" class="layui-input"
-                           lay-affix="clear" lang-i18n="account.accName">
                 </div>
             </div>
-            <div class="layui-col-md4">
-                <div class="layui-input-wrap">
-                    <div class="layui-input-prefix">
-                        <i class="layui-icon layui-icon-auz"></i>
-                    </div>
-                    <input type="text" name="mobile" id="mobile" value="" class="layui-input"
-                           lay-affix="clear" lang-i18n="account.mobile">
-                </div>
-            </div>
-            <!--            <div class="layui-col-md4">-->
-            <!--                <div class="layui-input-wrap">-->
-            <!--                    <div class="layui-input-prefix">-->
-            <!--                        <i class="layui-icon layui-icon-auz"></i>-->
-            <!--                    </div>-->
-            <!--                    <select name="tenantId" id="tenantId">-->
-            <!--                        <option value="" lang-i18n="tenant.name" selected></option>-->
-            <!--                    </select>-->
-            <!--                </div>-->
-            <!--            </div>-->
-
             <div class="layui-btn-container layui-col-xs12">
                 <button class="layui-btn" lay-submit lay-filter="tb-common-search" lang-i18n="common.search">
                     Search
@@ -73,44 +60,8 @@
     </div>
 </div>
 
-<script type="text/html" id="tb-tool">
-    <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="edit">
-            <i class="layui-icon layui-icon-edit"></i>
-        </a>
-        {{# if (d.status===0) { }}
-        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="frozen">
-            <i class="layui-icon layui-icon-pause"></i>
-        </a>
-        {{# } }}
-        {{# if (d.status===1) { }}
-        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="invoke">
-            <i class="layui-icon layui-icon-play"></i>
-        </a>
-        {{# } }}
-        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="assign">
-            <i class="layui-icon layui-icon-auz"></i>
-        </a>
-        <a class="layui-btn layui-btn-xs  layui-btn-primary layui-bg-red" lay-event="del">
-            <i class="layui-icon layui-icon-delete"></i>
-        </a>
-    </div>
-</script>
-<script type="text/html" id="tb-select-tool">
-    <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="select">
-            <i class="layui-icon layui-icon-ok"></i>
-        </a>
-    </div>
-</script>
 <script type="text/html" id="tb-toolbar">
     <div class="layui-btn-container">
-        <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="add">
-            <i class="layui-icon layui-icon-add-1"></i>
-        </a>
-        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">
-            <i class="layui-icon layui-icon-delete"></i>
-        </a>
         <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
             <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
             <i class="layui-icon layui-icon-down layui-font-12"></i>
@@ -123,6 +74,7 @@
     var selected_tree_node;
     var table;
     var tree;
+    var attrIds = [];
 
     layui.use(function () {
         table = layui.table;
@@ -131,6 +83,15 @@
         var dropdown = layui.dropdown;
         var layer = layui.layer;
         var util = layui.util;
+        var laydate = layui.laydate;
+
+        laydate.render({
+            elem: '#timeduration',
+            range: ['#startDate', '#endDate'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
 
         get(router.workshop_tree, null, function (result) {
             tree.render({
@@ -194,10 +155,6 @@
                     }
                 });
             },
-            request: {
-                pageName: 'page',
-                limitName: 'pageSize'
-            },
             response: {
                 statusName: 'code', //规定返回的状态码字段为code
                 statusCode: 200, //规定成功的状态码味200
@@ -206,13 +163,10 @@
                 return {
                     "code": res.code,
                     "msg": res.msg,
-                    "count": res.pagination.total,
                     "data": res.data,
                 };
             },
-            limit: 10,
-            limits: [10, 20, 50, 100],
-            page: true,
+            page: false,
             height: 'full'
         });
         // 工具栏事件
@@ -235,44 +189,9 @@
                     var getData = table.getData(id);
                     layer.alert(layui.util.escape(JSON.stringify(getData)));
                     break;
-                case 'add':
-                    current_row_data = null;
-                    openWindow('common.add', '/view/account_form_edit', ['95%', '80%']);
-                    break;
-                case 'deleteBatch':
-                    var data = checkStatus.data;
-                    if (data.length === 0) {
-                        return layer.msg(i18np.prop('common.msg.least.one'));
-                    }
-                    var ids = [];
-                    $.each(data, function (i, n) {
-                        ids.push(n.id);
-                    });
-                    delWindow(router.account_del, ids, reloadTb);
-                    break;
             }
         });
 
-        // 触发单元格工具事件
-        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
-            var data = obj.data; // 获得当前行数据
-            current_row_data = data;
-            if (obj.event === 'edit') {
-                openWindow('common.edit', '/view/account_form_edit', ['95%', '80%']);
-            } else if (obj.event === 'del') {
-                delWindow(router.account_del, [data.id], reloadTb);
-            } else if (obj.event === 'invoke') {
-                get(router.account_invoke, {accId: data.id}, function () {
-                    reloadTb();
-                })
-            } else if (obj.event === 'frozen') {
-                get(router.account_frozen, {accId: data.id}, function () {
-                    reloadTb();
-                })
-            } else if (obj.event === 'assign') {
-                openWindow('role.assign', '/view/account_assign?id=' + data.id, ['50%', '60%'])
-            }
-        });
         // table 滚动时移除内部弹出的元素
         var tableInst = table.getOptions('tb-common');
         tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
@@ -281,7 +200,8 @@
 
         // 搜索提交
         form.on('submit(tb-common-search)', function (data) {
-            if (selected_tree_node !== null) {
+            let field = data.field;
+            if (selected_tree_node !== null && field.startDate !== null && field.endDate !== null) {
                 reloadTb();
             }
             return false; // 阻止默认 form 跳转
@@ -306,12 +226,11 @@
 
     function reloadTb() {
         table.reloadData('tb-common', {
-            url: initRequestUrl(router.account_page),
+            url: initRequestUrl(router.ecrecord_page),
             where: {
-                platform: selected_tree_node.code,
-                accRole: 'COMMON',
-                accName: $('#accName').val(),
-                mobile: $('#mobile').val(),
+                attrIds: attrIds,
+                startTime: $('#startDate').val(),
+                endTime: $('#endDate').val(),
             },
         });
     }
@@ -321,13 +240,29 @@
             let tbCols = []
             let col = [];
             if (r.length > 0) {
+                col.push({field: 'time', title: i18np.prop("common.time"), fixed: 'left'})
                 r.forEach(e => {
                     let k = {field: e.id, title: e.name}
+                    attrIds.push(e.id);
                     col.push(k);
                 });
             }
             tbCols.push(col)
-            table.reload('tb-common', {cols: tbCols})
+            if ($('#startDate').val() != null && $('#endDate').val() != null) {
+                table.reload('tb-common', {
+                    cols: tbCols,
+                    url: initRequestUrl(router.ecrecord_page),
+                    where: {
+                        attrIds: attrIds,
+                        startTime: $('#startDate').val(),
+                        endTime: $('#endDate').val(),
+                    },
+                })
+            } else {
+                table.reload('tb-common', {
+                    cols: tbCols
+                })
+            }
         })
     }
 
