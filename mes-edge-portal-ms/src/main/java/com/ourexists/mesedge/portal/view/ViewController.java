@@ -243,4 +243,24 @@ public class ViewController {
     public String notify_form_edit() {
         return "notify_form_edit";
     }
+
+    @RequestMapping("/view/workshop_tables")
+    public String workshop_tables() {
+        return "workshop_tables";
+    }
+
+    @RequestMapping("/view/workshop_form_edit")
+    public String workshop_form_edit() {
+        return "workshop_form_edit";
+    }
+
+    @RequestMapping("/view/ec_tables")
+    public String ec_tables() {
+        return "ec_tables";
+    }
+
+    @RequestMapping("/view/ecattr_form_edit")
+    public String ecattr_form_edit() {
+        return "ecattr_form_edit";
+    }
 }

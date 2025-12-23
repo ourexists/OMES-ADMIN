@@ -163,7 +163,12 @@ var router = {
     "notify_edit": "/notify/addOrUpdate",
     "notify_start": "/notify/start",
     "notify_complete": "/notify/complete",
-    "notify_del": "/notify/delete"
+    "notify_del": "/notify/delete",
+    "workshop_tree": "/workshop/selectTree",
+    "workshop_del": "/workshop/delete",
+    "workshop_edit": "/workshop/addOrUpdate",
+    "ecattr_page": "/ecattr/selectByPage",
+    "ecattr_insert": "/ecattr/insertBatch",
 }
 
 function getCommonHeader() {

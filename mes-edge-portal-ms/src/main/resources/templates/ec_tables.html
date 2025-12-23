@@ -1,0 +1,350 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3">
+        <div class="layui-card">
+            <div class="layui-card-body mini-bar" id="ltTree">
+                <div class="layui-inline">
+                    <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
+                </div>
+                <a class="layui-btn layui-btn-sm layui-btn-primary" id="tree_query">
+                    <i class="layui-icon layui-icon-search"></i>
+                </a>
+                <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="reload">
+                    <i class="layui-icon layui-icon-refresh"></i>
+                </a>
+                <div id="left-tree"></div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9" style="padding: 15px;">
+        <form class="layui-form layui-row layui-col-space16">
+            <div class="layui-col-md4">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-auz"></i>
+                    </div>
+                    <input type="text" name="accName" id="accName" value="" class="layui-input"
+                           lay-affix="clear" lang-i18n="account.accName">
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-auz"></i>
+                    </div>
+                    <input type="text" name="mobile" id="mobile" value="" class="layui-input"
+                           lay-affix="clear" lang-i18n="account.mobile">
+                </div>
+            </div>
+            <!--            <div class="layui-col-md4">-->
+            <!--                <div class="layui-input-wrap">-->
+            <!--                    <div class="layui-input-prefix">-->
+            <!--                        <i class="layui-icon layui-icon-auz"></i>-->
+            <!--                    </div>-->
+            <!--                    <select name="tenantId" id="tenantId">-->
+            <!--                        <option value="" lang-i18n="tenant.name" selected></option>-->
+            <!--                    </select>-->
+            <!--                </div>-->
+            <!--            </div>-->
+
+            <div class="layui-btn-container layui-col-xs12">
+                <button class="layui-btn" lay-submit lay-filter="tb-common-search" lang-i18n="common.search">
+                    Search
+                </button>
+                <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+            </div>
+        </form>
+        <table class="layui-hide" id="tb-common"></table>
+    </div>
+</div>
+
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="edit">
+            <i class="layui-icon layui-icon-edit"></i>
+        </a>
+        {{# if (d.status===0) { }}
+        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="frozen">
+            <i class="layui-icon layui-icon-pause"></i>
+        </a>
+        {{# } }}
+        {{# if (d.status===1) { }}
+        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="invoke">
+            <i class="layui-icon layui-icon-play"></i>
+        </a>
+        {{# } }}
+        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="assign">
+            <i class="layui-icon layui-icon-auz"></i>
+        </a>
+        <a class="layui-btn layui-btn-xs  layui-btn-primary layui-bg-red" lay-event="del">
+            <i class="layui-icon layui-icon-delete"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="tb-select-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="select">
+            <i class="layui-icon layui-icon-ok"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-add-1"></i>
+        </a>
+        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">
+            <i class="layui-icon layui-icon-delete"></i>
+        </a>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
+            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
+            <i class="layui-icon layui-icon-down layui-font-12"></i>
+        </button>
+    </div>
+</script>
+
+<script th:inline="none">
+    var current_row_data;
+    var selected_tree_node;
+    var table;
+    var tree;
+
+    layui.use(function () {
+        table = layui.table;
+        tree = layui.tree;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+        var layer = layui.layer;
+        var util = layui.util;
+
+        let view_operate = {
+            'treeEdit': [],
+            'tbDefaultToolbar': ['filter', 'exports', 'print'],
+            'tbToolbar': '#tb-toolbar',
+            'tbCols': [[
+                // {type: 'checkbox', title: '', fixed: true},
+                // {field: 'accName', title: i18np.prop('account.accName')},
+                // {field: 'nickName', title: i18np.prop('account.nickName')},
+                // {field: 'statusDesc', title: i18np.prop('account.status')},
+                // {field: 'settledTime', title: i18np.prop('account.settledTime')},
+                // {field: 'expireTime', title: i18np.prop('account.expireTime')},
+                // {field: 'mobile', title: i18np.prop('account.mobile')},
+                // {field: 'source', title: i18np.prop('account.source')},
+                // {
+                //     fixed: 'right',
+                //     title: i18np.prop('common.operate'),
+                //     width: 200,
+                //     minWidth: 125,
+                //     templet: '#tb-tool'
+                // }
+            ]]
+        }
+
+        get(router.workshop_tree, null, function (result) {
+            tree.render({
+                elem: '#left-tree',
+                data: result,
+                onlyIconControl: true,  // 是否仅允许节点左侧图标控制展开收缩
+                id: 'left-tree',
+                edit: view_operate.treeEdit,
+                extEdit: true,
+                customName: { // 自定义 data 字段名 --- 2.8.14+
+                    title: 'name',
+                    field: 'code'
+                },
+                click: function (obj) {
+                    $(".layui-tree-set").removeClass('layui-tree-set-active');
+                    obj.elem.addClass('layui-tree-set-active');
+                    //获取当前点击的节点数据
+                    selected_tree_node = obj.data;
+                    reloadTb();
+                }
+            });
+        }, function (code, msg) {
+            alert("请重试");
+        })
+
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            method: 'POST',
+            headers: getCommonHeader(),
+            contentType: 'application/json',
+            loading: false,
+            toolbar: view_operate.tbToolbar,
+            defaultToolbar: view_operate.tbDefaultToolbar,
+            cols: view_operate.tbCols,
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-common', {
+                                    lineStyle: null
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-common', {
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "count": res.pagination.total,
+                    "data": res.data,
+                };
+            },
+            limit: 10,
+            limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            if (selected_tree_node == null) {
+                layer.msg(i18np.prop("bomc.msg.select"));
+                return;
+            }
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    var getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+                case 'add':
+                    current_row_data = null;
+                    openWindow('common.add', '/view/account_form_edit', ['95%', '80%']);
+                    break;
+                case 'deleteBatch':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    var ids = [];
+                    $.each(data, function (i, n) {
+                        ids.push(n.id);
+                    });
+                    delWindow(router.account_del, ids, reloadTb);
+                    break;
+            }
+        });
+
+        // 触发单元格工具事件
+        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            current_row_data = data;
+            if (obj.event === 'edit') {
+                openWindow('common.edit', '/view/account_form_edit', ['95%', '80%']);
+            } else if (obj.event === 'del') {
+                delWindow(router.account_del, [data.id], reloadTb);
+            } else if (obj.event === 'invoke') {
+                get(router.account_invoke, {accId: data.id}, function () {
+                    reloadTb();
+                })
+            } else if (obj.event === 'frozen') {
+                get(router.account_frozen, {accId: data.id}, function () {
+                    reloadTb();
+                })
+            } else if (obj.event === 'assign') {
+                openWindow('role.assign', '/view/account_assign?id=' + data.id, ['50%', '60%'])
+            }
+        });
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+
+        // 搜索提交
+        form.on('submit(tb-common-search)', function (data) {
+            if (selected_tree_node !== null) {
+                reloadTb();
+            }
+            return false; // 阻止默认 form 跳转
+        });
+
+        $('#tree_query').click(function () {
+            var name = $("#tree_name").val(); //搜索值
+            var elem = $("#left-tree").find('.layui-tree-txt').css('color', ''); //搜索文本与设置默认颜色
+            if (!name) {
+                return; //无搜索值返回
+            }
+            elem.filter(':contains(' + name + ')').css('color', '#FFB800'); //搜索文本并设置标志颜色
+            elem.parents('.layui-tree-pack').prev().find('.layui-tree-iconClick').click(); //展开选项
+        });
+
+        util.event('lay-on', {
+            reload: function () {
+                reloadTree();
+            }
+        });
+    });
+
+    function reloadTb() {
+        table.reloadData('tb-common', {
+            url: initRequestUrl(router.account_page),
+            where: {
+                platform: selected_tree_node.code,
+                accRole: 'COMMON',
+                accName: $('#accName').val(),
+                mobile: $('#mobile').val(),
+            },
+        });
+    }
+
+    function reloadTree() {
+        get(router.platform_all, null, function (result) {
+            tree.reload("left-tree", {data: result});
+        })
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>数据表格页面</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+<script type="text/html" id="common-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="edit">
+            <i class="layui-icon layui-icon-edit"></i>
+        </a>
+        <a class="layui-btn layui-btn-xs  layui-btn-primary layui-bg-red" lay-event="del">
+            <i class="layui-icon layui-icon-delete"></i>
+        </a>
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-add-1"></i>
+        </a>
+        <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="ecAttr">
+            <i class="layui-icon layui-icon-util"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="common-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-add-1"></i>
+        </a>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
+            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
+            <i class="layui-icon layui-icon-down layui-font-12"></i>
+        </button>
+    </div>
+</script>
+
+<script th:inline="none">
+    var current_row_data;
+    var table
+    layui.use(function () {
+        table = layui.treeTable;
+        var dropdown = layui.dropdown;
+
+        var page = {
+            cols: [[
+                {type: 'checkbox', title: '', fixed: true},
+                {field: 'name', title: i18np.prop('workshop.name')},
+                {field: 'selfCode', title: i18np.prop('workshop.code')},
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 200,
+                    minWidth: 125,
+                    templet: '#common-tool'
+                }
+            ]],
+            toolbar: '#common-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+        }
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            url: initRequestUrl(router.workshop_tree),
+            headers: getCommonHeader(),
+            method: 'GET',
+            toolbar: page.toolbar,
+            defaultToolbar: page.defaultToolbar,
+            cols: page.cols,
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-common', {
+                                    lineStyle: null // 恢复单行
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-common', {
+                                    // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "data": res.data,
+                };
+            },
+            page: false,
+            maxHeight: '501px',
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    var getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+                case 'add':
+                    current_row_data = null;
+                    openWindow('common.add', '/view/workshop_form_edit', ['60%', '35%']);
+                    break;
+            }
+        });
+
+        // 触发单元格工具事件
+        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            current_row_data = data;
+            if (obj.event === 'edit') {
+                openWindow('common.edit', '/view/workshop_form_edit', ['60%', '35%']);
+            } else if (obj.event === 'del') {
+                delWindow(router.workshop_del, [data.id], reloadTb);
+            } else if (obj.event === 'add') {
+                current_row_data = null;
+                openWindow('common.add', '/view/workshop_form_edit?pcode=' + data.code, ['60%', '35%']);
+            } else if (obj.event === 'ecAttr') {
+                openWindow('ecattr.name', '/view/ecattr_form_edit?id=' + data.id, ['80%', '50%']);
+            }
+        });
+
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+    })
+    ;
+
+    function reloadTb() {
+        table.reloadData('tb-common');
+    }
+
+
+</script>
+</body>
+</html>
