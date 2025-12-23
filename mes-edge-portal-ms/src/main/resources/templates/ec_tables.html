@@ -132,36 +132,13 @@
         var layer = layui.layer;
         var util = layui.util;
 
-        let view_operate = {
-            'treeEdit': [],
-            'tbDefaultToolbar': ['filter', 'exports', 'print'],
-            'tbToolbar': '#tb-toolbar',
-            'tbCols': [[
-                // {type: 'checkbox', title: '', fixed: true},
-                // {field: 'accName', title: i18np.prop('account.accName')},
-                // {field: 'nickName', title: i18np.prop('account.nickName')},
-                // {field: 'statusDesc', title: i18np.prop('account.status')},
-                // {field: 'settledTime', title: i18np.prop('account.settledTime')},
-                // {field: 'expireTime', title: i18np.prop('account.expireTime')},
-                // {field: 'mobile', title: i18np.prop('account.mobile')},
-                // {field: 'source', title: i18np.prop('account.source')},
-                // {
-                //     fixed: 'right',
-                //     title: i18np.prop('common.operate'),
-                //     width: 200,
-                //     minWidth: 125,
-                //     templet: '#tb-tool'
-                // }
-            ]]
-        }
-
         get(router.workshop_tree, null, function (result) {
             tree.render({
                 elem: '#left-tree',
                 data: result,
                 onlyIconControl: true,  // 是否仅允许节点左侧图标控制展开收缩
                 id: 'left-tree',
-                edit: view_operate.treeEdit,
+                edit: [],
                 extEdit: true,
                 customName: { // 自定义 data 字段名 --- 2.8.14+
                     title: 'name',
@@ -172,13 +149,12 @@
                     obj.elem.addClass('layui-tree-set-active');
                     //获取当前点击的节点数据
                     selected_tree_node = obj.data;
-                    reloadTb();
+                    reloadAll();
                 }
             });
         }, function (code, msg) {
             alert("请重试");
         })
-
 
         // 创建表格实例
         table.render({
@@ -187,9 +163,9 @@
             headers: getCommonHeader(),
             contentType: 'application/json',
             loading: false,
-            toolbar: view_operate.tbToolbar,
-            defaultToolbar: view_operate.tbDefaultToolbar,
-            cols: view_operate.tbCols,
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[]],
             done: function () {
                 // 行模式
                 dropdown.render({
@@ -338,6 +314,21 @@
                 mobile: $('#mobile').val(),
             },
         });
+    }
+
+    function reloadAll() {
+        post(router.ecattr_page, {"workshopId": selected_tree_node.id, requirePage: false}, function (r) {
+            let tbCols = []
+            let col = [];
+            if (r.length > 0) {
+                r.forEach(e => {
+                    let k = {field: e.id, title: e.name}
+                    col.push(k);
+                });
+            }
+            tbCols.push(col)
+            table.reload('tb-common', {cols: tbCols})
+        })
     }
 
     function reloadTree() {
