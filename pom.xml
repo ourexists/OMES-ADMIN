@@ -38,6 +38,7 @@
         <module>mes-edge-task</module>
         <module>mes-edge-ucenter</module>
         <module>mes-edge-message</module>
+        <module>mes-edge-ec</module>
     </modules>
 
     <parent>
