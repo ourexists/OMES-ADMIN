@@ -127,6 +127,9 @@
             toolbar: '#tb-toolbar',
             defaultToolbar: ['filter', 'exports', 'print'],
             cols: [[]],
+            text: {
+                none: i18np.prop('common.msg.selecttime')
+            },
             done: function () {
                 // 行模式
                 dropdown.render({
