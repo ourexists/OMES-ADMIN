@@ -263,4 +263,9 @@ public class ViewController {
     public String ecattr_form_edit() {
         return "ecattr_form_edit";
     }
+
+    @RequestMapping("/view/equip_run_record_tables")
+    public String equip_run_record_tables() {
+        return "equip_run_record_tables";
+    }
 }
