@@ -16,6 +16,11 @@
     </properties>
 
     <dependencies>
+        <!-- HttpClient5 核心库 -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+        </dependency>
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
