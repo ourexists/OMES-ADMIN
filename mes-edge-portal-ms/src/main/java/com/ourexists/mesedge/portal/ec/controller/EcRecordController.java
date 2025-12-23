@@ -13,6 +13,7 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.ec.feign.EcRecordFeign;
 import com.ourexists.mesedge.ec.model.EcRecordDto;
 import com.ourexists.mesedge.ec.model.EcRecordQuery;
+import com.ourexists.mesedge.portal.ec.model.EcRecordList;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +36,13 @@ public class EcRecordController {
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByCondition")
-    public JsonResponseEntity<List<Map<String, String>>> selectByCondition(@RequestBody EcRecordQuery dto) {
+    public JsonResponseEntity<EcRecordList> selectByCondition(@RequestBody EcRecordQuery dto) {
         try {
+            EcRecordList rs = new EcRecordList();
             List<Map<String, String>> rr = new ArrayList<>();
             List<EcRecordDto> r = RemoteHandleUtils.getDataFormResponse(feign.selectByCondition(dto));
             if (CollectionUtils.isEmpty(r)) {
-                return JsonResponseEntity.success(new ArrayList<>());
+                return JsonResponseEntity.success(rs);
             }
             Map<String, List<EcRecordDto>> map = new HashMap<>();
             for (EcRecordDto ecRecordDto : r) {
@@ -70,7 +72,23 @@ public class EcRecordController {
                     return null;
                 }
             }, Comparator.nullsLast(Long::compareTo)).reversed());
-            return JsonResponseEntity.success(rr);
+            rs.setData(rr);
+
+            Map<String, String> calc = new HashMap<>();
+            Map<String, String> max = rr.get(0);
+            Map<String, String> min = rr.get(rr.size() - 1);
+            for (Map.Entry<String, String> entry : max.entrySet()) {
+                if (entry.getKey().equals("time")) {
+                    continue;
+                }
+                Double c = Double.valueOf(max.get(entry.getKey()));
+                if (rr.size() > 1) {
+                    c = c - Double.parseDouble(min.get(entry.getKey()));
+                }
+                calc.put(entry.getKey(), String.valueOf(c));
+            }
+            rs.setCalc(calc);
+            return JsonResponseEntity.success(rs);
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }
