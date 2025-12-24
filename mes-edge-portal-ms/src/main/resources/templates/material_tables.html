@@ -51,7 +51,7 @@
             <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
         </div>
     </form>
-    <table class="layui-hide" id="tb-ebs-material"></table>
+    <table class="layui-hide" id="tb-common"></table>
 </div>
 <script type="text/html" id="material-tool">
     <div class="layui-clear-space">
@@ -167,7 +167,7 @@
 
         // 创建表格实例
         table.render({
-            elem: '#tb-ebs-material',
+            elem: '#tb-common',
             url: initRequestUrl(router.mat_page),
             headers: getCommonHeader(),
             method: 'POST',
@@ -190,12 +190,12 @@
                     click: function (obj) {
                         switch (obj.id) {
                             case 'default-row':
-                                table.reload('tb-ebs-material', {
+                                table.reload('tb-common', {
                                     lineStyle: null // 恢复单行
                                 });
                                 break;
                             case 'multi-row':
-                                table.reload('tb-ebs-material', {
+                                table.reload('tb-common', {
                                     // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
                                     lineStyle: 'height: 95px;'
                                 });
@@ -226,7 +226,7 @@
             height: 'full'
         });
         // 工具栏事件
-        table.on('toolbar(tb-ebs-material)', function (obj) {
+        table.on('toolbar(tb-common)', function (obj) {
             var id = obj.config.id;
             var checkStatus = table.checkStatus(id);
             switch (obj.event) {
@@ -268,7 +268,7 @@
         });
 
         // 触发单元格工具事件
-        table.on('tool(tb-ebs-material)', function (obj) { // 双击 toolDouble
+        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
             var data = obj.data; // 获得当前行数据
             current_row_data = data;
             if (obj.event === 'edit') {
@@ -282,7 +282,7 @@
         });
 
         // table 滚动时移除内部弹出的元素
-        var tableInst = table.getOptions('tb-ebs-material');
+        var tableInst = table.getOptions('tb-common');
         tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
             dropdown.close('dropdown-table-tool');
         });
@@ -296,7 +296,7 @@
     ;
 
     function reloadMaterialTb() {
-        table.reloadData('tb-ebs-material', {
+        table.reloadData('tb-common', {
             page: {
                 curr: 1 // 重新从第 1 页开始
             },
