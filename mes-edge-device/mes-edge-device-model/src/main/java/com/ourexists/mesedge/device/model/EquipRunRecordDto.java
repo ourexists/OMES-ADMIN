@@ -29,4 +29,22 @@ public class EquipRunRecordDto {
     private BigDecimal powerStart;
 
     private BigDecimal powerEnd;
+
+    private Long duration;
+
+    private BigDecimal powerUse;
+
+    public Long getDuration() {
+        if (runEndTime == null || runStartTime == null) {
+            return 0L;
+        }
+        return (runEndTime.getTime() - runStartTime.getTime()) / 60000;
+    }
+
+    public BigDecimal getPowerUse() {
+        if (powerEnd == null || powerStart == null) {
+            return BigDecimal.ZERO;
+        }
+        return powerStart.subtract(powerEnd);
+    }
 }
