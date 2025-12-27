@@ -22,4 +22,6 @@ public class EcAttrDto {
     private String map;
 
     private String workshopId;
+
+    private Integer sort;
 }

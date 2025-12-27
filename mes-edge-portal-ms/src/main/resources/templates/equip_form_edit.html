@@ -1,0 +1,110 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+
+            <label class="layui-form-label" lang-i18n="equip.name" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="text" name="name" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="equip.code" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="text" name="selfCode" autocomplete="off" lay-verify="required"
+                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="equip.type" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <select name="type" id="type">
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="equip.runMap"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="runMap" autocomplete="off" lay-verify="phone"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="equip.alarmMap"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="alarmMap" autocomplete="off" lay-verify="email"
+                           class="layui-input" lang-i18n="common.placeholder">
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = parent.current_row_data;
+    var selected_tree_node = parent.selected_tree_node;
+    layui.use(function () {
+        var form = layui.form,
+            layer = layui.layer;
+
+        get(router.equip_type, null, function (result) {
+            $.each(result, function (index, item) {
+                $('#type').append(new Option(item.name, item.id));
+            })
+            form.render();
+        })
+
+        if (current_row_data != null) {
+            form.val("common-edit-form", Object.assign({}, current_row_data));
+            if (current_row_data.selfCode !== "") {
+                $(".lay-unable-edit").attr("disabled", "block");
+            }
+        } else {
+            form.val("common-edit-form", {});
+            current_row_data = {}
+        }
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            var field = data.field; // 获取表单字段值
+            for (let key in field) {
+                current_row_data[key] = field[key];
+            }
+            if (selected_tree_node != null) {
+                current_row_data.workshopCode = selected_tree_node.selfCode;
+            }
+            post(router.equip_edit, current_row_data, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+                parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

@@ -24,6 +24,8 @@ public class EcAttr extends MainEntity {
 
     private String workshopId;
 
+    private Integer sort;
+
     public static EcAttrDto covert(EcAttr source) {
         if (source == null) {
             return null;

@@ -25,33 +25,30 @@ public class EcRecordServiceImpl extends AbstractMyBatisPlusService<EcRecordMapp
 
     @Override
     public List<EcRecord> selectByCondition(EcRecordQuery dto) {
-        return this.list(new LambdaUpdateWrapper<EcRecord>()
-                .in(!CollectionUtils.isEmpty(dto.getAttrIds()), EcRecord::getAttrId, dto.getAttrIds())
-                .between(dto.getStartTime() != null && dto.getEndTime() != null, EcRecord::getTime, dto.getStartTime(), dto.getEndTime())
-                .orderByAsc(EcRecord::getTime, EcRecord::getRecordId)
-        );
+        return this.list(new LambdaUpdateWrapper<EcRecord>().in(!CollectionUtils.isEmpty(dto.getAttrIds()), EcRecord::getAttrId, dto.getAttrIds()).between(dto.getStartTime() != null && dto.getEndTime() != null, EcRecord::getTime, dto.getStartTime(), dto.getEndTime()).orderByAsc(EcRecord::getTime, EcRecord::getRecordId));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addBatch(List<List<EcRecordDto>> dtoss) {
         if (CollectionUtils.isEmpty(dtoss)) {
-            List<EcRecord> lst = new ArrayList<>();
-            for (List<EcRecordDto> dtos : dtoss) {
-                Date time = new Date();
-                String group = IdWorker.getIdStr();
-                for (EcRecordDto dto : dtos) {
-                    if (dto.getTime() == null) {
-                        dto.setTime(time);
-                    }
-                    if (dto.getRecordId() == null) {
-                        dto.setRecordId(group);
-                    }
-                }
-                lst.addAll(EcRecord.wrap(dtos));
-            }
-            this.saveBatch(lst);
+            return;
         }
+        List<EcRecord> lst = new ArrayList<>();
+        for (List<EcRecordDto> dtos : dtoss) {
+            Date time = new Date();
+            String group = IdWorker.getIdStr();
+            for (EcRecordDto dto : dtos) {
+                if (dto.getTime() == null) {
+                    dto.setTime(time);
+                }
+                if (dto.getRecordId() == null) {
+                    dto.setRecordId(group);
+                }
+            }
+            lst.addAll(EcRecord.wrap(dtos));
+        }
+        this.saveBatch(lst);
     }
 
     @Override

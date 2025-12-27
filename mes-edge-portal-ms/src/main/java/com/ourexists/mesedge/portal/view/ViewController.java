@@ -268,4 +268,14 @@ public class ViewController {
     public String equip_run_record_tables() {
         return "equip_run_record_tables";
     }
+
+    @RequestMapping("/view/equip_tables")
+    public String equip_tables() {
+        return "equip_tables";
+    }
+
+    @RequestMapping("/view/equip_form_edit")
+    public String equip_form_edit() {
+        return "equip_form_edit";
+    }
 }
