@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,17 +76,38 @@ public class EcRecordController {
             rs.setData(rr);
 
             Map<String, String> calc = new HashMap<>();
-            Map<String, String> max = rr.get(0);
-            Map<String, String> min = rr.get(rr.size() - 1);
-            for (Map.Entry<String, String> entry : max.entrySet()) {
-                if (entry.getKey().equals("time")) {
+
+            for (String key : rr.get(0).keySet()) {
+                if (key.equals("time")) {
                     continue;
                 }
-                Double c = Double.valueOf(max.get(entry.getKey()));
-                if (rr.size() > 1) {
-                    c = c - Double.parseDouble(min.get(entry.getKey()));
+                Double maxVal = null;
+                Double minVal = null;
+
+                for (Map<String, String> sm : rr) {
+                    String val = sm.get(key);
+                    if (!StringUtils.hasText(val)) {
+                        continue;
+                    }
+                    try {
+                        double vd = Double.parseDouble(val);
+                        if (maxVal == null) {
+                            maxVal = vd;
+                        } else {
+                            maxVal = maxVal > vd ? maxVal : vd;
+                        }
+
+                        if (minVal == null) {
+                            minVal = vd;
+                        } else {
+                            minVal = minVal < vd ? minVal : vd;
+                        }
+                    } catch (Exception e) {
+                        continue;
+                    }
+                    Double c = maxVal - minVal;
+                    calc.put(key, String.valueOf(c));
                 }
-                calc.put(entry.getKey(), String.valueOf(c));
             }
             rs.setCalc(calc);
             return JsonResponseEntity.success(rs);

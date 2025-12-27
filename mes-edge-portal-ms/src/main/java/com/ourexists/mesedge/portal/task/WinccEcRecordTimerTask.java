@@ -77,7 +77,11 @@ public class WinccEcRecordTimerTask extends TimerTask {
         }
         EcRecordDto target = new EcRecordDto();
         target.setAttrId(source.getAttrId());
-        target.setAttrVal(source.getVal().toString());
+        if (source.getVal() == null) {
+            source.setVal("");
+        } else {
+            target.setAttrVal(source.getVal().toString());
+        }
         return target;
     }
 

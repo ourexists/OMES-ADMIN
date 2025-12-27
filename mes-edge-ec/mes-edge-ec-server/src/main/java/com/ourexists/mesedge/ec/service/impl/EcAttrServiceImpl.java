@@ -28,7 +28,7 @@ public class EcAttrServiceImpl extends AbstractMyBatisPlusService<EcAttrMapper, 
     public Page<EcAttr> selectByPage(EcAttrPageQuery dto) {
         LambdaQueryWrapper<EcAttr> qw = new LambdaQueryWrapper<EcAttr>()
                 .eq(StringUtils.hasText(dto.getWorkshopId()), EcAttr::getWorkshopId, dto.getWorkshopId())
-                .orderByDesc(EcAttr::getId);
+                .orderByAsc(EcAttr::getSort, EcAttr::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
 

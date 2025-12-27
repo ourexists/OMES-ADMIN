@@ -170,7 +170,12 @@ var router = {
     "ecattr_page": "/ecattr/selectByPage",
     "ecattr_insert": "/ecattr/insertBatch",
     "ecrecord_page": "/ec_record/selectByCondition",
-    "equipRunRecord_page": "/equipRunRecord/selectByPage"
+    "equipRunRecord_page": "/equipRunRecord/selectByPage",
+    "equip_page": "/equip/selectByPage",
+    "equip_edit": "/equip/addOrUpdate",
+    "equip_del": "/equip/delete",
+    "equip_id": "/equip/selectById",
+    "equip_type": "/equip/equipType"
 }
 
 function getCommonHeader() {

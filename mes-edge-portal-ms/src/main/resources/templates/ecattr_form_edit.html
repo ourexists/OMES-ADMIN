@@ -40,9 +40,10 @@
 <script th:inline="none">
     var details = [];
     var table;
-    layui.use(function () {
+    layui.use(['form', 'table', 'dropdown', 'layer', 'soulTable'], function () {
         let form = layui.form,
-            layer = layui.layer;
+            layer = layui.layer,
+            soulTable = layui.soulTable;
         table = layui.table;
 
         let id = layui.url().search.id;
@@ -61,6 +62,8 @@
             defaultToolbar: ['exports', 'print'],
             toolbar: '#tb-toolbar',
             cols: [[
+                {field: 'LAY_INDEX', title: 'NO', fixed: "left"},
+                {field: 'id', title: "ID", fixed: "left"},
                 {field: 'name', title: i18np.prop("ecattr.name"), edit: 'text'},
                 {field: 'map', title: i18np.prop("ecattr.map"), edit: 'text'},
                 {
@@ -74,7 +77,16 @@
             resize: true,
             loading: false,
             page: false,
-            height: "full"
+            height: "full",
+            rowDrag: {
+                done: function (obj) {
+                    details = obj.cache;
+                    reloadTb();
+                }
+            },
+            done: function () {
+                soulTable.render(this);
+            },
         });
 
         reloadTb();
@@ -103,10 +115,11 @@
             for (let key in field) {
                 current_row_data[key] = field[key];
             }
-
             let d = [];
-            details.forEach((e) => {
+            var tableCache = table.cache['tb-common'];
+            tableCache.forEach((e) => {
                 if (e.name != null || e.map != null) {
+                    e.sort = e.LAY_INDEX;
                     d.push(e);
                 }
             })
