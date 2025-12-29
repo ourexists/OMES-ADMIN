@@ -278,4 +278,9 @@ public class ViewController {
     public String equip_form_edit() {
         return "equip_form_edit";
     }
+
+    @RequestMapping("/view/equip_realtime")
+    public String equip_realtime() {
+        return "equip_realtime";
+    }
 }

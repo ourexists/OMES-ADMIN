@@ -4,7 +4,7 @@
 package com.ourexists.mesedge.message.timer;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.ourexists.mesedge.core.NotifyPusher;
+import com.ourexists.mesedge.message.core.NotifyPusher;
 import com.ourexists.mesedge.message.enums.NotifyStatusEnum;
 import com.ourexists.mesedge.message.pojo.Notify;
 import com.ourexists.mesedge.message.service.NotifyService;

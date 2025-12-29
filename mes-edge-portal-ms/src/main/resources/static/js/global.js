@@ -175,7 +175,9 @@ var router = {
     "equip_edit": "/equip/addOrUpdate",
     "equip_del": "/equip/delete",
     "equip_id": "/equip/selectById",
-    "equip_type": "/equip/equipType"
+    "equip_type": "/equip/equipType",
+    "equip_realtime_workshop": "/equip_realtime/getAllRealtimeInWorkshop",
+    "equip_realtime_all": "/equip_realtime/getAllRealtime"
 }
 
 function getCommonHeader() {

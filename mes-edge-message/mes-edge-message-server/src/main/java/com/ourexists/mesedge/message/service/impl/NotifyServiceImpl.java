@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.mesedge.core.NotifyPusher;
+import com.ourexists.mesedge.message.core.NotifyPusher;
 import com.ourexists.mesedge.message.enums.NotifyStatusEnum;
 import com.ourexists.mesedge.message.mapper.NotifyMapper;
 import com.ourexists.mesedge.message.model.query.NotifyPageQuery;
