@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.beans.BeanUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,12 @@ public class Equip extends MainEntity {
     private String alarmMap;
 
     private String workshopCode;
+
+    private BigDecimal lng;
+
+    private BigDecimal lat;
+
+    private String address;
 
     public static EquipDto covert(Equip source) {
         if (source == null) {

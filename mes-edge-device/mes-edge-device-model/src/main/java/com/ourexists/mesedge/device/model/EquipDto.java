@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
+
 /**
  * 设备
  */
@@ -33,6 +35,12 @@ public class EquipDto extends BaseDto {
     private String alarmMap;
 
     private String workshopCode;
+
+    private BigDecimal lng;
+
+    private BigDecimal lat;
+
+    private String address;
 
     public String getTypeDesc() {
         return EquipTypeEnum.valueof(this.type).getDesc();
