@@ -209,10 +209,8 @@
                 .then(res => res.json())
                 .then(data => {
                     if (!data || !data.display_name) {
-                        layer.msg('未获取到地址');
                         return;
                     }
-
                     // display_name 就是完整可读地址
                     form.val('common-edit-form', {
                         address: data.display_name
