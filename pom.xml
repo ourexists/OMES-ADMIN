@@ -39,7 +39,6 @@
         <module>mes-edge-ucenter</module>
         <module>mes-edge-message</module>
         <module>mes-edge-ec</module>
-        <module>mes-edge-dynamic</module>
     </modules>
 
     <parent>
