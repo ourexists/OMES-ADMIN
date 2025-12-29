@@ -126,8 +126,6 @@
                 {field: 'name', title: i18np.prop('equip.name')},
                 {field: 'selfCode', title: i18np.prop('equip.code')},
                 {field: 'typeDesc', title: i18np.prop('equip.type')},
-                {field: 'runMap', title: i18np.prop('equip.runMap')},
-                {field: 'alarmMap', title: i18np.prop('equip.alarmMap')},
                 {
                     fixed: 'right',
                     title: i18np.prop('common.operate'),
@@ -252,7 +250,8 @@
                     layer.alert(layui.util.escape(JSON.stringify(getData)));
                     break;
                 case 'add':
-                    openWindow('common.add', '/view/equip_form_edit?workshopCode=' + selected_tree_node.selfCode, ['80%', '50%']);
+                    current_row_data = null;
+                    openWindow('common.add', '/view/equip_form_edit?workshopCode=' + selected_tree_node.selfCode, ['90%', '70%']);
                     break;
                 case 'deleteBatch':
                     var data = checkStatus.data;
@@ -273,7 +272,7 @@
             var data = obj.data; // 获得当前行数据
             current_row_data = data;
             if (obj.event === 'edit') {
-                openWindow('common.edit', '/view/equip_form_edit', ['80%', '50%']);
+                openWindow('common.edit', '/view/equip_form_edit', ['90%', '70%']);
             } else if (obj.event === 'del') {
                 delWindow(router.bom_del, [data.id], reloadTb);
             } else if (obj.event === 'select') {
