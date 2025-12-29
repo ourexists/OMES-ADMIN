@@ -3,7 +3,7 @@ package com.ourexists.mesedge.message.pojo;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
-import com.ourexists.mesedge.core.NotifyMsg;
+import com.ourexists.mesedge.message.core.NotifyMsg;
 import com.ourexists.mesedge.message.model.NotifyDto;
 import com.ourexists.mesedge.message.model.NotifyVo;
 import lombok.Getter;

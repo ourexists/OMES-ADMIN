@@ -13,6 +13,7 @@
         <module>mes-edge-device-server</module>
         <module>mes-edge-device-model</module>
         <module>mes-edge-device-feign</module>
+        <module>mes-edge-device-base</module>
     </modules>
 
 </project>

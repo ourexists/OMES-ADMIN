@@ -1,4 +1,4 @@
-package com.ourexists.mesedge.core;
+package com.ourexists.mesedge.message.core;
 
 import lombok.Getter;
 import lombok.Setter;

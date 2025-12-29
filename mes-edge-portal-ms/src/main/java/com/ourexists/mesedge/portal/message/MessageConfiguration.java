@@ -6,7 +6,7 @@ import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.TenantInfo;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.core.NotifyMsg;
+import com.ourexists.mesedge.message.core.NotifyMsg;
 import com.ourexists.mesedge.message.feign.MessageFeign;
 import com.ourexists.mesedge.message.model.MessageDto;
 import com.ourexists.mesedge.message.model.MessageVo;
