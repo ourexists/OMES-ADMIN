@@ -29,4 +29,6 @@ public class EquipPageQuery extends PageQuery {
     @Schema(description = "设备类型")
     private Integer type;
 
+    @Schema(description = "是否同时获取设备实时信息")
+    private Boolean needRealtime = false;
 }

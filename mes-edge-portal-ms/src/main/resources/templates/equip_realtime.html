@@ -8,13 +8,25 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
+
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
     <script src="../static/leaflet/leaflet.js"></script>
+    <script src="../static/marker/leaflet.markercluster.js"></script>
 </head>
+<style>
+    #map {
+        width: 100%;
+        height: 600px;
+        margin-top: 10px;
+    }
+</style>
 <body>
 <div class="layui-tab-content" style="padding: 15px;">
     <div class="layui-col-sm12 layui-col-md4 layui-col-lg3">
@@ -79,41 +91,27 @@
     var selected_tree_node;
     var table;
     var tree;
+    var clusterGroup;
+    var map;
 
     layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
         table = layui.table;
         tree = layui.tree;
         var form = layui.form;
 
-        var onlineIcon = L.icon({
-            iconUrl: '/static/img/online_dev.svg',
-            iconSize: [32, 32]
-        });
-
-        var offlineIcon = L.icon({
-            iconUrl: '/static/img/offline_dev.svg',
-            iconSize: [32, 32]
-        });
-
-        var alarmIcon = L.icon({
-            iconUrl: '/static/img/alarm_dev.svg',
-            iconSize: [32, 32]
-        });
-
-        let map = L.map('map').setView([32.060255, 118.796877], 6);
-        let marker;
+        map = L.map('map').setView([32.060255, 118.796877], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
+        clusterGroup = L.markerClusterGroup();
+
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
-                console.info(JSON.stringify(result))
                 $('#type').append(new Option(item.name, item.id));
             })
             form.render();
         })
-
 
         get(router.workshop_tree, null, function (result) {
             tree.render({
@@ -132,21 +130,15 @@
                     obj.elem.addClass('layui-tree-set-active');
                     //获取当前点击的节点数据
                     selected_tree_node = obj.data;
-                    reloadTb();
+                    reloadMap();
                 }
             });
         }, function (code, msg) {
             alert("请重试");
         })
 
-
-        // 搜索提交
-        form.on('submit(tb-common-search)', function (data) {
-            if (selected_tree_node !== null) {
-                reloadTb();
-            }
-            return false; // 阻止默认 form 跳转
-        });
+        console.info(111)
+        reloadMap();
 
         $('#tree_query').click(function () {
             var name = $("#tree_name").val(); //搜索值
@@ -158,22 +150,67 @@
             elem.parents('.layui-tree-pack').prev().find('.layui-tree-iconClick').click(); //展开选项
         });
 
-        function reloadMap(workshopCode) {
-            get(router.equip_realtime_workshop, {"workshopCode": workshopCode}, function (e) {
-                e.forEach(function (d) {
-                    var marker = L.marker([d.lat, d.lng], {
-                        icon: d.status === 'online' ? onlineIcon : offlineIcon
-                    }).addTo(map);
+        form.on('submit(tb-common-search)', function (data) {
+            reloadMap(data.field);
+            return false; // 阻止默认 form 跳转
+        });
 
-                    marker.bindPopup(`
-      <b>${d.name}</b><br/>
-      设备编号：${d.selfCode}<br/>
-      状态：${d.status === 'online' ? '在线' : '离线'}
-    `);
-                });
-            })
-        }
+
     });
+
+    function reloadMap(data) {
+        var params = {
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+            needRealtime: true,
+            requirePage: false,
+        };
+        if (data != null) {
+            for (let key in data) {
+                params[key] = data[key];
+            }
+        }
+        post(router.equip_page, params, function (e) {
+            clusterGroup.clearLayers();
+            if (e == null) {
+                return;
+            }
+            if (e.length > 20) {
+                map.setView([e[0].lat, e[0].lng], 6);
+            } else if (e.length > 0) {
+                map.setView([e[0].lat, e[0].lng], 12);
+            }
+
+            //通过经纬度分组
+            e.forEach(function (d) {
+                var status = calcStatus(d);
+                var marker = L.marker([d.lat, d.lng], {icon: iconByStatus(status)});
+                marker.bindPopup(`<b>${d.name}</b><br/>` +
+                    i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
+                    i18np.prop("equip.runState") + `：${d.runState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}</br>` +
+                    i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`);
+                clusterGroup.addLayer(marker);
+            })
+            map.addLayer(clusterGroup);
+        })
+    }
+
+    function calcStatus(d) {
+        if (d.alarmState >= 1) {
+            return 'alarm';
+        }
+        if (d.runState === 1) {
+            return 'online';
+        }
+        return 'offline';
+    }
+
+    function iconByStatus(status) {
+        return L.icon({
+            iconUrl: `/static/img/${status.toLowerCase()}_dev.svg`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        });
+    }
 </script>
 </body>
 </html>

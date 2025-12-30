@@ -1,15 +1,14 @@
 package com.ourexists.mesedge.device.core;
 
-import java.util.List;
 import java.util.Map;
 
 public interface EquipRealtimeManager {
 
     /**
      * @param tenantId 租户id
-     * @param equipRealtimeMap key 场景code; values:租户下所有的设备
+     * @param equipRealtimeMap key 设备编号; values:租户下所有的设备
      */
-    void reset(String tenantId, Map<String, List<EquipRealtime>> equipRealtimeMap);
+    void reset(String tenantId, Map<String, EquipRealtime> equipRealtimeMap);
 
     /**
      * @param tenantId 租户id
@@ -19,15 +18,9 @@ public interface EquipRealtimeManager {
 
     void remove(String tenantId, String sn);
 
-    void removeById(String tenantId, String equipId);
-
-    void removeByIds(String tenantId, List<String> equipIds);
-
     void clear(String tenantId);
 
-    Map<String, List<EquipRealtime>> getAll(String tenantId);
-
-    List<EquipRealtime> getAll(String tenantId, String workshopCode);
+    Map<String, EquipRealtime> getAll(String tenantId);
 
     EquipRealtime get(String tenantId, String sn);
 }

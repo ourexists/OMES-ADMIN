@@ -1,0 +1,35 @@
+.status-dot {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 12px;
+    vertical-align: middle;
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.status-dot-map {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.status-online {
+    background: #52c41a;
+    box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
+}
+
+.status-offline {
+    background: #bfbfbf;
+}
+
+.status-alarm {
+    background: #ff4d4f;
+    box-shadow: 0 0 6px rgba(255, 77, 79, 0.8);
+}

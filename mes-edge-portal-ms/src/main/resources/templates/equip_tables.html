@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
-    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
@@ -127,6 +127,27 @@
                 {field: 'selfCode', title: i18np.prop('equip.code')},
                 {field: 'typeDesc', title: i18np.prop('equip.type')},
                 {
+                    field: 'runState', title: i18np.prop('equip.runState'), templet: function (e) {
+                        if (e.runState != null && e.runState === 1) {
+                            console.info(11111)
+                            return '<span class="status-dot status-online"></span>在线'
+                        } else {
+                            console.info(2222)
+                            return '<span class="status-dot status-offline"></span>'
+                        }
+                    }
+                },
+                {
+                    field: 'alarmState', title: i18np.prop('equip.alarmState'), templet: function (e) {
+                        if (e.alarmState != null && e.alarmState === 1) {
+                            console.info(11111)
+                            return '<span class="status-dot status-alarm"></span>'
+                        } else {
+                            return '<span class="status-dot status-offline"></span>'
+                        }
+                    }
+                },
+                {
                     fixed: 'right',
                     title: i18np.prop('common.operate'),
                     width: 200,
@@ -138,7 +159,6 @@
 
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
-                console.info(JSON.stringify(result))
                 $('#type').append(new Option(item.name, item.id));
             })
             form.render();
@@ -262,7 +282,7 @@
                     $.each(data, function (i, n) {
                         ids.push(n.id);
                     });
-                    delWindow(router.bom_del, ids, reloadTb);
+                    delWindow(router.equip_del, ids, reloadTb);
                     break;
             }
         });
@@ -274,7 +294,7 @@
             if (obj.event === 'edit') {
                 openWindow('common.edit', '/view/equip_form_edit', ['90%', '70%']);
             } else if (obj.event === 'del') {
-                delWindow(router.bom_del, [data.id], reloadTb);
+                delWindow(router.equip_del, [data.id], reloadTb);
             } else if (obj.event === 'select') {
                 parent.selectBom(obj.data);
                 closeWindow();
@@ -308,14 +328,12 @@
     function reloadTb() {
         table.reloadData('tb-common', {
             url: initRequestUrl(router.equip_page),
-            page: {
-                curr: 1 // 重新从第 1 页开始
-            },
             where: {
                 workshopCode: selected_tree_node.selfCode,
                 name: $('#name').val(),
                 selfCode: $('#selfCode').val(),
-                type: $('#type').val()
+                type: $('#type').val(),
+                needRealtime: true
             },
         });
     }
