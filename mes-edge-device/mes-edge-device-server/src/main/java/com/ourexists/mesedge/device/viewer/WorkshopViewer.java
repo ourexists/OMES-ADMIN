@@ -5,13 +5,17 @@
 package com.ourexists.mesedge.device.viewer;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.tree.TreeUtil;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
 import com.ourexists.mesedge.device.model.WorkshopDto;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
 import com.ourexists.mesedge.device.pojo.Workshop;
+import com.ourexists.mesedge.device.service.EquipService;
 import com.ourexists.mesedge.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +36,9 @@ public class WorkshopViewer implements WorkshopFeign {
 
     @Autowired
     private WorkshopService service;
+
+    @Autowired
+    private EquipService equipService;
 
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
@@ -64,6 +71,7 @@ public class WorkshopViewer implements WorkshopFeign {
     @Operation(summary = "删除", description = "删除")
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
+
         service.delete(idsDto.getIds());
         return JsonResponseEntity.success(true);
     }

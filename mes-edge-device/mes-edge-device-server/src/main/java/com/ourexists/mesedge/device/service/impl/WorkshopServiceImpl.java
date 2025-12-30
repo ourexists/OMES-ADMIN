@@ -5,14 +5,17 @@
 package com.ourexists.mesedge.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ourexists.era.framework.core.exceptions.BusinessException;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.mesedge.device.mapper.WorkshopMapper;
 import com.ourexists.mesedge.device.model.WorkshopDto;
 import com.ourexists.mesedge.device.model.WorkshopPageQuery;
-import com.ourexists.mesedge.device.pojo.Device;
+import com.ourexists.mesedge.device.pojo.Equip;
 import com.ourexists.mesedge.device.pojo.Workshop;
-import com.ourexists.mesedge.device.service.DeviceService;
+import com.ourexists.mesedge.device.service.EquipService;
 import com.ourexists.mesedge.device.service.WorkshopService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,7 @@ import java.util.List;
 public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapper, Workshop> implements WorkshopService {
 
     @Autowired
-    private DeviceService deviceService;
+    private EquipService equipService;
 
     @Override
     public Page<Workshop> selectByPage(WorkshopPageQuery dto) {
@@ -40,8 +43,29 @@ public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
+        List<Workshop> workshops = this.listByIds(ids);
+        if (CollectionUtil.isBlank(workshops)) {
+            return;
+        }
+        List<String> codes = workshops.stream().map(Workshop::getCode).toList();
+        List<Workshop> children = this.list(new LambdaQueryWrapper<Workshop>().in(Workshop::getPcode, codes));
+        if (CollectionUtil.isNotBlank(children)) {
+            StringBuilder msg = new StringBuilder();
+            for (Workshop child : children) {
+                msg.append(child.getName()).append(",");
+            }
+            throw new BusinessException("${common.msg.delete.existchild}", msg.substring(0, msg.length() - 1));
+        }
+        List<String> selfcodes = workshops.stream().map(Workshop::getSelfCode).toList();
+        List<Equip> equips = equipService.list(new LambdaUpdateWrapper<Equip>().in(Equip::getWorkshopCode, selfcodes));
+        if (CollectionUtil.isNotBlank(equips)) {
+            StringBuilder msg = new StringBuilder();
+            for (Equip child : equips) {
+                msg.append(child.getName()).append(",");
+            }
+            throw new BusinessException("${common.msg.delete.existdata}", msg.substring(0, msg.length() - 1));
+        }
         this.removeBatchByIds(ids);
-        deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
     }
 
     @Override
