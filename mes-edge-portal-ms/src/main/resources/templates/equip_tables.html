@@ -128,6 +128,13 @@
                 {field: 'selfCode', title: i18np.prop('equip.code')},
                 {field: 'typeDesc', title: i18np.prop('equip.type')},
                 {
+                    field: 'workshop', title: i18np.prop('workshop.name'), templet: function (e) {
+                        if (e.workshop != null) {
+                            return e.workshop.name
+                        }
+                    }
+                },
+                {
                     field: 'onlineState', title: i18np.prop('equip.onlineState'), templet: function (e) {
                         if (e.onlineState != null && e.onlineState === 1) {
                             return '<span class="status-dot status-online"></span>'
@@ -339,7 +346,9 @@
                 name: $('#name').val(),
                 selfCode: $('#selfCode').val(),
                 type: $('#type').val(),
-                needRealtime: true
+                needRealtime: true,
+                needWorkshopCascade: true,
+                queryWorkshop: true
             },
         });
     }

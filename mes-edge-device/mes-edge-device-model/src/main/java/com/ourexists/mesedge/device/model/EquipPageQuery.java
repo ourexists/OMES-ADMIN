@@ -34,4 +34,7 @@ public class EquipPageQuery extends PageQuery {
 
     @Schema(description = "是否需要场景级联查询")
     private Boolean needWorkshopCascade = false;
+
+    @Schema(description = "是否查询关联的场景信息")
+    private Boolean queryWorkshop = false;
 }

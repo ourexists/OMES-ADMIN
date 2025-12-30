@@ -50,6 +50,8 @@ public class EquipDto extends BaseDto {
 
     private String tenantId;
 
+    private WorkshopTreeNode workshop;
+
     public String getTypeDesc() {
         return EquipTypeEnum.valueof(this.type).getDesc();
     }
