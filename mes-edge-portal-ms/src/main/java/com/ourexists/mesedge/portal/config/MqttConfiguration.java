@@ -95,51 +95,48 @@ public class MqttConfiguration {
                 List<EquipAttrRealtime> attrs = equipRealtime.getEquipAttrRealtimes();
                 JSONObject[] devArrays = devArray.toArray(JSONObject.class);
                 JSONObject[] ywArrays = ywArray.toArray(JSONObject.class);
+
+                //先将场景中的所有设备态重置
+                if (equipRealtime.getWorkshopCode().equals(sn)) {
+                    equipRealtime.setOnlineState(0);
+                    equipRealtime.setAlarmState(0);
+                    equipRealtime.setRunState(0);
+                }
+
                 for (JSONObject object : devArrays) {
                     String devSn = object.getString("code");
                     String ssn = sn + "dev" + devSn;
-                    if (equipRealtime.getWorkshopCode().equals(sn)) {
-                        equipRealtime.setOnlineState(0);
-                        equipRealtime.setAlarmState(0);
-                        equipRealtime.setRunState(0);
-                        if (equipRealtime.getSelfCode().equals(ssn)) {
-                            equipRealtime.setOnlineState(1);
-                            equipRealtime.setAlarmState(object.getInteger(equipRealtime.getAlarmMap()));
-                            equipRealtime.setRunState(object.getInteger(equipRealtime.getRunMap()));
-                        }
-                        if (!CollectionUtils.isEmpty(attrs)) {
-                            for (EquipAttrRealtime attr : attrs) {
-                                attr.setValue(object.getString(attr.getMap()));
-                            }
+                    if (equipRealtime.getSelfCode().equals(ssn)) {
+                        equipRealtime.setOnlineState(1);
+                        equipRealtime.setAlarmState(object.getInteger(equipRealtime.getAlarmMap()));
+                        equipRealtime.setRunState(object.getInteger(equipRealtime.getRunMap()));
+                    }
+                    if (!CollectionUtils.isEmpty(attrs)) {
+                        for (EquipAttrRealtime attr : attrs) {
+                            attr.setValue(object.getString(attr.getMap()));
                         }
                     }
                 }
                 for (JSONObject o : ywArrays) {
                     String ywSn = o.getString("code");
                     String ssnn = sn + ywSn;
-                    if (equipRealtime.getWorkshopCode().equals(ywSn)) {
-                        equipRealtime.setOnlineState(0);
-                        equipRealtime.setAlarmState(0);
-                        equipRealtime.setRunState(0);
-                        if (equipRealtime.getSelfCode().equals(ssnn)) {
-                            equipRealtime.setOnlineState(1);
-                            int alarm = 0;
-                            if (o.getInteger(equipRealtime.getAlarmMap()) == 1) {
-                                alarm = 1;
-                            }
-                            if (o.getInteger("hhAlarm") == 1) {
-                                alarm = 2;
-                            }
-                            equipRealtime.setAlarmState(alarm);
-                            equipRealtime.setRunState(1);
-                            if (!CollectionUtils.isEmpty(attrs)) {
-                                for (EquipAttrRealtime attr : attrs) {
-                                    attr.setValue(o.getString(attr.getMap()));
-                                }
+                    if (equipRealtime.getSelfCode().equals(ssnn)) {
+                        equipRealtime.setOnlineState(1);
+                        int alarm = 0;
+                        if (o.getInteger(equipRealtime.getAlarmMap()) == 1) {
+                            alarm = 1;
+                        }
+                        if (o.getInteger("hhAlarm") == 1) {
+                            alarm = 2;
+                        }
+                        equipRealtime.setAlarmState(alarm);
+                        equipRealtime.setRunState(1);
+                        if (!CollectionUtils.isEmpty(attrs)) {
+                            for (EquipAttrRealtime attr : attrs) {
+                                attr.setValue(o.getString(attr.getMap()));
                             }
                         }
                     }
-
                 }
                 equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);
             }

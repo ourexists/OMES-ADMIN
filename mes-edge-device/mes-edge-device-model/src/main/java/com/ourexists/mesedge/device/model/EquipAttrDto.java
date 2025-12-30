@@ -25,5 +25,5 @@ public class EquipAttrDto {
 
     private Integer sort;
 
-    private String val;
+    private String value;
 }

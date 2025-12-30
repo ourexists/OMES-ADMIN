@@ -295,7 +295,6 @@
                 updateMarker(marker, d);
             } else {
                 // 新 Marker
-                console.info(1)
                 const status = calcStatus(d);
                 const marker = L.marker([d.lat, d.lng], {icon: iconByStatus(d.type, status)});
                 marker.bindPopup(createPopupHtml(d));
@@ -339,6 +338,7 @@
             i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
 
         if (d.attrs != null) {
+            console.info()
             d.attrs.forEach(function (t) {
                 html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}`;
             })
