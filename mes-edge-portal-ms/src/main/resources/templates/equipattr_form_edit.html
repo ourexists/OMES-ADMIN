@@ -1,0 +1,165 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <table class="layui-hide" id="tb-common"></table>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button"
+                    lang-i18n="common.msg.confirm"></button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset"></button>
+        </div>
+    </form>
+</div>
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="del">
+            <i class="layui-icon layui-icon-subtraction"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-fluid layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-addition"></i>
+        </a>
+    </div>
+</script>
+<script th:inline="none">
+    var details = [];
+    var table;
+    layui.use(['form', 'table', 'dropdown', 'layer', 'soulTable'], function () {
+        let form = layui.form,
+            layer = layui.layer,
+            soulTable = layui.soulTable;
+        table = layui.table;
+
+        let id = layui.url().search.id;
+
+        post(router.equipattr_page, {"equipId": id, requirePage: false}, function (r) {
+            details = r;
+            if (details.length > 0) {
+                details.forEach((e) => {
+                    e.tmp_id = e.id;
+                })
+            }
+        })
+
+        table.render({
+            elem: '#tb-common',
+            defaultToolbar: ['exports', 'print'],
+            toolbar: '#tb-toolbar',
+            cols: [[
+                {field: 'LAY_INDEX', title: 'NO', fixed: "left"},
+                {field: 'id', title: "ID", fixed: "left"},
+                {field: 'name', title: i18np.prop("equipattr.name"), edit: 'text'},
+                {field: 'map', title: i18np.prop("equipattr.map"), edit: 'text'},
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 200,
+                    minWidth: 125,
+                    templet: '#tb-tool'
+                }
+            ]],
+            resize: true,
+            loading: false,
+            page: false,
+            height: "full",
+            rowDrag: {
+                done: function (obj) {
+                    details = obj.cache;
+                    reloadTb();
+                }
+            },
+            done: function () {
+                soulTable.render(this);
+            },
+        });
+
+        reloadTb();
+
+        table.on('tool(tb-common)', function (obj) {
+            let data = obj.data;
+            if (obj.event === 'del') {
+                removeTbData(data);
+            }
+        });
+
+        table.on('toolbar(tb-common)', function (obj) {
+            let data = {
+                tmp_id: Date.now()
+            };
+            switch (obj.event) {
+                case 'add':
+                    addTbData(data);
+                    break;
+            }
+        });
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            let field = data.field; // 获取表单字段值
+            for (let key in field) {
+                current_row_data[key] = field[key];
+            }
+            let d = [];
+            var tableCache = table.cache['tb-common'];
+            tableCache.forEach((e) => {
+                if (e.name != null || e.map != null) {
+                    e.sort = e.LAY_INDEX;
+                    d.push(e);
+                }
+            })
+            post(router.equipattr_insert, {
+                "equipId": id,
+                "attrDtos": d
+            }, function () {
+                let index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+
+    function addTbData(data) {
+        details.push(data);
+        reloadTb();
+    }
+
+    function reloadTb() {
+        table.reload('tb-common', {
+            data: details,
+        })
+    }
+
+    function removeTbData(data) {
+        if (data.tmp_id != null) {
+            for (let j = 0; j < details.length; j++) {
+                if (details[j].tmp_id != null && details[j].tmp_id === data.tmp_id) {
+                    details.splice(j, 1);
+                    break;
+                }
+            }
+        }
+        reloadTb();
+    }
+</script>
+</body>
+</html>

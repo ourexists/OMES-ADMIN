@@ -9,9 +9,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class EquipAttrRealtime {
 
-    private String attrId;
+    private String id;
 
-    private String attrName;
+    private String name;
 
-    private String attrValue;
+    private String map;
+
+    private String value;
 }

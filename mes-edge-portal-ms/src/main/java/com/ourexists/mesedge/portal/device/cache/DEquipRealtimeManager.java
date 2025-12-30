@@ -4,9 +4,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
+import com.ourexists.mesedge.device.model.EquipAttrDto;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
 import jakarta.annotation.PostConstruct;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,10 +105,23 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     }
 
     @Override
+    public EquipRealtime getById(String tenantId, String id) {
+        ConcurrentMap<Object, Object> c = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+        for (Map.Entry<Object, Object> entry : c.entrySet()) {
+            EquipRealtime equipRealtime = (EquipRealtime) entry.getValue();
+            if (equipRealtime.getId().equals(id)) {
+                return equipRealtime;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public void reload() {
         UserContext.defaultTenant();
         EquipPageQuery query = new EquipPageQuery();
         query.setRequirePage(false);
+        query.setQueryAttrs(true);
         try {
             List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(equipFeign.selectByPage(query));
             Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
@@ -116,6 +132,16 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 }
                 EquipRealtime equipRealtime = new EquipRealtime();
                 BeanUtils.copyProperties(equipDto, equipRealtime);
+
+                if (!CollectionUtils.isEmpty(equipDto.getAttrs())) {
+                    List<EquipAttrRealtime> equipAttrRealtimes = new ArrayList<>();
+                    for (EquipAttrDto attr : equipDto.getAttrs()) {
+                        EquipAttrRealtime attrRealtime = new EquipAttrRealtime();
+                        BeanUtils.copyProperties(attr, attrRealtime);
+                        equipAttrRealtimes.add(attrRealtime);
+                    }
+                    equipRealtime.setEquipAttrRealtimes(equipAttrRealtimes);
+                }
                 r.put(equipDto.getSelfCode(), equipRealtime);
                 equipRealtimeMap.put(equipDto.getTenantId(), r);
             }

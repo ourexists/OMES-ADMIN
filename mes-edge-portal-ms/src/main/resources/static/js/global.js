@@ -176,6 +176,8 @@ var router = {
     "equip_del": "/equip/delete",
     "equip_id": "/equip/selectById",
     "equip_type": "/equip/equipType",
+    "equipattr_page": "/equipattr/selectByPage",
+    "equipattr_insert": "/equipattr/insertBatch",
 }
 
 function getCommonHeader() {

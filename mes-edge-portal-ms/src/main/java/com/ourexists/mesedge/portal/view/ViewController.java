@@ -283,4 +283,9 @@ public class ViewController {
     public String equip_realtime() {
         return "equip_realtime";
     }
+
+    @RequestMapping("/view/equipattr_form_edit")
+    public String equipattr_form_edit() {
+        return "equipattr_form_edit";
+    }
 }

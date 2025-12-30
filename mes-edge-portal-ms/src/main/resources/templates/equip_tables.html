@@ -80,12 +80,8 @@
         <a class="layui-btn layui-btn-xs  layui-btn-primary layui-bg-red" lay-event="del">
             <i class="layui-icon layui-icon-delete"></i>
         </a>
-    </div>
-</script>
-<script type="text/html" id="tb-select-tool">
-    <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="select">
-            <i class="layui-icon layui-icon-ok"></i>
+        <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="equipAttr">
+            <i class="layui-icon layui-icon-util"></i>
         </a>
     </div>
 </script>
@@ -311,6 +307,8 @@
                 openWindow('common.edit', '/view/equip_form_edit', ['90%', '70%']);
             } else if (obj.event === 'del') {
                 delWindow(router.equip_del, [data.id], reloadTb);
+            } else if (obj.event === 'equipAttr') {
+                openWindow('equipattr.name', '/view/equipattr_form_edit?id=' + data.id, ['80%', '50%']);
             }
         });
         // table 滚动时移除内部弹出的元素

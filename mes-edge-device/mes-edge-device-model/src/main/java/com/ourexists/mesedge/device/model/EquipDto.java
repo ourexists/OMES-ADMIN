@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 设备
@@ -51,6 +52,8 @@ public class EquipDto extends BaseDto {
     private String tenantId;
 
     private WorkshopTreeNode workshop;
+
+    private List<EquipAttrDto> attrs;
 
     public String getTypeDesc() {
         return EquipTypeEnum.valueof(this.type).getDesc();

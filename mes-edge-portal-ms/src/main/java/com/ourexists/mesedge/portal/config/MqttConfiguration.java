@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.constants.CommonConstant;
+import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import lombok.Getter;
@@ -23,6 +24,7 @@ import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannel
 import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -90,6 +92,7 @@ public class MqttConfiguration {
             JSONArray ywArray = jsonObject.getJSONArray("ai");
             Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll(CommonConstant.SYSTEM_TENANT);
             for (EquipRealtime equipRealtime : realtimeMap.values()) {
+                List<EquipAttrRealtime> attrs = equipRealtime.getEquipAttrRealtimes();
                 JSONObject[] devArrays = devArray.toArray(JSONObject.class);
                 JSONObject[] ywArrays = ywArray.toArray(JSONObject.class);
                 for (JSONObject object : devArrays) {
@@ -101,43 +104,51 @@ public class MqttConfiguration {
                         equipRealtime.setRunState(0);
                         if (equipRealtime.getSelfCode().equals(ssn)) {
                             equipRealtime.setOnlineState(1);
-                            equipRealtime.setAlarmState(object.getInteger("alarm"));
-                            equipRealtime.setRunState(object.getInteger("run"));
+                            equipRealtime.setAlarmState(object.getInteger(equipRealtime.getAlarmMap()));
+                            equipRealtime.setRunState(object.getInteger(equipRealtime.getRunMap()));
                         }
-                    }
-                    for (JSONObject o : ywArrays) {
-                        String ywSn = o.getString("code");
-                        String ssnn = sn + ywSn;
-                        if (equipRealtime.getWorkshopCode().equals(ywSn)) {
-                            equipRealtime.setOnlineState(0);
-                            equipRealtime.setAlarmState(0);
-                            equipRealtime.setRunState(0);
-                            if (equipRealtime.getSelfCode().equals(ssnn)) {
-                                equipRealtime.setOnlineState(1);
-                                int alarm = 0;
-                                if (o.getInteger("alarm") == 1) {
-                                    alarm = 1;
-                                }
-                                if (o.getInteger("hhAlarm") == 1) {
-                                    alarm = 2;
-                                }
-                                equipRealtime.setAlarmState(alarm);
-                                equipRealtime.setRunState(1);
+                        if (!CollectionUtils.isEmpty(attrs)) {
+                            for (EquipAttrRealtime attr : attrs) {
+                                attr.setValue(object.getString(attr.getMap()));
                             }
                         }
-
                     }
-                    equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);
                 }
+                for (JSONObject o : ywArrays) {
+                    String ywSn = o.getString("code");
+                    String ssnn = sn + ywSn;
+                    if (equipRealtime.getWorkshopCode().equals(ywSn)) {
+                        equipRealtime.setOnlineState(0);
+                        equipRealtime.setAlarmState(0);
+                        equipRealtime.setRunState(0);
+                        if (equipRealtime.getSelfCode().equals(ssnn)) {
+                            equipRealtime.setOnlineState(1);
+                            int alarm = 0;
+                            if (o.getInteger(equipRealtime.getAlarmMap()) == 1) {
+                                alarm = 1;
+                            }
+                            if (o.getInteger("hhAlarm") == 1) {
+                                alarm = 2;
+                            }
+                            equipRealtime.setAlarmState(alarm);
+                            equipRealtime.setRunState(1);
+                            if (!CollectionUtils.isEmpty(attrs)) {
+                                for (EquipAttrRealtime attr : attrs) {
+                                    attr.setValue(o.getString(attr.getMap()));
+                                }
+                            }
+                        }
+                    }
+
+                }
+                equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);
             }
         };
     }
 
     @Bean
-    public MessageProducer inbound(MqttPahoClientFactory clientFactory,
-                                   MessageChannel mqttInboundChannel) {
-        MqttPahoMessageDrivenChannelAdapter adapter =
-                new MqttPahoMessageDrivenChannelAdapter(clientId + "_input", clientFactory, "fxx/fb");
+    public MessageProducer inbound(MqttPahoClientFactory clientFactory, MessageChannel mqttInboundChannel) {
+        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId + "_input", clientFactory, "fxx/fb");
         adapter.setOutputChannel(mqttInboundChannel);
         adapter.setQos(1);
         return adapter;
@@ -151,8 +162,7 @@ public class MqttConfiguration {
     @Bean
     @ServiceActivator(inputChannel = CHANNEL_OUTPUT)
     public MessageHandler mqttOutbound(MqttPahoClientFactory factory) {
-        MqttPahoMessageHandler handler =
-                new MqttPahoMessageHandler(clientId + "_output", factory);
+        MqttPahoMessageHandler handler = new MqttPahoMessageHandler(clientId + "_output", factory);
         handler.setAsync(true);
         handler.setDefaultTopic("fxx/fb");
         return handler;

@@ -27,5 +27,7 @@ public interface EquipRealtimeManager {
 
     EquipRealtime get(String tenantId, String sn);
 
+    EquipRealtime getById(String tenantId, String id);
+
     void reload();
 }
