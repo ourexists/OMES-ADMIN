@@ -14,8 +14,11 @@ import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
+import com.ourexists.mesedge.device.model.WorkshopTreeNode;
 import com.ourexists.mesedge.device.pojo.Equip;
+import com.ourexists.mesedge.device.pojo.Workshop;
 import com.ourexists.mesedge.device.service.EquipService;
+import com.ourexists.mesedge.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ public class EquipViewer implements EquipFeign {
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
 
+    @Autowired
+    private WorkshopService workshopService;
+
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -45,12 +51,26 @@ public class EquipViewer implements EquipFeign {
         Page<Equip> page = service.selectByPage(dto);
         List<EquipDto> r = Equip.covert(page.getRecords());
         if (!CollectionUtils.isEmpty(r) && dto.getNeedRealtime()) {
+            List<WorkshopTreeNode> workshopDtos = null;
+            if (dto.getQueryWorkshop()) {
+                List<String> codes = r.stream().map(EquipDto::getWorkshopCode).toList();
+                workshopDtos = Workshop.covert(workshopService.queryByCodes(codes));
+            }
+
             for (EquipDto equipDto : r) {
                 EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
                 if (equipRealtime != null) {
                     equipDto.setRunState(equipRealtime.getRunState());
                     equipDto.setAlarmState(equipRealtime.getAlarmState());
                     equipDto.setOnlineState(equipRealtime.getOnlineState());
+                }
+                if (!CollectionUtils.isEmpty(workshopDtos)) {
+                    for (WorkshopTreeNode workshopDto : workshopDtos) {
+                        if (equipDto.getWorkshopCode().equals(workshopDto.getSelfCode())) {
+                            equipDto.setWorkshop(workshopDto);
+                            break;
+                        }
+                    }
                 }
             }
         }

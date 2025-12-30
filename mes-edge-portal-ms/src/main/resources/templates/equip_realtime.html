@@ -199,7 +199,8 @@
             workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
             needRealtime: true,
             requirePage: false,
-            needWorkshopCascade: true
+            needWorkshopCascade: true,
+            queryWorkshop: true
         };
         if (data != null) {
             for (let key in data) {
@@ -329,6 +330,7 @@
             }
         }
         return `<b>${d.name}</b><br/>` +
+            i18np.prop("workshop.name") + `：${d.workshop === null ? '' : d.workshop.name}<br/>` +
             i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
             i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
             i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
