@@ -90,39 +90,46 @@ public class MqttConfiguration {
             JSONArray ywArray = jsonObject.getJSONArray("ai");
             Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll(CommonConstant.SYSTEM_TENANT);
             for (EquipRealtime equipRealtime : realtimeMap.values()) {
-                equipRealtime.setOnlineState(0);
-                equipRealtime.setAlarmState(0);
-                equipRealtime.setRunState(0);
-
                 JSONObject[] devArrays = devArray.toArray(JSONObject.class);
                 JSONObject[] ywArrays = ywArray.toArray(JSONObject.class);
                 for (JSONObject object : devArrays) {
                     String devSn = object.getString("code");
-                    if (equipRealtime.getWorkshopCode().equals(sn)
-                            && equipRealtime.getSelfCode().equals(devSn)) {
-                        equipRealtime.setOnlineState(1);
-                        equipRealtime.setAlarmState(object.getInteger("alarm"));
-                        equipRealtime.setRunState(object.getInteger("run"));
-                    }
-                }
-                for (JSONObject o : ywArrays) {
-                    String ywSn = o.getString("code");
-                    if (equipRealtime.getWorkshopCode().equals(sn)
-                            && equipRealtime.getSelfCode().equals(ywSn)) {
-                        equipRealtime.setOnlineState(1);
-                        int alarm = 0;
-                        if (o.getInteger("alarm") == 1) {
-                            alarm = 1;
+                    String ssn = sn + "dev" + devSn;
+                    if (equipRealtime.getWorkshopCode().equals(sn)) {
+                        equipRealtime.setOnlineState(0);
+                        equipRealtime.setAlarmState(0);
+                        equipRealtime.setRunState(0);
+                        if (equipRealtime.getSelfCode().equals(ssn)) {
+                            equipRealtime.setOnlineState(1);
+                            equipRealtime.setAlarmState(object.getInteger("alarm"));
+                            equipRealtime.setRunState(object.getInteger("run"));
                         }
-                        if (o.getInteger("hhAlarm") == 1) {
-                            alarm = 2;
-                        }
-                        equipRealtime.setAlarmState(alarm);
-                        equipRealtime.setRunState(1);
                     }
+                    for (JSONObject o : ywArrays) {
+                        String ywSn = o.getString("code");
+                        String ssnn = sn + ywSn;
+                        if (equipRealtime.getWorkshopCode().equals(ywSn)) {
+                            equipRealtime.setOnlineState(0);
+                            equipRealtime.setAlarmState(0);
+                            equipRealtime.setRunState(0);
+                            if (equipRealtime.getSelfCode().equals(ssnn)) {
+                                equipRealtime.setOnlineState(1);
+                                int alarm = 0;
+                                if (o.getInteger("alarm") == 1) {
+                                    alarm = 1;
+                                }
+                                if (o.getInteger("hhAlarm") == 1) {
+                                    alarm = 2;
+                                }
+                                equipRealtime.setAlarmState(alarm);
+                                equipRealtime.setRunState(1);
+                            }
+                        }
+
+                    }
+                    equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);
                 }
             }
-            equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);
         };
     }
 

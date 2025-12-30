@@ -108,8 +108,36 @@
         map.on('dragend zoomend', function () {
             userInteracting = false;
         });
+
+
+        var legend = L.control({position: 'topleft'});
+
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'map-legend');
+
+            div.innerHTML = `
+        <div class="legend-item">
+            <span class="status-dot status-online"></span> 在线
+        </div>
+          <div class="legend-item">
+            <span class="status-dot status-offline"></span> 离线
+        </div>
+        <div class="legend-item">
+            <span class="status-dot status-running"></span> 运行
+        </div>
+        <div class="legend-item">
+            <span class="status-dot status-stopped"></span> 停止
+        </div>
+        <div class="legend-item">
+            <span class="status-dot status-alarm"></span> 报警
+        </div>
+    `;
+            return div;
+        };
+
+        legend.addTo(map);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+            attribution: '地图数据 © OpenStreetMap'
         }).addTo(map);
 
         clusterGroup = L.markerClusterGroup();
@@ -200,18 +228,27 @@
     }, 5000);
 
     function calcStatus(d) {
+        if (d.onlineState === 0) {
+            return 'offline';
+        }
         if (d.alarmState >= 1) {
             return 'alarm';
         }
         if (d.runState === 1) {
+            return 'running';
+        }
+        if (d.runState === 0) {
+            return 'stop';
+        }
+        if (d.onlineState === 1) {
             return 'online';
         }
         return 'offline';
     }
 
-    function iconByStatus(status) {
+    function iconByStatus(type, status) {
         return L.icon({
-            iconUrl: `/static/img/${status.toLowerCase()}_dev.svg`,
+            iconUrl: `/static/img/map/map_${status.toLowerCase()}_${type}.svg`,
             iconSize: [32, 32],
             iconAnchor: [16, 32]
         });
@@ -257,7 +294,7 @@
             } else {
                 // 新 Marker
                 const status = calcStatus(d);
-                const marker = L.marker([d.lat, d.lng], {icon: iconByStatus(status)});
+                const marker = L.marker([d.lat, d.lng], {icon: iconByStatus(d.type, status)});
                 marker.bindPopup(createPopupHtml(d));
                 clusterGroup.addLayer(marker);
                 markerMap[key] = marker;
@@ -276,17 +313,26 @@
     // 更新 Marker 内部状态和 Popup
     function updateMarker(marker, device) {
         // 更新 icon
-        marker.setIcon(iconByStatus(calcStatus(device)));
+        marker.setIcon(iconByStatus(device.type, calcStatus(device)));
 
         // 更新 Popup
         marker.setPopupContent(createPopupHtml(device));
     }
 
     function createPopupHtml(d) {
+        var runSpan = '<span class="status-dot-map status-offline"></span>';
+        if (d.onlineState === 1) {
+            if (d.runState === 1) {
+                runSpan = '<span class="status-dot-map status-running"></span>';
+            } else {
+                runSpan = '<span class="status-dot-map status-stopped"></span>';
+            }
+        }
         return `<b>${d.name}</b><br/>` +
-            `编码：${d.selfCode}<br/>` +
-            `运行状态：${d.runState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
-            `报警状态：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
+            i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
+            i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
+            i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
+            i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
     }
 </script>
 </body>

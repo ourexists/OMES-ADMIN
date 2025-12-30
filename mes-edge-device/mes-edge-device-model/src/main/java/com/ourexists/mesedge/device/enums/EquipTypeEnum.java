@@ -2,7 +2,8 @@ package com.ourexists.mesedge.device.enums;
 
 public enum EquipTypeEnum {
 
-    def(0, "Default");
+    def(0, "Default"),
+    yw(1, "液位计");
 
     private final Integer code;
 

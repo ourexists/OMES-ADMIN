@@ -20,9 +20,32 @@
     border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+.status-alarm {
+    background: #FF4D4F;
+    box-shadow: 0 0 8px rgba(255, 77, 79, 0.9);
+    animation: alarmPulse 1.5s infinite;
+}
+
+@keyframes alarmPulse {
+    0% {
+        box-shadow: 0 0 4px rgba(255, 77, 79, 0.9);
+    }
+    70% {
+        box-shadow: 0 0 12px rgba(255, 77, 79, 0);
+    }
+    100% {
+        box-shadow: 0 0 4px rgba(255, 77, 79, 0);
+    }
+}
+
 .status-online {
     background: #52c41a;
     box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
+}
+
+.status-running {
+    background: #1890FF;
+    box-shadow: 0 0 6px rgba(24, 144, 255, 0.6);
 }
 
 .status-offline {
@@ -32,4 +55,9 @@
 .status-alarm {
     background: #ff4d4f;
     box-shadow: 0 0 6px rgba(255, 77, 79, 0.8);
+}
+
+.status-stopped {
+    background: #FAAD14;
+    box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
 }

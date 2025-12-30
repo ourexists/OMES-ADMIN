@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
+import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipRunRecordFeign;
 import com.ourexists.mesedge.device.model.EquipRunRecordDto;
 import com.ourexists.mesedge.device.model.EquipRunRecordPageQuery;
@@ -30,6 +31,9 @@ public class EquipRunRecordViewer implements EquipRunRecordFeign {
 
     @Autowired
     private EquipRunRecordService service;
+
+    @Autowired
+    private EquipRealtimeManager equipRealtimeManager;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
