@@ -37,9 +37,6 @@ public class WorkshopViewer implements WorkshopFeign {
     @Autowired
     private WorkshopService service;
 
-    @Autowired
-    private EquipService equipService;
-
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
     public JsonResponseEntity<List<WorkshopTreeNode>> selectTree() {
