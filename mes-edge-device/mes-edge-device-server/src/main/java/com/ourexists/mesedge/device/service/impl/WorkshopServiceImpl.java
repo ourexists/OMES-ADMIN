@@ -28,8 +28,7 @@ public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapp
 
     @Override
     public Page<Workshop> selectByPage(WorkshopPageQuery dto) {
-        LambdaQueryWrapper<Workshop> qw = new LambdaQueryWrapper<Workshop>()
-                .orderByDesc(Workshop::getId);
+        LambdaQueryWrapper<Workshop> qw = new LambdaQueryWrapper<Workshop>().orderByDesc(Workshop::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
 
@@ -43,5 +42,10 @@ public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapp
     public void delete(List<String> ids) {
         this.removeBatchByIds(ids);
         deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
+    }
+
+    @Override
+    public List<Workshop> queryChildBySelfCode(String workshopCode) {
+        return this.list(new LambdaQueryWrapper<Workshop>().eqSql(Workshop::getPcode, "select code from t_workshop where self_code='" + workshopCode + "'"));
     }
 }

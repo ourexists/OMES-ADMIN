@@ -24,4 +24,6 @@ public interface WorkshopService extends IMyBatisPlusService<Workshop> {
     void addOrUpdate(WorkshopDto dto);
 
     void delete(List<String> ids);
+
+    List<Workshop> queryChildBySelfCode(String workshopCode);
 }

@@ -163,6 +163,7 @@
             workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
             needRealtime: true,
             requirePage: false,
+            needWorkshopCascade: true
         };
         if (data != null) {
             for (let key in data) {
@@ -174,11 +175,7 @@
             if (e == null) {
                 return;
             }
-            if (e.length > 20) {
-                map.setView([e[0].lat, e[0].lng], 6);
-            } else if (e.length > 0) {
-                map.setView([e[0].lat, e[0].lng], 12);
-            }
+            adjustMapView(e)
 
             //通过经纬度分组
             e.forEach(function (d) {
@@ -192,6 +189,8 @@
             })
             map.addLayer(clusterGroup);
         })
+
+
     }
 
     function calcStatus(d) {
@@ -209,6 +208,33 @@
             iconUrl: `/static/img/${status.toLowerCase()}_dev.svg`,
             iconSize: [32, 32],
             iconAnchor: [16, 32]
+        });
+    }
+
+    function adjustMapView(devices) {
+        if (!devices || devices.length === 0) return;
+
+        if (devices.length === 1) {
+            map.setView([devices[0].lat, devices[0].lng], 15);
+            return;
+        }
+
+        const allSame = devices.every(
+            d => d.lat === devices[0].lat && d.lng === devices[0].lng
+        );
+
+        if (allSame) {
+            map.setView([devices[0].lat, devices[0].lng], 15);
+            return;
+        }
+
+        const bounds = L.latLngBounds(
+            devices.map(d => [d.lat, d.lng])
+        );
+
+        map.fitBounds(bounds, {
+            padding: [40, 40],
+            maxZoom: 17
         });
     }
 </script>

@@ -31,4 +31,7 @@ public class EquipPageQuery extends PageQuery {
 
     @Schema(description = "是否同时获取设备实时信息")
     private Boolean needRealtime = false;
+
+    @Schema(description = "是否需要场景级联查询")
+    private Boolean needWorkshopCascade = false;
 }
