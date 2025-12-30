@@ -15,10 +15,10 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipPageQuery extends PageQuery {
+public class EquipAttrPageQuery extends PageQuery {
 
-    @Schema(description = "场景编号")
-    private String workshopCode;
+    @Schema(description = "设备id")
+    private String equipId;
 
     @Schema(description = "设备名")
     private String name;
@@ -37,7 +37,4 @@ public class EquipPageQuery extends PageQuery {
 
     @Schema(description = "是否查询关联的场景信息")
     private Boolean queryWorkshop = false;
-
-    @Schema(description = "是否查询关联属性")
-    private Boolean queryAttrs = false;
 }

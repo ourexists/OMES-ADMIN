@@ -50,14 +50,14 @@
             <div class="layui-inline">
                 <label class="layui-form-label" lang-i18n="equip.runMap"></label>
                 <div class="layui-input-block">
-                    <input type="text" name="runMap" autocomplete="off" lay-verify="phone"
+                    <input type="text" name="runMap" autocomplete="off"
                            class="layui-input" lang-i18n="common.placeholder">
                 </div>
             </div>
             <div class="layui-inline">
                 <label class="layui-form-label" lang-i18n="equip.alarmMap"></label>
                 <div class="layui-input-block">
-                    <input type="text" name="alarmMap" autocomplete="off" lay-verify="email"
+                    <input type="text" name="alarmMap" autocomplete="off"
                            class="layui-input" lang-i18n="common.placeholder">
                 </div>
             </div>
@@ -141,7 +141,7 @@
             for (let key in field) {
                 current_row_data[key] = field[key];
             }
-            if (selected_tree_node != null) {
+            if (selected_tree_node != null && current_row_data.workshopCode == null) {
                 current_row_data.workshopCode = selected_tree_node.selfCode;
             }
             post(router.equip_edit, current_row_data, function () {

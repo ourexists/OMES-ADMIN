@@ -171,7 +171,6 @@
                 }
             });
         }, function (code, msg) {
-            alert("请重试");
         })
 
         reloadMap(true);
@@ -200,7 +199,8 @@
             needRealtime: true,
             requirePage: false,
             needWorkshopCascade: true,
-            queryWorkshop: true
+            queryWorkshop: true,
+            queryAttrs: true
         };
         if (data != null) {
             for (let key in data) {
@@ -209,6 +209,7 @@
         }
         post(router.equip_page, params, function (e) {
             if (needViewReset) {
+                markerMap = {}
                 clusterGroup.clearLayers();
             }
             if (e == null) {
@@ -294,6 +295,7 @@
                 updateMarker(marker, d);
             } else {
                 // 新 Marker
+                console.info(1)
                 const status = calcStatus(d);
                 const marker = L.marker([d.lat, d.lng], {icon: iconByStatus(d.type, status)});
                 marker.bindPopup(createPopupHtml(d));
@@ -329,12 +331,19 @@
                 runSpan = '<span class="status-dot-map status-stopped"></span>';
             }
         }
-        return `<b>${d.name}</b><br/>` +
+        var html = `<b>${d.name}</b><br/>` +
             i18np.prop("workshop.name") + `：${d.workshop === null ? '' : d.workshop.name}<br/>` +
             i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
             i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
             i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
             i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
+
+        if (d.attrs != null) {
+            d.attrs.forEach(function (t) {
+                html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}`;
+            })
+        }
+        return html;
     }
 </script>
 </body>

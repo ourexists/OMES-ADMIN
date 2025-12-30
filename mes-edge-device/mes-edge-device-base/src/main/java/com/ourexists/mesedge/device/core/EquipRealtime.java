@@ -17,13 +17,17 @@ public class EquipRealtime {
 
     private String selfCode;
 
+    private String runMap;
+
+    private String alarmMap;
+
     private Integer onlineState = 0;
 
     private Integer runState = 0;
 
     private Integer alarmState = 0;
 
-    private List<EquipAttrRealtime> equipAttrRealtimeList;
+    private List<EquipAttrRealtime> equipAttrRealtimes;
 
     private String tenantId;
 
