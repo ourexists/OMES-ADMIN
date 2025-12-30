@@ -88,3 +88,10 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+mqtt:
+  server-uri:
+    - ${mqtt_server}
+  client-id: ds-dts
+  username: 4G_user
+  password: Pa$$WOr2
