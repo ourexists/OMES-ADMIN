@@ -1,5 +1,6 @@
 package com.ourexists.mesedge.device.core;
 
+import java.util.List;
 import java.util.Map;
 
 public interface EquipRealtimeManager {
@@ -18,9 +19,13 @@ public interface EquipRealtimeManager {
 
     void remove(String tenantId, String sn);
 
+    void removeBatch(String tenantId, List<String> ids);
+
     void clear(String tenantId);
 
     Map<String, EquipRealtime> getAll(String tenantId);
 
     EquipRealtime get(String tenantId, String sn);
+
+    void reload();
 }

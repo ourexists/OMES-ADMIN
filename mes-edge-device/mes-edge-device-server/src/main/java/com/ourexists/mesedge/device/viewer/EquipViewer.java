@@ -7,6 +7,7 @@ package com.ourexists.mesedge.device.viewer;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
@@ -16,6 +17,7 @@ import com.ourexists.mesedge.device.model.EquipPageQuery;
 import com.ourexists.mesedge.device.pojo.Equip;
 import com.ourexists.mesedge.device.service.EquipService;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -60,6 +62,9 @@ public class EquipViewer implements EquipFeign {
     @PostMapping("addOrUpdate")
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody EquipDto dto) {
         service.saveOrUpdate(Equip.wrap(dto));
+        EquipRealtime equipRealtime = new EquipRealtime();
+        BeanUtils.copyProperties(dto, equipRealtime);
+        equipRealtimeManager.addOrUpdate(UserContext.getTenant().getTenantId(), equipRealtime);
         return JsonResponseEntity.success(true);
     }
 
@@ -68,6 +73,7 @@ public class EquipViewer implements EquipFeign {
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
         service.removeByIds(idsDto.getIds());
+        equipRealtimeManager.reload();
         return JsonResponseEntity.success(true);
     }
 

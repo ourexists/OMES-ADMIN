@@ -128,7 +128,7 @@
         let map = L.map('map').setView(ln, 6);
         let marker;
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+            attribution: '地图数据 © OpenStreetMap'
         }).addTo(map);
 
         if (current_row_data != null && current_row_data.lat != null && current_row_data.lng != null) {

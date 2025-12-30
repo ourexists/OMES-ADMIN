@@ -17,6 +17,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,28 +43,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @PostConstruct
     public void init() {
-        UserContext.defaultTenant();
-        EquipPageQuery query = new EquipPageQuery();
-        query.setRequirePage(false);
-        try {
-            List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(equipFeign.selectByPage(query));
-            Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
-            for (EquipDto equipDto : equipDtos) {
-                Map<String, EquipRealtime> r = equipRealtimeMap.get(equipDto.getTenantId());
-                if (r == null) {
-                    r = new HashMap<>();
-                }
-                EquipRealtime equipRealtime = new EquipRealtime();
-                BeanUtils.copyProperties(equipDto, equipRealtime);
-                r.put(equipDto.getSelfCode(), equipRealtime);
-                equipRealtimeMap.put(equipDto.getTenantId(), r);
-            }
-            for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
-                reset(entry.getKey(), entry.getValue());
-            }
-        } catch (EraCommonException e) {
-            log.error(e.getMessage(), e);
-        }
+        reload();
     }
 
 
@@ -81,6 +61,19 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     @Override
     public void remove(String tenantId, String sn) {
         nativeCache(CACHE_NAME + "_" + tenantId).invalidate(sn);
+    }
+
+    @Override
+    public void removeBatch(String tenantId, List<String> ids) {
+        Map<Object, Object> map = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+        List<String> sns = new ArrayList<>();
+        for (Map.Entry<Object, Object> entry : map.entrySet()) {
+            EquipRealtime e = (EquipRealtime) entry.getValue();
+            if (ids.contains(e.getId())) {
+                sns.add(e.getSelfCode());
+            }
+        }
+        nativeCache(CACHE_NAME + "_" + tenantId).invalidateAll(sns);
     }
 
     @Override
@@ -105,6 +98,32 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             return null;
         } else {
             return (EquipRealtime) r;
+        }
+    }
+
+    @Override
+    public void reload() {
+        UserContext.defaultTenant();
+        EquipPageQuery query = new EquipPageQuery();
+        query.setRequirePage(false);
+        try {
+            List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(equipFeign.selectByPage(query));
+            Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
+            for (EquipDto equipDto : equipDtos) {
+                Map<String, EquipRealtime> r = equipRealtimeMap.get(equipDto.getTenantId());
+                if (r == null) {
+                    r = new HashMap<>();
+                }
+                EquipRealtime equipRealtime = new EquipRealtime();
+                BeanUtils.copyProperties(equipDto, equipRealtime);
+                r.put(equipDto.getSelfCode(), equipRealtime);
+                equipRealtimeMap.put(equipDto.getTenantId(), r);
+            }
+            for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
+                reset(entry.getKey(), entry.getValue());
+            }
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
         }
     }
 }
