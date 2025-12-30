@@ -42,6 +42,14 @@ public class EquipDto extends BaseDto {
 
     private String address;
 
+    private Integer runState = 0;
+
+    private Integer alarmState = 0;
+
+    private Integer onlineState = 0;
+
+    private String tenantId;
+
     public String getTypeDesc() {
         return EquipTypeEnum.valueof(this.type).getDesc();
     }

@@ -53,6 +53,5 @@ public class EquipRunRecordServiceImpl extends AbstractMyBatisPlusService<EquipR
     public void delete(List<String> ids) {
         this.removeBatchByIds(ids);
         deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
-        realtimeManager.removeByIds(UserContext.getTenant().getTenantId(), ids);
     }
 }

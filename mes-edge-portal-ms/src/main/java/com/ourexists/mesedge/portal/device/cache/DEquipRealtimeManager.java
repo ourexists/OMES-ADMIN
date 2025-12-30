@@ -2,6 +2,7 @@ package com.ourexists.mesedge.portal.device.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
@@ -16,7 +17,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,20 +42,24 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @PostConstruct
     public void init() {
+        UserContext.defaultTenant();
         EquipPageQuery query = new EquipPageQuery();
         query.setRequirePage(false);
         try {
             List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(equipFeign.selectByPage(query));
-            Map<String, List<EquipRealtime>> equipRealtimeMap = new HashMap<>();
+            Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
             for (EquipDto equipDto : equipDtos) {
-                List<EquipRealtime> r = equipRealtimeMap.get(equipDto.getWorkshopCode());
+                Map<String, EquipRealtime> r = equipRealtimeMap.get(equipDto.getTenantId());
                 if (r == null) {
-                    r = new ArrayList<>();
+                    r = new HashMap<>();
                 }
                 EquipRealtime equipRealtime = new EquipRealtime();
                 BeanUtils.copyProperties(equipDto, equipRealtime);
-                r.add(equipRealtime);
-                equipRealtimeMap.put(equipDto.getWorkshopCode(), r);
+                r.put(equipDto.getSelfCode(), equipRealtime);
+                equipRealtimeMap.put(equipDto.getTenantId(), r);
+            }
+            for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
+                reset(entry.getKey(), entry.getValue());
             }
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
@@ -64,65 +68,19 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
 
     @Override
-    public void reset(String tenantId, Map<String, List<EquipRealtime>> equipRealtimeMap) {
+    public void reset(String tenantId, Map<String, EquipRealtime> equipRealtimeMap) {
         nativeCache(CACHE_NAME + "_" + tenantId).putAll(equipRealtimeMap);
     }
 
     @Override
     public void addOrUpdate(String tenantId, EquipRealtime equipRealtime) {
-        Object r = nativeCache(CACHE_NAME + "_" + tenantId).getIfPresent(equipRealtime.getWorkshopCode());
-        List<EquipRealtime> rs;
-        if (r == null) {
-            rs = new ArrayList<>();
-            rs.add(equipRealtime);
-        } else {
-            rs = (List<EquipRealtime>) r;
-            boolean isUp = false;
-            for (EquipRealtime realtime : rs) {
-                if (realtime.getSelfCode().equals(equipRealtime.getSelfCode())) {
-                    BeanUtils.copyProperties(equipRealtime, realtime);
-                }
-            }
-            if (!isUp) {
-                rs.add(equipRealtime);
-            }
-        }
-        nativeCache(CACHE_NAME + "_" + tenantId).put(equipRealtime.getWorkshopCode(), rs);
+        nativeCache(CACHE_NAME + "_" + tenantId).put(equipRealtime.getSelfCode(), equipRealtime);
     }
 
 
     @Override
     public void remove(String tenantId, String sn) {
-        Map<String, List<EquipRealtime>> m = getAll(tenantId);
-        for (List<EquipRealtime> value : m.values()) {
-            for (EquipRealtime realtime : value) {
-                if (realtime.getSelfCode().equals(sn)) {
-                    value.remove(realtime);
-                    return;
-                }
-            }
-        }
-    }
-
-    @Override
-    public void removeById(String tenantId, String equipId) {
-        Map<String, List<EquipRealtime>> m = getAll(tenantId);
-        for (List<EquipRealtime> value : m.values()) {
-            for (EquipRealtime realtime : value) {
-                if (realtime.getId().equals(equipId)) {
-                    value.remove(realtime);
-                    return;
-                }
-            }
-        }
-    }
-
-    @Override
-    public void removeByIds(String tenantId, List<String> equipIds) {
-        Map<String, List<EquipRealtime>> m = getAll(tenantId);
-        for (List<EquipRealtime> value : m.values()) {
-            value.removeIf(realtime -> equipIds.contains(realtime.getId()));
-        }
+        nativeCache(CACHE_NAME + "_" + tenantId).invalidate(sn);
     }
 
     @Override
@@ -131,31 +89,22 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     }
 
     @Override
-    public Map<String, List<EquipRealtime>> getAll(String tenantId) {
-        Map<String, List<EquipRealtime>> r = new HashMap<>();
+    public Map<String, EquipRealtime> getAll(String tenantId) {
+        Map<String, EquipRealtime> r = new HashMap<>();
         ConcurrentMap<Object, Object> c = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
         for (Map.Entry<Object, Object> entry : c.entrySet()) {
-            r.put(entry.getKey().toString(), (List<EquipRealtime>) entry.getValue());
+            r.put((String) entry.getKey(), (EquipRealtime) entry.getValue());
         }
         return r;
     }
 
     @Override
-    public List<EquipRealtime> getAll(String tenantId, String workshopCode) {
-        Object c = nativeCache(CACHE_NAME + "_" + tenantId).getIfPresent(workshopCode);
-        return (List<EquipRealtime>) c;
-    }
-
-    @Override
     public EquipRealtime get(String tenantId, String sn) {
-        Map<String, List<EquipRealtime>> m = getAll(tenantId);
-        for (List<EquipRealtime> value : m.values()) {
-            for (EquipRealtime realtime : value) {
-                if (realtime.getSelfCode().equals(sn)) {
-                    return realtime;
-                }
-            }
+        Object r = nativeCache(CACHE_NAME + "_" + tenantId).getIfPresent(sn);
+        if (r == null) {
+            return null;
+        } else {
+            return (EquipRealtime) r;
         }
-        return null;
     }
 }

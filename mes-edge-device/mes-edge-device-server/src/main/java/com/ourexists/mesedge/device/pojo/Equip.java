@@ -2,7 +2,7 @@ package com.ourexists.mesedge.device.pojo;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
-import com.ourexists.era.framework.orm.mybatisplus.MainEntity;
+import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
 import com.ourexists.mesedge.device.model.EquipDto;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +17,7 @@ import java.util.List;
 @Setter
 @Accessors(chain = true)
 @TableName("t_equip")
-public class Equip extends MainEntity {
+public class Equip extends EraEntity {
 
     private String name;
 

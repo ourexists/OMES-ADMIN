@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
+import com.ourexists.mesedge.device.core.EquipRealtime;
+import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
@@ -16,6 +18,7 @@ import com.ourexists.mesedge.device.service.EquipService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,12 +33,26 @@ public class EquipViewer implements EquipFeign {
     @Autowired
     private EquipService service;
 
+    @Autowired
+    private EquipRealtimeManager equipRealtimeManager;
+
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<EquipDto>> selectByPage(@RequestBody EquipPageQuery dto) {
         Page<Equip> page = service.selectByPage(dto);
-        return JsonResponseEntity.success(Equip.covert(page.getRecords()), OrmUtils.extraPagination(page));
+        List<EquipDto> r = Equip.covert(page.getRecords());
+        if (!CollectionUtils.isEmpty(r) && dto.getNeedRealtime()) {
+            for (EquipDto equipDto : r) {
+                EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
+                if (equipRealtime != null) {
+                    equipDto.setRunState(equipRealtime.getRunState());
+                    equipDto.setAlarmState(equipRealtime.getAlarmState());
+                    equipDto.setOnlineState(equipRealtime.getOnlineState());
+                }
+            }
+        }
+        return JsonResponseEntity.success(r, OrmUtils.extraPagination(page));
     }
 
     @Override

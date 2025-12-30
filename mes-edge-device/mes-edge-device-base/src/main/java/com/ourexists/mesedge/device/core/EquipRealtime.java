@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -18,25 +17,11 @@ public class EquipRealtime {
 
     private String selfCode;
 
-    private Integer type;
+    private Integer onlineState = 0;
 
-    private String runMap;
+    private Integer runState = 0;
 
-    private String alarmMap;
-
-    private String workshopCode;
-
-    private BigDecimal lng;
-
-    private BigDecimal lat;
-
-    private String address;
-
-    private Boolean online = false;
-
-    private Integer runState;
-
-    private Integer alarmState;
+    private Integer alarmState = 0;
 
     private List<EquipAttrRealtime> equipAttrRealtimeList;
 
