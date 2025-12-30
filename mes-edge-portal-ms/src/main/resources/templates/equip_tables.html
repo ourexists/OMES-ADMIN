@@ -7,6 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/layui/css/custom.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
@@ -129,10 +130,8 @@
                 {
                     field: 'runState', title: i18np.prop('equip.runState'), templet: function (e) {
                         if (e.runState != null && e.runState === 1) {
-                            console.info(11111)
                             return '<span class="status-dot status-online"></span>在线'
                         } else {
-                            console.info(2222)
                             return '<span class="status-dot status-offline"></span>'
                         }
                     }
@@ -140,7 +139,6 @@
                 {
                     field: 'alarmState', title: i18np.prop('equip.alarmState'), templet: function (e) {
                         if (e.alarmState != null && e.alarmState === 1) {
-                            console.info(11111)
                             return '<span class="status-dot status-alarm"></span>'
                         } else {
                             return '<span class="status-dot status-offline"></span>'
@@ -295,9 +293,6 @@
                 openWindow('common.edit', '/view/equip_form_edit', ['90%', '70%']);
             } else if (obj.event === 'del') {
                 delWindow(router.equip_del, [data.id], reloadTb);
-            } else if (obj.event === 'select') {
-                parent.selectBom(obj.data);
-                closeWindow();
             }
         });
         // table 滚动时移除内部弹出的元素
@@ -329,7 +324,7 @@
         table.reloadData('tb-common', {
             url: initRequestUrl(router.equip_page),
             where: {
-                workshopCode: selected_tree_node.selfCode,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
                 name: $('#name').val(),
                 selfCode: $('#selfCode').val(),
                 type: $('#type').val(),

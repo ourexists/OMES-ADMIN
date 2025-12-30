@@ -26,4 +26,6 @@ public class EquipRealtime {
     private List<EquipAttrRealtime> equipAttrRealtimeList;
 
     private String tenantId;
+
+    private String workshopCode;
 }
