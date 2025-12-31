@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -32,4 +33,6 @@ public class EquipRealtime {
     private String tenantId;
 
     private String workshopCode;
+
+    private Date time;
 }

@@ -26,6 +26,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -108,12 +109,13 @@ public class MqttConfiguration {
                     String ssn = sn + "dev" + devSn;
                     if (equipRealtime.getSelfCode().equals(ssn)) {
                         equipRealtime.setOnlineState(1);
+                        equipRealtime.setTime(new Date());
                         equipRealtime.setAlarmState(object.getInteger(equipRealtime.getAlarmMap()));
                         equipRealtime.setRunState(object.getInteger(equipRealtime.getRunMap()));
-                    }
-                    if (!CollectionUtils.isEmpty(attrs)) {
-                        for (EquipAttrRealtime attr : attrs) {
-                            attr.setValue(object.getString(attr.getMap()));
+                        if (!CollectionUtils.isEmpty(attrs)) {
+                            for (EquipAttrRealtime attr : attrs) {
+                                attr.setValue(object.getString(attr.getMap()));
+                            }
                         }
                     }
                 }
@@ -136,6 +138,7 @@ public class MqttConfiguration {
                                 attr.setValue(o.getString(attr.getMap()));
                             }
                         }
+                        equipRealtime.setTime(new Date());
                     }
                 }
                 equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);

@@ -96,18 +96,17 @@ public class EquipViewer implements EquipFeign {
                         equipDto.setRunState(equipRealtime.getRunState());
                         equipDto.setAlarmState(equipRealtime.getAlarmState());
                         equipDto.setOnlineState(equipRealtime.getOnlineState());
-                    }
-                    List<EquipAttrDto> attrs = new ArrayList<>();
-                    if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
-                        for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
-                            EquipAttrDto attrDto = new EquipAttrDto();
-                            BeanUtils.copyProperties(equipAttrRealtime, attrDto);
-                            attrs.add(attrDto);
+                        List<EquipAttrDto> attrs = new ArrayList<>();
+                        if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
+                            for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
+                                EquipAttrDto attrDto = new EquipAttrDto();
+                                BeanUtils.copyProperties(equipAttrRealtime, attrDto);
+                                attrs.add(attrDto);
+                            }
                         }
+                        equipDto.setAttrs(attrs);
                     }
-                    equipDto.setAttrs(attrs);
                 }
-
             }
         }
         return JsonResponseEntity.success(r, OrmUtils.extraPagination(page));
@@ -118,7 +117,10 @@ public class EquipViewer implements EquipFeign {
     @PostMapping("addOrUpdate")
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody EquipDto dto) {
         service.saveOrUpdate(Equip.wrap(dto));
-        EquipRealtime equipRealtime = new EquipRealtime();
+        EquipRealtime equipRealtime = equipRealtimeManager.get(UserContext.getTenant().getTenantId(), dto.getSelfCode());
+        if (equipRealtime == null) {
+            equipRealtime = new EquipRealtime();
+        }
         BeanUtils.copyProperties(dto, equipRealtime);
         equipRealtimeManager.addOrUpdate(UserContext.getTenant().getTenantId(), equipRealtime);
         return JsonResponseEntity.success(true);
