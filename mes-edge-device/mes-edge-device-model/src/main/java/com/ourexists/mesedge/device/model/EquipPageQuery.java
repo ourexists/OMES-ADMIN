@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.util.List;
+
 
 @Schema
 @Getter
@@ -29,6 +31,9 @@ public class EquipPageQuery extends PageQuery {
     @Schema(description = "设备类型")
     private Integer type;
 
+    @Schema(description = "场景编号")
+    private List<String> workshopCodes;
+
     @Schema(description = "是否同时获取设备实时信息")
     private Boolean needRealtime = false;
 
@@ -40,4 +45,7 @@ public class EquipPageQuery extends PageQuery {
 
     @Schema(description = "是否查询关联属性")
     private Boolean queryAttrs = false;
+
+    @Schema(description = "是否限制用户场景")
+    private Boolean limitUserWorkshop = false;
 }

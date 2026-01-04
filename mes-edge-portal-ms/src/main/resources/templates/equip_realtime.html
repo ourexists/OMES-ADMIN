@@ -136,7 +136,7 @@
         };
 
         legend.addTo(map);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution: '地图数据 © OpenStreetMap'
         }).addTo(map);
 
@@ -249,6 +249,9 @@
     }
 
     function iconByStatus(type, status) {
+        if (type !== 2) {
+            type = 0;
+        }
         return L.icon({
             iconUrl: `/static/img/map/map_${status.toLowerCase()}_${type}.svg`,
             iconSize: [32, 32],

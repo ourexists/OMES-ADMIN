@@ -3,7 +3,8 @@ package com.ourexists.mesedge.device.enums;
 public enum EquipTypeEnum {
 
     def(0, "通用设备"),
-    yw(1, "液位计");
+    pump(1, "水泵"),
+    yw(2, "液位计");
 
     private final Integer code;
 

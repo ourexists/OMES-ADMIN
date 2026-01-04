@@ -178,6 +178,8 @@ var router = {
     "equip_type": "/equip/equipType",
     "equipattr_page": "/equipattr/selectByPage",
     "equipattr_insert": "/equipattr/insertBatch",
+    "workshop_assign_query": "/workshop/selectAssign",
+    "workshop_assign": "/workshop/assign",
 }
 
 function getCommonHeader() {

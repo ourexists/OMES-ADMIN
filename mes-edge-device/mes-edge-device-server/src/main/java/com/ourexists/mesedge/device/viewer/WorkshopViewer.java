@@ -5,17 +5,17 @@
 package com.ourexists.mesedge.device.viewer;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.tree.TreeUtil;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
+import com.ourexists.mesedge.device.model.WorkshopAssignDto;
 import com.ourexists.mesedge.device.model.WorkshopDto;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
 import com.ourexists.mesedge.device.pojo.Workshop;
-import com.ourexists.mesedge.device.service.EquipService;
+import com.ourexists.mesedge.device.pojo.WorkshopAssign;
+import com.ourexists.mesedge.device.service.WorkshopAssignService;
 import com.ourexists.mesedge.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -37,12 +38,51 @@ public class WorkshopViewer implements WorkshopFeign {
     @Autowired
     private WorkshopService service;
 
+    @Autowired
+    private WorkshopAssignService assignService;
+
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
     public JsonResponseEntity<List<WorkshopTreeNode>> selectTree() {
         List<WorkshopTreeNode> nodes = Workshop.covert(service.list());
         nodes = TreeUtil.foldRootTree(nodes);
         return JsonResponseEntity.success(nodes);
+    }
+
+
+    @Operation(summary = "查询分配的树", description = "查询分配的树")
+    @GetMapping("selectAssign")
+    public JsonResponseEntity<List<WorkshopTreeNode>> selectAssign(@RequestParam String assignId) {
+        List<WorkshopTreeNode> nodes = Workshop.covert(
+                service.list(new LambdaQueryWrapper<Workshop>()
+                        .inSql(Workshop::getSelfCode, "select workshop_code from r_workshop_assign where assign_id = " + assignId)));
+        return JsonResponseEntity.success(nodes);
+    }
+
+    @Operation(summary = "查询分配的树", description = "查询分配的树")
+    @PostMapping("selectAssignTrees")
+    public JsonResponseEntity<List<WorkshopTreeNode>> selectAssignTrees(@RequestBody List<String> assignIds, Boolean needFold) {
+        List<WorkshopAssign> workshopAssigns = assignService.list(new LambdaQueryWrapper<WorkshopAssign>()
+                .in(WorkshopAssign::getAssignId, assignIds));
+        List<String> workshopCodes = workshopAssigns.stream().map(WorkshopAssign::getWorkshopCode).toList();
+        List<WorkshopTreeNode> nodes = null;
+        if (CollectionUtil.isNotBlank(workshopCodes)) {
+            nodes = Workshop.covert(
+                    service.list(new LambdaQueryWrapper<Workshop>()
+                            .in(Workshop::getSelfCode, workshopCodes)));
+            if (needFold) {
+                nodes = TreeUtil.foldRootTree(nodes);
+            }
+        }
+        return JsonResponseEntity.success(nodes);
+    }
+
+
+    @Operation(summary = "查询分配的树", description = "查询分配的树")
+    @PostMapping("assign")
+    public JsonResponseEntity<Boolean> assign(@RequestBody WorkshopAssignDto workshopAssignDto) {
+        assignService.assign(workshopAssignDto);
+        return JsonResponseEntity.success(true);
     }
 
 
@@ -54,10 +94,7 @@ public class WorkshopViewer implements WorkshopFeign {
         }
         //生成级联编号
         if (StringUtils.isBlank(dto.getCode())) {
-            Workshop s = service.getOne(new LambdaQueryWrapper<Workshop>()
-                    .eq(Workshop::getPcode, dto.getPcode())
-                    .orderByDesc(Workshop::getCode)
-                    .last("limit 1"));
+            Workshop s = service.getOne(new LambdaQueryWrapper<Workshop>().eq(Workshop::getPcode, dto.getPcode()).orderByDesc(Workshop::getCode).last("limit 1"));
             String otherMaxCode = s == null ? null : s.getCode();
             dto.setCode(TreeUtil.generateCode(dto.getPcode(), otherMaxCode));
         }

@@ -288,4 +288,9 @@ public class ViewController {
     public String equipattr_form_edit() {
         return "equipattr_form_edit";
     }
+
+    @RequestMapping("/view/role_workshop")
+    public String role_workshop() {
+        return "role_workshop";
+    }
 }

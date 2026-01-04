@@ -4,13 +4,20 @@
 
 package com.ourexists.mesedge.portal.device.controller;
 
+import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
-import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
+import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.enums.EquipTypeEnum;
 import com.ourexists.mesedge.device.feign.EquipFeign;
+import com.ourexists.mesedge.device.feign.WorkshopFeign;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
+import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.ucenter.feign.RoleFeign;
+import com.ourexists.mesedge.ucenter.role.RoleDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "设备")
 @RestController
@@ -30,9 +39,32 @@ public class EquipController {
     @Autowired
     private EquipFeign feign;
 
+    @Autowired
+    private WorkshopFeign workshopFeign;
+
+    @Autowired
+    private RoleFeign roleFeign;
+
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<EquipDto>> selectByPage(@RequestBody EquipPageQuery dto) {
+        try {
+            if (dto.getLimitUserWorkshop()) {
+                List<RoleDto> roleDtos = RemoteHandleUtils.getDataFormResponse(
+                        roleFeign.selectRoleWhichAccHoldOnly(UserContext.getUser().getId())
+                );
+                List<String> roleIds = roleDtos.stream().map(RoleDto::getId).toList();
+                List<WorkshopTreeNode> workshopTreeNodes =
+                        RemoteHandleUtils.getDataFormResponse(workshopFeign.selectAssignTrees(roleIds, false));
+                if (CollectionUtil.isBlank(workshopTreeNodes)) {
+                    return JsonResponseEntity.success(Collections.emptyList());
+                }
+                List<String> workshopCodes = workshopTreeNodes.stream().map(WorkshopTreeNode::getSelfCode).toList();
+                dto.setWorkshopCodes(workshopCodes);
+            }
+        } catch (EraCommonException e) {
+            throw new RuntimeException(e);
+        }
         return feign.selectByPage(dto);
     }
 
@@ -56,10 +88,10 @@ public class EquipController {
 
     @Operation(summary = "设备类型", description = "设备类型")
     @GetMapping("equipType")
-    public JsonResponseEntity<List<MapDto>> equipType() {
-        List<MapDto> r = new ArrayList<>();
+    public JsonResponseEntity<Map<Integer, String>> equipType() {
+        Map<Integer, String> r = new HashMap<>();
         for (EquipTypeEnum value : EquipTypeEnum.values()) {
-            r.add(new MapDto(value.getCode().toString(), value.getDesc()));
+            r.put(value.getCode(), value.getDesc());
         }
         return JsonResponseEntity.success(r);
     }
