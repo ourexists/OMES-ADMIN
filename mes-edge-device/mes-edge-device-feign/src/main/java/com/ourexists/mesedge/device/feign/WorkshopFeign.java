@@ -6,13 +6,12 @@ package com.ourexists.mesedge.device.feign;
 
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.mesedge.device.model.WorkshopAssignDto;
 import com.ourexists.mesedge.device.model.WorkshopDto;
-import com.ourexists.mesedge.device.model.WorkshopPageQuery;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
-import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -29,4 +28,9 @@ public interface WorkshopFeign {
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
+    JsonResponseEntity<Boolean> assign(@RequestBody WorkshopAssignDto workshopAssignDto);
+
+    JsonResponseEntity<List<WorkshopTreeNode>> selectAssign(@RequestParam String assignId);
+
+    JsonResponseEntity<List<WorkshopTreeNode>> selectAssignTrees(@RequestParam List<String> assignIds, Boolean needFold);
 }

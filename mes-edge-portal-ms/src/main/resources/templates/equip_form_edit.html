@@ -102,29 +102,31 @@
     var current_row_data = parent.current_row_data;
     var selected_tree_node = parent.selected_tree_node;
     layui.use(function () {
-        let form = layui.form,
+        var form = layui.form,
             layer = layui.layer;
+
+        let ln = [32.060255, 118.796877]
 
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
-                $('#type').append(new Option(item.name, item.id));
+                $('#type').append(new Option(item, index));
             })
             form.render();
+            if (current_row_data != null) {
+                form.val("common-edit-form", Object.assign({}, current_row_data));
+                if (current_row_data.selfCode !== "") {
+                    $(".lay-unable-edit").attr("disabled", "block");
+                }
+                if (current_row_data.lat != null && current_row_data.lng != null) {
+                    ln = [current_row_data.lat, current_row_data.lng];
+                }
+            } else {
+                form.val("common-edit-form", {});
+                current_row_data = {}
+            }
         })
 
-        let ln = [32.060255, 118.796877]
-        if (current_row_data != null) {
-            form.val("common-edit-form", Object.assign({}, current_row_data));
-            if (current_row_data.selfCode !== "") {
-                $(".lay-unable-edit").attr("disabled", "block");
-            }
-            if (current_row_data.lat != null && current_row_data.lng != null) {
-                ln = [current_row_data.lat, current_row_data.lng];
-            }
-        } else {
-            form.val("common-edit-form", {});
-            current_row_data = {}
-        }
+
         let map = L.map('map').setView(ln, 6);
         let marker;
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

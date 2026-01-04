@@ -38,12 +38,12 @@
     }
 }
 
-.status-online {
+.status-running {
     background: #52c41a;
     box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
 }
 
-.status-running {
+.status-online {
     background: #1890FF;
     box-shadow: 0 0 6px rgba(24, 144, 255, 0.6);
 }
