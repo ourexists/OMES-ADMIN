@@ -16,6 +16,7 @@ import com.ourexists.mesedge.device.feign.WorkshopFeign;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.portal.device.model.EquipCountDto;
 import com.ourexists.mesedge.ucenter.feign.RoleFeign;
 import com.ourexists.mesedge.ucenter.role.RoleDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -92,6 +93,50 @@ public class EquipController {
         Map<Integer, String> r = new HashMap<>();
         for (EquipTypeEnum value : EquipTypeEnum.values()) {
             r.put(value.getCode(), value.getDesc());
+        }
+        return JsonResponseEntity.success(r);
+    }
+
+    @Operation(summary = "统计实时数据", description = "统计实时数据")
+    @PostMapping("countRealtime")
+    public JsonResponseEntity<EquipCountDto> countRealtime(@RequestBody EquipPageQuery dto) {
+        EquipCountDto r = new EquipCountDto();
+        try {
+            dto.setRequirePage(false);
+            dto.setNeedRealtime(true);
+            if (dto.getLimitUserWorkshop()) {
+                List<RoleDto> roleDtos = RemoteHandleUtils.getDataFormResponse(
+                        roleFeign.selectRoleWhichAccHoldOnly(UserContext.getUser().getId())
+                );
+                List<String> roleIds = roleDtos.stream().map(RoleDto::getId).toList();
+                List<WorkshopTreeNode> workshopTreeNodes =
+                        RemoteHandleUtils.getDataFormResponse(workshopFeign.selectAssignTrees(roleIds, false));
+                if (CollectionUtil.isBlank(workshopTreeNodes)) {
+                    return JsonResponseEntity.success(r);
+                }
+                List<String> workshopCodes = workshopTreeNodes.stream().map(WorkshopTreeNode::getSelfCode).toList();
+                dto.setWorkshopCodes(workshopCodes);
+            }
+            List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(feign.selectByPage(dto));
+            for (EquipDto equipDto : equipDtos) {
+                r.setTotal(r.getTotal() + 1);
+                if (equipDto.getOnlineState() == 1) {
+                    r.setOnline(r.getOnline() + 1);
+                    if (equipDto.getRunState() == 1) {
+                        r.setRun(r.getRun() + 1);
+                    } else {
+                        r.setStopped(r.getStopped() + 1);
+                    }
+                    if (equipDto.getAlarmState() == 1) {
+                        r.setAlarm(r.getAlarm() + 1);
+                    }
+                } else {
+                    r.setOffline(r.getOffline() + 1);
+                }
+            }
+
+        } catch (EraCommonException e) {
+            throw new RuntimeException(e);
         }
         return JsonResponseEntity.success(r);
     }
