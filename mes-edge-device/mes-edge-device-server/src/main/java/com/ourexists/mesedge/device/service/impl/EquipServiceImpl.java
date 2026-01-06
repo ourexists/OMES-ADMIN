@@ -42,6 +42,8 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
                         .filter(workShopCodes::contains)
                         .collect(Collectors.toList());
                 dto.setWorkshopCodes(intersection);
+            } else {
+                dto.setWorkshopCodes(workShopCodes);
             }
         }
         LambdaQueryWrapper<Equip> qw = new LambdaQueryWrapper<Equip>()
