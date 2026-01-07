@@ -34,11 +34,11 @@ public class EquipOfflineCheckTimerTask extends TimerTask {
             long diffMillis = Math.abs(now.getTime() - realtime.getTime().getTime());
             long diffMinutes = diffMillis / (60 * 1000); // 转换为分钟
             if (diffMinutes > 5) {
-                realtime.setTime(new Date());
                 realtime.setOnlineState(0);
                 realtime.setRunState(0);
                 realtime.setAlarmState(0);
             }
+            realtime.setTime(new Date());
         }
         equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, equipRealtimeMap);
     }
