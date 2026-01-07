@@ -23,6 +23,8 @@ public interface WorkshopService extends IMyBatisPlusService<Workshop> {
 
     List<Workshop> queryByCodes(List<String> codes);
 
+    Workshop queryByCode(String code);
+
     void addOrUpdate(WorkshopDto dto);
 
     void delete(List<String> ids);

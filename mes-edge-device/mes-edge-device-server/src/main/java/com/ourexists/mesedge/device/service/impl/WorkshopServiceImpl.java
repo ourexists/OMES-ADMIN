@@ -41,6 +41,11 @@ public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapp
     }
 
     @Override
+    public Workshop queryByCode(String code) {
+        return this.getOne(new LambdaQueryWrapper<Workshop>().eq(Workshop::getSelfCode, code).last("limit 1"));
+    }
+
+    @Override
     public void addOrUpdate(WorkshopDto dto) {
         saveOrUpdate(Workshop.wrap(dto));
     }

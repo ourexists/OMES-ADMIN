@@ -18,5 +18,6 @@ public interface EquipFeign {
 
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
-    JsonResponseEntity<EquipDto> selectById(@RequestParam String id);
+    JsonResponseEntity<EquipDto> selectById(@RequestParam String id,
+                                            @RequestParam Boolean needRealtime);
 }
