@@ -138,7 +138,28 @@ public class EquipViewer implements EquipFeign {
     @Override
     @Operation(summary = "通过id查询", description = "通过id查询")
     @GetMapping("selectById")
-    public JsonResponseEntity<EquipDto> selectById(@RequestParam String id) {
-        return JsonResponseEntity.success(Equip.covert(service.getById(id)));
+    public JsonResponseEntity<EquipDto> selectById(@RequestParam String id,
+                                                   @RequestParam Boolean needRealtime) {
+        EquipDto equipDto = Equip.covert(service.getById(id));
+        if (needRealtime == null || !needRealtime || equipDto == null) {
+            return JsonResponseEntity.success(equipDto);
+        }
+        equipDto.setWorkshop(Workshop.covert(workshopService.queryByCode(equipDto.getWorkshopCode())));
+        EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
+        if (equipRealtime != null) {
+            equipDto.setRunState(equipRealtime.getRunState());
+            equipDto.setAlarmState(equipRealtime.getAlarmState());
+            equipDto.setOnlineState(equipRealtime.getOnlineState());
+            List<EquipAttrDto> attrs = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
+                for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
+                    EquipAttrDto attrDto = new EquipAttrDto();
+                    BeanUtils.copyProperties(equipAttrRealtime, attrDto);
+                    attrs.add(attrDto);
+                }
+            }
+            equipDto.setAttrs(attrs);
+        }
+        return JsonResponseEntity.success(equipDto);
     }
 }

@@ -83,4 +83,9 @@ public class EquipAttrServiceImpl extends AbstractMyBatisPlusService<EquipAttrMa
     public List<EquipAttr> queryByEquip(List<String> equipIds) {
         return this.list(new LambdaUpdateWrapper<EquipAttr>().in(EquipAttr::getEquipId, equipIds).orderByAsc(EquipAttr::getSort, EquipAttr::getId));
     }
+
+    @Override
+    public List<EquipAttr> queryByEquip(String equipId) {
+        return this.list(new LambdaUpdateWrapper<EquipAttr>().eq(EquipAttr::getEquipId, equipId).orderByAsc(EquipAttr::getSort, EquipAttr::getId));
+    }
 }

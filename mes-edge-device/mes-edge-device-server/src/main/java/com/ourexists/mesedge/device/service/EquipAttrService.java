@@ -29,4 +29,7 @@ public interface EquipAttrService extends IMyBatisPlusService<EquipAttr> {
     void insertBatch(EquipAttrBatchDto dto);
 
     List<EquipAttr> queryByEquip(List<String> equipIds);
+
+
+    List<EquipAttr> queryByEquip(String equipId);
 }

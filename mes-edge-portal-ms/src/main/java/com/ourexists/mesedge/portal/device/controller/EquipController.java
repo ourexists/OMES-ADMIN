@@ -84,7 +84,13 @@ public class EquipController {
     @Operation(summary = "通过id查询", description = "通过id查询")
     @GetMapping("selectById")
     public JsonResponseEntity<EquipDto> selectById(@RequestParam String id) {
-        return feign.selectById(id);
+        return feign.selectById(id, false);
+    }
+
+    @Operation(summary = "通过id查询", description = "通过id查询")
+    @GetMapping("selectRealtimeById")
+    public JsonResponseEntity<EquipDto> selectRealtimeById(@RequestParam String id) {
+        return feign.selectById(id, true);
     }
 
     @Operation(summary = "设备类型", description = "设备类型")
