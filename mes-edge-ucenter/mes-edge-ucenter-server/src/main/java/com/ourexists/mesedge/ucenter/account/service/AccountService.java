@@ -110,4 +110,6 @@ public interface AccountService extends IMyBatisPlusService<Account> {
     Account getByAccName(String accName);
 
     AccVo extraInfo(AccVo accVo);
+
+    List<Account> selectByRoles(List<String> roleIds);
 }

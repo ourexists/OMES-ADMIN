@@ -61,6 +61,8 @@ public interface AccountFeign {
 //    @GetMapping("/selectByDepart")
     JsonResponseEntity<List<AccVo>> selectByDepart(@RequestParam String departId);
 
+    JsonResponseEntity<List<AccVo>> selectByRoles(@RequestBody List<String> roleIds);
+
     //    @Operation(summary = "通过id获取当前用户信息")
 //    @GetMapping("/selectById")
     JsonResponseEntity<AccVo> selectById(@RequestParam String id);

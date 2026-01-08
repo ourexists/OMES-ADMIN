@@ -8,7 +8,10 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ourexists.mesedge.message.model.query.MessagePageQuery;
 import com.ourexists.mesedge.message.pojo.Message;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * @author pengcheng

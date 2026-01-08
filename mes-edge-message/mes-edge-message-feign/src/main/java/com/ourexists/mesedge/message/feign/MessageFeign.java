@@ -26,11 +26,13 @@ public interface MessageFeign {
 
     //    @Operation(summary = "新增或修改根据id", description = "")
 //    @PostMapping("addOrUpdate")
-    JsonResponseEntity<MessageVo> addOrUpdate(@Validated @RequestBody MessageDto dto);
+    JsonResponseEntity<MessageVo> produce(@Validated @RequestBody MessageDto dto);
 
     //    @Operation(summary = "删除", description = "")
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
-    JsonResponseEntity<Boolean> read(@RequestParam String messageId, @RequestParam String accId);
+    JsonResponseEntity<Boolean> read(@RequestParam String messageId);
+
+    JsonResponseEntity<MessageVo> selectById( @RequestParam String id, @RequestParam String accId);
 }

@@ -6,6 +6,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.constants.CommonConstant;
 import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
+import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -93,27 +94,37 @@ public class MqttConfiguration {
             JSONArray ywArray = jsonObject.getJSONArray("ai");
             Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll(CommonConstant.SYSTEM_TENANT);
             for (EquipRealtime equipRealtime : realtimeMap.values()) {
-                List<EquipAttrRealtime> attrs = equipRealtime.getEquipAttrRealtimes();
-
-
-                //先将场景中的所有设备态重置
-                if (equipRealtime.getWorkshopCode().equals(sn)) {
-                    equipRealtime.setOnlineState(0);
-                    equipRealtime.setAlarmState(0);
-                    equipRealtime.setRunState(0);
+                EquipRealtimeConfig equipRealtimeConfig = equipRealtime.getEquipRealtimeConfig();
+                if (equipRealtimeConfig == null) {
+                    continue;
                 }
+                //先将场景中的所有设备态重置
+//                if (equipRealtime.getWorkshopCode().equals(sn)) {
+//                    equipRealtime.reset();
+//                }
                 if (devArray != null) {
                     JSONObject[] devArrays = devArray.toArray(JSONObject.class);
                     for (JSONObject object : devArrays) {
                         String devSn = object.getString("code");
                         String ssn = sn + "dev" + devSn;
                         if (equipRealtime.getSelfCode().equals(ssn)) {
-                            equipRealtime.setOnlineState(1);
                             equipRealtime.setTime(new Date());
-                            equipRealtime.setAlarmState(object.getInteger(equipRealtime.getAlarmMap()));
-                            equipRealtime.setRunState(object.getInteger(equipRealtime.getRunMap()));
-                            if (!CollectionUtils.isEmpty(attrs)) {
-                                for (EquipAttrRealtime attr : attrs) {
+                            equipRealtime.online();
+
+                            Integer alarmVal = object.getInteger(equipRealtimeConfig.getAlarmMap());
+                            if (alarmVal != null && alarmVal == 1) {
+                                equipRealtime.alarm();
+                            } else {
+                                equipRealtime.resetAlarm();
+                            }
+                            Integer runVal = object.getInteger(equipRealtimeConfig.getRunMap());
+                            if (runVal != null && runVal == 1) {
+                                equipRealtime.run();
+                            } else {
+                                equipRealtime.stop();
+                            }
+                            if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
+                                for (EquipAttrRealtime attr : equipRealtime.getEquipAttrRealtimes()) {
                                     attr.setValue(object.getString(attr.getMap()));
                                 }
                             }
@@ -127,22 +138,28 @@ public class MqttConfiguration {
                         String ywSn = o.getString("code");
                         String ssnn = sn + ywSn;
                         if (equipRealtime.getSelfCode().equals(ssnn)) {
-                            equipRealtime.setOnlineState(1);
+                            equipRealtime.setTime(new Date());
+                            equipRealtime.online();
+                            equipRealtime.run();
+
                             int alarm = 0;
-                            if (o.getInteger(equipRealtime.getAlarmMap()) == 1) {
+                            if (o.getInteger(equipRealtimeConfig.getAlarmMap()) == 1) {
                                 alarm = 1;
                             }
                             if (o.getInteger("hhAlarm") == 1) {
-                                alarm = 2;
+                                alarm = 1;
                             }
-                            equipRealtime.setAlarmState(alarm);
-                            equipRealtime.setRunState(1);
-                            if (!CollectionUtils.isEmpty(attrs)) {
-                                for (EquipAttrRealtime attr : attrs) {
+                            if (alarm == 1) {
+                                equipRealtime.alarm();
+                            } else {
+                                equipRealtime.resetAlarm();
+                            }
+                            if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
+                                for (EquipAttrRealtime attr : equipRealtime.getEquipAttrRealtimes()) {
                                     attr.setValue(o.getString(attr.getMap()));
                                 }
                             }
-                            equipRealtime.setTime(new Date());
+
                         }
                     }
                 }

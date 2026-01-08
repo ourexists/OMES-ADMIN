@@ -1,4 +1,4 @@
-package com.ourexists.mesedge.device.core;
+package com.ourexists.mesedge.device.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +7,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipAttrRealtime {
+public class EquipAttr {
 
     private String name;
 

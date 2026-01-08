@@ -12,7 +12,6 @@ import com.ourexists.mesedge.message.feign.MessageFeign;
 import com.ourexists.mesedge.message.model.MessageDto;
 import com.ourexists.mesedge.message.model.MessageVo;
 import com.ourexists.mesedge.message.model.query.MessagePageQuery;
-import com.ourexists.mesedge.message.pojo.Message;
 import com.ourexists.mesedge.message.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,10 +39,8 @@ public class MessageViewer implements MessageFeign {
 
     //    @Operation(summary = "新增或修改根据id", description = "")
 //    @PostMapping("addOrUpdate")
-    public JsonResponseEntity<MessageVo> addOrUpdate(@Validated @RequestBody MessageDto dto) {
-        Message message = Message.wrap(dto);
-        service.saveOrUpdate(Message.wrap(dto));
-        return JsonResponseEntity.success(Message.covert(message));
+    public JsonResponseEntity<MessageVo> produce(@Validated @RequestBody MessageDto dto) {
+        return JsonResponseEntity.success(service.produce(dto));
     }
 
     //    @Operation(summary = "删除", description = "")
@@ -53,8 +50,13 @@ public class MessageViewer implements MessageFeign {
         return JsonResponseEntity.success(true);
     }
 
-    public JsonResponseEntity<Boolean> read(@RequestParam String messageId, @RequestParam String accId) {
-        service.read(messageId, accId);
+    public JsonResponseEntity<Boolean> read(@RequestParam String messageId) {
+        service.read(messageId);
         return JsonResponseEntity.success(true);
+    }
+
+    @Override
+    public JsonResponseEntity<MessageVo> selectById(@RequestParam String id, @RequestParam String accId) {
+        return JsonResponseEntity.success(service.selectById(id, accId));
     }
 }

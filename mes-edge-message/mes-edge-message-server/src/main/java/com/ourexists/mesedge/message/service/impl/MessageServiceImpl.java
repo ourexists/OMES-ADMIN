@@ -5,11 +5,13 @@
 package com.ourexists.mesedge.message.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.mesedge.message.enums.MessageReadEnum;
 import com.ourexists.mesedge.message.mapper.MessageMapper;
 import com.ourexists.mesedge.message.mapper.MessageReadMapper;
+import com.ourexists.mesedge.message.model.MessageDto;
 import com.ourexists.mesedge.message.model.MessageVo;
 import com.ourexists.mesedge.message.model.query.MessagePageQuery;
 import com.ourexists.mesedge.message.pojo.Message;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +33,6 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
     @Autowired
     private MessageReadMapper messageReadMapper;
 
-
     @Override
     public Page<MessageVo> selectByPage(MessagePageQuery dto) {
         LambdaQueryWrapper<Message> qw = new LambdaQueryWrapper<Message>()
@@ -38,8 +40,9 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
                 .eq(StringUtils.hasText(dto.getPlatform()), Message::getPlatform, dto.getPlatform())
                 .ge(dto.getCreatedTimeStart() != null, Message::getCreatedTime, dto.getCreatedTimeStart())
                 .lt(dto.getCreatedTimeEnd() != null, Message::getCreatedTime, dto.getCreatedTimeEnd())
-                .inSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.read.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where acc_id=" + dto.getAccId())
-                .notInSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.unread.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where acc_id=" + dto.getAccId())
+                .inSql(StringUtils.hasText(dto.getAccId()) && dto.getReadStatus() == null, Message::getId, "select message_id from r_message_read where acc_id=" + dto.getAccId())
+                .inSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.read.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where is_read=true and acc_id=" + dto.getAccId())
+                .inSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.unread.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where is_read=false and acc_id=" + dto.getAccId())
                 .orderByDesc(Message::getId);
         Page<Message> page = this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
         List<MessageVo> r = Message.covert(page.getRecords());
@@ -53,14 +56,13 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
                 for (MessageVo messageVo : r) {
                     for (MessageRead messageRead : messageReads) {
                         if (messageVo.getId().equals(messageRead.getMessageId())) {
-                            messageVo.setReadStatus(MessageReadEnum.read.getCode());
+                            messageVo.setReadStatus(messageRead.getIsRead() ? MessageReadEnum.read.getCode() : MessageReadEnum.unread.getCode());
                             messageVo.setReadTime(messageRead.getTime());
                             break;
                         }
                     }
                 }
             }
-
         }
         Page<MessageVo> pager = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
         pager.setRecords(r);
@@ -75,11 +77,45 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
     }
 
     @Override
-    public void read(String messageId, String accId) {
-        MessageRead messageRead = new MessageRead();
-        messageRead.setMessageId(messageId);
-        messageRead.setAccId(accId);
-        messageRead.setTime(new Date());
-        this.messageReadMapper.insert(messageRead);
+    public void read(String messageId) {
+        this.messageReadMapper.update(
+                new LambdaUpdateWrapper<MessageRead>()
+                        .set(MessageRead::getIsRead, true)
+                        .set(MessageRead::getTime, new Date())
+                        .eq(MessageRead::getMessageId, messageId)
+        );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MessageVo produce(MessageDto dto) {
+        Message message = Message.wrap(dto);
+        if (this.save(message)) {
+            if (!CollectionUtils.isEmpty(dto.getSendAccounts())) {
+                List<MessageRead> messageReads = new ArrayList<>();
+                for (String sendAccount : dto.getSendAccounts()) {
+                    MessageRead messageRead = new MessageRead()
+                            .setIsRead(false)
+                            .setAccId(sendAccount)
+                            .setMessageId(message.getId());
+                    messageReads.add(messageRead);
+                }
+                this.messageReadMapper.insert(messageReads);
+            }
+        }
+        return Message.covert(message);
+    }
+
+    @Override
+    public MessageVo selectById(String id, String accId) {
+        MessageVo messageVo = Message.covert(this.getById(id));
+        if (messageVo != null) {
+            MessageRead messageRead = messageReadMapper.selectOne(new LambdaQueryWrapper<MessageRead>()
+                    .eq(MessageRead::getMessageId, id)
+                    .eq(MessageRead::getAccId, accId));
+            messageVo.setReadStatus(messageRead.getIsRead() ? MessageReadEnum.read.getCode() : MessageReadEnum.unread.getCode());
+            messageVo.setReadTime(messageRead.getTime());
+        }
+        return messageVo;
     }
 }

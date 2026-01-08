@@ -43,8 +43,8 @@ public class EquipPageQuery extends PageQuery {
     @Schema(description = "是否查询关联的场景信息")
     private Boolean queryWorkshop = false;
 
-    @Schema(description = "是否查询关联属性")
-    private Boolean queryAttrs = false;
+    @Schema(description = "是否查询关联配置")
+    private Boolean queryConfig = false;
 
     @Schema(description = "是否限制用户场景")
     private Boolean limitUserWorkshop = false;

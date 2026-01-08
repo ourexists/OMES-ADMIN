@@ -35,6 +35,10 @@ public class Notify extends EraEntity {
 
     private Integer step = 0;
 
+    private String source;
+
+    private String sourceId;
+
     public static NotifyVo covert(Notify source) {
         if (source == null) {
             return null;

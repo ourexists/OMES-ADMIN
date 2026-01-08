@@ -5,6 +5,7 @@
 package com.ourexists.mesedge.device.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -13,17 +14,10 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipAttrDto {
+public class EquipConfigDto {
 
-    private String id;
-
-    private String name;
-
-    private String map;
-
+    @NotEmpty
     private String equipId;
 
-    private Integer sort;
-
-    private String value;
+    private EquipConfigDetail config;
 }

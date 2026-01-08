@@ -28,4 +28,8 @@ public class NotifyDto {
     protected List<String> platforms;
 
     protected Integer step;
+
+    private String source;
+
+    private String sourceId;
 }

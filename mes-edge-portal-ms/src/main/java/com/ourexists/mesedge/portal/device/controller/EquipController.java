@@ -13,6 +13,7 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.enums.EquipTypeEnum;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
+import com.ourexists.mesedge.device.model.EquipConfigDto;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
@@ -145,5 +146,18 @@ public class EquipController {
             throw new RuntimeException(e);
         }
         return JsonResponseEntity.success(r);
+    }
+
+
+    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @GetMapping("queryEquipConfig")
+    public JsonResponseEntity<EquipConfigDto> queryEquipConfig(@RequestParam String equipId) {
+        return feign.queryEquipConfig(equipId);
+    }
+
+    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @PostMapping("setEquipConfig")
+    public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
+        return feign.setEquipConfig(equipConfigDto);
     }
 }

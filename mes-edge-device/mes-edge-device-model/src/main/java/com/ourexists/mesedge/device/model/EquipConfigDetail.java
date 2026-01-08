@@ -1,19 +1,19 @@
 package com.ourexists.mesedge.device.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.util.List;
 
-@Schema
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipAttrBatchDto {
+public class EquipConfigDetail {
 
-    private String equipId;
+    private String runMap;
 
-    private List<EquipConfigDto> configDtos;
+    private String alarmMap;
+
+    private List<EquipAttr> attrs;
 }

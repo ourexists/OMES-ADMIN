@@ -1,5 +1,6 @@
 package com.ourexists.mesedge.device.core;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -18,15 +19,16 @@ public class EquipRealtime {
 
     private String selfCode;
 
-    private String runMap;
+    private EquipRealtimeConfig equipRealtimeConfig;
 
-    private String alarmMap;
+    @Setter(AccessLevel.NONE)
+    private int onlineState = 0;
 
-    private Integer onlineState = 0;
+    @Setter(AccessLevel.NONE)
+    private int runState = 0;
 
-    private Integer runState = 0;
-
-    private Integer alarmState = 0;
+    @Setter(AccessLevel.NONE)
+    private int alarmState = 0;
 
     private List<EquipAttrRealtime> equipAttrRealtimes;
 
@@ -35,4 +37,54 @@ public class EquipRealtime {
     private String workshopCode;
 
     private Date time;
+
+    private Date onlineTime;
+
+    private Date offlineTime;
+
+    private Date runTime;
+
+    private Date stopTime;
+
+    private Date alarmTime;
+
+    private Date alarmEndTime;
+
+    public void online() {
+        this.onlineState = 1;
+        this.onlineTime = new Date();
+    }
+
+
+    public void offline() {
+        this.onlineState = 0;
+        this.offlineTime = new Date();
+        if (this.equipRealtimeConfig != null) {
+            this.equipAttrRealtimes = this.equipRealtimeConfig.getAttrs();
+        } else {
+            this.equipAttrRealtimes = null;
+        }
+    }
+
+    public void run() {
+        this.runState = 1;
+        this.runTime = new Date();
+    }
+
+
+    public void stop() {
+        this.runState = 0;
+        this.stopTime = new Date();
+    }
+
+    public void alarm() {
+        this.alarmState = 1;
+        this.alarmTime = new Date();
+    }
+
+    public void resetAlarm() {
+        this.alarmState = 0;
+        this.alarmEndTime = new Date();
+    }
+
 }

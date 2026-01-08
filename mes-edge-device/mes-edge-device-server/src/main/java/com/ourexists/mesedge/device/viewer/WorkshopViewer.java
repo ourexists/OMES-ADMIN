@@ -10,6 +10,7 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.tree.TreeUtil;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
+import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
 import com.ourexists.mesedge.device.model.WorkshopAssignDto;
 import com.ourexists.mesedge.device.model.WorkshopDto;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
@@ -80,9 +81,15 @@ public class WorkshopViewer implements WorkshopFeign {
 
     @Operation(summary = "查询分配的树", description = "查询分配的树")
     @PostMapping("assign")
-    public JsonResponseEntity<Boolean> assign(@RequestBody WorkshopAssignDto workshopAssignDto) {
-        assignService.assign(workshopAssignDto);
+    public JsonResponseEntity<Boolean> assign(@RequestBody WorkshopAssignBatchDto workshopAssignBatchDto) {
+        assignService.assign(workshopAssignBatchDto);
         return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "通过设备id查询场景分配", description = "通过设备id查询场景分配")
+    @GetMapping("selectWorkshopAssignByEquipId")
+    public JsonResponseEntity<List<WorkshopAssignDto>> selectWorkshopAssignByEquipId(@RequestParam String equipId) {
+        return JsonResponseEntity.success(WorkshopAssign.covert(assignService.selectWorkshopAssignByEquipId(equipId)));
     }
 
 

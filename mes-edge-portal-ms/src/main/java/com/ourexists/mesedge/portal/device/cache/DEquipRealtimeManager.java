@@ -6,9 +6,9 @@ import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
+import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
-import com.ourexists.mesedge.device.model.EquipAttrDto;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
 import jakarta.annotation.PostConstruct;
@@ -121,7 +121,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         UserContext.defaultTenant();
         EquipPageQuery query = new EquipPageQuery();
         query.setRequirePage(false);
-        query.setQueryAttrs(true);
+        query.setQueryConfig(true);
         try {
             List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(equipFeign.selectByPage(query));
             Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
@@ -133,14 +133,20 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 EquipRealtime equipRealtime = new EquipRealtime();
                 BeanUtils.copyProperties(equipDto, equipRealtime);
 
-                if (!CollectionUtils.isEmpty(equipDto.getAttrs())) {
-                    List<EquipAttrRealtime> equipAttrRealtimes = new ArrayList<>();
-                    for (EquipAttrDto attr : equipDto.getAttrs()) {
-                        EquipAttrRealtime attrRealtime = new EquipAttrRealtime();
-                        BeanUtils.copyProperties(attr, attrRealtime);
-                        equipAttrRealtimes.add(attrRealtime);
+                if (equipDto.getConfig() != null && equipDto.getConfig().getConfig() != null) {
+                    EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();
+                    BeanUtils.copyProperties(equipDto.getConfig().getConfig(), equipRealtimeConfig);
+                    if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getAttrs())) {
+                        List<EquipAttrRealtime> attrs = new ArrayList<>();
+                        equipDto.getConfig().getConfig().getAttrs().forEach(attr -> {
+                            EquipAttrRealtime equipAttrRealtime = new EquipAttrRealtime();
+                            BeanUtils.copyProperties(attr, equipAttrRealtime);
+                            attrs.add(equipAttrRealtime);
+                        });
+                        equipRealtimeConfig.setAttrs(attrs);
                     }
-                    equipRealtime.setEquipAttrRealtimes(equipAttrRealtimes);
+                    equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
+                    equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
                 }
                 r.put(equipDto.getSelfCode(), equipRealtime);
                 equipRealtimeMap.put(equipDto.getTenantId(), r);

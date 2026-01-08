@@ -8,6 +8,7 @@ import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.message.enums.MessageSourceEnum;
 import com.ourexists.mesedge.message.enums.MessageTypeEnum;
 import com.ourexists.mesedge.message.enums.NotifyStatusEnum;
 import com.ourexists.mesedge.message.feign.NotifyFeign;
@@ -85,6 +86,16 @@ public class NotifyController {
         Map<Integer, String> m = new HashMap<>();
         for (MessageTypeEnum value : MessageTypeEnum.values()) {
             m.put(value.getCode(), value.name());
+        }
+        return JsonResponseEntity.success(m);
+    }
+
+    @Operation(summary = "消息来源", description = "")
+    @GetMapping("messageSources")
+    public JsonResponseEntity<Map<String, String>> messageSources() {
+        Map<String, String> m = new HashMap<>();
+        for (MessageSourceEnum value : MessageSourceEnum.values()) {
+            m.put(value.name(), value.name());
         }
         return JsonResponseEntity.success(m);
     }
