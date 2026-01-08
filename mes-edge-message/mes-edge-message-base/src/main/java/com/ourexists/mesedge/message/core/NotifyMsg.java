@@ -18,4 +18,8 @@ public class NotifyMsg {
     private String platform;
 
     private String tenantId;
+
+    private String source;
+
+    private String sourceId;
 }

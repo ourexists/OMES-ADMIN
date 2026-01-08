@@ -160,6 +160,7 @@ var router = {
     "notify_page": "/notify/selectByPage",
     "notify_status": "/notify/notifyStatus",
     "message_type": "/notify/messageTypes",
+    "message_source": "/notify/messageSources",
     "notify_edit": "/notify/addOrUpdate",
     "notify_start": "/notify/start",
     "notify_complete": "/notify/complete",
@@ -176,8 +177,8 @@ var router = {
     "equip_del": "/equip/delete",
     "equip_id": "/equip/selectById",
     "equip_type": "/equip/equipType",
-    "equipattr_page": "/equipattr/selectByPage",
-    "equipattr_insert": "/equipattr/insertBatch",
+    "equip_config": "/equip/queryEquipConfig",
+    "equip_setConfig": "/equip/setEquipConfig",
     "workshop_assign_query": "/workshop/selectAssign",
     "workshop_assign": "/workshop/assign",
 }

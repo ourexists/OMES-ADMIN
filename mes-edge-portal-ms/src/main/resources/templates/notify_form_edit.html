@@ -45,6 +45,22 @@
                 </div>
             </div>
         </div>
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="notify.source"></label>
+                <div class="layui-input-block">
+                    <select name="source" id="source">
+                    </select>
+                </div>
+            </div>
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="notify.sourceId"></label>
+                <div class="layui-input-block">
+                    <input type="text" name="sourceId" lang-i18n="common.placeholder"
+                           class="layui-input"/>
+                </div>
+            </div>
+        </div>
         <div class="layui-form-item layui-form-text">
             <label class="layui-form-label" lang-i18n="notify.platforms"></label>
             <div class="layui-input-block platformInput"></div>
@@ -69,6 +85,15 @@
             })
             form.render();
         });
+
+        get(router.message_source, null, function (result) {
+            $.each(result, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#source').append(new Option(item, index));
+            })
+            form.render();
+        });
+
 
         get(router.platform_all, null, function (result) {
             $.each(result, function (index, item) {

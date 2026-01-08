@@ -11,9 +11,9 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipAttrBatchDto {
+public class WorkshopAssignBatchDto {
 
-    private String equipId;
+    private String assignId;
 
-    private List<EquipConfigDto> configDtos;
+    private List<String> workshopCodes;
 }

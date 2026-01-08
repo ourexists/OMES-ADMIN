@@ -31,10 +31,6 @@ public class EquipDto extends BaseDto {
 
     private String typeDesc;
 
-    private String runMap;
-
-    private String alarmMap;
-
     private String workshopCode;
 
     private BigDecimal lng;
@@ -53,7 +49,9 @@ public class EquipDto extends BaseDto {
 
     private WorkshopTreeNode workshop;
 
-    private List<EquipAttrDto> attrs;
+    private EquipConfigDto config;
+
+    private List<EquipAttr> attrs;
 
     public String getTypeDesc() {
         return EquipTypeEnum.valueof(this.type).getDesc();

@@ -6,6 +6,7 @@ package com.ourexists.mesedge.message.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
+import com.ourexists.mesedge.message.model.MessageDto;
 import com.ourexists.mesedge.message.model.MessageVo;
 import com.ourexists.mesedge.message.model.query.MessagePageQuery;
 import com.ourexists.mesedge.message.pojo.Message;
@@ -23,5 +24,9 @@ public interface MessageService extends IMyBatisPlusService<Message> {
 
     void deleteByIds(List<String> ids);
 
-    void read(String messageId, String accId);
+    void read(String messageId);
+
+    MessageVo produce(MessageDto dto);
+
+    MessageVo selectById(String id, String accId);
 }

@@ -139,6 +139,12 @@ public class AccountViewer implements AccountFeign {
         return JsonResponseEntity.success(Account.covert(accountService.selectByDepart(departId)));
     }
 
+    @Override
+    @PostMapping("/selectByRoles")
+    public JsonResponseEntity<List<AccVo>> selectByRoles(@RequestBody List<String> roleIds) {
+        return JsonResponseEntity.success(Account.covert(accountService.selectByRoles(roleIds)));
+    }
+
     @Operation(summary = "当前用户信息")
     @GetMapping("/currentUser")
     public JsonResponseEntity<UserInfo> currentUser() {

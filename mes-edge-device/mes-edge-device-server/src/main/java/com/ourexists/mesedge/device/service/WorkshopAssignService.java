@@ -5,8 +5,10 @@
 package com.ourexists.mesedge.device.service;
 
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
-import com.ourexists.mesedge.device.model.WorkshopAssignDto;
+import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
 import com.ourexists.mesedge.device.pojo.WorkshopAssign;
+
+import java.util.List;
 
 /**
  * @author pengcheng
@@ -14,5 +16,7 @@ import com.ourexists.mesedge.device.pojo.WorkshopAssign;
  * @since 1.0.0
  */
 public interface WorkshopAssignService extends IMyBatisPlusService<WorkshopAssign> {
-    void assign(WorkshopAssignDto workshopAssignDto);
+    void assign(WorkshopAssignBatchDto workshopAssignBatchDto);
+
+    List<WorkshopAssign> selectWorkshopAssignByEquipId(String equipId);
 }

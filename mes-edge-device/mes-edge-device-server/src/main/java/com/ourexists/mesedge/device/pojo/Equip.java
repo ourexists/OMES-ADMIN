@@ -25,10 +25,6 @@ public class Equip extends EraEntity {
 
     private Integer type;
 
-    private String runMap;
-
-    private String alarmMap;
-
     private String workshopCode;
 
     private BigDecimal lng;

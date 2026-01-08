@@ -10,7 +10,7 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
-import com.ourexists.mesedge.device.model.WorkshopAssignDto;
+import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
 import com.ourexists.mesedge.device.model.WorkshopDto;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
 import com.ourexists.mesedge.ucenter.feign.RoleFeign;
@@ -54,8 +54,8 @@ public class WorkshopController {
 
     @Operation(summary = "分配", description = "分配")
     @PostMapping("assign")
-    public JsonResponseEntity<Boolean> assign(@Validated @RequestBody WorkshopAssignDto workshopAssignDto) {
-        return workshopFeign.assign(workshopAssignDto);
+    public JsonResponseEntity<Boolean> assign(@Validated @RequestBody WorkshopAssignBatchDto workshopAssignBatchDto) {
+        return workshopFeign.assign(workshopAssignBatchDto);
     }
 
     @Operation(summary = "查询分配的树", description = "查询分配的树")

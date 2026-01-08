@@ -270,4 +270,9 @@ public class AccountServiceImpl extends AbstractMyBatisPlusService<AccountMapper
         accVo.setPermissionApiDetailDtos(PermissionApi.covert(permissionService.selectAccPermissionApiGroupByTenant(accVo.getId())));
         return accVo;
     }
+
+    @Override
+    public List<Account> selectByRoles(List<String> roleIds) {
+        return this.baseMapper.selectByRoles(roleIds);
+    }
 }

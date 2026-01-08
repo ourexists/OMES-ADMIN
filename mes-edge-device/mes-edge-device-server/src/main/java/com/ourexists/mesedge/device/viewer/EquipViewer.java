@@ -13,14 +13,11 @@ import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
-import com.ourexists.mesedge.device.model.EquipAttrDto;
-import com.ourexists.mesedge.device.model.EquipDto;
-import com.ourexists.mesedge.device.model.EquipPageQuery;
-import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.device.model.*;
 import com.ourexists.mesedge.device.pojo.Equip;
-import com.ourexists.mesedge.device.pojo.EquipAttr;
+import com.ourexists.mesedge.device.pojo.EquipConfig;
 import com.ourexists.mesedge.device.pojo.Workshop;
-import com.ourexists.mesedge.device.service.EquipAttrService;
+import com.ourexists.mesedge.device.service.EquipConfigService;
 import com.ourexists.mesedge.device.service.EquipService;
 import com.ourexists.mesedge.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,7 +47,7 @@ public class EquipViewer implements EquipFeign {
     private WorkshopService workshopService;
 
     @Autowired
-    private EquipAttrService equipAttrService;
+    private EquipConfigService equipConfigService;
 
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
@@ -60,14 +57,14 @@ public class EquipViewer implements EquipFeign {
         List<EquipDto> r = Equip.covert(page.getRecords());
         if (!CollectionUtils.isEmpty(r)) {
             List<WorkshopTreeNode> workshopDtos = null;
-            List<EquipAttrDto> equipAttrs = null;
+            List<EquipConfigDto> equipConfigs = null;
             if (dto.getQueryWorkshop()) {
                 List<String> codes = r.stream().map(EquipDto::getWorkshopCode).toList();
                 workshopDtos = Workshop.covert(workshopService.queryByCodes(codes));
             }
-            if (dto.getQueryAttrs()) {
+            if (dto.getQueryConfig()) {
                 List<String> ids = r.stream().map(EquipDto::getId).toList();
-                equipAttrs = EquipAttr.covert(equipAttrService.queryByEquip(ids));
+                equipConfigs = EquipConfig.covert(equipConfigService.queryByEquip(ids));
             }
             for (EquipDto equipDto : r) {
                 if (!CollectionUtils.isEmpty(workshopDtos)) {
@@ -78,17 +75,13 @@ public class EquipViewer implements EquipFeign {
                         }
                     }
                 }
-                if (!CollectionUtils.isEmpty(equipAttrs)) {
-                    List<EquipAttrDto> equipAttrDtos = equipDto.getAttrs();
-                    if (equipAttrDtos == null) {
-                        equipAttrDtos = new ArrayList<>();
-                    }
-                    for (EquipAttrDto equipAttr : equipAttrs) {
-                        if (equipAttr.getEquipId().equals(equipDto.getId())) {
-                            equipAttrDtos.add(equipAttr);
+                if (!CollectionUtils.isEmpty(equipConfigs)) {
+                    for (EquipConfigDto equipConfigDto : equipConfigs) {
+                        if (equipConfigDto.getEquipId().equals(equipDto.getId())) {
+                            equipDto.setConfig(equipConfigDto);
+                            break;
                         }
                     }
-                    equipDto.setAttrs(equipAttrDtos);
                 }
                 if (dto.getNeedRealtime()) {
                     EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
@@ -96,10 +89,10 @@ public class EquipViewer implements EquipFeign {
                         equipDto.setRunState(equipRealtime.getRunState());
                         equipDto.setAlarmState(equipRealtime.getAlarmState());
                         equipDto.setOnlineState(equipRealtime.getOnlineState());
-                        List<EquipAttrDto> attrs = new ArrayList<>();
+                        List<EquipAttr> attrs = new ArrayList<>();
                         if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
                             for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
-                                EquipAttrDto attrDto = new EquipAttrDto();
+                                EquipAttr attrDto = new EquipAttr();
                                 BeanUtils.copyProperties(equipAttrRealtime, attrDto);
                                 attrs.add(attrDto);
                             }
@@ -138,8 +131,7 @@ public class EquipViewer implements EquipFeign {
     @Override
     @Operation(summary = "通过id查询", description = "通过id查询")
     @GetMapping("selectById")
-    public JsonResponseEntity<EquipDto> selectById(@RequestParam String id,
-                                                   @RequestParam Boolean needRealtime) {
+    public JsonResponseEntity<EquipDto> selectById(@RequestParam String id, @RequestParam Boolean needRealtime) {
         EquipDto equipDto = Equip.covert(service.getById(id));
         if (needRealtime == null || !needRealtime || equipDto == null) {
             return JsonResponseEntity.success(equipDto);
@@ -150,10 +142,10 @@ public class EquipViewer implements EquipFeign {
             equipDto.setRunState(equipRealtime.getRunState());
             equipDto.setAlarmState(equipRealtime.getAlarmState());
             equipDto.setOnlineState(equipRealtime.getOnlineState());
-            List<EquipAttrDto> attrs = new ArrayList<>();
+            List<EquipAttr> attrs = new ArrayList<>();
             if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
                 for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
-                    EquipAttrDto attrDto = new EquipAttrDto();
+                    EquipAttr attrDto = new EquipAttr();
                     BeanUtils.copyProperties(equipAttrRealtime, attrDto);
                     attrs.add(attrDto);
                 }
@@ -161,5 +153,20 @@ public class EquipViewer implements EquipFeign {
             equipDto.setAttrs(attrs);
         }
         return JsonResponseEntity.success(equipDto);
+    }
+
+    @Override
+    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @GetMapping("queryEquipConfig")
+    public JsonResponseEntity<EquipConfigDto> queryEquipConfig(@RequestParam String equipId) {
+        return JsonResponseEntity.success(EquipConfig.covert(equipConfigService.queryByEquip(equipId)));
+    }
+
+    @Override
+    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @GetMapping("setEquipConfig")
+    public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
+        equipConfigService.addOrUpdate(equipConfigDto);
+        return JsonResponseEntity.success(true);
     }
 }

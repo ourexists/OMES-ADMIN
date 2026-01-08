@@ -6,6 +6,7 @@ package com.ourexists.mesedge.device.feign;
 
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
 import com.ourexists.mesedge.device.model.WorkshopAssignDto;
 import com.ourexists.mesedge.device.model.WorkshopDto;
 import com.ourexists.mesedge.device.model.WorkshopTreeNode;
@@ -28,7 +29,9 @@ public interface WorkshopFeign {
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
-    JsonResponseEntity<Boolean> assign(@RequestBody WorkshopAssignDto workshopAssignDto);
+    JsonResponseEntity<Boolean> assign(@RequestBody WorkshopAssignBatchDto workshopAssignBatchDto);
+
+    JsonResponseEntity<List<WorkshopAssignDto>> selectWorkshopAssignByEquipId(@RequestParam String equipId);
 
     JsonResponseEntity<List<WorkshopTreeNode>> selectAssign(@RequestParam String assignId);
 

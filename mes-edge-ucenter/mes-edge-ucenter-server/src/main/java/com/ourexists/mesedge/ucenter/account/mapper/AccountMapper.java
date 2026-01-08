@@ -125,4 +125,13 @@ public interface AccountMapper extends BaseMapper<Account> {
     @Select("select " + FIELD + " from p_ucenter_acc a left join r_ucenter_depart_users b " +
             "on a.id = b.acc_id where b.depart_id=#{departId}")
     List<Account> selectByDepart(String departId);
+
+    @Select("<script>" +
+            "select " + FIELD + " from p_ucenter_acc a left join r_ucenter_acc_role b " +
+            "on a.id = b.acc_id where b.role_id in " +
+            "<foreach collection=\"roleIds\" item=\"roleId\" open=\"(\" separator=\",\" close=\")\">" +
+            " #{roleId}" +
+            "</foreach>" +
+            "</script>")
+    List<Account> selectByRoles(List<String> roleIds);
 }

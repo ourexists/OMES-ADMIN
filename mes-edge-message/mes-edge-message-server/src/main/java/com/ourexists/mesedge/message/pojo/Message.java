@@ -27,6 +27,10 @@ public class Message extends EraEntity {
 
     private String platform;
 
+    protected String notifyId;
+
+    protected String source;
+
     private String sourceId;
 
     public static MessageVo covert(Message source) {
@@ -48,7 +52,7 @@ public class Message extends EraEntity {
         return targets;
     }
 
-    public static <T extends MessageDto>  Message wrap(T source) {
+    public static <T extends MessageDto> Message wrap(T source) {
         Message target = new Message();
         BeanUtils.copyProperties(source, target);
         return target;

@@ -53,6 +53,12 @@ public class MessageController {
         return feign.selectByPage(dto);
     }
 
+    @Operation(summary = "分页", description = "")
+    @GetMapping("selectById")
+    public JsonResponseEntity<MessageVo> selectById(@RequestParam String id, @RequestParam String accId) {
+        return feign.selectById(id, accId);
+    }
+
     @Operation(summary = "删除", description = "")
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
@@ -62,7 +68,7 @@ public class MessageController {
     @Operation(summary = "已读", description = "")
     @GetMapping("read")
     public JsonResponseEntity<Boolean> read(@RequestParam String messageId) {
-        return feign.read(messageId, UserContext.getUser().getId());
+        return feign.read(messageId);
     }
 
     @Operation(summary = "连接实时通道", description = "")

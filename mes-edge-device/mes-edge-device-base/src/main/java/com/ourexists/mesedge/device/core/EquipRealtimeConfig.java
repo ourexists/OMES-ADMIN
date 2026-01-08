@@ -4,14 +4,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipAttrRealtime {
+public class EquipRealtimeConfig {
 
-    private String name;
+    private String runMap;
 
-    private String map;
+    private String alarmMap;
 
-    private String value;
+    private List<EquipAttrRealtime> attrs;
 }

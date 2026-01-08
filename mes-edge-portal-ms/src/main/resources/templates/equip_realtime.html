@@ -94,6 +94,7 @@
     var clusterGroup;
     var map;
     let markerMap = {};
+    let reloading = false;
 
     layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
         table = layui.table;
@@ -194,35 +195,40 @@
     });
 
     function reloadMap(needViewReset, data) {
-        var params = {
-            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-            needRealtime: true,
-            requirePage: false,
-            needWorkshopCascade: true,
-            queryWorkshop: true,
-            queryAttrs: true
-        };
-        if (data != null) {
-            for (let key in data) {
-                params[key] = data[key];
+        if (reloading) return;
+        reloading = true;
+
+        try {
+            var params = {
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+                needRealtime: true,
+                requirePage: false,
+                needWorkshopCascade: true,
+                queryWorkshop: true,
+                queryAttrs: true
+            };
+            if (data != null) {
+                for (let key in data) {
+                    params[key] = data[key];
+                }
             }
+            post(router.equip_page, params, function (e) {
+                if (needViewReset) {
+                    markerMap = {}
+                    clusterGroup.clearLayers();
+                }
+                if (e == null) {
+                    return;
+                }
+                if (needViewReset) {
+                    adjustMapView(e)
+                }
+
+                refreshMarkers(e)
+            })
+        } finally {
+            reloading = false;
         }
-        post(router.equip_page, params, function (e) {
-            if (needViewReset) {
-                markerMap = {}
-                clusterGroup.clearLayers();
-            }
-            if (e == null) {
-                return;
-            }
-            if (needViewReset) {
-                adjustMapView(e)
-            }
-
-            refreshMarkers(e)
-        })
-
-
     }
 
     setInterval(async () => {

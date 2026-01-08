@@ -107,6 +107,7 @@
     var selected_tree_node;
     var table;
     var tree;
+    let reloading = false;
 
     layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
         table = layui.table;
@@ -120,6 +121,7 @@
             'tbToolbar': '#tb-toolbar',
             'tbCols': [[
                 {type: 'checkbox', title: '', fixed: true},
+                {field: 'id', title: 'ID', fixed: true},
                 {field: 'name', title: i18np.prop('equip.name')},
                 {field: 'selfCode', title: i18np.prop('equip.code')},
                 {field: 'typeDesc', title: i18np.prop('equip.type')},
@@ -337,18 +339,24 @@
     });
 
     function reloadTb() {
-        table.reloadData('tb-common', {
-            url: initRequestUrl(router.equip_page),
-            where: {
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-                name: $('#name').val(),
-                selfCode: $('#selfCode').val(),
-                type: $('#type').val(),
-                needRealtime: true,
-                needWorkshopCascade: true,
-                queryWorkshop: true
-            },
-        });
+        if (reloading) return;
+        reloading = true;
+        try {
+            table.reloadData('tb-common', {
+                url: initRequestUrl(router.equip_page),
+                where: {
+                    workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+                    name: $('#name').val(),
+                    selfCode: $('#selfCode').val(),
+                    type: $('#type').val(),
+                    needRealtime: true,
+                    needWorkshopCascade: true,
+                    queryWorkshop: true
+                },
+            });
+        } finally {
+            reloading = false
+        }
     }
 
     setInterval(async () => {
