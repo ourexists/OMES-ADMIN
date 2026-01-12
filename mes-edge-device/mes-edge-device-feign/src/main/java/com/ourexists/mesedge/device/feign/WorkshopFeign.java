@@ -25,6 +25,8 @@ public interface WorkshopFeign {
 //    @PostMapping("addOrUpdate")
     JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody WorkshopDto dto);
 
+    JsonResponseEntity<WorkshopTreeNode> selectByCode(@RequestParam String code);
+
     //    @Operation(summary = "删除", description = "")
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);

@@ -3,14 +3,21 @@ package com.ourexists.mesedge.portal.device.cache;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.core.utils.DateUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
+import com.ourexists.mesedge.device.feign.WorkshopFeign;
 import com.ourexists.mesedge.device.model.EquipDto;
 import com.ourexists.mesedge.device.model.EquipPageQuery;
+import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.message.enums.MessageSourceEnum;
+import com.ourexists.mesedge.message.enums.MessageTypeEnum;
+import com.ourexists.mesedge.message.feign.NotifyFeign;
+import com.ourexists.mesedge.message.model.NotifyDto;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -20,10 +27,7 @@ import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
@@ -35,6 +39,12 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @Autowired
     private EquipFeign equipFeign;
+
+    @Autowired
+    private WorkshopFeign workshopFeign;
+
+    @Autowired
+    private NotifyFeign notifyFeign;
 
     private static final String CACHE_NAME = "EquipRealtime";
 
@@ -157,5 +167,29 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void change(EquipRealtime source, EquipRealtime target) {
+        if (target.getAlarmState() == 1 && source.getAlarmState() != target.getAlarmState()) {
+            try {
+                WorkshopTreeNode workshopTreeNode = RemoteHandleUtils.getDataFormResponse(workshopFeign.selectByCode(source.getWorkshopCode()));
+                String workName = workshopTreeNode == null ? "" : workshopTreeNode.getName();
+                List<String> platforms = new ArrayList<>();
+                platforms.add("MES APP");
+                NotifyDto dto = new NotifyDto()
+                        .setStep(0)
+                        .setContext("[" + DateUtil.dateFormat(new Date()) + "]\r <" + workName + " - " + target.getName() + "> 设备产生报警")
+                        .setTitle("【" + target.getName() + "】异常报警")
+                        .setSource(MessageSourceEnum.Equip.name())
+                        .setSourceId(source.getId())
+                        .setPlatforms(platforms)
+                        .setType(MessageTypeEnum.ALARM.getCode());
+                notifyFeign.createAndStart(dto);
+            } catch (EraCommonException e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
     }
 }

@@ -11,6 +11,7 @@ import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -108,6 +109,9 @@ public class MqttConfiguration {
                         String devSn = object.getString("code");
                         String ssn = sn + "dev" + devSn;
                         if (equipRealtime.getSelfCode().equals(ssn)) {
+                            EquipRealtime source = new EquipRealtime();
+                            BeanUtils.copyProperties(equipRealtime, source);
+
                             equipRealtime.setTime(new Date());
                             equipRealtime.online();
 
@@ -128,6 +132,7 @@ public class MqttConfiguration {
                                     attr.setValue(object.getString(attr.getMap()));
                                 }
                             }
+                            equipRealtimeManager.change(source, equipRealtime);
                         }
                     }
                 }
@@ -138,6 +143,9 @@ public class MqttConfiguration {
                         String ywSn = o.getString("code");
                         String ssnn = sn + ywSn;
                         if (equipRealtime.getSelfCode().equals(ssnn)) {
+                            EquipRealtime source = new EquipRealtime();
+                            BeanUtils.copyProperties(equipRealtime, source);
+
                             equipRealtime.setTime(new Date());
                             equipRealtime.online();
                             equipRealtime.run();
@@ -159,7 +167,7 @@ public class MqttConfiguration {
                                     attr.setValue(o.getString(attr.getMap()));
                                 }
                             }
-
+                            equipRealtimeManager.change(source, equipRealtime);
                         }
                     }
                 }

@@ -30,4 +30,6 @@ public interface WorkshopService extends IMyBatisPlusService<Workshop> {
     void delete(List<String> ids);
 
     List<Workshop> queryChildBySelfCode(String workshopCode);
+
+    Workshop selectByCode(String code);
 }

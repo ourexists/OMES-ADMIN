@@ -56,4 +56,9 @@ public class NotifyViewer implements NotifyFeign {
         service.updateStatus(id, status);
         return JsonResponseEntity.success(true);
     }
+
+    public JsonResponseEntity<Boolean> createAndStart(@Validated @RequestBody NotifyDto dto) {
+        service.createAndStart(dto);
+        return JsonResponseEntity.success(true);
+    }
 }
