@@ -173,7 +173,7 @@
 
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
-                $('#type').append(new Option(item.name, item.id));
+                $('#type').append(new Option(item, index));
             })
             form.render();
         })

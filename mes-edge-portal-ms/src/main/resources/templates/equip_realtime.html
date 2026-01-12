@@ -95,11 +95,19 @@
     var map;
     let markerMap = {};
     let reloading = false;
+    var form;
 
     layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
         table = layui.table;
         tree = layui.tree;
-        var form = layui.form;
+        form = layui.form;
+
+        get(router.equip_type, null, function (result) {
+            $.each(result, function (index, item) {
+                $('#type').append(new Option(item, index));
+            })
+            form.render();
+        })
 
         map = L.map('map').setView([32.060255, 118.796877], 6);
         map.on('dragstart zoomstart', function () {
@@ -144,12 +152,6 @@
         clusterGroup = L.markerClusterGroup();
         map.addLayer(clusterGroup);
 
-        get(router.equip_type, null, function (result) {
-            $.each(result, function (index, item) {
-                $('#type').append(new Option(item.name, item.id));
-            })
-            form.render();
-        })
 
         get(router.workshop_tree, null, function (result) {
             tree.render({
@@ -255,7 +257,7 @@
     }
 
     function iconByStatus(type, status) {
-        if (type !== 2) {
+        if (type !== 2 && type !== 1) {
             type = 0;
         }
         return L.icon({
