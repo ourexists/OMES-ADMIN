@@ -12,12 +12,14 @@ import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusSe
 import com.ourexists.mesedge.message.core.NotifyPusher;
 import com.ourexists.mesedge.message.enums.NotifyStatusEnum;
 import com.ourexists.mesedge.message.mapper.NotifyMapper;
+import com.ourexists.mesedge.message.model.NotifyDto;
 import com.ourexists.mesedge.message.model.query.NotifyPageQuery;
 import com.ourexists.mesedge.message.pojo.Notify;
 import com.ourexists.mesedge.message.service.NotifyService;
 import com.ourexists.mesedge.message.timer.NotifyTimerManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -92,5 +94,14 @@ public class NotifyServiceImpl extends AbstractMyBatisPlusService<NotifyMapper, 
         if (status.equals(NotifyStatusEnum.COMPLETED.getCode())) {
             notifyTimerManager.removeTask(id);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createAndStart(NotifyDto dto) {
+        Notify notify = Notify.wrap(dto);
+        notify.setId(null);
+        this.addOrUpdate(Notify.wrap(dto));
+        this.updateStatus(dto.getId(), NotifyStatusEnum.PROGRESS.getCode());
     }
 }

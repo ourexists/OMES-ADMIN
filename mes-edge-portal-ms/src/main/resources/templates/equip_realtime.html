@@ -203,6 +203,9 @@
         try {
             var params = {
                 workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+                name: $('#name').val(),
+                selfCode: $('#selfCode').val(),
+                type: $('#type').val(),
                 needRealtime: true,
                 requirePage: false,
                 needWorkshopCascade: true,

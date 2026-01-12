@@ -30,4 +30,11 @@ public interface EquipRealtimeManager {
     EquipRealtime getById(String tenantId, String id);
 
     void reload();
+
+    /**
+     * 变化处理
+     * @param source    原数据
+     * @param target    变化后的数据
+     */
+    void change(EquipRealtime source, EquipRealtime target);
 }

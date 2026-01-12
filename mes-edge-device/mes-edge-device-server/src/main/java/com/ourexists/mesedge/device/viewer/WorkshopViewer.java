@@ -109,6 +109,11 @@ public class WorkshopViewer implements WorkshopFeign {
         return JsonResponseEntity.success(true);
     }
 
+    @Override
+    public JsonResponseEntity<WorkshopTreeNode> selectByCode(String code) {
+        return JsonResponseEntity.success(Workshop.covert(service.selectByCode(code)));
+    }
+
     @Operation(summary = "删除", description = "删除")
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {

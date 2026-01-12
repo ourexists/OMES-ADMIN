@@ -6,6 +6,7 @@ package com.ourexists.mesedge.message.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
+import com.ourexists.mesedge.message.model.NotifyDto;
 import com.ourexists.mesedge.message.model.query.NotifyPageQuery;
 import com.ourexists.mesedge.message.pojo.Notify;
 
@@ -25,4 +26,6 @@ public interface NotifyService extends IMyBatisPlusService<Notify> {
     void delete(List<String> ids);
 
     void updateStatus(String id, Integer status);
+
+    void createAndStart(NotifyDto dto);
 }

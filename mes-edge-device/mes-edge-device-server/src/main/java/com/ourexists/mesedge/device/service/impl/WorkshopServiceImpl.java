@@ -82,4 +82,9 @@ public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapp
     public List<Workshop> queryChildBySelfCode(String workshopCode) {
         return this.list(new LambdaQueryWrapper<Workshop>().eqSql(Workshop::getPcode, "select code from t_workshop where self_code='" + workshopCode + "'"));
     }
+
+    @Override
+    public Workshop selectByCode(String code) {
+        return this.getOne(new LambdaQueryWrapper<Workshop>().eq(Workshop::getSelfCode, code));
+    }
 }

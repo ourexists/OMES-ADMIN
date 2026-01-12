@@ -35,4 +35,7 @@ public interface NotifyFeign {
 
 
     JsonResponseEntity<Boolean> updateStatus(@RequestParam String id, @RequestParam Integer status);
+
+
+    JsonResponseEntity<Boolean> createAndStart(@Validated @RequestBody NotifyDto dto);
 }
