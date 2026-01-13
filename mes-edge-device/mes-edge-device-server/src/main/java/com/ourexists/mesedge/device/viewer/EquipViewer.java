@@ -109,12 +109,13 @@ public class EquipViewer implements EquipFeign {
     @Operation(summary = "新增或修改根据id", description = "新增或修改根据id")
     @PostMapping("addOrUpdate")
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody EquipDto dto) {
-        service.saveOrUpdate(Equip.wrap(dto));
+        Equip e = Equip.wrap(dto);
+        service.saveOrUpdate(e);
         EquipRealtime equipRealtime = equipRealtimeManager.get(UserContext.getTenant().getTenantId(), dto.getSelfCode());
         if (equipRealtime == null) {
             equipRealtime = new EquipRealtime();
         }
-        BeanUtils.copyProperties(dto, equipRealtime);
+        BeanUtils.copyProperties(e, equipRealtime);
         equipRealtimeManager.addOrUpdate(UserContext.getTenant().getTenantId(), equipRealtime);
         return JsonResponseEntity.success(true);
     }
@@ -133,10 +134,13 @@ public class EquipViewer implements EquipFeign {
     @GetMapping("selectById")
     public JsonResponseEntity<EquipDto> selectById(@RequestParam String id, @RequestParam Boolean needRealtime) {
         EquipDto equipDto = Equip.covert(service.getById(id));
-        if (needRealtime == null || !needRealtime || equipDto == null) {
-            return JsonResponseEntity.success(equipDto);
+        if (equipDto == null) {
+            return null;
         }
         equipDto.setWorkshop(Workshop.covert(workshopService.queryByCode(equipDto.getWorkshopCode())));
+        if (needRealtime == null || !needRealtime) {
+            return JsonResponseEntity.success(equipDto);
+        }
         EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
         if (equipRealtime != null) {
             equipDto.setRunState(equipRealtime.getRunState());

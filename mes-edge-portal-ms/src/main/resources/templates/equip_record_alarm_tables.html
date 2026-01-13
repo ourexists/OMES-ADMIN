@@ -1,0 +1,235 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>数据表格页面</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="sn" id="sn" placeholder="SN"
+                       lay-affix="clear" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="state" id="state">
+                    <option value="" lang-i18n="equip.state"></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="layui-form-item">
+                <div class="layui-inline" id="timeduration">
+                    <div class="layui-input-inline">
+                        <input type="text" autocomplete="off" id="startDate" name="startDate" class="layui-input"
+                               placeholder="startTime" lang-i18n="common.starttime">
+                    </div>
+                    <div class="layui-form-mid">-</div>
+                    <div class="layui-input-inline">
+                        <input type="text" autocomplete="off" id="endDate" name="endDate" class="layui-input"
+                               placeholder="endTime" lang-i18n="common.endtime">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="common-search" lang-i18n="common.search">Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+    </div>
+</script>
+
+<script th:inline="none">
+    var table
+    layui.use(function () {
+        table = layui.table;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+        var laydate = layui.laydate;
+
+        laydate.render({
+            elem: '#timeduration',
+            range: ['#startDate', '#endDate'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+
+        var stateMap = {
+            "0": i18np.prop("equip.common"),
+            "1": i18np.prop("equip.alarm")
+        }
+        $.each(stateMap, function (index, item) {
+            //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+            $('#state').append(new Option(item, index));
+        })
+        form.render();
+
+        var default_param = {
+            cols: [[
+                {field: 'LAY_INDEX', title: 'NO'},
+                {
+                    field: 'sn', title: i18np.prop('common.sn'), exportTemplet: function (d, obj) {
+                        // 返回 select 选中值
+                        return "'" + d.sn;
+                    }
+                },
+                {
+                    field: 'state', title: i18np.prop('equip.state'), templet(d) {
+                        return stateMap[d.state]
+                    }
+                },
+                {field: 'startTime', title: i18np.prop('equiprun.runStartTime')},
+                {field: 'endTime', title: i18np.prop('equiprun.runEndTime')},
+                {field: 'powerStart', title: i18np.prop('equiprun.powerStart')},
+                {field: 'powerEnd', title: i18np.prop('equiprun.powerEnd')},
+                {field: 'duration', title: i18np.prop('equiprun.duration')},
+                {field: 'powerUse', title: i18np.prop('equiprun.powerUse')},
+            ]],
+            defaultToolbar: ['filter', 'exports', 'print'],
+        }
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            data: [],
+            contentType: 'application/json',
+            toolbar: '#tb-toolbar',
+            defaultToolbar: default_param.defaultToolbar,
+            cols: default_param.cols,
+            text: {
+                none: i18np.prop('common.msg.selecttime')
+            },
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-common', {
+                                    lineStyle: null // 恢复单行
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-common', {
+                                    // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            request: {
+                'requirePage': false
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "data": res.data,
+                };
+            },
+            page: false,
+            height: '450px'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    var getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+            }
+        });
+
+        // table 滚动时移除内部弹出的元素
+        var tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+
+        // 搜索提交
+        form.on('submit(common-search)', function (data) {
+            if ($('#startDate').val() == null || $('#startDate').val() == ''
+                || $('#endDate').val() == null || $('#endDate').val() == '') {
+                layer.alert(i18np.prop('common.msg.selecttime'));
+                return false;
+            }
+            reloadTb();
+            return false; // 阻止默认 form 跳转
+        });
+    })
+    ;
+
+    function getCustomTitle() {
+        return i18np.prop('common.duration') + ': ' + $('#startDate').val() + ' - ' + $('#endDate').val();
+    }
+
+    function reloadTb() {
+        table.reload('tb-common', {
+            url: initRequestUrl(router.equipRecordAlarm_page),
+            headers: getCommonHeader(),
+            method: 'POST',
+            where: {
+                startDate: $('#startDate').val(),
+                endDate: $('#endDate').val(),
+                sn: $('#sn').val(),
+                state: $('#state').val(),
+                requirePage: false
+            },
+            customTitleRow: getCustomTitle(),
+        });
+    }
+
+
+</script>
+</body>
+</html>

@@ -6,10 +6,11 @@ import java.util.Map;
 public interface EquipRealtimeManager {
 
     /**
-     * @param tenantId 租户id
-     * @param equipRealtimeMap key 设备编号; values:租户下所有的设备
+     * 实时数据处理
+     * @param tenantId
+     * @param targets
      */
-    void reset(String tenantId, Map<String, EquipRealtime> equipRealtimeMap);
+    void realtimeHandle(String tenantId, List<EquipRealtime> targets);
 
     /**
      * @param tenantId 租户id
@@ -30,11 +31,4 @@ public interface EquipRealtimeManager {
     EquipRealtime getById(String tenantId, String id);
 
     void reload();
-
-    /**
-     * 变化处理
-     * @param source    原数据
-     * @param target    变化后的数据
-     */
-    void change(EquipRealtime source, EquipRealtime target);
 }

@@ -1,6 +1,7 @@
 package com.ourexists.mesedge.portal.device.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.DateUtil;
@@ -10,10 +11,10 @@ import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
-import com.ourexists.mesedge.device.feign.WorkshopFeign;
-import com.ourexists.mesedge.device.model.EquipDto;
-import com.ourexists.mesedge.device.model.EquipPageQuery;
-import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.device.feign.EquipRecordAlarmFeign;
+import com.ourexists.mesedge.device.feign.EquipRecordOnlineFeign;
+import com.ourexists.mesedge.device.feign.EquipRecordRunFeign;
+import com.ourexists.mesedge.device.model.*;
 import com.ourexists.mesedge.message.enums.MessageSourceEnum;
 import com.ourexists.mesedge.message.enums.MessageTypeEnum;
 import com.ourexists.mesedge.message.feign.NotifyFeign;
@@ -41,10 +42,16 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     private EquipFeign equipFeign;
 
     @Autowired
-    private WorkshopFeign workshopFeign;
+    private NotifyFeign notifyFeign;
 
     @Autowired
-    private NotifyFeign notifyFeign;
+    private EquipRecordRunFeign equipRecordRunFeign;
+
+    @Autowired
+    private EquipRecordOnlineFeign equipRecordOnlineFeign;
+
+    @Autowired
+    private EquipRecordAlarmFeign equipRecordAlarmFeign;
 
     private static final String CACHE_NAME = "EquipRealtime";
 
@@ -61,8 +68,17 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
 
     @Override
-    public void reset(String tenantId, Map<String, EquipRealtime> equipRealtimeMap) {
-        nativeCache(CACHE_NAME + "_" + tenantId).putAll(equipRealtimeMap);
+    public void realtimeHandle(String tenantId, List<EquipRealtime> targets) {
+        Map<Object, Object> map = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+        List<EquipRealtime> sources = new ArrayList<>();
+        for (EquipRealtime target : targets) {
+            sources.add((EquipRealtime) map.get(target.getSelfCode()));
+        }
+        changeListener(sources, targets);
+        for (EquipRealtime target : targets) {
+            map.put(target.getSelfCode(), target);
+        }
+        nativeCache(CACHE_NAME + "_" + tenantId).putAll(map);
     }
 
     @Override
@@ -119,7 +135,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         ConcurrentMap<Object, Object> c = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
         for (Map.Entry<Object, Object> entry : c.entrySet()) {
             EquipRealtime equipRealtime = (EquipRealtime) entry.getValue();
-            if (equipRealtime.getId().equals(id)) {
+            if (id.equals(equipRealtime.getId())) {
                 return equipRealtime;
             }
         }
@@ -162,34 +178,68 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 equipRealtimeMap.put(equipDto.getTenantId(), r);
             }
             for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
-                reset(entry.getKey(), entry.getValue());
+                nativeCache(CACHE_NAME + "_" + entry.getKey()).putAll(entry.getValue());
             }
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
         }
     }
 
-    @Override
-    public void change(EquipRealtime source, EquipRealtime target) {
-        if (target.getAlarmState() == 1 && source.getAlarmState() != target.getAlarmState()) {
-            try {
-                WorkshopTreeNode workshopTreeNode = RemoteHandleUtils.getDataFormResponse(workshopFeign.selectByCode(source.getWorkshopCode()));
-                String workName = workshopTreeNode == null ? "" : workshopTreeNode.getName();
-                List<String> platforms = new ArrayList<>();
-                platforms.add("MES APP");
-                NotifyDto dto = new NotifyDto()
-                        .setStep(0)
-                        .setContext("[" + DateUtil.dateFormat(new Date()) + "]\r <" + workName + " - " + target.getName() + "> 设备产生报警")
-                        .setTitle("【" + target.getName() + "】异常报警")
-                        .setSource(MessageSourceEnum.Equip.name())
-                        .setSourceId(source.getId())
-                        .setPlatforms(platforms)
-                        .setType(MessageTypeEnum.ALARM.getCode());
-                notifyFeign.createAndStart(dto);
-            } catch (EraCommonException e) {
-                log.error(e.getMessage(), e);
+    public void changeListener(Collection<EquipRealtime> sources, Collection<EquipRealtime> targets) {
+        List<EquipRecordAlarmDto> r = new ArrayList<>();
+        List<EquipRecordRunDto> r1 = new ArrayList<>();
+        List<EquipRecordOnlineDto> r2 = new ArrayList<>();
+        for (EquipRealtime source : sources) {
+            for (EquipRealtime target : targets) {
+                if (source.getId().equals(target.getId())) {
+                    if (!source.getAlarmState().equals(target.getAlarmState())) {
+                        EquipRecordAlarmDto dto = new EquipRecordAlarmDto()
+                                .setSn(source.getSelfCode())
+                                .setState(target.getAlarmState())
+                                .setStartTime(new Date())
+                                .setTenantId(source.getTenantId());
+                        r.add(dto);
+
+                        if (target.getAlarmState() == 1) {
+                            List<String> platforms = new ArrayList<>();
+                            platforms.add("MES APP");
+                            NotifyDto notifyDto = new NotifyDto().setStep(0).setContext("[" + DateUtil.dateFormat(new Date()) + "]\r 设备产生报警").setTitle("【" + target.getName() + "】异常报警").setSource(MessageSourceEnum.Equip.name()).setSourceId(source.getId()).setPlatforms(platforms).setType(MessageTypeEnum.ALARM.getCode());
+                            notifyFeign.createAndStart(notifyDto);
+                        }
+                    }
+                    if (!source.getRunState().equals(target.getRunState())) {
+                        EquipRecordRunDto dto = new EquipRecordRunDto()
+                                .setSn(source.getSelfCode())
+                                .setState(target.getRunState())
+                                .setStartTime(new Date())
+                                .setTenantId(source.getTenantId());
+                        r1.add(dto);
+                    }
+
+                    if (!source.getOnlineState().equals(target.getOnlineState())) {
+                        EquipRecordOnlineDto dto = new EquipRecordOnlineDto()
+                                .setSn(source.getSelfCode())
+                                .setState(target.getOnlineState())
+                                .setStartTime(new Date())
+                                .setTenantId(source.getTenantId());
+                        r2.add(dto);
+                    }
+                }
             }
         }
-
+        try {
+            if (!CollectionUtils.isEmpty(r)) {
+                RemoteHandleUtils.getDataFormResponse(equipRecordAlarmFeign.addBatch(r));
+            }
+            if (!CollectionUtils.isEmpty(r1)) {
+                RemoteHandleUtils.getDataFormResponse(equipRecordRunFeign.addBatch(r1));
+            }
+            if (!CollectionUtils.isEmpty(r2)) {
+                RemoteHandleUtils.getDataFormResponse(equipRecordOnlineFeign.addBatch(r2));
+            }
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
+            throw new BusinessException(e.getMessage());
+        }
     }
 }

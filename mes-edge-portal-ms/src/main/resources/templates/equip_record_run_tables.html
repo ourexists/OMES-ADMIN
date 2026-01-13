@@ -16,6 +16,26 @@
 <body>
 <div class="layui-tab-content" style="padding: 15px;">
     <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="sn" id="sn" placeholder="SN"
+                       lay-affix="clear" class="layui-input">
+            </div>
+
+        </div>
+        <div class="layui-col-md4">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <select name="state" id="state">
+                    <option value="" lang-i18n="equip.state"></option>
+                </select>
+            </div>
+        </div>
         <div class="layui-col-md6">
             <div class="layui-form-item">
                 <div class="layui-inline" id="timeduration">
@@ -61,6 +81,16 @@
             lang: localStorage.getItem(store.language)
         });
 
+        var stateMap = {
+            "0": i18np.prop("equip.stop"),
+            "1": i18np.prop("equip.run")
+        }
+        $.each(stateMap, function (index, item) {
+            //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+            $('#state').append(new Option(item, index));
+        })
+        form.render();
+
         var default_param = {
             cols: [[
                 {field: 'LAY_INDEX', title: 'NO'},
@@ -70,8 +100,13 @@
                         return "'" + d.sn;
                     }
                 },
-                {field: 'runStartTime', title: i18np.prop('equiprun.runStartTime')},
-                {field: 'runEndTime', title: i18np.prop('equiprun.runEndTime')},
+                {
+                    field: 'state', title: i18np.prop('equip.state'), templet(d) {
+                        return stateMap[d.state]
+                    }
+                },
+                {field: 'startTime', title: i18np.prop('equiprun.runStartTime')},
+                {field: 'endTime', title: i18np.prop('equiprun.runEndTime')},
                 {field: 'powerStart', title: i18np.prop('equiprun.powerStart')},
                 {field: 'powerEnd', title: i18np.prop('equiprun.powerEnd')},
                 {field: 'duration', title: i18np.prop('equiprun.duration')},
@@ -181,12 +216,14 @@
 
     function reloadTb() {
         table.reload('tb-common', {
-            url: initRequestUrl(router.equipRunRecord_page),
+            url: initRequestUrl(router.equipRecordRun_page),
             headers: getCommonHeader(),
             method: 'POST',
             where: {
                 startDate: $('#startDate').val(),
                 endDate: $('#endDate').val(),
+                sn: $('#sn').val(),
+                state: $('#state').val(),
                 requirePage: false
             },
             customTitleRow: getCustomTitle(),

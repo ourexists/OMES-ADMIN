@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.constants.CommonConstant;
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.mesedge.device.core.EquipAttrRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
@@ -18,16 +19,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
-import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.core.MessageProducer;
 import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
-import org.springframework.integration.mqtt.outbound.MqttPahoMessageHandler;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +87,7 @@ public class MqttConfiguration {
     @Bean
     @ServiceActivator(inputChannel = CHANNEL_INPUT)
     public MessageHandler handler() {
+        UserContext.defaultTenant();
         return message -> {
             String payload = (String) message.getPayload();
             JSONObject jsonObject = JSON.parseObject(payload);
@@ -94,6 +95,8 @@ public class MqttConfiguration {
             JSONArray devArray = jsonObject.getJSONArray("dev");
             JSONArray ywArray = jsonObject.getJSONArray("ai");
             Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll(CommonConstant.SYSTEM_TENANT);
+
+            List<EquipRealtime> targets = new ArrayList<>();
             for (EquipRealtime equipRealtime : realtimeMap.values()) {
                 EquipRealtimeConfig equipRealtimeConfig = equipRealtime.getEquipRealtimeConfig();
                 if (equipRealtimeConfig == null) {
@@ -109,30 +112,30 @@ public class MqttConfiguration {
                         String devSn = object.getString("code");
                         String ssn = sn + "dev" + devSn;
                         if (equipRealtime.getSelfCode().equals(ssn)) {
-                            EquipRealtime source = new EquipRealtime();
-                            BeanUtils.copyProperties(equipRealtime, source);
+                            EquipRealtime target = new EquipRealtime();
+                            BeanUtils.copyProperties(equipRealtime, target);
 
-                            equipRealtime.setTime(new Date());
-                            equipRealtime.online();
 
+                            target.setTime(new Date());
+                            target.online();
                             Integer alarmVal = object.getInteger(equipRealtimeConfig.getAlarmMap());
                             if (alarmVal != null && alarmVal == 1) {
-                                equipRealtime.alarm();
+                                target.alarm();
                             } else {
-                                equipRealtime.resetAlarm();
+                                target.resetAlarm();
                             }
                             Integer runVal = object.getInteger(equipRealtimeConfig.getRunMap());
                             if (runVal != null && runVal == 1) {
-                                equipRealtime.run();
+                                target.run();
                             } else {
-                                equipRealtime.stop();
+                                target.stop();
                             }
-                            if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
-                                for (EquipAttrRealtime attr : equipRealtime.getEquipAttrRealtimes()) {
+                            if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
+                                for (EquipAttrRealtime attr : target.getEquipAttrRealtimes()) {
                                     attr.setValue(object.getString(attr.getMap()));
                                 }
                             }
-                            equipRealtimeManager.change(source, equipRealtime);
+                            targets.add(target);
                         }
                     }
                 }
@@ -143,12 +146,12 @@ public class MqttConfiguration {
                         String ywSn = o.getString("code");
                         String ssnn = sn + ywSn;
                         if (equipRealtime.getSelfCode().equals(ssnn)) {
-                            EquipRealtime source = new EquipRealtime();
-                            BeanUtils.copyProperties(equipRealtime, source);
+                            EquipRealtime target = new EquipRealtime();
+                            BeanUtils.copyProperties(equipRealtime, target);
 
-                            equipRealtime.setTime(new Date());
-                            equipRealtime.online();
-                            equipRealtime.run();
+                            target.setTime(new Date());
+                            target.online();
+                            target.run();
 
                             int alarm = 0;
                             if (o.getInteger(equipRealtimeConfig.getAlarmMap()) == 1) {
@@ -158,20 +161,22 @@ public class MqttConfiguration {
                                 alarm = 1;
                             }
                             if (alarm == 1) {
-                                equipRealtime.alarm();
+                                target.alarm();
                             } else {
-                                equipRealtime.resetAlarm();
+                                target.resetAlarm();
                             }
-                            if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
-                                for (EquipAttrRealtime attr : equipRealtime.getEquipAttrRealtimes()) {
+                            if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
+                                for (EquipAttrRealtime attr : target.getEquipAttrRealtimes()) {
                                     attr.setValue(o.getString(attr.getMap()));
                                 }
                             }
-                            equipRealtimeManager.change(source, equipRealtime);
+                            targets.add(target);
                         }
                     }
                 }
-                equipRealtimeManager.reset(CommonConstant.SYSTEM_TENANT, realtimeMap);
+                if (!CollectionUtils.isEmpty(targets)) {
+                    equipRealtimeManager.realtimeHandle(CommonConstant.SYSTEM_TENANT, targets);
+                }
             }
         };
     }
@@ -184,18 +189,18 @@ public class MqttConfiguration {
         return adapter;
     }
 
-    @Bean(name = CHANNEL_OUTPUT)
-    public MessageChannel mqttOutboundChannel() {
-        return new PublishSubscribeChannel();
-    }
-
-    @Bean
-    @ServiceActivator(inputChannel = CHANNEL_OUTPUT)
-    public MessageHandler mqttOutbound(MqttPahoClientFactory factory) {
-        MqttPahoMessageHandler handler = new MqttPahoMessageHandler(clientId + "_output", factory);
-        handler.setAsync(true);
-        handler.setDefaultTopic("fxx/fb");
-        return handler;
-    }
+//    @Bean(name = CHANNEL_OUTPUT)
+//    public MessageChannel mqttOutboundChannel() {
+//        return new PublishSubscribeChannel();
+//    }
+//
+//    @Bean
+//    @ServiceActivator(inputChannel = CHANNEL_OUTPUT)
+//    public MessageHandler mqttOutbound(MqttPahoClientFactory factory) {
+//        MqttPahoMessageHandler handler = new MqttPahoMessageHandler(clientId + "_output", factory);
+//        handler.setAsync(true);
+//        handler.setDefaultTopic("fxx/fb");
+//        return handler;
+//    }
 
 }

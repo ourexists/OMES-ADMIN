@@ -22,13 +22,13 @@ public class EquipRealtime {
     private EquipRealtimeConfig equipRealtimeConfig;
 
     @Setter(AccessLevel.NONE)
-    private int onlineState = 0;
+    private Integer onlineState = 0;
 
     @Setter(AccessLevel.NONE)
-    private int runState = 0;
+    private Integer runState = 0;
 
     @Setter(AccessLevel.NONE)
-    private int alarmState = 0;
+    private Integer alarmState = 0;
 
     private List<EquipAttrRealtime> equipAttrRealtimes;
 
