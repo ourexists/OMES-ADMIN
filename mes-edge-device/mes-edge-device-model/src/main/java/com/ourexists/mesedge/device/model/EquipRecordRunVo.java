@@ -16,17 +16,9 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class EquipRunRecordDto {
+public class EquipRecordRunVo extends EquipRecordRunDto {
 
-    private String id;
-
-    private String sn;
-
-    private Date runStartTime;
-
-    private Date runEndTime;
-
-    private BigDecimal powerStart;
+    private Date endTime;
 
     private BigDecimal powerEnd;
 
@@ -35,10 +27,10 @@ public class EquipRunRecordDto {
     private BigDecimal powerUse;
 
     public Long getDuration() {
-        if (runEndTime == null || runStartTime == null) {
+        if (startTime == null || endTime == null) {
             return 0L;
         }
-        return (runEndTime.getTime() - runStartTime.getTime()) / 60000;
+        return (endTime.getTime() - startTime.getTime()) / 60000;
     }
 
     public BigDecimal getPowerUse() {

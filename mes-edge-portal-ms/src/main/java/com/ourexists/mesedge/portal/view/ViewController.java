@@ -264,10 +264,21 @@ public class ViewController {
         return "ecattr_form_edit";
     }
 
-    @RequestMapping("/view/equip_run_record_tables")
-    public String equip_run_record_tables() {
-        return "equip_run_record_tables";
+    @RequestMapping("/view/equip_record_run_tables")
+    public String equip_record_run_tables() {
+        return "equip_record_run_tables";
     }
+
+    @RequestMapping("/view/equip_record_alarm_tables")
+    public String equip_record_alarm_tables() {
+        return "equip_record_alarm_tables";
+    }
+
+    @RequestMapping("/view/equip_record_online_tables")
+    public String equip_record_online_tables() {
+        return "equip_record_online_tables";
+    }
+
 
     @RequestMapping("/view/equip_tables")
     public String equip_tables() {

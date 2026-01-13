@@ -5,7 +5,7 @@
 package com.ourexists.mesedge.device.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ourexists.mesedge.device.pojo.EquipRunRecord;
+import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -14,5 +14,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 1.0.0
  */
 @Mapper
-public interface EquipRunRecordMapper extends BaseMapper<EquipRunRecord> {
+public interface EquipRecordAlarmMapper extends BaseMapper<EquipRecordAlarm> {
 }
