@@ -33,8 +33,12 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
         LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
                 .eq(StringUtils.hasText(dto.getSn()), EquipRecordAlarm::getSn, dto.getSn())
                 .eq(dto.getState() != null, EquipRecordAlarm::getState, dto.getState())
-                .ge(dto.getStartDate() != null, EquipRecordAlarm::getStartTime, dto.getStartDate())
-                .le(dto.getEndDate() != null, EquipRecordAlarm::getStartTime, dto.getEndDate())
+                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
+                    wrapper
+                            .between(EquipRecordAlarm::getStartTime, dto.getStartDate(), dto.getEndDate())
+                            .or()
+                            .between(EquipRecordAlarm::getEndTime, dto.getStartDate(), dto.getEndDate());
+                })
                 .orderByDesc(EquipRecordAlarm::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }

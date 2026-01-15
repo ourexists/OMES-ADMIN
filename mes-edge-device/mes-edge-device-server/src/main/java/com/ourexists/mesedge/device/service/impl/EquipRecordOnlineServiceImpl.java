@@ -11,6 +11,7 @@ import com.ourexists.mesedge.device.mapper.EquipRecordOnlineMapper;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
 import com.ourexists.mesedge.device.pojo.Device;
+import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
 import com.ourexists.mesedge.device.pojo.EquipRecordOnline;
 import com.ourexists.mesedge.device.service.DeviceService;
 import com.ourexists.mesedge.device.service.EquipRecordOnlineService;
@@ -33,8 +34,12 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
         LambdaQueryWrapper<EquipRecordOnline> qw = new LambdaQueryWrapper<EquipRecordOnline>()
                 .eq(StringUtils.hasText(dto.getSn()), EquipRecordOnline::getSn, dto.getSn())
                 .eq(dto.getState() != null, EquipRecordOnline::getState, dto.getState())
-                .ge(dto.getStartDate() != null, EquipRecordOnline::getStartTime, dto.getStartDate())
-                .le(dto.getEndDate() != null, EquipRecordOnline::getStartTime, dto.getEndDate())
+                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
+                    wrapper
+                            .between(EquipRecordOnline::getStartTime, dto.getStartDate(), dto.getEndDate())
+                            .or()
+                            .between(EquipRecordOnline::getEndTime, dto.getStartDate(), dto.getEndDate());
+                })
                 .orderByDesc(EquipRecordOnline::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }

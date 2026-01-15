@@ -173,6 +173,10 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                     }
                     equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
                     equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
+                    Date currentDate = new Date();
+                    equipRealtime.setAlarmChangeTime(currentDate);
+                    equipRealtime.setRunChangeTime(currentDate);
+                    equipRealtime.setOnlineChangeTime(currentDate);
                 }
                 r.put(equipDto.getSelfCode(), equipRealtime);
                 equipRealtimeMap.put(equipDto.getTenantId(), r);

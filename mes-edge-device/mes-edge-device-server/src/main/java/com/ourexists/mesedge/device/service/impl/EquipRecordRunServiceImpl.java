@@ -33,8 +33,12 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
         LambdaQueryWrapper<EquipRecordRun> qw = new LambdaQueryWrapper<EquipRecordRun>()
                 .eq(StringUtils.hasText(dto.getSn()), EquipRecordRun::getSn, dto.getSn())
                 .eq(dto.getState() != null, EquipRecordRun::getState, dto.getState())
-                .ge(dto.getStartDate() != null, EquipRecordRun::getStartTime, dto.getStartDate())
-                .le(dto.getEndDate() != null, EquipRecordRun::getStartTime, dto.getEndDate())
+                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
+                    wrapper
+                            .between(EquipRecordRun::getStartTime, dto.getStartDate(), dto.getEndDate())
+                            .or()
+                            .between(EquipRecordRun::getEndTime, dto.getStartDate(), dto.getEndDate());
+                })
                 .orderByDesc(EquipRecordRun::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }

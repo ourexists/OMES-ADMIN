@@ -86,9 +86,7 @@ public class EquipViewer implements EquipFeign {
                 if (dto.getNeedRealtime()) {
                     EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
                     if (equipRealtime != null) {
-                        equipDto.setRunState(equipRealtime.getRunState());
-                        equipDto.setAlarmState(equipRealtime.getAlarmState());
-                        equipDto.setOnlineState(equipRealtime.getOnlineState());
+                        BeanUtils.copyProperties(equipRealtime, equipDto, "name", "selfCode");
                         List<EquipAttr> attrs = new ArrayList<>();
                         if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
                             for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
@@ -143,9 +141,7 @@ public class EquipViewer implements EquipFeign {
         }
         EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
         if (equipRealtime != null) {
-            equipDto.setRunState(equipRealtime.getRunState());
-            equipDto.setAlarmState(equipRealtime.getAlarmState());
-            equipDto.setOnlineState(equipRealtime.getOnlineState());
+            BeanUtils.copyProperties(equipRealtime, equipDto, "name", "selfCode");
             List<EquipAttr> attrs = new ArrayList<>();
             if (!CollectionUtils.isEmpty(equipRealtime.getEquipAttrRealtimes())) {
                 for (EquipAttrRealtime equipAttrRealtime : equipRealtime.getEquipAttrRealtimes()) {
