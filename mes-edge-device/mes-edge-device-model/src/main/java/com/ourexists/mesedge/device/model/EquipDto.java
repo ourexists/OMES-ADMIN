@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,6 +45,12 @@ public class EquipDto extends BaseDto {
     private Integer alarmState = 0;
 
     private Integer onlineState = 0;
+
+    private Date onlineChangeTime;
+
+    private Date runChangeTime;
+
+    private Date alarmChangeTime;
 
     private String tenantId;
 

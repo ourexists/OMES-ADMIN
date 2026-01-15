@@ -38,53 +38,60 @@ public class EquipRealtime {
 
     private Date time;
 
-    private Date onlineTime;
+    private Date onlineChangeTime;
 
-    private Date offlineTime;
+    private Date runChangeTime;
 
-    private Date runTime;
+    private Date alarmChangeTime;
 
-    private Date stopTime;
-
-    private Date alarmTime;
-
-    private Date alarmEndTime;
 
     public void online() {
-        this.onlineState = 1;
-        this.onlineTime = new Date();
+        if (this.onlineState != 0) {
+            this.onlineChangeTime = new Date();
+            this.onlineState = 1;
+        }
     }
 
 
     public void offline() {
-        this.onlineState = 0;
-        this.offlineTime = new Date();
-        if (this.equipRealtimeConfig != null) {
-            this.equipAttrRealtimes = this.equipRealtimeConfig.getAttrs();
-        } else {
-            this.equipAttrRealtimes = null;
+        if (this.onlineState != 0) {
+            this.onlineState = 0;
+            this.onlineChangeTime = new Date();
+            if (this.equipRealtimeConfig != null) {
+                this.equipAttrRealtimes = this.equipRealtimeConfig.getAttrs();
+            } else {
+                this.equipAttrRealtimes = null;
+            }
         }
     }
 
     public void run() {
-        this.runState = 1;
-        this.runTime = new Date();
+        if (this.runState != 1) {
+            this.runState = 1;
+            this.runChangeTime = new Date();
+        }
     }
 
 
     public void stop() {
-        this.runState = 0;
-        this.stopTime = new Date();
+        if (this.runState != 0) {
+            this.runState = 0;
+            this.runChangeTime = new Date();
+        }
     }
 
     public void alarm() {
-        this.alarmState = 1;
-        this.alarmTime = new Date();
+        if (this.alarmState != 1) {
+            this.alarmState = 1;
+            this.alarmChangeTime = new Date();
+        }
     }
 
     public void resetAlarm() {
-        this.alarmState = 0;
-        this.alarmEndTime = new Date();
+        if (this.alarmState != 0) {
+            this.alarmState = 0;
+            this.alarmChangeTime = new Date();
+        }
     }
 
 }
