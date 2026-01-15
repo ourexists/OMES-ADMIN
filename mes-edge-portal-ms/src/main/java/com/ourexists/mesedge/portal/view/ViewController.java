@@ -304,4 +304,10 @@ public class ViewController {
     public String role_workshop() {
         return "role_workshop";
     }
+
+
+    @RequestMapping("/view/equip_collect_tables")
+    public String equip_collect_tables() {
+        return "equip_collect_tables";
+    }
 }

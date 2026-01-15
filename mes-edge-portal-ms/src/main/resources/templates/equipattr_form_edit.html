@@ -53,6 +53,12 @@
         </a>
     </div>
 </script>
+<script type="text/html" id="needCollect-switch">
+    <!-- 这里的 checked 的状态值判断仅作为演示 -->
+    <input type="checkbox" name="needCollect" value='{{= d.needCollect }}' title="yes|no" lay-skin="switch"
+           lay-filter="collect-switch"
+           {{=(d.needCollect!=null && d.needCollect ? "checked" : "") }}>
+</script>
 <script th:inline="none">
     var attrDetails = [];
     var current_data;
@@ -74,6 +80,9 @@
                 {field: 'name', title: i18np.prop("equipattr.name"), edit: 'text'},
                 {field: 'map', title: i18np.prop("equipattr.map"), edit: 'text'},
                 {field: 'value', title: i18np.prop("equipattr.value"), edit: 'text'},
+                {
+                    field: 'needCollect', title: i18np.prop("equipattr.value"), templet: '#needCollect-switch'
+                },
                 {
                     fixed: 'right',
                     title: i18np.prop('common.operate'),
@@ -138,6 +147,12 @@
                     break;
             }
         });
+        form.on('switch(collect-switch)', function (obj) {
+            const tr = obj.elem.closest('tr');
+            const index = tr.getAttribute('data-index');
+            const data = table.cache['tb-common'][index];
+            data.needCollect = !!obj.elem.checked;
+        });
 
         // 提交事件
         form.on('submit(common-edit-button)', function (data) {
@@ -154,7 +169,6 @@
                 }
             })
             current_data.attrs = d;
-            console.info(JSON.stringify(current_data))
             post(router.equip_setConfig, {
                 "equipId": id,
                 "config": current_data

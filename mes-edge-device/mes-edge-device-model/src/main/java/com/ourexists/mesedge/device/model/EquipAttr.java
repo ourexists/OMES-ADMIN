@@ -14,4 +14,6 @@ public class EquipAttr {
     private String map;
 
     private String value;
+
+    private Boolean needCollect = false;
 }

@@ -46,7 +46,7 @@ public class EquipRealtime {
 
 
     public void online() {
-        if (this.onlineState != 0) {
+        if (this.onlineState != 1) {
             this.onlineChangeTime = new Date();
             this.onlineState = 1;
         }

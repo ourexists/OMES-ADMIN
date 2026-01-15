@@ -83,6 +83,9 @@
         <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="equipAttr">
             <i class="layui-icon layui-icon-util"></i>
         </a>
+        <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="equipHistory">
+            <i class="layui-icon layui-icon-list"></i>
+        </a>
     </div>
 </script>
 <script type="text/html" id="tb-toolbar">
@@ -311,6 +314,8 @@
                 delWindow(router.equip_del, [data.id], reloadTb);
             } else if (obj.event === 'equipAttr') {
                 openWindow('equipattr.name', '/view/equipattr_form_edit?id=' + data.id, ['80%', '50%']);
+            } else if (obj.event === 'equipHistory') {
+                parent.openIndexTab('/view/equip_collect_tables?sn=' + data.selfCode, 'equip_collect_tables' + obj.data.selfCode, obj.data.name + '[' + obj.data.selfCode + ']')
             }
         });
         // table 滚动时移除内部弹出的元素

@@ -210,7 +210,7 @@
                 requirePage: false,
                 needWorkshopCascade: true,
                 queryWorkshop: true,
-                queryAttrs: true
+                queryAttrs: true,
             };
             if (data != null) {
                 for (let key in data) {
@@ -225,11 +225,17 @@
                 if (e == null) {
                     return;
                 }
+                var r = [];
+                e.forEach(function (item) {
+                    if (item.lng != null && item.lat != null) {
+                        r.push(item);
+                    }
+                })
                 if (needViewReset) {
-                    adjustMapView(e)
+                    adjustMapView(r)
                 }
 
-                refreshMarkers(e)
+                refreshMarkers(r)
             })
         } finally {
             reloading = false;
@@ -352,7 +358,6 @@
             i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
 
         if (d.attrs != null) {
-            console.info()
             d.attrs.forEach(function (t) {
                 html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}`;
             })

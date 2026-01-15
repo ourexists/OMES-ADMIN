@@ -4,6 +4,7 @@
 
 package com.ourexists.mesedge.device.viewer;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
@@ -168,5 +169,14 @@ public class EquipViewer implements EquipFeign {
     public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
         equipConfigService.addOrUpdate(equipConfigDto);
         return JsonResponseEntity.success(true);
+    }
+
+    @Override
+    public JsonResponseEntity<EquipConfigDto> queryEquipConfigBySn(String equipSn) {
+        Equip equip = service.getOne(new LambdaQueryWrapper<Equip>().eq(Equip::getSelfCode, equipSn));
+        if (equip == null) {
+            return JsonResponseEntity.success(null);
+        }
+        return JsonResponseEntity.success(EquipConfig.covert(equipConfigService.queryByEquip(equip.getId())));
     }
 }
