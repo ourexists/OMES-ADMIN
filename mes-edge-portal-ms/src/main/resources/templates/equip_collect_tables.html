@@ -1,0 +1,244 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md6">
+            <div class="layui-form-item">
+                <div class="layui-inline" id="timeduration">
+                    <div class="layui-input-inline">
+                        <input type="text" autocomplete="off" id="startDate" name="startDate"
+                               class="layui-input"
+                               placeholder="startTime" lang-i18n="common.starttime">
+                    </div>
+                    <div class="layui-form-mid">-</div>
+                    <div class="layui-input-inline">
+                        <input type="text" autocomplete="off" id="endDate" name="endDate" class="layui-input"
+                               placeholder="endTime" lang-i18n="common.endtime">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-btn-container layui-col-xs12">
+            <button class="layui-btn" lay-submit lay-filter="tb-common-search" lang-i18n="common.search">
+                Search
+            </button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+        </div>
+    </form>
+    <table class="layui-hide" id="tb-common"></table>
+</div>
+
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="rowMode">
+            <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
+            <i class="layui-icon layui-icon-down layui-font-12"></i>
+        </button>
+    </div>
+</script>
+
+<script th:inline="none">
+    var current_row_data;
+    var selected_tree_node;
+    var table;
+    var tree;
+    let sn;
+
+    layui.use(function () {
+        table = layui.table;
+        tree = layui.tree;
+        var form = layui.form;
+        var dropdown = layui.dropdown;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+
+        sn = layui.url().search.sn;
+
+        laydate.render({
+            elem: '#timeduration',
+            range: ['#startDate', '#endDate'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+
+        // 创建表格实例
+        table.render({
+            elem: '#tb-common',
+            method: 'POST',
+            headers: getCommonHeader(),
+            contentType: 'application/json',
+            loading: false,
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            // totalRow: true,
+            cols: [[]],
+            text: {
+                none: i18np.prop('common.msg.selecttime')
+            },
+            data: [],
+            done: function () {
+                // 行模式
+                dropdown.render({
+                    elem: '#rowMode',
+                    data: [{
+                        id: 'default-row',
+                        title: i18np.prop('common.mode.single')
+                    }, {
+                        id: 'multi-row',
+                        title: i18np.prop('common.mode.multi')
+                    }],
+                    // 菜单被点击的事件
+                    click: function (obj) {
+                        switch (obj.id) {
+                            case 'default-row':
+                                table.reload('tb-common', {
+                                    lineStyle: null
+                                });
+                                break;
+                            case 'multi-row':
+                                table.reload('tb-common', {
+                                    lineStyle: 'height: 95px;'
+                                });
+                                break;
+                        }
+                    }
+                });
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "data": res.data
+                };
+            },
+            page: false,
+            height: 'full'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            if (selected_tree_node == null) {
+                layer.msg(i18np.prop("bomc.msg.select"));
+                return;
+            }
+            let id = obj.config.id;
+            let checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    let data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    let getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+            }
+        });
+
+        // table 滚动时移除内部弹出的元素
+        let tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+
+        // 搜索提交
+        form.on('submit(tb-common-search)', function (data) {
+            let field = data.field;
+            if (selected_tree_node !== null && field.startDate !== null && field.endDate !== null
+                && field.startDate !== '' && field.endDate !== '') {
+                reloadTb();
+            }
+            return false; // 阻止默认 form 跳转
+        });
+
+        reloadAll();
+    });
+
+    function reloadTb() {
+        let title = $('#startDate').val() + " ~ " + $('#endDate').val();
+        table.reload('tb-common', {
+            url: initRequestUrl(router.equip_collect_page),
+            customTitleRow: title,
+            where: {
+                sn,
+                startTime: $('#startDate').val(),
+                endTime: $('#endDate').val(),
+            },
+        });
+    }
+
+    function reloadAll() {
+        get(router.equip_config_sn, {"equipSn": sn}, function (d) {
+            if (d == null) {
+                return
+            }
+            if (d.config == null) {
+                return;
+            }
+            let r = d.config.attrs;
+            let tbCols = []
+            let col = [];
+            if (r.length > 0) {
+                col.push({
+                    field: 'time',
+                    title: i18np.prop("common.time"),
+                    fixed: 'left',
+                })
+                r.forEach(e => {
+                    if (e.needCollect) {
+                        let k = {
+                            field: e.name, title: e.name, templet: function (d) {
+                                return d.data == null ? null : d.data[e.name]
+                            }
+                        }
+                        col.push(k);
+                    }
+                });
+            }
+            tbCols.push(col)
+            if ($('#startDate').val() == null || $('#startDate').val() == ''
+                || $('#endDate').val() == null || $('#endDate').val() == '') {
+                table.reload('tb-common', {
+                    cols: tbCols,
+                })
+            } else {
+                let title = $('#startDate').val() + "-" + $('#endDate').val();
+                table.reload('tb-common', {
+                    cols: tbCols,
+                    customTitleRow: title,
+                    url: initRequestUrl(router.equip_collect_page),
+                    where: {
+                        sn,
+                        startTime: $('#startDate').val(),
+                        endTime: $('#endDate').val(),
+                    },
+                })
+            }
+        })
+    }
+
+
+</script>
+</body>
+</html>

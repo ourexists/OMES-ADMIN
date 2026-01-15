@@ -180,9 +180,11 @@ var router = {
     "equip_id": "/equip/selectById",
     "equip_type": "/equip/equipType",
     "equip_config": "/equip/queryEquipConfig",
+    "equip_config_sn": "/equip/queryEquipConfigBySn",
     "equip_setConfig": "/equip/setEquipConfig",
     "workshop_assign_query": "/workshop/selectAssign",
     "workshop_assign": "/workshop/assign",
+    "equip_collect_page": "/equip/collect/selectByPage",
 }
 
 function getCommonHeader() {

@@ -47,30 +47,21 @@
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">经度</label>
+            <label class="layui-form-label" lang-i18n="common.lng"></label>
             <div class="layui-input-inline">
                 <input type="text" name="lng" disabled class="layui-input">
             </div>
 
-            <label class="layui-form-label" style="">纬度</label>
+            <label class="layui-form-label" lang-i18n="common.lat"></label>
             <div class="layui-input-inline">
                 <input type="text" name="lat" disabled class="layui-input">
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label" style="">地址</label>
+            <label class="layui-form-label" lang-i18n="common.address"></label>
             <div class="layui-input-block">
-                <input type="text" name="address" disabled class="layui-input">
+                <input type="text" name="address" class="layui-input">
             </div>
-        </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label">地址定位</label>
-            <div class="layui-input-inline">
-                <input type="text" id="searchText" placeholder="输入地址 / 地点名称"
-                       class="layui-input">
-            </div>
-            <button type="button" class="layui-btn layui-btn-primary" id="btnSearch">搜索
-            </button>
         </div>
         <div class="layui-form-item">
             <div id="map"></div>
@@ -113,6 +104,26 @@
 
         let map = L.map('map').setView(ln, 6);
         let marker;
+
+        var legend = L.control({position: 'topright'});
+
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'map-legend');
+
+            div.innerHTML = `<div class="layui-form-item">
+            <div class="layui-input-inline">
+                <input type="text" id="searchText" class="layui-input">
+            </div>
+            <button type="button" class="layui-btn layui-btn-radius layui-btn-normal" id="btnSearch">
+            <i class="layui-icon layui-icon-search"></i>
+            </button>
+        </div>
+    `;
+            return div;
+        };
+
+        legend.addTo(map);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '地图数据 © OpenStreetMap'
         }).addTo(map);

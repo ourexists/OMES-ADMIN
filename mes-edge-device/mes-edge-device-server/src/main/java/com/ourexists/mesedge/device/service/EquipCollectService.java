@@ -7,8 +7,9 @@ package com.ourexists.mesedge.device.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
 import com.ourexists.mesedge.device.model.EquipAttrPageQuery;
-import com.ourexists.mesedge.device.model.EquipConfigDto;
-import com.ourexists.mesedge.device.pojo.EquipConfig;
+import com.ourexists.mesedge.device.model.EquipCollectDto;
+import com.ourexists.mesedge.device.model.EquipCollectPageQuery;
+import com.ourexists.mesedge.device.pojo.EquipCollect;
 
 import java.util.List;
 
@@ -17,17 +18,15 @@ import java.util.List;
  * @date 2022/4/2 16:19
  * @since 1.0.0
  */
-public interface EquipConfigService extends IMyBatisPlusService<EquipConfig> {
+public interface EquipCollectService extends IMyBatisPlusService<EquipCollect> {
 
-    Page<EquipConfig> selectByPage(EquipAttrPageQuery dto);
+    Page<EquipCollect> selectByPage(EquipCollectPageQuery dto);
 
-    void addOrUpdate(EquipConfigDto dto);
+    void addOrUpdate(EquipCollectDto dto);
 
     void delete(List<String> ids);
 
-    List<EquipConfig> queryByEquip(List<String> equipIds);
+    List<EquipCollect> queryByEquip(List<String> sns);
 
-    EquipConfig queryByEquip(String equipId);
-
-//    List<EquipConfig> queryEquipConfigBySn(String equipSn);
+    EquipCollect queryByEquip(String sn);
 }

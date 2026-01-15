@@ -13,5 +13,7 @@ public class EquipAttrRealtime {
 
     private String map;
 
+    private Boolean needCollect = false;
+    
     private String value;
 }

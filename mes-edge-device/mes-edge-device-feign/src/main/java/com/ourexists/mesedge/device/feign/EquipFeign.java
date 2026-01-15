@@ -25,4 +25,6 @@ public interface EquipFeign {
     JsonResponseEntity<EquipConfigDto> queryEquipConfig(@RequestParam String equipId);
 
     JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto);
+
+    JsonResponseEntity<EquipConfigDto> queryEquipConfigBySn(@RequestParam String equipSn);
 }

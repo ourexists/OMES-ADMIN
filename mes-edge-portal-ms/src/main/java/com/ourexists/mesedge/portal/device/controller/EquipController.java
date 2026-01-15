@@ -155,6 +155,12 @@ public class EquipController {
         return feign.queryEquipConfig(equipId);
     }
 
+    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @GetMapping("queryEquipConfigBySn")
+    public JsonResponseEntity<EquipConfigDto> queryEquipConfigBySn(@RequestParam String equipSn) {
+        return feign.queryEquipConfigBySn(equipSn);
+    }
+
     @Operation(summary = "设置设备配置", description = "设置设备配置")
     @PostMapping("setEquipConfig")
     public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
