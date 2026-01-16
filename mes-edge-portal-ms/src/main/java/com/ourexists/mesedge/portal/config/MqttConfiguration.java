@@ -174,9 +174,9 @@ public class MqttConfiguration {
                         }
                     }
                 }
-                if (!CollectionUtils.isEmpty(targets)) {
-                    equipRealtimeManager.realtimeHandle(CommonConstant.SYSTEM_TENANT, targets);
-                }
+            }
+            if (!CollectionUtils.isEmpty(targets)) {
+                equipRealtimeManager.realtimeHandle(CommonConstant.SYSTEM_TENANT, targets);
             }
         };
     }
