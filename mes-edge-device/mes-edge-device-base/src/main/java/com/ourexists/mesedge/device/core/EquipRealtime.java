@@ -1,6 +1,5 @@
 package com.ourexists.mesedge.device.core;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,13 +20,10 @@ public class EquipRealtime {
 
     private EquipRealtimeConfig equipRealtimeConfig;
 
-    @Setter(AccessLevel.NONE)
     private Integer onlineState = 0;
 
-    @Setter(AccessLevel.NONE)
     private Integer runState = 0;
 
-    @Setter(AccessLevel.NONE)
     private Integer alarmState = 0;
 
     private List<EquipAttrRealtime> equipAttrRealtimes;
