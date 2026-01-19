@@ -119,6 +119,10 @@
                     }
                 });
             },
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
             response: {
                 statusName: 'code', //规定返回的状态码字段为code
                 statusCode: 200, //规定成功的状态码味200
@@ -127,10 +131,13 @@
                 return {
                     "code": res.code,
                     "msg": res.msg,
+                    "count": res.pagination.total,
                     "data": res.data
                 };
             },
-            page: false,
+            limit: 10,
+            limits: [10, 20, 50, 100],
+            page: true,
             height: 'full'
         });
         // 工具栏事件
@@ -182,8 +189,8 @@
             customTitleRow: title,
             where: {
                 sn,
-                startTime: $('#startDate').val(),
-                endTime: $('#endDate').val(),
+                startDate: $('#startDate').val(),
+                endDate: $('#endDate').val(),
             },
         });
     }
@@ -230,8 +237,8 @@
                     url: initRequestUrl(router.equip_collect_page),
                     where: {
                         sn,
-                        startTime: $('#startDate').val(),
-                        endTime: $('#endDate').val(),
+                        startDate: $('#startDate').val(),
+                        endDate: $('#endDate').val(),
                     },
                 })
             }

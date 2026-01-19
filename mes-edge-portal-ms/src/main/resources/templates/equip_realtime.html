@@ -29,7 +29,7 @@
 </style>
 <body>
 <div class="layui-tab-content" style="padding: 15px;">
-    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3">
+    <div class="layui-col-md3">
         <div class="layui-card">
             <div class="layui-card-body mini-bar" id="ltTree">
                 <div class="layui-inline">
@@ -42,7 +42,7 @@
             </div>
         </div>
     </div>
-    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9" style="padding: 15px;">
+    <div class="layui-col-md9" style="padding: 15px;">
         <form class="layui-form layui-row layui-col-space16">
             <div class="layui-col-md4">
                 <div class="layui-input-wrap">
@@ -144,7 +144,21 @@
             return div;
         };
 
+        var legend2 = L.control({position: 'topright'});
+
+        legend2.onAdd = function () {
+            var div = L.DomUtil.create('div', 'map-legend');
+
+            div.innerHTML = `
+             <button type="button" class="layui-btn layui-btn-sm" id="fullscreenBtn">
+                <i class="layui-icon  layui-icon-screen-full" id="layui-icon-screen"></i>
+            </button>
+            `;
+            return div;
+        };
+
         legend.addTo(map);
+        legend2.addTo(map);
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution: '地图数据 © OpenStreetMap'
         }).addTo(map);
@@ -330,7 +344,73 @@
                 delete markerMap[key];
             }
         });
+
+
+        $('#fullscreenBtn').click(function () {
+            if (isFullscreen()) {
+                exitFullscreen();
+            } else {
+                enterFullscreen();
+            }
+            // updateFullscreenButton();  // 更新按钮图标
+        });
     }
+
+    function isFullscreen() {
+        // 标准浏览器支持
+        if (document.fullscreenElement) {
+            return true;
+        }
+        // Firefox 支持
+        else if (document.mozFullScreenElement) {
+            return true;
+        }
+        // Chrome、Safari、Opera 支持
+        else if (document.webkitFullscreenElement) {
+            return true;
+        }
+        // IE/Edge 支持
+        else if (document.msFullscreenElement) {
+            return true;
+        }
+        return false;
+    }
+
+    function enterFullscreen() {
+        let elem = $('#map').get(0);
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { // Firefox
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { // IE/Edge
+            elem.msRequestFullscreen();
+        }
+    }
+
+    // 退出全屏模式
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { // Firefox
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { // IE/Edge
+            document.msExitFullscreen();
+        }
+    }
+
+    // // 更新按钮图标，根据全屏状态切换
+    // function updateFullscreenButton() {
+    //     var icon = document.getElementById('layui-icon-screen');
+    //     if (isFullscreen()) {
+    //         icon.className = 'layui-icon layui-icon-screen-full'; // 设置退出全屏图标
+    //     } else {
+    //         icon.className = 'layui-icon layui-icon-screen-restore'; // 设置进入全屏图标
+    //     }
+    // }
 
     // 更新 Marker 内部状态和 Popup
     function updateMarker(marker, device) {
@@ -364,6 +444,8 @@
         }
         return html;
     }
+
+
 </script>
 </body>
 </html>

@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 
 @Slf4j
 @Tag(name = "认证相关")
@@ -42,5 +44,17 @@ public class OpenController {
             throw new BusinessException("图形验证码生成失败!");
         }
         return JsonResponseEntity.success(true);
+    }
+
+
+    @Operation(summary = "验证码")
+    @GetMapping("/captchaBase")
+    public JsonResponseEntity<String> captchaBase(@RequestParam String uuid) {
+        CircleCaptcha captcha = CaptchaUtil.createCircleCaptcha(100, 50);
+        authValidRuleCache.setCaptcha(uuid, captcha.getCode());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        captcha.write(baos);  // 将验证码图片写入输出流
+        String base64Img = Base64.getEncoder().encodeToString(baos.toByteArray());
+        return JsonResponseEntity.success("data:image/png;base64," + base64Img);
     }
 }
