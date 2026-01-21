@@ -20,16 +20,13 @@
     <script src="../static/leaflet/leaflet.js"></script>
     <script src="../static/marker/leaflet.markercluster.js"></script>
 </head>
-<style>
-    #map {
-        width: 100%;
-        height: 600px;
-        margin-top: 10px;
-    }
-</style>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
-    <div class="layui-col-md3">
+
+<div class="layui-tab-content main-panel">
+    <button type="button" class="layui-btn layui-btn-sm fullscreenBtn">
+        <i class="layui-icon  layui-icon-screen-full" id="layui-icon-screen"></i>
+    </button>
+    <div class="layui-col-md2 left-panel">
         <div class="layui-card">
             <div class="layui-card-body mini-bar" id="ltTree">
                 <div class="layui-inline">
@@ -42,7 +39,7 @@
             </div>
         </div>
     </div>
-    <div class="layui-col-md9" style="padding: 15px;">
+    <div class="layui-col-md8 right-panel">
         <form class="layui-form layui-row layui-col-space16">
             <div class="layui-col-md4">
                 <div class="layui-input-wrap">
@@ -81,26 +78,71 @@
                 <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
             </div>
         </form>
-        <div id="map"></div>
+        <div id="cardContainer" class="common-data-container"></div>
     </div>
 </div>
 
+<script type="text/html" id="deviceCardTpl">
+    {{# layui.each(d, function(index, item){ }}
+    <div class="layui-col-md3 layui-col-sm6 device-container">
+        <div class="layui-card device-card">
+            <div class="layui-card-header">
+                <div class="card-header-1">
+                    <span>{{ item.name }}</span>
+                    <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"></span>
+                    <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"></span>
+                    <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"></span>
+                </div>
+                <div class="card-header-2">
+                    <p>{{ i18np.prop('equip.code') }}: {{ item.selfCode }}</p>
+                    <p>{{ i18np.prop('workshop.name') }}: {{ item.workshop === null ? '' : item.workshop.name }}</p>
+                </div>
+            </div>
+
+            <div class="layui-card-body">
+
+                {{# layui.each(item.attrs, function(index, t){ }}
+                <p>{{ t.name }} : {{t.value == null ? 'unknow' : t.value }}</p>
+                {{# }); }}
+            </div>
+
+            <div class="layui-card-footer">
+                <button class="layui-btn layui-btn-xs layui-btn-primary" onclick="openEdit('{{ item.id }}')">
+                    <i class="layui-icon layui-icon-edit"></i>
+                </button>
+                <button class="layui-btn layui-btn-xs layui-btn-primary"
+                        onclick="openAttrHistory('{{ item.selfCode }}')">
+                    <i class="layui-icon layui-icon-log"></i>
+                </button>
+                <button class="layui-btn layui-btn-xs layui-btn-primary"
+                        onclick="openAttrHistory('{{ item.selfCode }}')">
+                    <i class="layui-icon layui-icon-chart"></i>
+                </button>
+                <button class="layui-btn layui-btn-xs layui-btn-primary"
+                        onclick="openAttrHistory('{{ item.selfCode }}')">
+                    <i class="layui-icon layui-icon-engine"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {{# }); }}
+</script>
 
 <script th:inline="none">
-    var current_row_data;
-    var selected_tree_node;
-    var table;
-    var tree;
-    var clusterGroup;
-    var map;
-    let markerMap = {};
+    let current_row_data;
+    let selected_tree_node;
+    let table;
+    let tree;
     let reloading = false;
-    var form;
+    let form;
+    let dataList;
+    let laytpl;
 
-    layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
+    layui.use(function () {
         table = layui.table;
         tree = layui.tree;
         form = layui.form;
+        laytpl = layui.laytpl;
 
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
@@ -108,64 +150,6 @@
             })
             form.render();
         })
-
-        map = L.map('map').setView([32.060255, 118.796877], 6);
-        map.on('dragstart zoomstart', function () {
-            userInteracting = true;
-        });
-
-        map.on('dragend zoomend', function () {
-            userInteracting = false;
-        });
-
-
-        var legend = L.control({position: 'topleft'});
-
-        legend.onAdd = function () {
-            var div = L.DomUtil.create('div', 'map-legend');
-
-            div.innerHTML = `
-        <div class="legend-item">
-            <span class="status-dot status-online"></span> 在线
-        </div>
-          <div class="legend-item">
-            <span class="status-dot status-offline"></span> 离线
-        </div>
-        <div class="legend-item">
-            <span class="status-dot status-running"></span> 运行
-        </div>
-        <div class="legend-item">
-            <span class="status-dot status-stopped"></span> 停止
-        </div>
-        <div class="legend-item">
-            <span class="status-dot status-alarm"></span> 报警
-        </div>
-    `;
-            return div;
-        };
-
-        var legend2 = L.control({position: 'topright'});
-
-        legend2.onAdd = function () {
-            var div = L.DomUtil.create('div', 'map-legend');
-
-            div.innerHTML = `
-             <button type="button" class="layui-btn layui-btn-sm" id="fullscreenBtn">
-                <i class="layui-icon  layui-icon-screen-full" id="layui-icon-screen"></i>
-            </button>
-            `;
-            return div;
-        };
-
-        legend.addTo(map);
-        legend2.addTo(map);
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-            attribution: '地图数据 © OpenStreetMap'
-        }).addTo(map);
-
-        clusterGroup = L.markerClusterGroup();
-        map.addLayer(clusterGroup);
-
 
         get(router.workshop_tree, null, function (result) {
             tree.render({
@@ -184,13 +168,13 @@
                     obj.elem.addClass('layui-tree-set-active');
                     //获取当前点击的节点数据
                     selected_tree_node = obj.data;
-                    reloadMap(true);
+                    reloadData();
                 }
             });
         }, function (code, msg) {
         })
 
-        reloadMap(true);
+        reloadData();
 
         $('#tree_query').click(function () {
             var name = $("#tree_name").val(); //搜索值
@@ -203,19 +187,27 @@
         });
 
         form.on('submit(tb-common-search)', function (data) {
-            reloadMap(true, data.field);
+            reloadData(true, data.field);
             return false; // 阻止默认 form 跳转
         });
 
-
+        fullscreen($('#cardContainer').get(0));
     });
 
-    function reloadMap(needViewReset, data) {
+    function openEdit(id) {
+        openWindow('common.edit', '/view/equip_form_edit?id=' + id, ['90%', '70%']);
+    }
+
+    function openAttrHistory(sn) {
+        openWindow('data.collect', '/view/equip_collect_tables?sn=' + sn, ['90%', '70%']);
+    }
+
+    function reloadData() {
         if (reloading) return;
         reloading = true;
 
         try {
-            var params = {
+            let params = {
                 workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
                 name: $('#name').val(),
                 selfCode: $('#selfCode').val(),
@@ -226,30 +218,17 @@
                 queryWorkshop: true,
                 queryAttrs: true,
             };
-            if (data != null) {
-                for (let key in data) {
-                    params[key] = data[key];
-                }
-            }
             post(router.equip_page, params, function (e) {
-                if (needViewReset) {
-                    markerMap = {}
-                    clusterGroup.clearLayers();
-                }
                 if (e == null) {
                     return;
                 }
-                var r = [];
-                e.forEach(function (item) {
-                    if (item.lng != null && item.lat != null) {
-                        r.push(item);
-                    }
-                })
-                if (needViewReset) {
-                    adjustMapView(r)
-                }
+                dataList = e;
+                const tpl = document.getElementById('deviceCardTpl').innerHTML;
+                const container = document.getElementById('cardContainer');
 
-                refreshMarkers(r)
+                laytpl(tpl).render(dataList, function (html) {
+                    container.innerHTML = html;
+                });
             })
         } finally {
             reloading = false;
@@ -257,195 +236,60 @@
     }
 
     setInterval(async () => {
-        reloadMap(false);
+        reloadData();
     }, 5000);
-
-    function calcStatus(d) {
-        if (d.onlineState === 0) {
-            return 'offline';
-        }
-        if (d.alarmState >= 1) {
-            return 'alarm';
-        }
-        if (d.runState === 1) {
-            return 'running';
-        }
-        if (d.runState === 0) {
-            return 'stop';
-        }
-        if (d.onlineState === 1) {
-            return 'online';
-        }
-        return 'offline';
-    }
-
-    function iconByStatus(type, status) {
-        if (type !== 2 && type !== 1) {
-            type = 0;
-        }
-        return L.icon({
-            iconUrl: `/static/img/map/map_${status.toLowerCase()}_${type}.svg`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 32]
-        });
-    }
-
-    function adjustMapView(devices) {
-        if (!devices || devices.length === 0) return;
-
-        if (devices.length === 1) {
-            map.setView([devices[0].lat, devices[0].lng], 15);
-            return;
-        }
-
-        const allSame = devices.every(
-            d => d.lat === devices[0].lat && d.lng === devices[0].lng
-        );
-
-        if (allSame) {
-            map.setView([devices[0].lat, devices[0].lng], 15);
-            return;
-        }
-
-        const bounds = L.latLngBounds(
-            devices.map(d => [d.lat, d.lng])
-        );
-
-        map.fitBounds(bounds, {
-            padding: [40, 40],
-            maxZoom: 17
-        });
-    }
-
-    function refreshMarkers(devices) {
-        const newKeys = new Set();
-        devices.forEach(function (d) {
-            const key = d.id; // 或经纬度组合: `${d.lat},${d.lng}`
-            newKeys.add(key);
-
-            if (markerMap[key]) {
-                // 已有 Marker → 更新状态 / Popup
-                const marker = markerMap[key];
-                updateMarker(marker, d);
-            } else {
-                // 新 Marker
-                const status = calcStatus(d);
-                const marker = L.marker([d.lat, d.lng], {icon: iconByStatus(d.type, status)});
-                marker.bindPopup(createPopupHtml(d));
-                clusterGroup.addLayer(marker);
-                markerMap[key] = marker;
-            }
-        })
-
-        // 移除已不存在的 Marker
-        Object.keys(markerMap).forEach(key => {
-            if (!newKeys.has(key)) {
-                clusterGroup.removeLayer(markerMap[key]);
-                delete markerMap[key];
-            }
-        });
-
-
-        $('#fullscreenBtn').click(function () {
-            if (isFullscreen()) {
-                exitFullscreen();
-            } else {
-                enterFullscreen();
-            }
-            // updateFullscreenButton();  // 更新按钮图标
-        });
-    }
-
-    function isFullscreen() {
-        // 标准浏览器支持
-        if (document.fullscreenElement) {
-            return true;
-        }
-        // Firefox 支持
-        else if (document.mozFullScreenElement) {
-            return true;
-        }
-        // Chrome、Safari、Opera 支持
-        else if (document.webkitFullscreenElement) {
-            return true;
-        }
-        // IE/Edge 支持
-        else if (document.msFullscreenElement) {
-            return true;
-        }
-        return false;
-    }
-
-    function enterFullscreen() {
-        let elem = $('#map').get(0);
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.mozRequestFullScreen) { // Firefox
-            elem.mozRequestFullScreen();
-        } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
-            elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) { // IE/Edge
-            elem.msRequestFullscreen();
-        }
-    }
-
-    // 退出全屏模式
-    function exitFullscreen() {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) { // Firefox
-            document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) { // Chrome, Safari, Opera
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { // IE/Edge
-            document.msExitFullscreen();
-        }
-    }
-
-    // // 更新按钮图标，根据全屏状态切换
-    // function updateFullscreenButton() {
-    //     var icon = document.getElementById('layui-icon-screen');
-    //     if (isFullscreen()) {
-    //         icon.className = 'layui-icon layui-icon-screen-full'; // 设置退出全屏图标
-    //     } else {
-    //         icon.className = 'layui-icon layui-icon-screen-restore'; // 设置进入全屏图标
-    //     }
-    // }
-
-    // 更新 Marker 内部状态和 Popup
-    function updateMarker(marker, device) {
-        // 更新 icon
-        marker.setIcon(iconByStatus(device.type, calcStatus(device)));
-
-        // 更新 Popup
-        marker.setPopupContent(createPopupHtml(device));
-    }
-
-    function createPopupHtml(d) {
-        var runSpan = '<span class="status-dot-map status-offline"></span>';
-        if (d.onlineState === 1) {
-            if (d.runState === 1) {
-                runSpan = '<span class="status-dot-map status-running"></span>';
-            } else {
-                runSpan = '<span class="status-dot-map status-stopped"></span>';
-            }
-        }
-        var html = `<b>${d.name}</b><br/>` +
-            i18np.prop("workshop.name") + `：${d.workshop === null ? '' : d.workshop.name}<br/>` +
-            i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
-            i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
-            i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
-            i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
-
-        if (d.attrs != null) {
-            d.attrs.forEach(function (t) {
-                html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}`;
-            })
-        }
-        return html;
-    }
-
-
 </script>
 </body>
+
+<style>
+    .status-dot {
+        margin: 2px;
+    }
+
+    .device-card {
+        margin: 5px;
+        padding: 10px;
+        border: 1px solid #eceaea; /* 主边框颜色，可自定义 */
+        border-radius: 10px; /* 圆角 */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 浅阴影增加浮雕感 */
+        transition: all 0.2s ease; /* hover 平滑过渡 */
+        background-color: #fff; /* 防止透明影响阴影 */
+        overflow: hidden; /* 防止子元素溢出 */
+    }
+
+    .device-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    }
+
+    .device-card .layui-card-header {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .card-header-1 {
+        display: flex;
+        justify-content: space-between;
+        font-weight: 600;
+        flex-direction: row;
+    }
+
+    .card-header-2 {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: column;
+        font-size: 12px;
+        padding-top: 5px;
+    }
+
+    .device-card .layui-card-body {
+        font-size: 13px;
+        height: 30px;
+        overflow-y: auto;
+    }
+
+    .layui-card-footer {
+        text-align: right;
+    }
+</style>
 </html>

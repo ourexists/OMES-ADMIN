@@ -295,6 +295,11 @@ public class ViewController {
         return "equip_realtime";
     }
 
+    @RequestMapping("/view/equip_gis")
+    public String equip_gis() {
+        return "equip_gis";
+    }
+
     @RequestMapping("/view/equipattr_form_edit")
     public String equipattr_form_edit() {
         return "equipattr_form_edit";

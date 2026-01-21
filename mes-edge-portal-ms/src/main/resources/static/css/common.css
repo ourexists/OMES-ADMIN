@@ -61,3 +61,57 @@
     background: #FAAD14;
     box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
 }
+
+.main-panel {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    height: 100%; /* 全屏占满高度 */
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.left-panel,
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 占满父容器 */
+    overflow: hidden; /* 防止外溢 */
+    flex: 1 1 auto;
+    overflow-y: auto; /* 独立纵向滚动 */
+    padding: 10px;
+}
+
+.right-panel > form {
+    flex: 0 0 auto; /* 高度由内容决定 */
+}
+
+.right-panel .common-data-container {
+    flex: 1 1 auto; /* 吃掉剩余空间 */
+    overflow-y: auto; /* 独立滚动 */
+    padding-right: 10px;
+    background: #ffffff;
+}
+
+.fullscreenBtn {
+    position: fixed; /* 固定在窗口 */
+    top: 20px;
+    right: 20px; /* 距离右边 */
+    z-index: 999; /* 保证在最上层 */
+    border-radius: 50%; /* 圆形按钮 */
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 悬浮感 */
+    transition: all 0.2s ease;
+}
+
+.fullscreenBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
