@@ -364,18 +364,14 @@ function delTreeNode(url, ids, successFuc, failFuc) {
 var tabFunction = {
     //新增tab url 页面地址 id 对应data-id name标题
     tabAdd: function (url, id, name, filter) {
+        var iframeId = 'iframe_' + id;
         layui.element.tabAdd(filter, {
             title: name,
-            content: "<iframe id='loadTable' src='" + url + "' width='100%' height='1000' allowfullscreen frameborder=\"0\" scrolling='false' ></iframe>",
+            content: "<iframe id='" + iframeId + "' src='" + url + "' frameborder='0' ></iframe>",
             id: id,
             change: true,
             type: 2
         });
-        var iframe = document.getElementById('loadTable')
-        var iframeWin = iframe.contentWindow || iframe.contentDocument.parentWindow;//兼容
-        if (iframeWin.document.body) {
-            iframe.height = iframeWin.document.documentElement.scrollHeight || iframeWin.document.body.scrollHeight;//滚动条高度
-        }
     },
     //根据id切换tab
     tabChange: function (id, filter) {
@@ -423,3 +419,53 @@ function input_limit_int(value) {
     return value.replace(/[^\.\d]/g, '').replace('.', '');
 }
 
+
+//全屏放大
+function enterFullscreen(elem) {
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.mozRequestFullScreen) { // Firefox
+        elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { // IE/Edge
+        elem.msRequestFullscreen();
+    }
+}
+
+function fullscreen(elem) {
+    let btn = $('.fullscreenBtn')[0]
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    btn.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - btn.getBoundingClientRect().left;
+        offsetY = e.clientY - btn.getBoundingClientRect().top;
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        let x = e.clientX - offsetX;
+        let y = e.clientY - offsetY;
+
+        // 限制在窗口范围内
+        const maxX = window.innerWidth - btn.offsetWidth;
+        const maxY = window.innerHeight - btn.offsetHeight;
+        x = Math.max(0, Math.min(x, maxX));
+        y = Math.max(0, Math.min(y, maxY));
+
+        btn.style.left = x + 'px';
+        btn.style.top = y + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    $('.fullscreenBtn').click(function () {
+        enterFullscreen(elem);
+    });
+}

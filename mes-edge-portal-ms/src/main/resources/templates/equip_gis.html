@@ -1,0 +1,373 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
+
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/leaflet/leaflet.js"></script>
+    <script src="../static/marker/leaflet.markercluster.js"></script>
+</head>
+<style>
+    #map {
+        flex: 1 1 auto; /* 吃掉剩余空间 */
+        margin-top: 10px;
+    }
+</style>
+<body>
+<div class="layui-tab-content main-panel">
+    <button type="button" class="layui-btn layui-btn-sm fullscreenBtn">
+        <i class="layui-icon  layui-icon-screen-full" id="layui-icon-screen"></i>
+    </button>
+    <div class="layui-col-md2 left-panel">
+        <div class="layui-card">
+            <div class="layui-card-body mini-bar" id="ltTree">
+                <div class="layui-inline">
+                    <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
+                </div>
+                <a class="layui-btn layui-btn-primary" id="tree_query">
+                    <i class="layui-icon layui-icon-search"></i>
+                </a>
+                <div id="left-tree"></div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-md8 right-panel">
+        <form class="layui-form layui-row layui-col-space16">
+            <div class="layui-col-md4">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-auz"></i>
+                    </div>
+                    <input type="text" name="name" id="name" value=""
+                           class="layui-input"
+                           lay-affix="clear" lang-i18n="equip.name">
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-auz"></i>
+                    </div>
+                    <input type="text" name="selfCode" id="selfCode"
+                           lay-affix="clear" class="layui-input" lang-i18n="equip.code">
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-auz"></i>
+                    </div>
+                    <select name="type" id="type">
+                        <option value="" lang-i18n="equip.type" selected></option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="layui-btn-container layui-col-xs12">
+                <button class="layui-btn" lay-submit lay-filter="tb-common-search" lang-i18n="common.search">
+                    Search
+                </button>
+                <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+            </div>
+        </form>
+        <div id="map"></div>
+    </div>
+</div>
+
+
+<script th:inline="none">
+    var current_row_data;
+    var selected_tree_node;
+    var table;
+    var tree;
+    var clusterGroup;
+    var map;
+    let markerMap = {};
+    let reloading = false;
+    var form;
+
+    layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
+        table = layui.table;
+        tree = layui.tree;
+        form = layui.form;
+
+        get(router.equip_type, null, function (result) {
+            $.each(result, function (index, item) {
+                $('#type').append(new Option(item, index));
+            })
+            form.render();
+        })
+
+        map = L.map('map').setView([32.060255, 118.796877], 6);
+        map.on('dragstart zoomstart', function () {
+            userInteracting = true;
+        });
+
+        map.on('dragend zoomend', function () {
+            userInteracting = false;
+        });
+
+
+        var legend = L.control({position: 'topleft'});
+
+        legend.onAdd = function () {
+            var div = L.DomUtil.create('div', 'map-legend');
+
+            div.innerHTML = `
+        <div class="legend-item">
+            <span class="status-dot status-online"></span> 在线
+        </div>
+          <div class="legend-item">
+            <span class="status-dot status-offline"></span> 离线
+        </div>
+        <div class="legend-item">
+            <span class="status-dot status-running"></span> 运行
+        </div>
+        <div class="legend-item">
+            <span class="status-dot status-stopped"></span> 停止
+        </div>
+        <div class="legend-item">
+            <span class="status-dot status-alarm"></span> 报警
+        </div>
+    `;
+            return div;
+        };
+
+        legend.addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: '地图数据 © OpenStreetMap'
+        }).addTo(map);
+
+        clusterGroup = L.markerClusterGroup();
+        map.addLayer(clusterGroup);
+
+
+        get(router.workshop_tree, null, function (result) {
+            tree.render({
+                elem: '#left-tree',
+                data: result,
+                onlyIconControl: true,  // 是否仅允许节点左侧图标控制展开收缩
+                id: 'left-tree',
+                edit: [],
+                extEdit: true,
+                customName: { // 自定义 data 字段名 --- 2.8.14+
+                    title: 'name',
+                    field: 'selfCode'
+                },
+                click: function (obj) {
+                    $(".layui-tree-set").removeClass('layui-tree-set-active');
+                    obj.elem.addClass('layui-tree-set-active');
+                    //获取当前点击的节点数据
+                    selected_tree_node = obj.data;
+                    reloadMap(true);
+                }
+            });
+        }, function (code, msg) {
+        })
+
+        reloadMap(true);
+
+        $('#tree_query').click(function () {
+            var name = $("#tree_name").val(); //搜索值
+            var elem = $("#left-tree").find('.layui-tree-txt').css('color', ''); //搜索文本与设置默认颜色
+            if (!name) {
+                return; //无搜索值返回
+            }
+            elem.filter(':contains(' + name + ')').css('color', '#FFB800'); //搜索文本并设置标志颜色
+            elem.parents('.layui-tree-pack').prev().find('.layui-tree-iconClick').click(); //展开选项
+        });
+
+        form.on('submit(tb-common-search)', function (data) {
+            reloadMap(true, data.field);
+            return false; // 阻止默认 form 跳转
+        });
+
+        fullscreen($('#map').get(0))
+    });
+
+    function reloadMap(needViewReset, data) {
+        if (reloading) return;
+        reloading = true;
+
+        try {
+            var params = {
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+                name: $('#name').val(),
+                selfCode: $('#selfCode').val(),
+                type: $('#type').val(),
+                needRealtime: true,
+                requirePage: false,
+                needWorkshopCascade: true,
+                queryWorkshop: true,
+                queryAttrs: true,
+            };
+            if (data != null) {
+                for (let key in data) {
+                    params[key] = data[key];
+                }
+            }
+            post(router.equip_page, params, function (e) {
+                if (needViewReset) {
+                    markerMap = {}
+                    clusterGroup.clearLayers();
+                }
+                if (e == null) {
+                    return;
+                }
+                var r = [];
+                e.forEach(function (item) {
+                    if (item.lng != null && item.lat != null) {
+                        r.push(item);
+                    }
+                })
+                if (needViewReset) {
+                    adjustMapView(r)
+                }
+
+                refreshMarkers(r)
+            })
+        } finally {
+            reloading = false;
+        }
+    }
+
+    setInterval(async () => {
+        reloadMap(false);
+    }, 5000);
+
+    function calcStatus(d) {
+        if (d.onlineState === 0) {
+            return 'offline';
+        }
+        if (d.alarmState >= 1) {
+            return 'alarm';
+        }
+        if (d.runState === 1) {
+            return 'running';
+        }
+        if (d.runState === 0) {
+            return 'stop';
+        }
+        if (d.onlineState === 1) {
+            return 'online';
+        }
+        return 'offline';
+    }
+
+    function iconByStatus(type, status) {
+        if (type !== 2 && type !== 1) {
+            type = 0;
+        }
+        return L.icon({
+            iconUrl: `/static/img/map/map_${status.toLowerCase()}_${type}.svg`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 32]
+        });
+    }
+
+    function adjustMapView(devices) {
+        if (!devices || devices.length === 0) return;
+
+        if (devices.length === 1) {
+            map.setView([devices[0].lat, devices[0].lng], 15);
+            return;
+        }
+
+        const allSame = devices.every(
+            d => d.lat === devices[0].lat && d.lng === devices[0].lng
+        );
+
+        if (allSame) {
+            map.setView([devices[0].lat, devices[0].lng], 15);
+            return;
+        }
+
+        const bounds = L.latLngBounds(
+            devices.map(d => [d.lat, d.lng])
+        );
+
+        map.fitBounds(bounds, {
+            padding: [40, 40],
+            maxZoom: 17
+        });
+    }
+
+    function refreshMarkers(devices) {
+        const newKeys = new Set();
+        devices.forEach(function (d) {
+            const key = d.id; // 或经纬度组合: `${d.lat},${d.lng}`
+            newKeys.add(key);
+
+            if (markerMap[key]) {
+                // 已有 Marker → 更新状态 / Popup
+                const marker = markerMap[key];
+                updateMarker(marker, d);
+            } else {
+                // 新 Marker
+                const status = calcStatus(d);
+                const marker = L.marker([d.lat, d.lng], {icon: iconByStatus(d.type, status)});
+                marker.bindPopup(createPopupHtml(d));
+                clusterGroup.addLayer(marker);
+                markerMap[key] = marker;
+            }
+        })
+
+        // 移除已不存在的 Marker
+        Object.keys(markerMap).forEach(key => {
+            if (!newKeys.has(key)) {
+                clusterGroup.removeLayer(markerMap[key]);
+                delete markerMap[key];
+            }
+        });
+
+
+    }
+
+    // 更新 Marker 内部状态和 Popup
+    function updateMarker(marker, device) {
+        // 更新 icon
+        marker.setIcon(iconByStatus(device.type, calcStatus(device)));
+
+        // 更新 Popup
+        marker.setPopupContent(createPopupHtml(device));
+    }
+
+    function createPopupHtml(d) {
+        var runSpan = '<span class="status-dot-map status-offline"></span>';
+        if (d.onlineState === 1) {
+            if (d.runState === 1) {
+                runSpan = '<span class="status-dot-map status-running"></span>';
+            } else {
+                runSpan = '<span class="status-dot-map status-stopped"></span>';
+            }
+        }
+        var html = `<b>${d.name}</b><br/>` +
+            i18np.prop("workshop.name") + `：${d.workshop === null ? '' : d.workshop.name}<br/>` +
+            i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
+            i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
+            i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
+            i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
+
+        if (d.attrs != null) {
+            d.attrs.forEach(function (t) {
+                html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}`;
+            })
+        }
+        return html;
+    }
+</script>
+</body>
+</html>

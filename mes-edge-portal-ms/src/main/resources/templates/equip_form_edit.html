@@ -74,7 +74,7 @@
     </form>
 </div>
 <script>
-    var current_row_data = parent.current_row_data;
+    var current_row_data;
     var selected_tree_node = parent.selected_tree_node;
     layui.use(function () {
         var form = layui.form,
@@ -87,7 +87,13 @@
                 $('#type').append(new Option(item, index));
             })
             form.render();
-            if (current_row_data != null) {
+        })
+
+        let id = layui.url().search.id;
+
+        if (id != null) {
+            get(router.equip_id, {id: id}, function (result) {
+                current_row_data = result;
                 form.val("common-edit-form", Object.assign({}, current_row_data));
                 if (current_row_data.selfCode !== "") {
                     $(".lay-unable-edit").attr("disabled", "block");
@@ -95,11 +101,11 @@
                 if (current_row_data.lat != null && current_row_data.lng != null) {
                     ln = [current_row_data.lat, current_row_data.lng];
                 }
-            } else {
-                form.val("common-edit-form", {});
-                current_row_data = {}
-            }
-        })
+            });
+        } else {
+            form.val("common-edit-form", {});
+            current_row_data = {}
+        }
 
 
         let map = L.map('map').setView(ln, 6);

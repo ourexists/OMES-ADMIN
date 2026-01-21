@@ -13,6 +13,45 @@
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
 </head>
+<style>
+    html, body {
+        height: 100%;
+    }
+
+    .layui-layout-admin .layui-body {
+        bottom: 44px; /* footer 高度，默认是 44 */
+    }
+
+    .layui-body .layui-tab {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .layui-body .layui-tab-title {
+        flex: 0 0 auto; /* tab 标题固定 */
+    }
+
+    .layui-body .layui-tab-content {
+        height: 100%;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .layui-body .layui-tab-content .layui-tab-item {
+        height: 100%;
+        padding: 0;
+        overflow: hidden;
+    }
+
+
+    .layui-tab-content iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
+</style>
 <body>
 <div class="layui-layout layui-layout-admin">
     <div class="layui-header">
