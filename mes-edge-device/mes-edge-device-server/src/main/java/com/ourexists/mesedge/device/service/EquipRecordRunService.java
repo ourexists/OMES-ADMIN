@@ -6,8 +6,10 @@ package com.ourexists.mesedge.device.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordRunDto;
 import com.ourexists.mesedge.device.model.EquipRecordRunPageQuery;
+import com.ourexists.mesedge.device.model.EquipRecordRunVo;
 import com.ourexists.mesedge.device.pojo.EquipRecordRun;
 
 import java.util.List;
@@ -24,4 +26,6 @@ public interface EquipRecordRunService extends IMyBatisPlusService<EquipRecordRu
     void delete(List<String> ids);
 
     void add(EquipRecordRunDto dto);
+
+    List<EquipRecordRunVo> countMerging(EquipRecordCountQuery query);
 }

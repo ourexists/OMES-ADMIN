@@ -9,6 +9,7 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmDto;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmPageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmVo;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -29,4 +30,6 @@ public interface EquipRecordAlarmFeign {
     //    @Operation(summary = "批量新增记录", description = "批量新增记录")
 //    @PostMapping("addBatch")
     JsonResponseEntity<Boolean> addBatch(@Validated @RequestBody List<EquipRecordAlarmDto> dtos);
+
+    JsonResponseEntity<List<EquipRecordAlarmVo>> countMerging(@Validated @RequestBody EquipRecordCountQuery query);
 }

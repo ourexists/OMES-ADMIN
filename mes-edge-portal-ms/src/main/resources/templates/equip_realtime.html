@@ -94,13 +94,12 @@
                     <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"></span>
                 </div>
                 <div class="card-header-2">
-                    <p>{{ i18np.prop('equip.code') }}: {{ item.selfCode }}</p>
-                    <p>{{ i18np.prop('workshop.name') }}: {{ item.workshop === null ? '' : item.workshop.name }}</p>
+                    <p>{{ i18np.prop('equip.code') }}:{{ item.selfCode }}</p>
+                    <p>{{ i18np.prop('workshop.name') }}:{{ item.workshop === null ? '' : item.workshop.name }}</p>
                 </div>
             </div>
 
             <div class="layui-card-body">
-
                 {{# layui.each(item.attrs, function(index, t){ }}
                 <p>{{ t.name }} : {{t.value == null ? 'unknow' : t.value }}</p>
                 {{# }); }}
@@ -110,18 +109,20 @@
                 <button class="layui-btn layui-btn-xs layui-btn-primary" onclick="openEdit('{{ item.id }}')">
                     <i class="layui-icon layui-icon-edit"></i>
                 </button>
+                {{# if (item.attrs!=null && item.attrs.length>0) { }}
                 <button class="layui-btn layui-btn-xs layui-btn-primary"
                         onclick="openAttrHistory('{{ item.selfCode }}')">
                     <i class="layui-icon layui-icon-log"></i>
                 </button>
                 <button class="layui-btn layui-btn-xs layui-btn-primary"
-                        onclick="openAttrHistory('{{ item.selfCode }}')">
+                        onclick="openCollectEcharts('{{ item.selfCode }}')">
                     <i class="layui-icon layui-icon-chart"></i>
                 </button>
                 <button class="layui-btn layui-btn-xs layui-btn-primary"
-                        onclick="openAttrHistory('{{ item.selfCode }}')">
+                        onclick="openRunEcharts('{{ item.selfCode }}')">
                     <i class="layui-icon layui-icon-engine"></i>
                 </button>
+                {{# } }}
             </div>
         </div>
     </div>
@@ -195,11 +196,19 @@
     });
 
     function openEdit(id) {
-        openWindow('common.edit', '/view/equip_form_edit?id=' + id, ['90%', '70%']);
+        openWindow('common.edit', '/view/equip_form_edit?id=' + id, ['90%', '90%']);
     }
 
     function openAttrHistory(sn) {
-        openWindow('data.collect', '/view/equip_collect_tables?sn=' + sn, ['90%', '70%']);
+        openWindow('data.collect', '/view/equip_collect_tables?sn=' + sn, ['90%', '90%']);
+    }
+
+    function openCollectEcharts(sn) {
+        openWindow('data.echart', '/view/equip_collect_echarts?sn=' + sn, ['60%', '90%']);
+    }
+
+    function openRunEcharts(sn) {
+        openWindow('data.collect', '/view/equip_run_echarts?sn=' + sn, ['60%', '90%']);
     }
 
     function reloadData() {
@@ -278,7 +287,7 @@
         display: flex;
         justify-content: space-between;
         flex-direction: column;
-        font-size: 12px;
+        font-size: 10px;
         padding-top: 5px;
     }
 

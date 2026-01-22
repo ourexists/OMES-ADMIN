@@ -9,6 +9,7 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.mesedge.device.feign.EquipRecordOnlineFeign;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineVo;
@@ -60,5 +61,11 @@ public class EquipRecordOnlineViewer implements EquipRecordOnlineFeign {
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
         service.delete(idsDto.getIds());
         return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "统计", description = "统计")
+    @PostMapping("countMerging")
+    public JsonResponseEntity<List<EquipRecordOnlineVo>> countMerging(@Validated @RequestBody EquipRecordCountQuery query) {
+        return JsonResponseEntity.success(service.countMerging(query));
     }
 }

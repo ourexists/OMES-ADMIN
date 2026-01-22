@@ -6,12 +6,17 @@ package com.ourexists.mesedge.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
+import com.ourexists.mesedge.device.core.EquipRealtime;
+import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.mapper.EquipRecordOnlineMapper;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
+import com.ourexists.mesedge.device.model.EquipRecordOnlineVo;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.pojo.Device;
-import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
 import com.ourexists.mesedge.device.pojo.EquipRecordOnline;
 import com.ourexists.mesedge.device.service.DeviceService;
 import com.ourexists.mesedge.device.service.EquipRecordOnlineService;
@@ -20,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -28,6 +35,9 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private EquipRealtimeManager realtimeManager;
 
     @Override
     public Page<EquipRecordOnline> selectByPage(EquipRecordOnlinePageQuery dto) {
@@ -71,5 +81,65 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
         } else {
             this.save(current);
         }
+    }
+
+    @Override
+    public List<EquipRecordOnlineVo> countMerging(EquipRecordCountQuery query) {
+        List<EquipRecordOnlineVo> r = new ArrayList<>();
+        EquipRealtime equipRealtime = realtimeManager.get(UserContext.getTenant().getTenantId(), query.getSn());
+        Date now = new Date();
+        //限制最大查询时间不能大于当前时间
+        if (query.getEndDate().after(now)) {
+            query.setEndDate(now);
+        }
+        if (equipRealtime != null && equipRealtime.getOnlineChangeTime() != null
+                && !equipRealtime.getOnlineChangeTime().after(query.getStartDate())) {
+            EquipRecordOnlineVo e = new EquipRecordOnlineVo();
+            e.setSn(query.getSn());
+            e.setStartTime(query.getStartDate());
+            e.setEndTime(query.getEndDate());
+            e.setState(equipRealtime.getOnlineState());
+            e.setTenantId(equipRealtime.getTenantId());
+            r.add(e);
+        } else {
+            Date queryEndDate;
+            if (equipRealtime != null && equipRealtime.getOnlineChangeTime() != null &&
+                    equipRealtime.getOnlineChangeTime().before(query.getEndDate())) {
+                EquipRecordOnlineVo e = new EquipRecordOnlineVo();
+                e.setSn(query.getSn());
+                e.setStartTime(equipRealtime.getOnlineChangeTime());
+                e.setEndTime(query.getEndDate());
+                e.setState(equipRealtime.getRunState());
+                e.setTenantId(equipRealtime.getTenantId());
+                r.add(e);
+                queryEndDate = equipRealtime.getOnlineChangeTime();
+            } else {
+                queryEndDate = query.getEndDate();
+            }
+            LambdaQueryWrapper<EquipRecordOnline> qw = new LambdaQueryWrapper<EquipRecordOnline>()
+                    .eq(EquipRecordOnline::getSn, query.getSn())
+                    .and(wrapper -> {
+                        wrapper
+                                .between(EquipRecordOnline::getStartTime, query.getStartDate(), queryEndDate)
+                                .or()
+                                .between(EquipRecordOnline::getEndTime, query.getStartDate(), queryEndDate);
+                    })
+                    .orderByDesc(EquipRecordOnline::getId);
+            List<EquipRecordOnlineVo> vos = EquipRecordOnline.covert(this.list(qw), EquipRecordOnlineVo.class);
+            if (CollectionUtil.isNotBlank(vos)) {
+                for (EquipRecordOnlineVo vo : vos) {
+                    if (vo.getEndTime() == null) {
+                        vo.setEndTime(queryEndDate);
+                    }
+                    if (vo.getStartTime().before(queryEndDate)) {
+                        if (vo.getStartTime().before(query.getStartDate())) {
+                            vo.setStartTime(query.getStartDate());
+                        }
+                        r.add(vo);
+                    }
+                }
+            }
+        }
+        return r;
     }
 }

@@ -6,10 +6,16 @@ package com.ourexists.mesedge.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
+import com.ourexists.mesedge.device.core.EquipRealtime;
+import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.mapper.EquipRecordRunMapper;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordRunDto;
 import com.ourexists.mesedge.device.model.EquipRecordRunPageQuery;
+import com.ourexists.mesedge.device.model.EquipRecordRunVo;
 import com.ourexists.mesedge.device.pojo.Device;
 import com.ourexists.mesedge.device.pojo.EquipRecordRun;
 import com.ourexists.mesedge.device.service.DeviceService;
@@ -19,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -27,6 +35,9 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private EquipRealtimeManager realtimeManager;
 
     @Override
     public Page<EquipRecordRun> selectByPage(EquipRecordRunPageQuery dto) {
@@ -70,5 +81,65 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
         } else {
             this.save(current);
         }
+    }
+
+    @Override
+    public List<EquipRecordRunVo> countMerging(EquipRecordCountQuery query) {
+        List<EquipRecordRunVo> r = new ArrayList<>();
+        EquipRealtime equipRealtime = realtimeManager.get(UserContext.getTenant().getTenantId(), query.getSn());
+        Date now = new Date();
+        //限制最大查询时间不能大于当前时间
+        if (query.getEndDate().after(now)) {
+            query.setEndDate(now);
+        }
+        if (equipRealtime != null && equipRealtime.getRunChangeTime() != null
+                && !equipRealtime.getRunChangeTime().after(query.getStartDate())) {
+            EquipRecordRunVo e = new EquipRecordRunVo();
+            e.setSn(query.getSn());
+            e.setStartTime(query.getStartDate());
+            e.setEndTime(query.getEndDate());
+            e.setState(equipRealtime.getRunState());
+            e.setTenantId(equipRealtime.getTenantId());
+            r.add(e);
+        } else {
+            Date queryEndDate;
+            if (equipRealtime != null && equipRealtime.getRunChangeTime() != null &&
+                    equipRealtime.getRunChangeTime().before(query.getEndDate())) {
+                EquipRecordRunVo e = new EquipRecordRunVo();
+                e.setSn(query.getSn());
+                e.setStartTime(equipRealtime.getRunChangeTime());
+                e.setEndTime(query.getEndDate());
+                e.setState(equipRealtime.getRunState());
+                e.setTenantId(equipRealtime.getTenantId());
+                r.add(e);
+                queryEndDate = equipRealtime.getRunChangeTime();
+            } else {
+                queryEndDate = query.getEndDate();
+            }
+            LambdaQueryWrapper<EquipRecordRun> qw = new LambdaQueryWrapper<EquipRecordRun>()
+                    .eq(EquipRecordRun::getSn, query.getSn())
+                    .and(wrapper -> {
+                        wrapper
+                                .between(EquipRecordRun::getStartTime, query.getStartDate(), queryEndDate)
+                                .or()
+                                .between(EquipRecordRun::getEndTime, query.getStartDate(), queryEndDate);
+                    })
+                    .orderByDesc(EquipRecordRun::getId);
+            List<EquipRecordRunVo> equipRecordRunVos = EquipRecordRun.covert(this.list(qw), EquipRecordRunVo.class);
+            if (CollectionUtil.isNotBlank(equipRecordRunVos)) {
+                for (EquipRecordRunVo equipRecordRunVo : equipRecordRunVos) {
+                    if (equipRecordRunVo.getEndTime() == null) {
+                        equipRecordRunVo.setEndTime(queryEndDate);
+                    }
+                    if (equipRecordRunVo.getStartTime().before(queryEndDate)) {
+                        if (equipRecordRunVo.getStartTime().before(query.getStartDate())) {
+                            equipRecordRunVo.setStartTime(query.getStartDate());
+                        }
+                        r.add(equipRecordRunVo);
+                    }
+                }
+            }
+        }
+        return r;
     }
 }

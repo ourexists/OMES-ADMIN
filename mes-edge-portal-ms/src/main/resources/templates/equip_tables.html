@@ -256,7 +256,7 @@
                     break;
                 case 'add':
                     current_row_data = null;
-                    openWindow('common.add', '/view/equip_form_edit?workshopCode=' + selected_tree_node.selfCode, ['90%', '70%']);
+                    openWindow('common.add', '/view/equip_form_edit?workshopCode=' + selected_tree_node.selfCode, ['90%', '90%']);
                     break;
                 case 'deleteBatch':
                     var data = checkStatus.data;
@@ -276,7 +276,7 @@
         table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
             var data = obj.data; // 获得当前行数据
             if (obj.event === 'edit') {
-                openWindow('common.edit', '/view/equip_form_edit?id=' + data.id, ['90%', '70%']);
+                openWindow('common.edit', '/view/equip_form_edit?id=' + data.id, ['90%', '90%']);
             } else if (obj.event === 'del') {
                 delWindow(router.equip_del, [data.id], reloadTb);
             } else if (obj.event === 'equipAttr') {
