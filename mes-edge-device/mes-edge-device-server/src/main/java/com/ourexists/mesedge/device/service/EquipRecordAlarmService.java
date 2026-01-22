@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmDto;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmPageQuery;
+import com.ourexists.mesedge.device.model.EquipRecordAlarmVo;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
 
 import java.util.List;
@@ -24,4 +26,6 @@ public interface EquipRecordAlarmService extends IMyBatisPlusService<EquipRecord
     void delete(List<String> ids);
 
     void add(EquipRecordAlarmDto dto);
+
+    List<EquipRecordAlarmVo> countMerging(EquipRecordCountQuery query);
 }

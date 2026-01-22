@@ -7,8 +7,11 @@ package com.ourexists.mesedge.portal.device.controller;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.device.feign.EquipRecordOnlineFeign;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineVo;
+import com.ourexists.mesedge.device.model.EquipRecordRunVo;
+import com.ourexists.mesedge.device.pojo.EquipRecordOnline;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,5 +41,11 @@ public class EquipRecordOnlineController {
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
         return feign.delete(idsDto);
+    }
+
+    @Operation(summary = "统计", description = "统计")
+    @PostMapping("countMerging")
+    public JsonResponseEntity<List<EquipRecordOnlineVo>> countMerging(@RequestBody EquipRecordCountQuery query) {
+        return feign.countMerging(query);
     }
 }

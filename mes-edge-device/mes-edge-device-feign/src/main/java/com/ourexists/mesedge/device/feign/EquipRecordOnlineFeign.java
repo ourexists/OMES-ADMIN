@@ -6,6 +6,7 @@ package com.ourexists.mesedge.device.feign;
 
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineVo;
@@ -22,11 +23,13 @@ public interface EquipRecordOnlineFeign {
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
-//    @Operation(summary = "新增记录", description = "新增记录")
+    //    @Operation(summary = "新增记录", description = "新增记录")
 //    @PostMapping("add")
     JsonResponseEntity<Boolean> add(@Validated @RequestBody EquipRecordOnlineDto dto);
 
-//    @Operation(summary = "批量新增记录", description = "批量新增记录")
+    //    @Operation(summary = "批量新增记录", description = "批量新增记录")
 //    @PostMapping("addBatch")
     JsonResponseEntity<Boolean> addBatch(@Validated @RequestBody List<EquipRecordOnlineDto> dtos);
+
+    JsonResponseEntity<List<EquipRecordOnlineVo>> countMerging(@Validated @RequestBody EquipRecordCountQuery query);
 }

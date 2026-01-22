@@ -9,6 +9,7 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.mesedge.device.feign.EquipRecordAlarmFeign;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmPageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmVo;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,5 +39,11 @@ public class EquipRecordAlarmController {
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
         return feign.delete(idsDto);
+    }
+
+    @Operation(summary = "统计", description = "统计")
+    @PostMapping("countMerging")
+    public JsonResponseEntity<List<EquipRecordAlarmVo>> countMerging(@RequestBody EquipRecordCountQuery query) {
+        return feign.countMerging(query);
     }
 }

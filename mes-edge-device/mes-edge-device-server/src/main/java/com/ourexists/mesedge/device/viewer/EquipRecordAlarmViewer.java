@@ -12,6 +12,7 @@ import com.ourexists.mesedge.device.feign.EquipRecordAlarmFeign;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmDto;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmPageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmVo;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
 import com.ourexists.mesedge.device.service.EquipRecordAlarmService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,5 +61,11 @@ public class EquipRecordAlarmViewer implements EquipRecordAlarmFeign {
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
         service.delete(idsDto.getIds());
         return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "统计", description = "统计")
+    @PostMapping("countMerging")
+    public JsonResponseEntity<List<EquipRecordAlarmVo>> countMerging(@Validated @RequestBody EquipRecordCountQuery query) {
+        return JsonResponseEntity.success(service.countMerging(query));
     }
 }

@@ -6,10 +6,16 @@ package com.ourexists.mesedge.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
+import com.ourexists.mesedge.device.core.EquipRealtime;
+import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.mapper.EquipRecordAlarmMapper;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmDto;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmPageQuery;
+import com.ourexists.mesedge.device.model.EquipRecordAlarmVo;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.pojo.Device;
 import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
 import com.ourexists.mesedge.device.service.DeviceService;
@@ -19,6 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -27,6 +35,9 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private EquipRealtimeManager realtimeManager;
 
     @Override
     public Page<EquipRecordAlarm> selectByPage(EquipRecordAlarmPageQuery dto) {
@@ -70,5 +81,65 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
         } else {
             this.save(current);
         }
+    }
+
+    @Override
+    public List<EquipRecordAlarmVo> countMerging(EquipRecordCountQuery query) {
+        List<EquipRecordAlarmVo> r = new ArrayList<>();
+        EquipRealtime equipRealtime = realtimeManager.get(UserContext.getTenant().getTenantId(), query.getSn());
+        Date now = new Date();
+        //限制最大查询时间不能大于当前时间
+        if (query.getEndDate().after(now)) {
+            query.setEndDate(now);
+        }
+        if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null
+                && !equipRealtime.getAlarmChangeTime().after(query.getStartDate())) {
+            EquipRecordAlarmVo e = new EquipRecordAlarmVo();
+            e.setSn(query.getSn());
+            e.setStartTime(query.getStartDate());
+            e.setEndTime(query.getEndDate());
+            e.setState(equipRealtime.getAlarmState());
+            e.setTenantId(equipRealtime.getTenantId());
+            r.add(e);
+        } else {
+            Date queryEndDate;
+            if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null &&
+                    equipRealtime.getAlarmChangeTime().before(query.getEndDate())) {
+                EquipRecordAlarmVo e = new EquipRecordAlarmVo();
+                e.setSn(query.getSn());
+                e.setStartTime(equipRealtime.getAlarmChangeTime());
+                e.setEndTime(query.getEndDate());
+                e.setState(equipRealtime.getAlarmState());
+                e.setTenantId(equipRealtime.getTenantId());
+                r.add(e);
+                queryEndDate = equipRealtime.getAlarmChangeTime();
+            } else {
+                queryEndDate = query.getEndDate();
+            }
+            LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
+                    .eq(EquipRecordAlarm::getSn, query.getSn())
+                    .and(wrapper -> {
+                        wrapper
+                                .between(EquipRecordAlarm::getStartTime, query.getStartDate(), queryEndDate)
+                                .or()
+                                .between(EquipRecordAlarm::getEndTime, query.getStartDate(), queryEndDate);
+                    })
+                    .orderByDesc(EquipRecordAlarm::getId);
+            List<EquipRecordAlarmVo> vos = EquipRecordAlarm.covert(this.list(qw), EquipRecordAlarmVo.class);
+            if (CollectionUtil.isNotBlank(vos)) {
+                for (EquipRecordAlarmVo vo : vos) {
+                    if (vo.getEndTime() == null) {
+                        vo.setEndTime(queryEndDate);
+                    }
+                    if (vo.getStartTime().before(queryEndDate)) {
+                        if (vo.getStartTime().before(query.getStartDate())) {
+                            vo.setStartTime(query.getStartDate());
+                        }
+                        r.add(vo);
+                    }
+                }
+            }
+        }
+        return r;
     }
 }

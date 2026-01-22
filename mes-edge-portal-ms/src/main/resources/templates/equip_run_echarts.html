@@ -1,0 +1,278 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/js/echarts.min.js"></script>
+</head>
+<style>
+    #chart-container {
+        height: 300rpx;
+        width: 100%;
+        background: rgba(220, 220, 220, 0.3);
+    }
+</style>
+<body>
+<div class="layui-tab-content" style="padding: 15px;">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-form-item">
+            <div class="layui-inline" id="timeduration">
+                <div class="layui-input-inline">
+                    <input type="text" autocomplete="off" id="startDate" name="startDate"
+                           class="layui-input"
+                           placeholder="startTime" lang-i18n="common.starttime">
+                </div>
+                <div class="layui-form-mid">-</div>
+                <div class="layui-input-inline">
+                    <input type="text" autocomplete="off" id="endDate" name="endDate" class="layui-input"
+                           placeholder="endTime" lang-i18n="common.endtime">
+                </div>
+            </div>
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="tb-common-search"
+                    lang-i18n="common.search"></button>
+            <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear"></button>
+        </div>
+    </form>
+    <div id="chart-container"></div>
+</div>
+
+<script th:inline="none">
+    let datalist = [];
+    let config_data = [];
+    let sn;
+    let chart;
+
+    var chart_option = {
+        title: {
+            text: '设备运行趋势'
+        },
+        tooltip: {
+            confine: true,
+            formatter: (params) => {
+                const type = params.data[0];
+                const state = params.data[3];
+                let desc = '';
+                if (type == 0) {
+                    if (state == 1) {
+                        desc = '在线';
+                    } else {
+                        desc = t('离线');
+                    }
+                } else if (type == 1) {
+                    if (state == 1) {
+                        desc = '运行';
+                    } else {
+                        desc = '停止';
+                    }
+                } else if (type == 2) {
+                    if (state == 1) {
+                        desc = '报警';
+                    } else {
+                        desc = '正常';
+                    }
+                }
+                const start = formatDate(params.data[1]);
+                const end = formatDate(params.data[2]);
+                return `${desc}\r\n${start}~${end}`;
+            }
+        },
+        xAxis: {
+            type: 'time',
+            axisLabel: {
+                fontSize: 6 // Set the desired font size here
+            }
+        },
+        yAxis: {type: 'category', data: ['在线', '运行', '报警']},
+        series: [{
+            type: 'custom',
+            renderItem: (params, api) => {
+                const yIndex = api.value(0);
+                const start = api.coord([api.value(1), yIndex]);
+                const end = api.coord([api.value(2), yIndex]);
+                return {
+                    type: 'rect',
+                    shape: {
+                        x: start[0],
+                        y: start[1] - 10,
+                        width: end[0] - start[0],
+                        height: 20
+                    },
+                    style: {
+                        fill: parseColor(api)
+                    }
+                };
+            },
+            encode: {x: [1, 2], y: 0},
+            data: [],
+        }]
+    };
+
+    layui.use(function () {
+        let form = layui.form;
+        let laydate = layui.laydate;
+
+        sn = layui.url().search.sn;
+
+        laydate.render({
+            elem: '#timeduration',
+            range: ['#startDate', '#endDate'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        $('#startDate').val(formatDate(startOfDay));
+        $('#endDate').val(formatDate(endOfDay));
+
+        // 搜索提交
+        form.on('submit(tb-common-search)', function (data) {
+            let field = data.field;
+            if (field.startDate !== null && field.endDate !== null
+                && field.startDate !== '' && field.endDate !== '') {
+                reloadTb();
+            }
+            return false; // 阻止默认 form 跳转
+        });
+
+        setTimeout(() => {
+            reloadAll();
+        }, 100)
+    });
+
+    function parseColor(api) {
+        let type = api.value(0);
+        let state = api.value(3);
+        if (type == 0) {
+            return state == 1 ? '#1890ff' : '#bfbfbf';
+        }
+        if (type == 1) {
+            return state == 1 ? '#52c41a' : '#FAAD14';
+        }
+        if (type == 2) {
+            return state == 1 ? '#ff4d4f' : '#bfbfbf';
+        }
+    }
+
+    function formatDate(date) {
+        const Y = date.getFullYear();
+        const M = String(date.getMonth() + 1).padStart(2, '0');
+        const D = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const m = String(date.getMinutes()).padStart(2, '0');
+        const s = String(date.getSeconds()).padStart(2, '0');
+        return `${Y}-${M}-${D} ${h}:${m}:${s}`;
+    }
+
+    function reloadTb() {
+        post(router.equip_collect_page, {
+            sn,
+            startDate: $('#startDate').val(),
+            endDate: $('#endDate').val(),
+            requirePage: false
+        }, function (res) {
+            if (res === null) {
+                return;
+            }
+            datalist = res;
+            chart_option = generateOption(config_data);
+            chart.setOption(chart_option);
+        })
+    }
+
+    function reloadAll() {
+        const dom = $('#chart-container')[0];
+        chart = echarts.init(dom);
+        console.info(chart)
+        chart.setOption(chart_option);
+        // reloadTb()
+    }
+
+    function generateOption() {
+        let visualMap = [];
+        let xAxis = [];
+        let yAxis = [];
+        let grid = [];
+        let series = [];
+        let title = [];
+        let single = 100 / config_data.length;
+
+        config_data.forEach((item, index) => {
+            visualMap.push(
+                {
+                    show: false,
+                    type: 'continuous',
+                    seriesIndex: index,
+                }
+            );
+            title.push({
+                top: (single / 15 + single * index) + '%',
+                left: 'center',
+                text: item.name
+            });
+            xAxis.push({
+                gridIndex: index,
+                type: 'time',
+                splitLine: {
+                    show: false
+                },
+                axisLabel: {
+                    rotate: 45,  // 旋转标签，避免重叠
+                    interval: "auto"  // 自动调整显示间隔
+                }
+            })
+            yAxis.push({
+                type: 'value',
+                gridIndex: index,
+                splitLine: {
+                    show: false
+                },
+            })
+            grid.push({
+                top: (single / 5 + single * index) + '%',
+                height: (single * 3 / 5) + '%'
+            },)
+            let vList = []
+            datalist.forEach(item2 => {
+                let d = item2.data[item.name];
+                if (d != null) {
+                    vList.push([item2.time, d])
+                } else {
+                    vList.push([item2.time, ""])
+                }
+            })
+            series.push({
+                type: 'line',
+                areaStyle: {},
+                showSymbol: false,
+                data: vList,
+                xAxisIndex: index,
+                yAxisIndex: index
+            })
+        })
+        return {
+            visualMap,
+            title,
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis,
+            yAxis,
+            grid,
+            series
+        };
+    }
+</script>
+</body>
+</html>
