@@ -16,9 +16,7 @@ import com.ourexists.mesedge.device.model.EquipRecordAlarmDto;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmPageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordAlarmVo;
 import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
-import com.ourexists.mesedge.device.pojo.Device;
 import com.ourexists.mesedge.device.pojo.EquipRecordAlarm;
-import com.ourexists.mesedge.device.service.DeviceService;
 import com.ourexists.mesedge.device.service.EquipRecordAlarmService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,9 +30,6 @@ import java.util.List;
 @Service
 public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<EquipRecordAlarmMapper, EquipRecordAlarm>
         implements EquipRecordAlarmService {
-
-    @Autowired
-    private DeviceService deviceService;
 
     @Autowired
     private EquipRealtimeManager realtimeManager;
@@ -58,7 +53,6 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
         this.removeBatchByIds(ids);
-        deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
     }
 
     @Override

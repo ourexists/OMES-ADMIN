@@ -1,0 +1,51 @@
+/* 右侧折叠按钮 */
+.scene-tree-toggle {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    width: 32px;
+    height: 60px;
+    background: #1890ff;
+    color: #fff;
+    cursor: pointer;
+    z-index: 9999;
+    border-radius: 6px 0 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 面板 */
+.scene-tree-panel {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 300px;
+    height: 100%;
+    background: #fff;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+    z-index: 9998;
+    transition: right 0.3s ease;
+}
+
+.scene-tree-panel.open {
+    right: 0;
+}
+
+.scene-tree-header {
+    height: 50px;
+    line-height: 50px;
+    padding: 0 15px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+}
+
+.scene-tree-body {
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100% - 50px);
+}
+
+.layui-tree-set-active > .layui-tree-entry .layui-tree-main {
+    background: #f2f2f2;
+}

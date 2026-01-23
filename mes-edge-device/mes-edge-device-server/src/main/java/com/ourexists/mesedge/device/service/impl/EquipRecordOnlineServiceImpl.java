@@ -12,13 +12,11 @@ import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusSe
 import com.ourexists.mesedge.device.core.EquipRealtime;
 import com.ourexists.mesedge.device.core.EquipRealtimeManager;
 import com.ourexists.mesedge.device.mapper.EquipRecordOnlineMapper;
+import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineVo;
-import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
-import com.ourexists.mesedge.device.pojo.Device;
 import com.ourexists.mesedge.device.pojo.EquipRecordOnline;
-import com.ourexists.mesedge.device.service.DeviceService;
 import com.ourexists.mesedge.device.service.EquipRecordOnlineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,9 +30,6 @@ import java.util.List;
 @Service
 public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<EquipRecordOnlineMapper, EquipRecordOnline>
         implements EquipRecordOnlineService {
-
-    @Autowired
-    private DeviceService deviceService;
 
     @Autowired
     private EquipRealtimeManager realtimeManager;
@@ -58,7 +53,6 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
         this.removeBatchByIds(ids);
-        deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
     }
 
     @Override

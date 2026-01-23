@@ -34,9 +34,6 @@
                     lang-i18n="common.search">
                 Search
             </button>
-            <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">
-                Clear
-            </button>
         </div>
     </form>
     <div id="chart-container"></div>
@@ -83,16 +80,6 @@
         }, 100)
     });
 
-    function formatDate(date) {
-        const Y = date.getFullYear();
-        const M = String(date.getMonth() + 1).padStart(2, '0');
-        const D = String(date.getDate()).padStart(2, '0');
-        const h = String(date.getHours()).padStart(2, '0');
-        const m = String(date.getMinutes()).padStart(2, '0');
-        const s = String(date.getSeconds()).padStart(2, '0');
-        return `${Y}-${M}-${D} ${h}:${m}:${s}`;
-    }
-
     function reloadTb() {
         post(router.equip_collect_page, {
             sn,
@@ -130,7 +117,7 @@
                 let size = config_data.length * baseSize;
 
                 $("#chart-container").css({
-                    width: baseSize * 2 + 'px',
+                    width: '100%',
                     height: size + 'px'
                 });
                 const dom = $('#chart-container')[0];
@@ -196,6 +183,7 @@
             series.push({
                 type: 'line',
                 areaStyle: {},
+                smooth: true,
                 showSymbol: false,
                 data: vList,
                 xAxisIndex: index,

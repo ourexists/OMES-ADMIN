@@ -7,11 +7,12 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
-    <link rel="stylesheet" href="../static/layui/css/custom.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
     <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
     <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
+    <link rel="stylesheet" href="../static/tree-select/treeSelect.css">
+    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
 
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
@@ -19,6 +20,8 @@
     <script src="../static/js/global.js"></script>
     <script src="../static/leaflet/leaflet.js"></script>
     <script src="../static/marker/leaflet.markercluster.js"></script>
+    <script src="../static/tree-select/treeSelect.js"></script>
+    <script src="../static/fullscreen/fullscreen.js"></script>
 </head>
 <style>
     #map {
@@ -27,24 +30,8 @@
     }
 </style>
 <body>
-<div class="layui-tab-content main-panel">
-    <button type="button" class="layui-btn layui-btn-sm fullscreenBtn">
-        <i class="layui-icon  layui-icon-screen-full" id="layui-icon-screen"></i>
-    </button>
-    <div class="layui-col-md2 left-panel">
-        <div class="layui-card">
-            <div class="layui-card-body mini-bar" id="ltTree">
-                <div class="layui-inline">
-                    <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
-                </div>
-                <a class="layui-btn layui-btn-primary" id="tree_query">
-                    <i class="layui-icon layui-icon-search"></i>
-                </a>
-                <div id="left-tree"></div>
-            </div>
-        </div>
-    </div>
-    <div class="layui-col-md8 right-panel">
+<div class="layui-tab-content oemes-container main-panel">
+    <div class="right-panel">
         <form class="layui-form layui-row layui-col-space16">
             <div class="layui-col-md4">
                 <div class="layui-input-wrap">
@@ -104,6 +91,29 @@
         tree = layui.tree;
         form = layui.form;
 
+        const fullscreen = new FullScreen({
+            elem: $('#map').get(0),
+        });
+
+        get(router.workshop_tree, null, function (result) {
+                const sceneTree = new TreeSelect({
+                    data: result,
+                    needVirtualRoot: true,
+                    virtualRootName: i18np.prop('common.all'),
+                    customName: {
+                        title: 'name',
+                        field: 'selfCode'
+                    },
+                    onSelect: function (obj) {
+                        //获取当前点击的节点数据
+                        selected_tree_node = obj;
+                        reloadMap(true);
+                        $(".workshopName").text(obj.name);
+                    }
+                })
+            }
+        )
+
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
                 $('#type').append(new Option(item, index));
@@ -122,6 +132,17 @@
 
 
         var legend = L.control({position: 'topleft'});
+
+        var legend2 = L.control({position: 'topright'});
+
+        legend2.onAdd = function () {
+            var div = L.DomUtil.create('div', 'map-legend');
+            div.innerHTML = `
+        <div class="workshopName" style="font-size: 16px; color: #0078d7">
+        </div>
+    `;
+            return div;
+        }
 
         legend.onAdd = function () {
             var div = L.DomUtil.create('div', 'map-legend');
@@ -146,7 +167,9 @@
             return div;
         };
 
+
         legend.addTo(map);
+        legend2.addTo(map);
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
             attribution: '地图数据 © OpenStreetMap'
         }).addTo(map);
@@ -155,47 +178,13 @@
         map.addLayer(clusterGroup);
 
 
-        get(router.workshop_tree, null, function (result) {
-            tree.render({
-                elem: '#left-tree',
-                data: result,
-                onlyIconControl: true,  // 是否仅允许节点左侧图标控制展开收缩
-                id: 'left-tree',
-                edit: [],
-                extEdit: true,
-                customName: { // 自定义 data 字段名 --- 2.8.14+
-                    title: 'name',
-                    field: 'selfCode'
-                },
-                click: function (obj) {
-                    $(".layui-tree-set").removeClass('layui-tree-set-active');
-                    obj.elem.addClass('layui-tree-set-active');
-                    //获取当前点击的节点数据
-                    selected_tree_node = obj.data;
-                    reloadMap(true);
-                }
-            });
-        }, function (code, msg) {
-        })
-
         reloadMap(true);
-
-        $('#tree_query').click(function () {
-            var name = $("#tree_name").val(); //搜索值
-            var elem = $("#left-tree").find('.layui-tree-txt').css('color', ''); //搜索文本与设置默认颜色
-            if (!name) {
-                return; //无搜索值返回
-            }
-            elem.filter(':contains(' + name + ')').css('color', '#FFB800'); //搜索文本并设置标志颜色
-            elem.parents('.layui-tree-pack').prev().find('.layui-tree-iconClick').click(); //展开选项
-        });
 
         form.on('submit(tb-common-search)', function (data) {
             reloadMap(true, data.field);
             return false; // 阻止默认 form 跳转
         });
 
-        fullscreen($('#map').get(0))
     });
 
     function reloadMap(needViewReset, data) {

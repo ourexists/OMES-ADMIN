@@ -77,4 +77,10 @@ public class MessageController {
         return Flux.interval(Duration.ofSeconds(1))
                 .map(sequence -> "message " + sequence);
     }
+
+    @Operation(summary = "统计未读", description = "")
+    @GetMapping(value = "/countUnread")
+    public JsonResponseEntity<Long> countUnread() {
+        return feign.countReadStatus(UserContext.getUser().getId(), UserContext.getPlatForm(), 0);
+    }
 }

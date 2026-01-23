@@ -24,6 +24,8 @@ public interface EquipRealtimeManager {
 
     void clear(String tenantId);
 
+    Map<String, EquipRealtime> getAll();
+
     Map<String, EquipRealtime> getAll(String tenantId);
 
     EquipRealtime get(String tenantId, String sn);

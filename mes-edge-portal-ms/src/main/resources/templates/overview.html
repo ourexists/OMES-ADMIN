@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>设备管理平台-首页</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/tree-select/treeSelect.css">
+    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/js/echarts.min.js"></script>
+    <script src="../static/tree-select/treeSelect.js"></script>
+    <script src="../static/fullscreen/fullscreen.js"></script>
+</head>
+<style>
+    .kpi-card {
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    .kpi-num {
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+    .kpi-title {
+        color: #888;
+        margin-top: 5px;
+    }
+    .oemes-container {
+        background: #f2f2f2;
+    }
+</style>
+<body>
+<div class="layui-fluid oemes-container" style="padding:15px;">
+    <!-- 标题栏 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <span style="font-size:20px;font-weight:600;">设备管理平台</span>
+                    <div style="float:right;" id="workshopName">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 区域 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-body kpi-card">
+                    <i class="layui-icon layui-icon-engine" style="font-size:30px;"></i>
+                    <div class="kpi-num" id="totalCount">0</div>
+                    <div class="kpi-title" lang-i18n="equip.total"></div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-body kpi-card">
+                    <i class="layui-icon layui-icon-rss" style="font-size:30px;color:#1890FF;"></i>
+                    <div class="kpi-num" id="onlineCount">0</div>
+                    <div class="kpi-title" lang-i18n="equip.online">在线设备</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-body kpi-card">
+                    <i class="layui-icon layui-icon-rss" style="font-size:30px;color:#bfbfbf;"></i>
+                    <div class="kpi-num" id="offlineCount">0</div>
+                    <div class="kpi-title" lang-i18n="equip.offline">离线设备</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-body kpi-card">
+                    <i class="layui-icon layui-icon-notice" style="font-size:30px;color:#ff4d4f;"></i>
+                    <div class="kpi-num" id="alarmCount">0</div>
+                    <div class="kpi-title" lang-i18n="equip.alarm">告警设备</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-body kpi-card">
+                    <i class="layui-icon layui-icon-loading" style="font-size:30px;color:#52c41a;"></i>
+                    <div class="kpi-num" id="runCount">0</div>
+                    <div class="kpi-title" lang-i18n="equip.run">运行设备</div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-body kpi-card">
+                    <i class="layui-icon layui-icon-pause" style="font-size:30px;color:#ffb800;"></i>
+                    <div class="kpi-num" id="stopCount">0</div>
+                    <div class="kpi-title" lang-i18n="equip.stop">停止设备</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据分析图表 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header" lang-i18n="title.equip_status">设备状态分布</div>
+                <div class="layui-card-body">
+                    <div id="statusChart" style="height:320px; width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header" lang-i18n="title.equip_trend_7">设备近7日在线趋势</div>
+                <div class="layui-card-body">
+                    <div id="trendChart" style="height:320px; width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备列表 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">报警明细</div>
+                <div class="layui-card-body">
+                    <table id="alarmTable" lay-filter="alarmTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script th:inline="none">
+    let trendChart;
+    let statusChart;
+    let selected_tree_node;
+    layui.use(function () {
+        var table = layui.table;
+        var $ = layui.$;
+
+        const fullscreen = new FullScreen();
+
+        statusChart = echarts.init($('#statusChart')[0]);
+        trendChart = echarts.init($('#trendChart')[0]);
+
+        let opened = false;
+
+        // 折叠按钮点击
+        $('#sceneToggle').on('click', function () {
+            opened = !opened;
+            $('#scenePanel').toggleClass('open', opened);
+
+            $('#sceneToggle i')
+                .toggleClass('layui-icon-shrink-right', !opened)
+                .toggleClass('layui-icon-spread-left', opened);
+        });
+
+        get(router.workshop_tree, null, function (result) {
+                const sceneTree = new TreeSelect({
+                    data: result,
+                    needVirtualRoot: true,
+                    virtualRootName: i18np.prop('common.all'),
+                    customName: {
+                        title: 'name',
+                        field: 'selfCode'
+                    },
+                    onSelect: function (obj) {
+                        //获取当前点击的节点数据
+                        selected_tree_node = obj;
+                        reloadCount();
+                        reloadTrendChart();
+                        $('#workshopName').text(obj.name);
+                    }
+                })
+            }
+        )
+
+        table.render({
+            elem: '#alarmTable',
+            method: 'POST',
+            headers: getCommonHeader(),
+            contentType: 'application/json',
+            loading: false,
+            defaultToolbar: [],
+            cols: [[
+                {field: 'title', title: i18np.prop('message.title')},
+                {field: 'context', title: i18np.prop('message.context')},
+            ]],
+            data: [],
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "count": res.pagination.total,
+                    "data": res.data
+                };
+            },
+            limit: 5,
+            limits: [5, 10, 20, 50, 100],
+            page: true,
+            size: 'lg',
+            height: 'full'
+        });
+        reloadCount();
+        reloadTrendChart();
+        reloadMessage();
+
+        setInterval(() => {
+            reloadCount();
+            reloadTrendChart();
+            reloadMessage();
+        }, 30000)
+
+
+        function reloadMessage() {
+            table.reloadData('alarmTable', {
+                url: initRequestUrl(router.message_page),
+                where: {
+                    platform: client.platform,
+                    type: 1,
+                },
+            });
+        }
+
+    });
+
+    function reloadCount() {
+        post(router.equip_count, {
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
+        }, function (result) {
+            $("#totalCount").text(result.total);
+            $("#onlineCount").text(result.online);
+            $("#offlineCount").text(result.offline);
+            $("#alarmCount").text(result.alarm);
+            $("#runCount").text(result.run);
+            $("#stopCount").text(result.stopped);
+            statusChart.setOption({
+                tooltip: {trigger: 'item'},
+                legend: {bottom: 0},
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: [
+                        {value: result.online, name: '在线'},
+                        {value: result.offline, name: '离线'},
+                        {value: result.alarm, name: '告警'}
+                    ]
+                }]
+            });
+        })
+    }
+
+    function reloadTrendChart() {
+        const end = new Date();
+        const start = new Date(end);
+        start.setDate(end.getDate() - 7);
+
+        post(router.equip_state_snapshot_count, {
+            startDate: formatDate(start),
+            endDate: formatDate(end),
+            onlineState: 1,
+            countType: 1,
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
+        }, function (result) {
+            const data = [];
+            result.forEach(item => {
+                data.push([item.time, item.num]);
+            })
+            trendChart.setOption({
+                tooltip: {trigger: 'axis'},
+                xAxis: {
+                    type: 'time',
+                    min: start,
+                    max: end
+                },
+                yAxis: {
+                    type: 'value',
+                    min: 0,
+                    max: 1000
+                },
+                series: [{
+                    name: '在线设备数',
+                    type: 'line',
+                    smooth: true,
+                    data: data
+                }]
+            });
+        })
+    }
+</script>
+
+</body>
+</html>

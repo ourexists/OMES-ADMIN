@@ -60,6 +60,17 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         return springCache.getNativeCache();
     }
 
+    public Map<String, EquipRealtime> getAll() {
+        Map<String, EquipRealtime> r = new HashMap<>();
+        for (String cacheName : cacheManager.getCacheNames()) {
+            ConcurrentMap<Object, Object> c = nativeCache(cacheName).asMap();
+            for (Map.Entry<Object, Object> entry : c.entrySet()) {
+                r.put((String) entry.getKey(), (EquipRealtime) entry.getValue());
+            }
+        }
+        return r;
+    }
+
 
     @PostConstruct
     public void init() {
@@ -206,8 +217,16 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
                         if (target.getAlarmState() == 1) {
                             List<String> platforms = new ArrayList<>();
-                            platforms.add("MES APP");
-                            NotifyDto notifyDto = new NotifyDto().setStep(0).setContext("[" + DateUtil.dateFormat(new Date()) + "]\r 设备产生报警").setTitle("【" + target.getName() + "】异常报警").setSource(MessageSourceEnum.Equip.name()).setSourceId(source.getId()).setPlatforms(platforms).setType(MessageTypeEnum.ALARM.getCode());
+                            platforms.add("mes-app");
+                            platforms.add("mes-edge");
+                            NotifyDto notifyDto = new NotifyDto()
+                                    .setStep(0)
+                                    .setContext("[" + DateUtil.dateFormat(new Date()) + "]\r 设备产生报警")
+                                    .setTitle("【" + target.getName() + "】异常报警")
+                                    .setSource(MessageSourceEnum.Equip.name())
+                                    .setSourceId(source.getId())
+                                    .setPlatforms(platforms)
+                                    .setType(MessageTypeEnum.ALARM.getCode());
                             notifyFeign.createAndStart(notifyDto);
                         }
                     }
