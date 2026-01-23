@@ -1,4 +1,4 @@
-<!--
+`<!--
   ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
   -->
 
@@ -77,8 +77,9 @@
     var current_row_data;
     var selected_tree_node = parent.selected_tree_node;
     layui.use(function () {
-        var form = layui.form,
+        let form = layui.form,
             layer = layui.layer;
+
 
         let ln = [32.060255, 118.796877]
 
@@ -98,44 +99,19 @@
                 if (current_row_data.selfCode !== "") {
                     $(".lay-unable-edit").attr("disabled", "block");
                 }
+
                 if (current_row_data.lat != null && current_row_data.lng != null) {
                     ln = [current_row_data.lat, current_row_data.lng];
+                    initMap();
+                    setPoint(current_row_data.lat, current_row_data.lng);
+                } else {
+                    initMap();
                 }
             });
         } else {
             form.val("common-edit-form", {});
-            current_row_data = {}
-        }
-
-
-        let map = L.map('map').setView(ln, 6);
-        let marker;
-
-        var legend = L.control({position: 'topright'});
-
-        legend.onAdd = function () {
-            var div = L.DomUtil.create('div', 'map-legend');
-
-            div.innerHTML = `<div class="layui-form-item">
-            <div class="layui-input-inline">
-                <input type="text" id="searchText" class="layui-input">
-            </div>
-            <button type="button" class="layui-btn layui-btn-radius layui-btn-normal" id="btnSearch">
-            <i class="layui-icon layui-icon-search"></i>
-            </button>
-        </div>
-    `;
-            return div;
-        };
-
-        legend.addTo(map);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-            attribution: '地图数据 © OpenStreetMap'
-        }).addTo(map);
-
-        if (current_row_data != null && current_row_data.lat != null && current_row_data.lng != null) {
-            setPoint(current_row_data.lat, current_row_data.lng);
+            current_row_data = {};
+            initMap();
         }
 
         // 提交事件
@@ -188,16 +164,40 @@
                 });
         }
 
+        function initMap() {
+            let map = L.map('map').setView(ln, 6);
+            let legend = L.control({position: 'topright'});
+            legend.onAdd = function () {
+                let div = L.DomUtil.create('div', 'map-legend');
+                div.innerHTML =
+                    `<div class="layui-form-item">
+                        <div class="layui-input-inline">
+                            <input type="text" id="searchText" class="layui-input">
+                        </div>
+                        <button type="button" class="layui-btn layui-btn-radius layui-btn-normal" id="btnSearch">
+                        <i class="layui-icon layui-icon-search"></i>
+                        </button>
+                    </div>`;
+                return div;
+            };
+
+            legend.addTo(map);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                attribution: '地图数据 © OpenStreetMap'
+            }).addTo(map);
+        }
+
         function setPoint(lat, lng) {
             lat = Number(lat).toFixed(6);
             lng = Number(lng).toFixed(6);
             map.setView([lat, lng], 15);
 
-            if (marker) {
-                map.removeLayer(marker);
-            }
+            // if (marker) {
+            //     map.removeLayer(marker);
+            // }
 
-            marker = L.marker([lat, lng]).addTo(map);
+            L.marker([lat, lng]).addTo(map);
 
             form.val('common-edit-form', {
                 lat: lat,
@@ -232,4 +232,4 @@
     });
 </script>
 </body>
-</html>
+</html>`

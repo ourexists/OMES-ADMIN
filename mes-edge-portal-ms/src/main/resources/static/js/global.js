@@ -185,6 +185,13 @@ var router = {
     "workshop_assign_query": "/workshop/selectAssign",
     "workshop_assign": "/workshop/assign",
     "equip_collect_page": "/equip/collect/selectByPage",
+    equip_run_count: '/equipRecordRun/countMerging',
+    equip_online_count: '/equipRecordOnline/countMerging',
+    equip_alarm_count: '/equipRecordAlarm/countMerging',
+    equip_count: '/equip/countRealtime',
+    message_page: '/message/selectByPage',
+    equip_state_snapshot_page: '/equipStateSnapshot/selectByPage',
+    equip_state_snapshot_count: "/equipStateSnapshot/countNumByTime"
 }
 
 function getCommonHeader() {
@@ -310,6 +317,7 @@ function openWindow(name, url, area, successFunc) {
     if (area == null) {
         area = ['80%', '60%'];
     }
+
     layer.open({
         title: i18np.prop(name),
         type: 2,
@@ -420,52 +428,18 @@ function input_limit_int(value) {
 }
 
 
-//全屏放大
-function enterFullscreen(elem) {
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-    } else if (elem.mozRequestFullScreen) { // Firefox
-        elem.mozRequestFullScreen();
-    } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
-        elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { // IE/Edge
-        elem.msRequestFullscreen();
-    }
+
+
+function parseDate(dateformat) {
+    return new Date(dateformat.replace(' ', 'T'));
 }
 
-function fullscreen(elem) {
-    let btn = $('.fullscreenBtn')[0]
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    btn.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        offsetX = e.clientX - btn.getBoundingClientRect().left;
-        offsetY = e.clientY - btn.getBoundingClientRect().top;
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        let x = e.clientX - offsetX;
-        let y = e.clientY - offsetY;
-
-        // 限制在窗口范围内
-        const maxX = window.innerWidth - btn.offsetWidth;
-        const maxY = window.innerHeight - btn.offsetHeight;
-        x = Math.max(0, Math.min(x, maxX));
-        y = Math.max(0, Math.min(y, maxY));
-
-        btn.style.left = x + 'px';
-        btn.style.top = y + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
-
-    $('.fullscreenBtn').click(function () {
-        enterFullscreen(elem);
-    });
+function formatDate(date) {
+    const Y = date.getFullYear();
+    const M = String(date.getMonth() + 1).padStart(2, '0');
+    const D = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    const s = String(date.getSeconds()).padStart(2, '0');
+    return `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }

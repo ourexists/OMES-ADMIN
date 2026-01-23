@@ -1,0 +1,24 @@
+.fullscreenBtn {
+    position: fixed; /* 固定在窗口 */
+    top: 20px;
+    right: 20px; /* 距离右边 */
+    z-index: 999; /* 保证在最上层 */
+    border-radius: 50%; /* 圆形按钮 */
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    font-size: 24px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 悬浮感 */
+    transition: all 0.2s ease;
+    opacity: 1;
+    filter: alpha(opacity=100);
+}
+
+.fullscreenBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}

@@ -118,4 +118,13 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
         }
         return messageVo;
     }
+
+    @Override
+    public Long countReadStatus(String userId, String platform, Integer readStatus) {
+        return this.messageReadMapper.selectCount(new LambdaQueryWrapper<MessageRead>()
+                .eq(MessageRead::getAccId, userId)
+                .eq(MessageRead::getIsRead, readStatus == 1)
+                .inSql(MessageRead::getMessageId, "select id from t_message where platform='" + platform + "'")
+        );
+    }
 }

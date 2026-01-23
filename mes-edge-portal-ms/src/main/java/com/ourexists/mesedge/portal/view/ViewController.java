@@ -325,4 +325,10 @@ public class ViewController {
     public String equip_collect_echarts() {
         return "equip_collect_echarts";
     }
+
+
+    @RequestMapping("/view/overview")
+    public String overview() {
+        return "overview";
+    }
 }

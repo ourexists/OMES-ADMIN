@@ -29,4 +29,6 @@ public interface MessageService extends IMyBatisPlusService<Message> {
     MessageVo produce(MessageDto dto);
 
     MessageVo selectById(String id, String accId);
+
+    Long countReadStatus(String userId, String platform, Integer readStatus);
 }

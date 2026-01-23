@@ -59,4 +59,11 @@ public class MessageViewer implements MessageFeign {
     public JsonResponseEntity<MessageVo> selectById(@RequestParam String id, @RequestParam String accId) {
         return JsonResponseEntity.success(service.selectById(id, accId));
     }
+
+    @Override
+    public JsonResponseEntity<Long> countReadStatus(@RequestParam String userId,
+                                                @RequestParam String platform,
+                                                @RequestParam Integer readStatus) {
+        return JsonResponseEntity.success(service.countReadStatus(userId, platform, readStatus));
+    }
 }

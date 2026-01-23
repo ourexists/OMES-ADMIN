@@ -34,5 +34,9 @@ public interface MessageFeign {
 
     JsonResponseEntity<Boolean> read(@RequestParam String messageId);
 
-    JsonResponseEntity<MessageVo> selectById( @RequestParam String id, @RequestParam String accId);
+    JsonResponseEntity<MessageVo> selectById(@RequestParam String id, @RequestParam String accId);
+
+    JsonResponseEntity<Long> countReadStatus(@RequestParam String userId,
+                                         @RequestParam String platform,
+                                         @RequestParam Integer readStatus);
 }

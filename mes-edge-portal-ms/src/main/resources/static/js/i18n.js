@@ -140,7 +140,7 @@ layui.define(["jquery"], function (exports) {
         }
 
         var value = (namespace) ? $.i18n.map[namespace][key] : $.i18n.map[key];
-        if (value === null) {
+        if (value == null) {
             return '[' + ((namespace) ? namespace + '#' + key : key) + ']';
         }
 
@@ -168,7 +168,7 @@ layui.define(["jquery"], function (exports) {
          */
 
         var i;
-        if (typeof(value) == 'string') {
+        if (typeof (value) == 'string') {
             // Handle escape characters. Done separately from the tokenizing loop below because escape characters are
             // active in quoted strings.
             i = 0;
@@ -263,13 +263,13 @@ layui.define(["jquery"], function (exports) {
         if (value.length === 0) {
             return "";
         }
-        if (value.length == 1 && typeof(value[0]) == "string") {
+        if (value.length == 1 && typeof (value[0]) == "string") {
             return value[0];
         }
 
         var str = "";
         for (i = 0, j = value.length; i < j; i++) {
-            if (typeof(value[i]) == "string") {
+            if (typeof (value[i]) == "string") {
                 str += value[i];
             } else if (phvList && value[i] < phvList.length) {
                 // Must be a number
@@ -308,7 +308,7 @@ layui.define(["jquery"], function (exports) {
         if (fileNames !== null && fileNames.length > 0) {
             loadAndParseFile(fileNames[0], settings, function () {
                 fileNames.shift();
-                loadAndParseFiles(fileNames,settings);
+                loadAndParseFiles(fileNames, settings);
             });
         } else {
             callbackIfComplete(settings);
@@ -319,7 +319,7 @@ layui.define(["jquery"], function (exports) {
     function loadAndParseFile(filename, settings, nextFile) {
 
         if (settings.debug) {
-            debug('loadAndParseFile(\'' + filename +'\')');
+            debug('loadAndParseFile(\'' + filename + '\')');
             debug('totalFiles: ' + settings.totalFiles);
             debug('filesLoaded: ' + settings.filesLoaded);
         }
@@ -362,7 +362,7 @@ layui.define(["jquery"], function (exports) {
         var regPlaceHolder = /(\{\d+})/g;
         var regRepPlaceHolder = /\{(\d+)}/g;
         var unicodeRE = /(\\u.{4})/ig;
-        for (var i=0,j=lines.length;i<j;i++) {
+        for (var i = 0, j = lines.length; i < j; i++) {
             var line = lines[i];
 
             line = line.trim();
@@ -449,7 +449,7 @@ layui.define(["jquery"], function (exports) {
         if (regDot.test(key)) {
             var fullname = '';
             var names = key.split(/\./);
-            for (var i=0,j=names.length;i<j;i++) {
+            for (var i = 0, j = names.length; i < j; i++) {
                 var name = names[i];
 
                 if (i > 0) {
@@ -476,7 +476,7 @@ layui.define(["jquery"], function (exports) {
         }
 
         lang = lang.toLowerCase();
-        lang = lang.replace(/-/,"_"); // some browsers report language as en-US instead of en_US
+        lang = lang.replace(/-/, "_"); // some browsers report language as en-US instead of en_US
         if (lang.length > 3) {
             lang = lang.substring(0, 3) + lang.substring(3).toUpperCase();
         }
@@ -493,7 +493,9 @@ layui.define(["jquery"], function (exports) {
             codes.push(code);
         }
         // convert codes to text
-        return codes.reduce(function (acc, val) { return acc + String.fromCharCode(val); }, '');
+        return codes.reduce(function (acc, val) {
+            return acc + String.fromCharCode(val);
+        }, '');
     }
 
     exports("i18n", $.i18n);
