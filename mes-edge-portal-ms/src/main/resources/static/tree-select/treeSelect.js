@@ -7,6 +7,7 @@
             customName: {},
             needVirtualRoot: false,
             virtualRootName: 'all',
+            container: '.oemes-container',
             onSelect: function () {
             }
         }, options);
@@ -39,7 +40,7 @@
                 </div>
             </div>
         `;
-        $('.oemes-container').append(html);
+        $(this.options.container).append(html);
     };
 
     TreeSelect.prototype._bindEvent = function () {

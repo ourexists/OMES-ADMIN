@@ -119,10 +119,14 @@
             if (timer != null) {
                 clearInterval(timer);
             }
+            if (selected_tree_node.id == null) {
+                loadIframePage(null, null);
+                return;
+            }
             get(router.workshop_scadaurl, {
                     workshopId: selected_tree_node.id
                 }, function (result) {
-                    loadIframePage(result == null ? null : result.url, result == null ? null : result.interval, true)
+                    loadIframePage(result == null ? null : result.url, result == null ? null : result.interval)
                 }
             )
         }
@@ -138,15 +142,12 @@
             )
         }
 
-        function loadIframePage(uri, interval, needLoading) {
+        function loadIframePage(uri, interval) {
             $('.placeholder').hide();
-            if (needLoading) {
-                $(".loading").show();
-            }
+            $(".loading").show();
             // 移除旧 iframe
             $('.main-panel').find('iframe').remove();
 
-            console.info("121212")
             if (uri != null && uri !== "") {
                 const iframe = document.createElement('iframe');
                 iframe.id = 'scadaFrame';
