@@ -31,6 +31,9 @@
         <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="ecAttr">
             <i class="layui-icon layui-icon-util"></i>
         </a>
+        <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="scada">
+            <i class="layui-icon layui-icon-layouts"></i>
+        </a>
     </div>
 </script>
 <script type="text/html" id="common-toolbar">
@@ -157,6 +160,8 @@
                 openWindow('common.add', '/view/workshop_form_edit?pcode=' + data.code, ['60%', '35%']);
             } else if (obj.event === 'ecAttr') {
                 openWindow('ecattr.name', '/view/ecattr_form_edit?id=' + data.id, ['80%', '50%']);
+            } else if (obj.event === 'scada') {
+                openWindow('workshop.scada', '/view/workshop_config_scada?id=' + data.id, ['60%', '70%']);
             }
         });
 

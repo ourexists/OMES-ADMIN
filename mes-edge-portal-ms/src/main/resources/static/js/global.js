@@ -191,7 +191,11 @@ var router = {
     equip_count: '/equip/countRealtime',
     message_page: '/message/selectByPage',
     equip_state_snapshot_page: '/equipStateSnapshot/selectByPage',
-    equip_state_snapshot_count: "/equipStateSnapshot/countNumByTime"
+    equip_state_snapshot_count: "/equipStateSnapshot/countNumByTime",
+    workshop_scada_server: "/workshop/scadaServer",
+    workshop_config_scada: "/workshop/queryScadaConfig",
+    workshop_set_scada: "/workshop/setScadaConfig",
+    workshop_scadaurl: "/workshop/getScadaUrl",
 }
 
 function getCommonHeader() {
@@ -426,8 +430,6 @@ function input_limit_float(value) {
 function input_limit_int(value) {
     return value.replace(/[^\.\d]/g, '').replace('.', '');
 }
-
-
 
 
 function parseDate(dateformat) {

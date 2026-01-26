@@ -1,0 +1,173 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/tree-select/treeSelect.css">
+    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
+
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/tree-select/treeSelect.js"></script>
+    <script src="../static/fullscreen/fullscreen.js"></script>
+</head>
+<style>
+    #scadaFrame {
+        flex: 1 1 auto; /* 吃掉剩余空间 */
+        margin-top: 10px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .loading {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .placeholder {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .loading i {
+        font-size: 36px;
+        color: #1e9fff;
+    }
+
+    .loading-text {
+        margin-top: 8px;
+        color: #666;
+    }
+</style>
+<body>
+<div class="layui-tab-content oemes-container main-panel">
+    <div class="loading">
+        <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <div class="placeholder">
+        <div class="loading-text" lang-i18n="workshop.scada_no"></div>
+    </div>
+    <!--    <iframe-->
+    <!--            id="scadaFrame"-->
+    <!--            src="about:blank"-->
+    <!--            frameborder="0"-->
+    <!--            hidden="hidden"-->
+    <!--    ></iframe>-->
+</div>
+
+
+<script th:inline="none">
+    var current_row_data;
+    var selected_tree_node;
+    var form;
+    let timer;
+
+    layui.use(function () {
+        form = layui.form;
+
+        $('.loading').hide();
+        $('.placeholder').show();
+
+        const fullscreen = new FullScreen({
+            elem: $('#scadaFrame').get(0),
+        });
+
+        if (timer != null) {
+            clearInterval(timer);
+        }
+
+        get(router.workshop_tree, null, function (result) {
+                const sceneTree = new TreeSelect({
+                    data: result,
+                    needVirtualRoot: true,
+                    virtualRootName: i18np.prop('common.all'),
+                    customName: {
+                        title: 'name',
+                        field: 'selfCode'
+                    },
+                    onSelect: function (obj) {
+                        //获取当前点击的节点数据
+                        selected_tree_node = obj;
+                        loadIframe();
+                    }
+                })
+            }
+        )
+
+        function loadIframe() {
+            if (timer != null) {
+                clearInterval(timer);
+            }
+            get(router.workshop_scadaurl, {
+                    workshopId: selected_tree_node.id
+                }, function (result) {
+                    loadIframePage(result == null ? null : result.url, result == null ? null : result.interval, true)
+                }
+            )
+        }
+
+        function reloadIframe() {
+            get(router.workshop_scadaurl, {
+                    workshopId: selected_tree_node.id
+                }, function (result) {
+                    if (result != null && result.url !== "") {
+                        $('#scadaFrame').attr('src', result.url);
+                    }
+                }
+            )
+        }
+
+        function loadIframePage(uri, interval, needLoading) {
+            $('.placeholder').hide();
+            if (needLoading) {
+                $(".loading").show();
+            }
+            // 移除旧 iframe
+            $('.main-panel').find('iframe').remove();
+
+            console.info("121212")
+            if (uri != null && uri !== "") {
+                const iframe = document.createElement('iframe');
+                iframe.id = 'scadaFrame';
+                iframe.src = uri;
+                iframe.frameBorder = '0';
+                iframe.onload = function () {
+                    // iframe 加载完成，隐藏 loading
+                    $(".loading").fadeOut(200);
+                };
+                $('.main-panel').append(iframe);
+                if (interval != null && interval > 0) {
+                    timer = setInterval(() => {
+                        reloadIframe();
+                    }, interval * 60 * 1000)
+                }
+            } else {
+                $(".loading").hide();
+                $('.placeholder').show();
+            }
+        }
+    });
+</script>
+</body>
+</html>

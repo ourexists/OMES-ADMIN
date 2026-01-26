@@ -6,10 +6,7 @@ package com.ourexists.mesedge.device.feign;
 
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
-import com.ourexists.mesedge.device.model.WorkshopAssignDto;
-import com.ourexists.mesedge.device.model.WorkshopDto;
-import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.device.model.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -38,4 +35,8 @@ public interface WorkshopFeign {
     JsonResponseEntity<List<WorkshopTreeNode>> selectAssign(@RequestParam String assignId);
 
     JsonResponseEntity<List<WorkshopTreeNode>> selectAssignTrees(@RequestParam List<String> assignIds, Boolean needFold);
+
+    JsonResponseEntity<WorkshopConfigScadaDto> queryScadaConfig(@RequestParam String workshopId);
+
+    JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto);
 }

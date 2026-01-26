@@ -1,0 +1,131 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="workshop.scada_server" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <select name="server" id="server">
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" style="font-weight: bold ">Key</label>
+            <div class="layui-input-block">
+                <input type="text" name="privateKey" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" style="font-weight: bold ">Secret</label>
+            <div class="layui-input-block">
+                <input type="text" name="privateSecret" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="workshop.scada_mapcode" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="text" name="mapCode" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="workshop.scada_interval" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="number" name="interval" autocomplete="off" lay-verify="required"
+                       class="layui-input" lang-i18n="common.placeholder" lay-precision>
+            </div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn" lay-submit lay-filter="common-edit-button"
+                    lang-i18n="common.msg.confirm"></button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset"></button>
+        </div>
+    </form>
+</div>
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="del">
+            <i class="layui-icon layui-icon-subtraction"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-fluid layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-addition"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="needCollect-switch">
+    <!-- 这里的 checked 的状态值判断仅作为演示 -->
+    <input type="checkbox" name="needCollect" value='{{= d.needCollect }}' title="yes|no" lay-skin="switch"
+           lay-filter="collect-switch"
+           {{=(d.needCollect!=null && d.needCollect ? "checked" : "") }}>
+</script>
+<script th:inline="none">
+    var current_data;
+    layui.use(function () {
+        let form = layui.form,
+            layer = layui.layer;
+
+        get(router.workshop_scada_server, null, function (result) {
+            $.each(result, function (index, item) {
+                $('#server').append(new Option(item, item));
+            })
+            form.render();
+        })
+
+        let id = layui.url().search.id;
+        get(router.workshop_config_scada, {"workshopId": id}, function (r) {
+            if (r == null) {
+                current_data = {};
+                form.val("common-edit-form", {});
+            } else {
+                current_data = r.scadaConfig;
+                if (current_data != null) {
+                    form.val("common-edit-form", Object.assign({}, current_data));
+                } else {
+                    form.val("common-edit-form", {});
+                    current_data = {};
+                }
+            }
+        })
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            let field = data.field; // 获取表单字段值
+            for (let key in field) {
+                current_data[key] = field[key];
+            }
+            post(router.workshop_set_scada, {
+                "workshopId": id,
+                "scadaConfig": current_data
+            }, function () {
+                let index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

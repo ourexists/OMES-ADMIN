@@ -76,6 +76,7 @@
 <script>
     var current_row_data;
     var selected_tree_node = parent.selected_tree_node;
+    let map;
     layui.use(function () {
         let form = layui.form,
             layer = layui.layer;
@@ -165,7 +166,7 @@
         }
 
         function initMap() {
-            let map = L.map('map').setView(ln, 6);
+            map = L.map('map').setView(ln, 6);
             let legend = L.control({position: 'topright'});
             legend.onAdd = function () {
                 let div = L.DomUtil.create('div', 'map-legend');
@@ -186,6 +187,11 @@
             L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
                 attribution: '地图数据 © OpenStreetMap'
             }).addTo(map);
+
+            map.on('click', function (e) {
+                setPoint(e.latlng.lat, e.latlng.lng);
+                reverseAddress(e.latlng.lat, e.latlng.lng)
+            });
         }
 
         function setPoint(lat, lng) {
@@ -223,13 +229,7 @@
                     layer.msg('地址解析失败');
                 });
         }
-
-        // 2. 点击地图选点
-        map.on('click', function (e) {
-            setPoint(e.latlng.lat, e.latlng.lng);
-            reverseAddress(e.latlng.lat, e.latlng.lng)
-        });
     });
 </script>
 </body>
-</html>`
+</html>

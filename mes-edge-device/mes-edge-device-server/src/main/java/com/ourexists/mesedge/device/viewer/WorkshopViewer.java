@@ -10,13 +10,12 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.tree.TreeUtil;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
-import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
-import com.ourexists.mesedge.device.model.WorkshopAssignDto;
-import com.ourexists.mesedge.device.model.WorkshopDto;
-import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.device.model.*;
 import com.ourexists.mesedge.device.pojo.Workshop;
 import com.ourexists.mesedge.device.pojo.WorkshopAssign;
+import com.ourexists.mesedge.device.pojo.WorkshopConfigScada;
 import com.ourexists.mesedge.device.service.WorkshopAssignService;
+import com.ourexists.mesedge.device.service.WorkshopConfigScadaService;
 import com.ourexists.mesedge.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +40,9 @@ public class WorkshopViewer implements WorkshopFeign {
 
     @Autowired
     private WorkshopAssignService assignService;
+
+    @Autowired
+    private WorkshopConfigScadaService configScadaService;
 
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
@@ -121,4 +123,19 @@ public class WorkshopViewer implements WorkshopFeign {
         service.delete(idsDto.getIds());
         return JsonResponseEntity.success(true);
     }
+
+
+    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @GetMapping("queryScadaConfig")
+    public JsonResponseEntity<WorkshopConfigScadaDto> queryScadaConfig(@RequestParam String workshopId) {
+        return JsonResponseEntity.success(WorkshopConfigScada.covert(configScadaService.queryByWorkshop(workshopId)));
+    }
+
+    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @PostMapping("setScadaConfig")
+    public JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto) {
+        configScadaService.addOrUpdate(dto);
+        return JsonResponseEntity.success(true);
+    }
+
 }
