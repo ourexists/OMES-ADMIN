@@ -326,9 +326,18 @@ public class ViewController {
         return "equip_collect_echarts";
     }
 
-
     @RequestMapping("/view/overview")
     public String overview() {
         return "overview";
+    }
+
+    @RequestMapping("/view/workshop_config_scada")
+    public String workshop_config_scada() {
+        return "workshop_config_scada";
+    }
+
+    @RequestMapping("/view/workshop_scada")
+    public String workshop_scada() {
+        return "workshop_scada";
     }
 }
