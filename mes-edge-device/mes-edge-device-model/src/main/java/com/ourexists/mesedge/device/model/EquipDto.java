@@ -60,6 +60,8 @@ public class EquipDto extends BaseDto {
 
     private List<EquipAttr> attrs;
 
+    private List<String> alarmTexts;
+
     public String getTypeDesc() {
         return EquipTypeEnum.valueof(this.type).getDesc();
     }

@@ -80,6 +80,9 @@
                     <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"></span>
                     <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"></span>
                 </div>
+                {{# layui.each(item.alarmTexts, function(index, t){ }}
+                <p style="color: red">{{ t }}</p>
+                {{# }); }}
                 <div class="card-header-2">
                     <p>{{ i18np.prop('equip.code') }}:{{ item.selfCode }}</p>
                     <p>{{ i18np.prop('workshop.name') }}:{{ item.workshop === null ? '' : item.workshop.name }}</p>
@@ -260,7 +263,7 @@
         display: flex;
         justify-content: space-between;
         flex-direction: column;
-        font-size: 10px;
+        font-size: 12px;
         padding-top: 5px;
     }
 

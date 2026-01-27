@@ -5,10 +5,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.constants.CommonConstant;
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.mesedge.device.core.EquipAttrRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
-import com.ourexists.mesedge.device.core.EquipRealtimeManager;
+import com.ourexists.mesedge.device.core.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -157,8 +154,15 @@ public class MqttConfiguration {
                             if (o.getInteger(equipRealtimeConfig.getAlarmMap()) == 1) {
                                 alarm = 1;
                             }
-                            if (o.getInteger("hhAlarm") == 1) {
-                                alarm = 1;
+                            if (!CollectionUtils.isEmpty(equipRealtimeConfig.getAlarms())) {
+                                List<String> alarms = new ArrayList<>();
+                                for (EquipAlarmRealtime alarmRealtime : equipRealtimeConfig.getAlarms()) {
+                                    if (o.getString(alarmRealtime.getMap()).equals(alarmRealtime.getVal())) {
+                                        alarm = 1;
+                                        alarms.add(alarmRealtime.getText());
+                                    }
+                                }
+                                target.setAlarmTexts(alarms);
                             }
                             if (alarm == 1) {
                                 target.alarm();

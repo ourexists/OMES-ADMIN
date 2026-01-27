@@ -4,12 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.era.framework.core.utils.DateUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.device.core.EquipAttrRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
-import com.ourexists.mesedge.device.core.EquipRealtimeManager;
+import com.ourexists.mesedge.device.core.*;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.feign.EquipRecordAlarmFeign;
 import com.ourexists.mesedge.device.feign.EquipRecordOnlineFeign;
@@ -182,6 +178,15 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                         });
                         equipRealtimeConfig.setAttrs(attrs);
                     }
+                    if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getAlarms())) {
+                        List<EquipAlarmRealtime> alarms = new ArrayList<>();
+                        equipDto.getConfig().getConfig().getAlarms().forEach(alarm -> {
+                            EquipAlarmRealtime equipAlarmRealtime = new EquipAlarmRealtime();
+                            BeanUtils.copyProperties(alarm, equipAlarmRealtime);
+                            alarms.add(equipAlarmRealtime);
+                        });
+                        equipRealtimeConfig.setAlarms(alarms);
+                    }
                     equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
                     equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
                     Date currentDate = new Date();
@@ -219,15 +224,24 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                             List<String> platforms = new ArrayList<>();
                             platforms.add("mes-app");
                             platforms.add("mes-edge");
+                            StringBuilder context = new StringBuilder();
+                            if (!CollectionUtils.isEmpty(target.getAlarmTexts())) {
+                                for (String alarmText : target.getAlarmTexts()) {
+                                    context.append(alarmText).append("\r\n");
+                                }
+                            } else {
+                                context.append("设备报警");
+                            }
                             NotifyDto notifyDto = new NotifyDto()
                                     .setStep(0)
-                                    .setContext("[" + DateUtil.dateFormat(new Date()) + "]\r 设备产生报警")
+                                    .setContext(context.toString())
                                     .setTitle("【" + target.getName() + "】异常报警")
                                     .setSource(MessageSourceEnum.Equip.name())
                                     .setSourceId(source.getId())
                                     .setPlatforms(platforms)
                                     .setType(MessageTypeEnum.ALARM.getCode());
                             notifyFeign.createAndStart(notifyDto);
+
                         }
                     }
                     if (!source.getRunState().equals(target.getRunState())) {
