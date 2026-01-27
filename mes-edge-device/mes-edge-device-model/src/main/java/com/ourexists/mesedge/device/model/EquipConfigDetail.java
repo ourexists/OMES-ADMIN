@@ -16,4 +16,6 @@ public class EquipConfigDetail {
     private String alarmMap;
 
     private List<EquipAttr> attrs;
+
+    private List<EquipAlarm> alarms;
 }

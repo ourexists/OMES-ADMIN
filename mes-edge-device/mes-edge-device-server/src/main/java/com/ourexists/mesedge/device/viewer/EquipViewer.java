@@ -97,6 +97,7 @@ public class EquipViewer implements EquipFeign {
                             }
                         }
                         equipDto.setAttrs(attrs);
+                        equipDto.setAlarmTexts(equipRealtime.getAlarmTexts());
                     }
                 }
             }

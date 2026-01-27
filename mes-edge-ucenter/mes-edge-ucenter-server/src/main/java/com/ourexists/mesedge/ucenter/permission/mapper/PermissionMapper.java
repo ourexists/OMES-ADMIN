@@ -22,7 +22,7 @@ public interface PermissionMapper extends BaseMapper<Permission> {
     String FIELD = "a.id, a.revision, a.created_by as createdBy, a.created_id as createdId, a.created_time as createdTime," +
             "a.updated_by as updatedBy, a.updated_id as updatedId,a.updated_time as updatedTime," +
             "a.name, a.code, a.pcode, a.ppcode, a.strategy, a.icon, a.component, a.url, a.sort_no, a.type, a.keep_alive," +
-            "a.description, a.internal_or_external";
+            "a.description, a.internal_or_external, a.i18n ";
 
     @Select("select " + FIELD + " from p_ucenter_permission a" +
             " where pcode = (select code from p_ucenter_permission where id=#{id})" +

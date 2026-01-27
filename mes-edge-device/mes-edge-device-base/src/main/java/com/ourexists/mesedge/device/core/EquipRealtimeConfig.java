@@ -16,4 +16,6 @@ public class EquipRealtimeConfig {
     private String alarmMap;
 
     private List<EquipAttrRealtime> attrs;
+
+    private List<EquipAlarmRealtime> alarms;
 }

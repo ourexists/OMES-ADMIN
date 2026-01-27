@@ -101,7 +101,7 @@ public class NotifyServiceImpl extends AbstractMyBatisPlusService<NotifyMapper, 
     public void createAndStart(NotifyDto dto) {
         Notify notify = Notify.wrap(dto);
         notify.setId(null);
-        this.addOrUpdate(Notify.wrap(dto));
-        this.updateStatus(dto.getId(), NotifyStatusEnum.PROGRESS.getCode());
+        this.addOrUpdate(notify);
+        this.updateStatus(notify.getId(), NotifyStatusEnum.PROGRESS.getCode());
     }
 }

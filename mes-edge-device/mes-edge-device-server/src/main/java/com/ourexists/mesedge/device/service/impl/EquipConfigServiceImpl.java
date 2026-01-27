@@ -9,10 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.mesedge.device.core.EquipAttrRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtimeConfig;
-import com.ourexists.mesedge.device.core.EquipRealtimeManager;
+import com.ourexists.mesedge.device.core.*;
 import com.ourexists.mesedge.device.mapper.EquipConfigMapper;
 import com.ourexists.mesedge.device.model.EquipAttrPageQuery;
 import com.ourexists.mesedge.device.model.EquipConfigDto;
@@ -56,6 +53,15 @@ public class EquipConfigServiceImpl extends AbstractMyBatisPlusService<EquipConf
                     attrs.add(equipAttrRealtime);
                 });
                 equipRealtimeConfig.setAttrs(attrs);
+            }
+            if (!CollectionUtils.isEmpty(dto.getConfig().getAlarms())) {
+                List<EquipAlarmRealtime> alarms = new ArrayList<>();
+                dto.getConfig().getAlarms().forEach(attr -> {
+                    EquipAlarmRealtime equipAlarmRealtime = new EquipAlarmRealtime();
+                    BeanUtils.copyProperties(attr, equipAlarmRealtime);
+                    alarms.add(equipAlarmRealtime);
+                });
+                equipRealtimeConfig.setAlarms(alarms);
             }
             equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
             equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
