@@ -105,11 +105,11 @@
                         onclick="openCollectEcharts('{{ item.selfCode }}')">
                     <i class="layui-icon layui-icon-chart"></i>
                 </button>
+                {{# } }}
                 <button class="layui-btn layui-btn-xs layui-btn-primary"
                         onclick="openRunEcharts('{{ item.selfCode }}')">
                     <i class="layui-icon layui-icon-engine"></i>
                 </button>
-                {{# } }}
             </div>
         </div>
     </div>
@@ -181,7 +181,7 @@
     }
 
     function openRunEcharts(sn) {
-        openWindow('data.echart', '/view/equip_run_echarts?sn=' + sn, ['40%', '90%']);
+        openWindow('data.echart', '/view/equip_run_echarts?sn=' + sn, ['40%', '70%']);
     }
 
     function reloadData() {

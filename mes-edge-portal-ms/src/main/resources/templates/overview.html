@@ -246,7 +246,7 @@
     function reloadCount() {
         post(router.equip_count, {
             needWorkshopCascade: true,
-            workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
         }, function (result) {
             $("#totalCount").text(result.total);
             $("#onlineCount").text(result.online);

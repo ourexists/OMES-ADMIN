@@ -11,5 +11,5 @@ public class ScadaUrlDto {
 
     private String url;
 
-    private Integer Interval;
+    private Integer interval;
 }

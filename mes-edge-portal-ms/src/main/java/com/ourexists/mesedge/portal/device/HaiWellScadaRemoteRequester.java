@@ -30,7 +30,7 @@ public class HaiWellScadaRemoteRequester implements ScadaRemoteRequester {
     public static final String SCADA_PATH = "/api/project/getProjectMachineVisitUrl";
 
     @Override
-    public String remote(WorkshopScadaConfigDetail workshopScadaConfigDetail) {
+    public String remote(WorkshopScadaConfigDetail workshopScadaConfigDetail, Integer platform) {
         String url = getAccessUri() + SCADA_PATH;
         log.info("【HaiWell api调用器】[{}]开始调用", url);
 
@@ -40,7 +40,7 @@ public class HaiWellScadaRemoteRequester implements ScadaRemoteRequester {
         jsonObject.put("account", workshopScadaConfigDetail.getPrivateKey());
         jsonObject.put("privateKey", workshopScadaConfigDetail.getPrivateSecret());
         jsonObject.put("machineCode", workshopScadaConfigDetail.getMapCode());
-        jsonObject.put("platform", 1);
+        jsonObject.put("platform", platform);
         // 构建请求实体
         HttpEntity<String> entity = new HttpEntity<>(jsonObject.toJSONString(), headers);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);

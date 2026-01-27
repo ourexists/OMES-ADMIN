@@ -131,6 +131,15 @@ public class WorkshopViewer implements WorkshopFeign {
         return JsonResponseEntity.success(WorkshopConfigScada.covert(configScadaService.queryByWorkshop(workshopId)));
     }
 
+    @GetMapping("queryScadaConfigByWorkshopCode")
+    public JsonResponseEntity<WorkshopConfigScadaDto> queryScadaConfigByWorkshopCode(@RequestParam String workshopCode) {
+        Workshop workshop = service.selectByCode(workshopCode);
+        if (workshop == null) {
+            return JsonResponseEntity.success(null);
+        }
+        return JsonResponseEntity.success(WorkshopConfigScada.covert(configScadaService.queryByWorkshop(workshop.getId())));
+    }
+
     @Operation(summary = "设置设备配置", description = "设置设备配置")
     @PostMapping("setScadaConfig")
     public JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto) {

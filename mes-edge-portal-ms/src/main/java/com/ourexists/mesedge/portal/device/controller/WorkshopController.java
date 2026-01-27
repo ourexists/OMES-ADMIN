@@ -110,7 +110,27 @@ public class WorkshopController {
                 return JsonResponseEntity.success(null);
             }
             ScadaUrlDto scadaUrlDto = new ScadaUrlDto()
-                    .setUrl(scadaPathManager.getScadaPath(workshopConfigScadaDto.getScadaConfig()))
+                    .setUrl(scadaPathManager.getScadaPath(workshopConfigScadaDto.getScadaConfig(), 1))
+                    .setInterval(workshopConfigScadaDto.getScadaConfig().getInterval());
+            return JsonResponseEntity.success(scadaUrlDto);
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
+            throw new BusinessException(e.getMessage());
+        }
+    }
+
+    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @GetMapping("getScadaUrlByWorkshopCode")
+    public JsonResponseEntity<ScadaUrlDto> getScadaUrlByWorkshopCode(@RequestParam String workshopCode,
+                                                                     @RequestParam Integer platform) {
+        try {
+            WorkshopConfigScadaDto workshopConfigScadaDto =
+                    RemoteHandleUtils.getDataFormResponse(workshopFeign.queryScadaConfigByWorkshopCode(workshopCode));
+            if (workshopConfigScadaDto == null) {
+                return JsonResponseEntity.success(null);
+            }
+            ScadaUrlDto scadaUrlDto = new ScadaUrlDto()
+                    .setUrl(scadaPathManager.getScadaPath(workshopConfigScadaDto.getScadaConfig(), platform))
                     .setInterval(workshopConfigScadaDto.getScadaConfig().getInterval());
             return JsonResponseEntity.success(scadaUrlDto);
         } catch (EraCommonException e) {

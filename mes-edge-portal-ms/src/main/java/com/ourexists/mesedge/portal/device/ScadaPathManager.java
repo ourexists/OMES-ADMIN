@@ -15,7 +15,7 @@ public class ScadaPathManager {
     @Autowired
     private List<ScadaRemoteRequester> remoteRequesters;
 
-    public String getScadaPath(WorkshopScadaConfigDetail workshopScadaConfigDetail) {
+    public String getScadaPath(WorkshopScadaConfigDetail workshopScadaConfigDetail, Integer platform) {
         ScadaRemoteRequester remoteRequester = null;
         for (ScadaRemoteRequester r : remoteRequesters) {
             if (r.serverName().equals(workshopScadaConfigDetail.getServer())) {
@@ -25,7 +25,7 @@ public class ScadaPathManager {
         if (remoteRequester == null) {
             return null;
         }
-        return remoteRequester.remote(workshopScadaConfigDetail);
+        return remoteRequester.remote(workshopScadaConfigDetail, platform);
     }
 
     public List<String> getAllRequesters() {
