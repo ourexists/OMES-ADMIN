@@ -20,6 +20,10 @@ var store = {
     menu: 'menu'
 }
 
+window.APP_CONFIG = {
+    systemName: 'OMES ADMIN',
+}
+
 layui.use(['i18np'], function () {
     i18np = layui.i18np;
     var language = localStorage.getItem(store.language);
@@ -445,3 +449,5 @@ function formatDate(date) {
     const s = String(date.getSeconds()).padStart(2, '0');
     return `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }
+
+document.title = window.APP_CONFIG.systemName;
