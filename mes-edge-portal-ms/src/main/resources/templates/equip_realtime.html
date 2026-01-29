@@ -91,7 +91,7 @@
 
             <div class="layui-card-body">
                 {{# layui.each(item.attrs, function(index, t){ }}
-                <p>{{ t.name }} : {{t.value == null ? 'unknow' : t.value }}</p>
+                <p class="card-attr">{{ t.name }} : {{t.value == null ? 'unknow' : t.value }}</p>
                 {{# }); }}
             </div>
 
@@ -265,6 +265,15 @@
         flex-direction: column;
         font-size: 12px;
         padding-top: 5px;
+    }
+
+    .card-attr {
+        display: flex;
+        justify-content: space-between;
+        flex-direction: column;
+        color: #2d93ca;
+        font-size: 14px;
+        margin-left: 10%;
     }
 
     .device-card .layui-card-body {
