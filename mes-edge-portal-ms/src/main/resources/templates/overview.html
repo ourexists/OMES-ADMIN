@@ -35,6 +35,12 @@
     .oemes-container {
         background: #f2f2f2;
     }
+
+    .header {
+        display: flex;
+        align-items: center; /* 上下居中 */
+        justify-content: space-between;
+    }
 </style>
 <body>
 <div class="layui-fluid oemes-container" style="padding:15px;">
@@ -42,10 +48,9 @@
     <div class="layui-row layui-col-space15">
         <div class="layui-col-md12">
             <div class="layui-card">
-                <div class="layui-card-body">
+                <div class="layui-card-body header">
                     <span style="font-size:20px;font-weight:600;">设备管理平台</span>
-                    <div style="float:right;" id="workshopName">
-                    </div>
+                    <span style="font-size:14px;color: #0078d7;" id="workshopName"></span>
                 </div>
             </div>
         </div>
