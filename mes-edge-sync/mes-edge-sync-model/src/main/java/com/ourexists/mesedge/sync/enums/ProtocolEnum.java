@@ -6,5 +6,5 @@ package com.ourexists.mesedge.sync.enums;
 
 public enum ProtocolEnum {
 
-    opc_ua, rest
+    opc_ua, rest, WINCC
 }
