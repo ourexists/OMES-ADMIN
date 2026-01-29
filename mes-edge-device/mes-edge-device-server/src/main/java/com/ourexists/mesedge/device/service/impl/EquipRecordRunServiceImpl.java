@@ -6,11 +6,10 @@ package com.ourexists.mesedge.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.mesedge.device.core.EquipRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtimeManager;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtime;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.mesedge.device.mapper.EquipRecordRunMapper;
 import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordRunDto;
@@ -80,7 +79,7 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
     @Override
     public List<EquipRecordRunVo> countMerging(EquipRecordCountQuery query) {
         List<EquipRecordRunVo> r = new ArrayList<>();
-        EquipRealtime equipRealtime = realtimeManager.get(UserContext.getTenant().getTenantId(), query.getSn());
+        EquipRealtime equipRealtime = realtimeManager.get(query.getSn());
         Date now = new Date();
         //限制最大查询时间不能大于当前时间
         if (query.getEndDate().after(now)) {

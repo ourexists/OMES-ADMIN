@@ -1,0 +1,215 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label" lang-i18n="data.collect_type" style="font-weight: bold "></label>
+                <div class="layui-input-block">
+                    <select name="collectType" id="collectType">
+                    </select>
+                </div>
+            </div>
+        </div>
+        <table class="layui-hide" id="tb-common"></table>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="common-edit-button"
+                    lang-i18n="common.msg.confirm"></button>
+        </div>
+    </form>
+</div>
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="del">
+            <i class="layui-icon layui-icon-subtraction"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-fluid layui-btn-primary" lay-event="add">
+            <i class="layui-icon layui-icon-addition"></i>
+        </a>
+    </div>
+</script>
+<script type="text/html" id="needCollect-switch">
+    <!-- 这里的 checked 的状态值判断仅作为演示 -->
+    <input type="checkbox" name="needCollect" value='{{= d.needCollect }}' title="yes|no" lay-skin="switch"
+           lay-filter="collect-switch"
+           {{=(d.needCollect!=null && d.needCollect ? "checked" : "") }}>
+</script>
+<script th:inline="none">
+    var attrDetails = [];
+    var current_data;
+    var table;
+    layui.use(['form', 'table', 'dropdown', 'layer', 'soulTable'], function () {
+        let form = layui.form,
+            layer = layui.layer,
+            soulTable = layui.soulTable;
+        table = layui.table;
+
+        let id = layui.url().search.id;
+
+        get(router.workshop_collect_type, null, function (result) {
+            $.each(result, function (index, item) {
+                $('#collectType').append(new Option(item, item));
+            })
+            form.render();
+        })
+
+        table.render({
+            elem: '#tb-common',
+            defaultToolbar: [],
+            toolbar: '#tb-toolbar',
+            cols: [[
+                {field: 'LAY_INDEX', title: 'NO', fixed: "left"},
+                {field: 'name', title: i18np.prop("workshop.config_collect_name"), edit: 'text'},
+                {field: 'map', title: i18np.prop("workshop.config_collect_map"), edit: 'text'},
+                {field: 'value', title: i18np.prop("workshop.config_collect_value"), edit: 'text'},
+                {
+                    field: 'needCollect', title: i18np.prop("data.collect"), templet: '#needCollect-switch'
+                },
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 200,
+                    minWidth: 125,
+                    templet: '#tb-tool'
+                }
+            ]],
+            resize: true,
+            loading: false,
+            page: false,
+            height: "full",
+            rowDrag: {
+                done: function (obj) {
+                    attrDetails = obj.cache;
+                    reloadTb();
+                }
+            },
+            done: function () {
+                soulTable.render(this);
+            },
+        });
+
+        get(router.workshop_config_collect, {"workshopId": id}, function (r) {
+            if (r == null) {
+                current_data = {};
+                attrDetails = [];
+                form.val("common-edit-form", {});
+            } else {
+                current_data = r.config;
+                if (current_data != null) {
+                    form.val("common-edit-form", Object.assign({}, current_data));
+                    if (current_data.attrs != null) {
+                        attrDetails = current_data.attrs;
+                    } else {
+                        attrDetails = [];
+                    }
+                    if (attrDetails.length > 0) {
+                        attrDetails.forEach((e, index) => {
+                            e.tmp_id = index;
+                        })
+                    }
+                } else {
+                    form.val("common-edit-form", {});
+                    current_data = {};
+                    attrDetails = [];
+                }
+            }
+            reloadTb();
+        })
+
+        table.on('tool(tb-common)', function (obj) {
+            let data = obj.data;
+            if (obj.event === 'del') {
+                removeTbData(data);
+            }
+        });
+
+        table.on('toolbar(tb-common)', function (obj) {
+            let data = {
+                tmp_id: Date.now()
+            };
+            switch (obj.event) {
+                case 'add':
+                    addTbData(data);
+                    break;
+            }
+        });
+
+        form.on('switch(collect-switch)', function (obj) {
+            const tr = obj.elem.closest('tr');
+            const index = tr.getAttribute('data-index');
+            const data = table.cache['tb-common'][index];
+            data.needCollect = !!obj.elem.checked;
+        });
+
+        // 提交事件
+        form.on('submit(common-edit-button)', function (data) {
+            let field = data.field; // 获取表单字段值
+            for (let key in field) {
+                current_data[key] = field[key];
+            }
+            let d = [];
+            let tableCache = table.cache['tb-common'];
+            tableCache.forEach((e) => {
+                if (e.name != null || e.map != null) {
+                    e.sort = e.LAY_INDEX;
+                    d.push(e);
+                }
+            })
+            current_data.attrs = d;
+            post(router.workshop_setConfig_collect, {
+                "workshopId": id,
+                "config": current_data
+            }, function () {
+                let index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }, function (code, msg) {
+                layer.alert(msg, {
+                    title: 'error'
+                });
+            })
+            return false;
+        });
+    });
+
+    function addTbData(data) {
+        attrDetails.push(data);
+        reloadTb();
+    }
+
+    function reloadTb() {
+        table.reloadData('tb-common', {
+            data: attrDetails,
+        })
+    }
+
+    function removeTbData(data) {
+        if (data.tmp_id != null) {
+            for (let j = 0; j < attrDetails.length; j++) {
+                if (attrDetails[j].tmp_id != null && attrDetails[j].tmp_id === data.tmp_id) {
+                    attrDetails.splice(j, 1);
+                    break;
+                }
+            }
+        }
+        reloadTb();
+    }
+</script>
+</body>
+</html>

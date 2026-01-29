@@ -11,7 +11,7 @@ spring:
   mvc:
     static-path-pattern: static/**
   application:
-    name: mes-edge-portal-ms
+    name: OEMS-ADMIN
   config:
     location: classpath:/,file:config/
   profiles:
@@ -92,6 +92,6 @@ springdoc:
 mqtt:
   server-uri:
     - ${mqtt_server}
-  client-id: ds-dts
+  client-id: OEMS-TEST
   username: 4G_user
   password: Pa$$WOr2

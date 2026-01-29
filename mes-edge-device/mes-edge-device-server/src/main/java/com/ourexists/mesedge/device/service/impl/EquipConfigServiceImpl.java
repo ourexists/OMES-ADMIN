@@ -7,9 +7,8 @@ package com.ourexists.mesedge.device.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.mesedge.device.core.*;
+import com.ourexists.mesedge.device.core.equip.cache.*;
 import com.ourexists.mesedge.device.mapper.EquipConfigMapper;
 import com.ourexists.mesedge.device.model.EquipAttrPageQuery;
 import com.ourexists.mesedge.device.model.EquipConfigDto;
@@ -41,7 +40,7 @@ public class EquipConfigServiceImpl extends AbstractMyBatisPlusService<EquipConf
     @Override
     public void addOrUpdate(EquipConfigDto dto) {
         saveOrUpdate(EquipConfig.wrap(dto));
-        EquipRealtime equipRealtime = equipRealtimeManager.getById(UserContext.getTenant().getTenantId(), dto.getEquipId());
+        EquipRealtime equipRealtime = equipRealtimeManager.getById(dto.getEquipId());
         if (equipRealtime != null) {
             EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();
             BeanUtils.copyProperties(dto.getConfig(), equipRealtimeConfig);
@@ -65,7 +64,7 @@ public class EquipConfigServiceImpl extends AbstractMyBatisPlusService<EquipConf
             }
             equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
             equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
-            equipRealtimeManager.addOrUpdate(UserContext.getTenant().getTenantId(), equipRealtime);
+            equipRealtimeManager.addOrUpdate(equipRealtime);
         }
     }
 

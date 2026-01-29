@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.mesedge.task.enums.TaskStatusEnum;
@@ -35,8 +36,10 @@ public class TaskServiceImpl extends AbstractMyBatisPlusService<TaskMapper, Task
 
     @PostConstruct
     public void init() {
+        UserContext.defaultTenant();
         //初始化时加载所有的运行中的任务
-        List<Task> taskList = this.list(new LambdaQueryWrapper<Task>().eq(Task::getStatus, TaskStatusEnum.RUNNING.getCode()));
+        List<Task> taskList = this.list(new LambdaQueryWrapper<Task>()
+                .eq(Task::getStatus, TaskStatusEnum.RUNNING.getCode()));
         if (CollectionUtil.isNotBlank(taskList)) {
             for (Task task : taskList) {
                 timerTaskManager.addTask(task.getId(), task.getType(), task.getCron());

@@ -54,4 +54,6 @@ public class ConnectDto {
     private String username;
 
     private String password;
+
+    private String tenantId;
 }

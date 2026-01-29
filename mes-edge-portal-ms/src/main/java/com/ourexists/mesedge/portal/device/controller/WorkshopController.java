@@ -10,11 +10,9 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.device.core.workshop.collect.WorkshopRealtimeCollectSelector;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
-import com.ourexists.mesedge.device.model.WorkshopAssignBatchDto;
-import com.ourexists.mesedge.device.model.WorkshopConfigScadaDto;
-import com.ourexists.mesedge.device.model.WorkshopDto;
-import com.ourexists.mesedge.device.model.WorkshopTreeNode;
+import com.ourexists.mesedge.device.model.*;
 import com.ourexists.mesedge.portal.device.ScadaPathManager;
 import com.ourexists.mesedge.portal.device.model.ScadaUrlDto;
 import com.ourexists.mesedge.ucenter.feign.RoleFeign;
@@ -42,6 +40,9 @@ public class WorkshopController {
 
     @Autowired
     private ScadaPathManager scadaPathManager;
+
+    @Autowired
+    private WorkshopRealtimeCollectSelector workshopRealtimeCollectSelector;
 
 
     @Operation(summary = "查询所有树", description = "查询所有树")
@@ -88,19 +89,37 @@ public class WorkshopController {
         }
     }
 
-    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @Operation(summary = "设置场景采集配置", description = "设置场景采集配置")
+    @PostMapping("setConfigCollect")
+    public JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto) {
+        return workshopFeign.setConfigCollect(dto);
+    }
+
+    @Operation(summary = "场景采集配置")
+    @GetMapping("queryConfigCollect")
+    public JsonResponseEntity<WorkshopConfigCollectDto> queryConfigCollect(@RequestParam String workshopId) {
+        return workshopFeign.queryConfigCollect(workshopId);
+    }
+
+    @Operation(summary = "场景采集方式")
+    @GetMapping("collectType")
+    public JsonResponseEntity<List<String>> collectType() {
+        return JsonResponseEntity.success(workshopRealtimeCollectSelector.getAllNames());
+    }
+
+    @Operation(summary = "场景SCADA配置")
     @GetMapping("queryScadaConfig")
     public JsonResponseEntity<WorkshopConfigScadaDto> queryScadaConfig(@RequestParam String workshopId) {
         return workshopFeign.queryScadaConfig(workshopId);
     }
 
-    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @Operation(summary = "设置场景SCADA配置")
     @PostMapping("setScadaConfig")
     public JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto) {
         return workshopFeign.setScadaConfig(dto);
     }
 
-    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @Operation(summary = "设置设备配置")
     @GetMapping("getScadaUrl")
     public JsonResponseEntity<ScadaUrlDto> getScadaUrl(@RequestParam String workshopId) {
         try {
@@ -119,7 +138,7 @@ public class WorkshopController {
         }
     }
 
-    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @Operation(summary = "场景SCADA配置")
     @GetMapping("getScadaUrlByWorkshopCode")
     public JsonResponseEntity<ScadaUrlDto> getScadaUrlByWorkshopCode(@RequestParam String workshopCode,
                                                                      @RequestParam Integer platform) {
@@ -139,7 +158,7 @@ public class WorkshopController {
         }
     }
 
-    @Operation(summary = "获取所有SCADA服务类型", description = "获取所有SCADA服务类型")
+    @Operation(summary = "获取所有SCADA服务类型")
     @GetMapping("scadaServer")
     public JsonResponseEntity<List<String>> scadaServer() {
         return JsonResponseEntity.success(scadaPathManager.getAllRequesters());

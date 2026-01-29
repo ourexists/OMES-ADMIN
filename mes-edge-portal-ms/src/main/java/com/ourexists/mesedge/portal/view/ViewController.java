@@ -254,14 +254,14 @@ public class ViewController {
         return "workshop_form_edit";
     }
 
-    @RequestMapping("/view/ec_tables")
-    public String ec_tables() {
-        return "ec_tables";
+    @RequestMapping("/view/workshop_collect_tables")
+    public String workshop_collect_tables() {
+        return "workshop_collect_tables";
     }
 
-    @RequestMapping("/view/ecattr_form_edit")
-    public String ecattr_form_edit() {
-        return "ecattr_form_edit";
+    @RequestMapping("/view/workshop_config_collect")
+    public String workshop_config_collect() {
+        return "workshop_config_collect";
     }
 
     @RequestMapping("/view/equip_record_run_tables")

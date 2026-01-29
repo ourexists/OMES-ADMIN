@@ -193,6 +193,7 @@ var router = {
     equip_online_count: '/equipRecordOnline/countMerging',
     equip_alarm_count: '/equipRecordAlarm/countMerging',
     equip_count: '/equip/countRealtime',
+    equip_collect_type: '/equip/collectType',
     message_page: '/message/selectByPage',
     equip_state_snapshot_page: '/equipStateSnapshot/selectByPage',
     equip_state_snapshot_count: "/equipStateSnapshot/countNumByTime",
@@ -200,6 +201,9 @@ var router = {
     workshop_config_scada: "/workshop/queryScadaConfig",
     workshop_set_scada: "/workshop/setScadaConfig",
     workshop_scadaurl: "/workshop/getScadaUrl",
+    workshop_config_collect: "/workshop/queryConfigCollect",
+    workshop_setConfig_collect: "/workshop/setConfigCollect",
+    workshop_collect_type: '/workshop/collectType',
 }
 
 function getCommonHeader() {

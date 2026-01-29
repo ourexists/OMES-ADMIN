@@ -28,7 +28,7 @@
         <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="add">
             <i class="layui-icon layui-icon-add-1"></i>
         </a>
-        <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="ecAttr">
+        <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="collect">
             <i class="layui-icon layui-icon-util"></i>
         </a>
         <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="scada">
@@ -158,8 +158,8 @@
             } else if (obj.event === 'add') {
                 current_row_data = null;
                 openWindow('common.add', '/view/workshop_form_edit?pcode=' + data.code, ['60%', '35%']);
-            } else if (obj.event === 'ecAttr') {
-                openWindow('ecattr.name', '/view/ecattr_form_edit?id=' + data.id, ['80%', '50%']);
+            } else if (obj.event === 'collect') {
+                openWindow('workshop.collect', '/view/workshop_config_collect?id=' + data.id, ['80%', '50%']);
             } else if (obj.event === 'scada') {
                 openWindow('workshop.scada', '/view/workshop_config_scada?id=' + data.id, ['60%', '70%']);
             }

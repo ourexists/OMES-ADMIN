@@ -11,6 +11,8 @@ import java.util.List;
 @Accessors(chain = true)
 public class EquipConfigDetail {
 
+    private String collectType;
+
     private String runMap;
 
     private String alarmMap;
