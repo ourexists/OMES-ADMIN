@@ -38,7 +38,9 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
 
     private static final String CACHE_NAME = "WORKSHOP_REALTIME_";
 
-    public DWorkshopRealtimeManager(CacheManager cacheManager, WorkshopFeign workshopFeign, TenantFeign tenantFeign) {
+    public DWorkshopRealtimeManager(CacheManager cacheManager,
+                                    WorkshopFeign workshopFeign,
+                                    TenantFeign tenantFeign) {
         this.cacheManager = cacheManager;
         this.workshopFeign = workshopFeign;
         this.tenantFeign = tenantFeign;

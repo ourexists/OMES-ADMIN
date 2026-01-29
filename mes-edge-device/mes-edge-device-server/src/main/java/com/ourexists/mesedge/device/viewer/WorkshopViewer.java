@@ -47,7 +47,7 @@ public class WorkshopViewer implements WorkshopFeign {
     private WorkshopConfigScadaService configScadaService;
 
     @Autowired
-    private WorkshopConfigCollectService configCollectService;
+    private WorkshopConfigCollectService workshopConfigCollectService;
 
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
@@ -155,13 +155,13 @@ public class WorkshopViewer implements WorkshopFeign {
     @Operation(summary = "场景采集配置", description = "场景采集配置")
     @GetMapping("queryConfigCollect")
     public JsonResponseEntity<WorkshopConfigCollectDto> queryConfigCollect(@RequestParam String workshopId) {
-        return JsonResponseEntity.success(WorkshopConfigCollect.covert(configCollectService.queryByWorkshop(workshopId)));
+        return JsonResponseEntity.success(WorkshopConfigCollect.covert(workshopConfigCollectService.queryByWorkshop(workshopId)));
     }
 
     @Operation(summary = "设置场景采集配置", description = "设置场景采集配置")
     @PostMapping("setConfigCollect")
     public JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto) {
-        configCollectService.addOrUpdate(dto);
+        workshopConfigCollectService.addOrUpdate(dto);
         return JsonResponseEntity.success(true);
     }
 
@@ -169,7 +169,7 @@ public class WorkshopViewer implements WorkshopFeign {
     @Operation(summary = "所有场景采集配置", description = "所有场景采集配置")
     @GetMapping("queryAllConfigCollect")
     public JsonResponseEntity<List<WorkshopConfigCollectDto>> queryAllConfigCollect() {
-        return JsonResponseEntity.success(WorkshopConfigCollect.covert(configCollectService.queryAllConfigCollect()));
+        return JsonResponseEntity.success(WorkshopConfigCollect.covert(workshopConfigCollectService.queryAllConfigCollect()));
     }
 
 }

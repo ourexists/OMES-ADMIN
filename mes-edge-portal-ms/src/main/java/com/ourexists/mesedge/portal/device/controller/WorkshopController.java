@@ -10,6 +10,10 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.device.core.workshop.cache.WorkshopRealtime;
+import com.ourexists.mesedge.device.core.workshop.cache.WorkshopRealtimeCollect;
+import com.ourexists.mesedge.device.core.workshop.cache.WorkshopRealtimeConfig;
+import com.ourexists.mesedge.device.core.workshop.cache.WorkshopRealtimeManager;
 import com.ourexists.mesedge.device.core.workshop.collect.WorkshopRealtimeCollectSelector;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
 import com.ourexists.mesedge.device.model.*;
@@ -20,10 +24,12 @@ import com.ourexists.mesedge.ucenter.role.RoleDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -40,6 +46,9 @@ public class WorkshopController {
 
     @Autowired
     private ScadaPathManager scadaPathManager;
+
+    @Autowired
+    private WorkshopRealtimeManager workshopRealtimeManager;
 
     @Autowired
     private WorkshopRealtimeCollectSelector workshopRealtimeCollectSelector;
@@ -92,7 +101,27 @@ public class WorkshopController {
     @Operation(summary = "设置场景采集配置", description = "设置场景采集配置")
     @PostMapping("setConfigCollect")
     public JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto) {
-        return workshopFeign.setConfigCollect(dto);
+        try {
+            RemoteHandleUtils.getDataFormResponse(workshopFeign.setConfigCollect(dto));
+            WorkshopRealtime workshopRealtime = new WorkshopRealtime();
+            workshopRealtime.setId(dto.getWorkshopId());
+            WorkshopRealtimeConfig workshopRealtimeConfig = new WorkshopRealtimeConfig();
+            BeanUtils.copyProperties(dto.getConfig(), workshopRealtimeConfig);
+            List<WorkshopRealtimeCollect> attrconfigs = new ArrayList<>();
+            for (WorkshopConfigCollectAttr attr : dto.getConfig().getAttrs()) {
+                WorkshopRealtimeCollect workshopRealtimeCollect = new WorkshopRealtimeCollect();
+                BeanUtils.copyProperties(attr, workshopRealtimeCollect);
+                attrconfigs.add(workshopRealtimeCollect);
+            }
+            workshopRealtimeConfig.setAttrs(attrconfigs);
+            workshopRealtime.setConfig(workshopRealtimeConfig);
+            workshopRealtime.setAttrsRealtime(null);
+            workshopRealtimeManager.build(workshopRealtime);
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
+            throw new BusinessException(e.getMessage());
+        }
+        return JsonResponseEntity.success(true);
     }
 
     @Operation(summary = "场景采集配置")

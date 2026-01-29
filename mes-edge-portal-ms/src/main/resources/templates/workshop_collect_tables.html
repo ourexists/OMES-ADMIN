@@ -248,11 +248,14 @@
     function reloadAll() {
         get(router.workshop_config_collect, {"workshopId": selected_tree_node.id}, function (d) {
             if (d == null || d.config == null || d.config.attrs == null) {
+                table.reload('tb-common', {
+                    cols: [],
+                })
                 return
             }
-            let r = d.config.attrs;
             let tbCols = []
             let col = [];
+            let r = d.config.attrs;
             if (r.length > 0) {
                 col.push({
                     field: 'time',
