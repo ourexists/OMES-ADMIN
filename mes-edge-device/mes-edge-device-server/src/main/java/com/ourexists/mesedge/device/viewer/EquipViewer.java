@@ -8,11 +8,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
-import com.ourexists.mesedge.device.core.EquipAttrRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtime;
-import com.ourexists.mesedge.device.core.EquipRealtimeManager;
+import com.ourexists.mesedge.device.core.equip.cache.EquipAttrRealtime;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtime;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.model.*;
 import com.ourexists.mesedge.device.pojo.Equip;
@@ -85,7 +84,7 @@ public class EquipViewer implements EquipFeign {
                     }
                 }
                 if (dto.getNeedRealtime()) {
-                    EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
+                    EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getSelfCode());
                     if (equipRealtime != null) {
                         BeanUtils.copyProperties(equipRealtime, equipDto, "name", "selfCode");
                         List<EquipAttr> attrs = new ArrayList<>();
@@ -111,12 +110,12 @@ public class EquipViewer implements EquipFeign {
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody EquipDto dto) {
         Equip e = Equip.wrap(dto);
         service.saveOrUpdate(e);
-        EquipRealtime equipRealtime = equipRealtimeManager.get(UserContext.getTenant().getTenantId(), dto.getSelfCode());
+        EquipRealtime equipRealtime = equipRealtimeManager.get(dto.getSelfCode());
         if (equipRealtime == null) {
             equipRealtime = new EquipRealtime();
         }
         BeanUtils.copyProperties(e, equipRealtime);
-        equipRealtimeManager.addOrUpdate(UserContext.getTenant().getTenantId(), equipRealtime);
+        equipRealtimeManager.addOrUpdate(equipRealtime);
         return JsonResponseEntity.success(true);
     }
 
@@ -141,7 +140,7 @@ public class EquipViewer implements EquipFeign {
         if (needRealtime == null || !needRealtime) {
             return JsonResponseEntity.success(equipDto);
         }
-        EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getTenantId(), equipDto.getSelfCode());
+        EquipRealtime equipRealtime = equipRealtimeManager.get(equipDto.getSelfCode());
         if (equipRealtime != null) {
             BeanUtils.copyProperties(equipRealtime, equipDto, "name", "selfCode");
             List<EquipAttr> attrs = new ArrayList<>();

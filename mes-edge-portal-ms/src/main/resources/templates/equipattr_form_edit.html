@@ -16,6 +16,13 @@
 <div style="padding: 16px;">
     <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
         <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="data.collect_type" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <select name="collectType" id="collectType">
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
             <div class="layui-inline">
                 <label class="layui-form-label" lang-i18n="equip.runMap" style="font-weight: bold "></label>
                 <div class="layui-input-block">
@@ -94,6 +101,13 @@
         table = layui.table;
 
         let id = layui.url().search.id;
+
+        get(router.equip_collect_type, null, function (result) {
+            $.each(result, function (index, item) {
+                $('#collectType').append(new Option(item, item));
+            })
+            form.render();
+        })
 
         table.render({
             elem: '#tb-common',
@@ -201,6 +215,7 @@
             reloadTb();
             reloadTb2();
         })
+
 
         table.on('tool(tb-common)', function (obj) {
             let data = obj.data;

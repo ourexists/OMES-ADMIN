@@ -13,8 +13,10 @@ import com.ourexists.mesedge.device.feign.WorkshopFeign;
 import com.ourexists.mesedge.device.model.*;
 import com.ourexists.mesedge.device.pojo.Workshop;
 import com.ourexists.mesedge.device.pojo.WorkshopAssign;
+import com.ourexists.mesedge.device.pojo.WorkshopConfigCollect;
 import com.ourexists.mesedge.device.pojo.WorkshopConfigScada;
 import com.ourexists.mesedge.device.service.WorkshopAssignService;
+import com.ourexists.mesedge.device.service.WorkshopConfigCollectService;
 import com.ourexists.mesedge.device.service.WorkshopConfigScadaService;
 import com.ourexists.mesedge.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +45,9 @@ public class WorkshopViewer implements WorkshopFeign {
 
     @Autowired
     private WorkshopConfigScadaService configScadaService;
+
+    @Autowired
+    private WorkshopConfigCollectService configCollectService;
 
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
@@ -124,13 +129,13 @@ public class WorkshopViewer implements WorkshopFeign {
         return JsonResponseEntity.success(true);
     }
 
-
-    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @Operation(summary = "场景SCADA配置", description = "场景SCADA配置")
     @GetMapping("queryScadaConfig")
     public JsonResponseEntity<WorkshopConfigScadaDto> queryScadaConfig(@RequestParam String workshopId) {
         return JsonResponseEntity.success(WorkshopConfigScada.covert(configScadaService.queryByWorkshop(workshopId)));
     }
 
+    @Operation(summary = "场景SCADA配置", description = "场景SCADA配置")
     @GetMapping("queryScadaConfigByWorkshopCode")
     public JsonResponseEntity<WorkshopConfigScadaDto> queryScadaConfigByWorkshopCode(@RequestParam String workshopCode) {
         Workshop workshop = service.selectByCode(workshopCode);
@@ -140,11 +145,31 @@ public class WorkshopViewer implements WorkshopFeign {
         return JsonResponseEntity.success(WorkshopConfigScada.covert(configScadaService.queryByWorkshop(workshop.getId())));
     }
 
-    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @Operation(summary = "设置场景SCADA配置", description = "设置场景SCADA配置")
     @PostMapping("setScadaConfig")
     public JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto) {
         configScadaService.addOrUpdate(dto);
         return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "场景采集配置", description = "场景采集配置")
+    @GetMapping("queryConfigCollect")
+    public JsonResponseEntity<WorkshopConfigCollectDto> queryConfigCollect(@RequestParam String workshopId) {
+        return JsonResponseEntity.success(WorkshopConfigCollect.covert(configCollectService.queryByWorkshop(workshopId)));
+    }
+
+    @Operation(summary = "设置场景采集配置", description = "设置场景采集配置")
+    @PostMapping("setConfigCollect")
+    public JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto) {
+        configCollectService.addOrUpdate(dto);
+        return JsonResponseEntity.success(true);
+    }
+
+
+    @Operation(summary = "所有场景采集配置", description = "所有场景采集配置")
+    @GetMapping("queryAllConfigCollect")
+    public JsonResponseEntity<List<WorkshopConfigCollectDto>> queryAllConfigCollect() {
+        return JsonResponseEntity.success(WorkshopConfigCollect.covert(configCollectService.queryAllConfigCollect()));
     }
 
 }

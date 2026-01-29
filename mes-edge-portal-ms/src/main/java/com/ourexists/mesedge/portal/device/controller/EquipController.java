@@ -10,6 +10,7 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.device.core.equip.collect.EquipRealtimeCollectSelector;
 import com.ourexists.mesedge.device.enums.EquipTypeEnum;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.feign.WorkshopFeign;
@@ -46,6 +47,9 @@ public class EquipController {
 
     @Autowired
     private RoleFeign roleFeign;
+
+    @Autowired
+    private EquipRealtimeCollectSelector equipRealtimeCollectSelector;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -165,5 +169,11 @@ public class EquipController {
     @PostMapping("setEquipConfig")
     public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
         return feign.setEquipConfig(equipConfigDto);
+    }
+
+    @Operation(summary = "所有采集方式")
+    @GetMapping("collectType")
+    public JsonResponseEntity<List<String>> collectType() {
+        return JsonResponseEntity.success(equipRealtimeCollectSelector.getAllNames());
     }
 }

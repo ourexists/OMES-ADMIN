@@ -30,6 +30,9 @@ public class PermissionModifyDto extends BaseDto {
     @Schema(description = "菜单图标")
     private String icon;
 
+    @Schema(description = "国际化名称")
+    private String i18n;
+
     @Schema(description = "组件")
     private String component;
 

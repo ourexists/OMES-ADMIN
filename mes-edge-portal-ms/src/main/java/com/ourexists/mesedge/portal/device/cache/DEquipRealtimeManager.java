@@ -5,7 +5,7 @@ import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.mesedge.device.core.*;
+import com.ourexists.mesedge.device.core.equip.cache.*;
 import com.ourexists.mesedge.device.feign.EquipFeign;
 import com.ourexists.mesedge.device.feign.EquipRecordAlarmFeign;
 import com.ourexists.mesedge.device.feign.EquipRecordOnlineFeign;
@@ -15,6 +15,8 @@ import com.ourexists.mesedge.message.enums.MessageSourceEnum;
 import com.ourexists.mesedge.message.enums.MessageTypeEnum;
 import com.ourexists.mesedge.message.feign.NotifyFeign;
 import com.ourexists.mesedge.message.model.NotifyDto;
+import com.ourexists.mesedge.ucenter.feign.TenantFeign;
+import com.ourexists.mesedge.ucenter.tenant.TenantVo;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -41,6 +43,9 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     private NotifyFeign notifyFeign;
 
     @Autowired
+    private TenantFeign tenantFeign;
+
+    @Autowired
     private EquipRecordRunFeign equipRecordRunFeign;
 
     @Autowired
@@ -49,34 +54,32 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     @Autowired
     private EquipRecordAlarmFeign equipRecordAlarmFeign;
 
-    private static final String CACHE_NAME = "EquipRealtime";
+    private static final String CACHE_NAME = "equip_realtime_";
 
-    public Cache<Object, Object> nativeCache(String cacheName) {
-        CaffeineCache springCache = (CaffeineCache) cacheManager.getCache(cacheName);
+    public Cache<Object, Object> nativeCache() {
+        String tenantId = UserContext.getTenant().getTenantId();
+        CaffeineCache springCache = (CaffeineCache) cacheManager.getCache(CACHE_NAME + tenantId);
         return springCache.getNativeCache();
     }
 
-    public Map<String, EquipRealtime> getAll() {
-        Map<String, EquipRealtime> r = new HashMap<>();
-        for (String cacheName : cacheManager.getCacheNames()) {
-            ConcurrentMap<Object, Object> c = nativeCache(cacheName).asMap();
-            for (Map.Entry<Object, Object> entry : c.entrySet()) {
-                r.put((String) entry.getKey(), (EquipRealtime) entry.getValue());
-            }
-        }
-        return r;
-    }
-
-
     @PostConstruct
     public void init() {
-        reload();
+        try {
+            UserContext.defaultTenant();
+            UserContext.getTenant().setSkipMain(false);
+            List<TenantVo> tenantVos = RemoteHandleUtils.getDataFormResponse(tenantFeign.all());
+            for (TenantVo tenantVo : tenantVos) {
+                UserContext.getTenant().setTenantId(tenantVo.getTenantCode());
+                reload();
+            }
+        } catch (EraCommonException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-
     @Override
-    public void realtimeHandle(String tenantId, List<EquipRealtime> targets) {
-        Map<Object, Object> map = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+    public void realtimeHandle(List<EquipRealtime> targets) {
+        Map<Object, Object> map = nativeCache().asMap();
         List<EquipRealtime> sources = new ArrayList<>();
         for (EquipRealtime target : targets) {
             sources.add((EquipRealtime) map.get(target.getSelfCode()));
@@ -85,23 +88,23 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         for (EquipRealtime target : targets) {
             map.put(target.getSelfCode(), target);
         }
-        nativeCache(CACHE_NAME + "_" + tenantId).putAll(map);
+        nativeCache().putAll(map);
     }
 
     @Override
-    public void addOrUpdate(String tenantId, EquipRealtime equipRealtime) {
-        nativeCache(CACHE_NAME + "_" + tenantId).put(equipRealtime.getSelfCode(), equipRealtime);
+    public void addOrUpdate(EquipRealtime equipRealtime) {
+        nativeCache().put(equipRealtime.getSelfCode(), equipRealtime);
     }
 
 
     @Override
-    public void remove(String tenantId, String sn) {
-        nativeCache(CACHE_NAME + "_" + tenantId).invalidate(sn);
+    public void remove(String sn) {
+        nativeCache().invalidate(sn);
     }
 
     @Override
-    public void removeBatch(String tenantId, List<String> ids) {
-        Map<Object, Object> map = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+    public void removeBatch(List<String> ids) {
+        Map<Object, Object> map = nativeCache().asMap();
         List<String> sns = new ArrayList<>();
         for (Map.Entry<Object, Object> entry : map.entrySet()) {
             EquipRealtime e = (EquipRealtime) entry.getValue();
@@ -109,18 +112,18 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 sns.add(e.getSelfCode());
             }
         }
-        nativeCache(CACHE_NAME + "_" + tenantId).invalidateAll(sns);
+        nativeCache().invalidateAll(sns);
     }
 
     @Override
-    public void clear(String tenantId) {
-        nativeCache(CACHE_NAME + "_" + tenantId).cleanUp();
+    public void clear() {
+        nativeCache().cleanUp();
     }
 
     @Override
-    public Map<String, EquipRealtime> getAll(String tenantId) {
+    public Map<String, EquipRealtime> getAll() {
         Map<String, EquipRealtime> r = new HashMap<>();
-        ConcurrentMap<Object, Object> c = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+        ConcurrentMap<Object, Object> c = nativeCache().asMap();
         for (Map.Entry<Object, Object> entry : c.entrySet()) {
             r.put((String) entry.getKey(), (EquipRealtime) entry.getValue());
         }
@@ -128,8 +131,8 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     }
 
     @Override
-    public EquipRealtime get(String tenantId, String sn) {
-        Object r = nativeCache(CACHE_NAME + "_" + tenantId).getIfPresent(sn);
+    public EquipRealtime get(String sn) {
+        Object r = nativeCache().getIfPresent(sn);
         if (r == null) {
             return null;
         } else {
@@ -138,8 +141,8 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     }
 
     @Override
-    public EquipRealtime getById(String tenantId, String id) {
-        ConcurrentMap<Object, Object> c = nativeCache(CACHE_NAME + "_" + tenantId).asMap();
+    public EquipRealtime getById(String id) {
+        ConcurrentMap<Object, Object> c = nativeCache().asMap();
         for (Map.Entry<Object, Object> entry : c.entrySet()) {
             EquipRealtime equipRealtime = (EquipRealtime) entry.getValue();
             if (id.equals(equipRealtime.getId())) {
@@ -151,7 +154,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @Override
     public void reload() {
-        UserContext.defaultTenant();
         EquipPageQuery query = new EquipPageQuery();
         query.setRequirePage(false);
         query.setQueryConfig(true);
@@ -198,7 +200,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 equipRealtimeMap.put(equipDto.getTenantId(), r);
             }
             for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
-                nativeCache(CACHE_NAME + "_" + entry.getKey()).putAll(entry.getValue());
+                nativeCache().putAll(entry.getValue());
             }
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
