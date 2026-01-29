@@ -235,10 +235,10 @@
         let title = i18np.prop('workshop.name') + ":" + selected_tree_node.name + "<br>"
             + i18np.prop('workshop.name') + ":" + $('#startDate').val() + " ~ " + $('#endDate').val();
         table.reload('tb-common', {
-            url: initRequestUrl(router.ecrecord_page),
+            url: initRequestUrl(router.workshop_collect_page),
             customTitleRow: title,
             where: {
-                attrIds: attrIds,
+                workshopId: selected_tree_node.id,
                 startTime: $('#startDate').val(),
                 endTime: $('#endDate').val(),
             },
@@ -246,19 +246,25 @@
     }
 
     function reloadAll() {
-        post(router.ecattr_page, {"workshopId": selected_tree_node.id, requirePage: false}, function (r) {
+        get(router.workshop_config_collect, {"workshopId": selected_tree_node.id}, function (d) {
+            if (d == null || d.config == null || d.config.attrs == null) {
+                return
+            }
+            let r = d.config.attrs;
             let tbCols = []
             let col = [];
             if (r.length > 0) {
                 col.push({
                     field: 'time',
                     title: i18np.prop("common.time"),
-                    fixed: 'left',
-                    totalRow: i18np.prop("ec.calc")
+                    fixed: 'left'
                 })
                 r.forEach(e => {
-                    let k = {field: e.id, title: e.name, totalRow: true}
-                    attrIds.push(e.id);
+                    let k = {
+                        field: e.id, title: e.name, templet: function (d) {
+                            return d.data == null ? null : d.data[e.name]
+                        }
+                    }
                     col.push(k);
                 });
             }
@@ -274,9 +280,9 @@
                 table.reload('tb-common', {
                     cols: tbCols,
                     customTitleRow: title,
-                    url: initRequestUrl(router.ecrecord_page),
+                    url: initRequestUrl(router.workshop_collect_page),
                     where: {
-                        attrIds: attrIds,
+                        workshopId: selected_tree_node.id,
                         startTime: $('#startDate').val(),
                         endTime: $('#endDate').val(),
                     },
