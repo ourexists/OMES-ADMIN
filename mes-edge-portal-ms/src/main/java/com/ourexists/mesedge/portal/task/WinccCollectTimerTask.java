@@ -7,6 +7,7 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.mesedge.device.core.workshop.collect.WorkshopRealtimeCollectSelector;
 import com.ourexists.mesedge.device.core.workshop.collect.WorkshopRealtimeCollector;
 import com.ourexists.mesedge.portal.third.wincc.WinccApi;
+import com.ourexists.mesedge.sync.enums.ProtocolEnum;
 import com.ourexists.mesedge.sync.feign.ConnectFeign;
 import com.ourexists.mesedge.sync.model.ConnectDto;
 import com.ourexists.mesedge.task.process.task.TimerTask;
@@ -34,12 +35,9 @@ public class WinccCollectTimerTask extends TimerTask {
     @Autowired
     private WorkshopRealtimeCollectSelector selector;
 
-    public static final String PROTOCOL = "WINCC";
-
     @Override
     public void doRun() {
         UserContext.defaultTenant();
-        UserContext.getTenant().setSkipMain(false);
         //获取连接器
         List<ConnectDto> connects = connect();
         if (CollectionUtils.isEmpty(connects)) {
@@ -48,7 +46,7 @@ public class WinccCollectTimerTask extends TimerTask {
         for (ConnectDto connect : connects) {
             //根据不同租户调整
             UserContext.getTenant().setTenantId(connect.getTenantId());
-            WorkshopRealtimeCollector collector = selector.getCollector(PROTOCOL);
+            WorkshopRealtimeCollector collector = selector.getCollector(connect.getServerName());
             List<String> varis = collector.collectVariables();
             if (CollectionUtils.isEmpty(varis)) {
                 return;
@@ -62,7 +60,7 @@ public class WinccCollectTimerTask extends TimerTask {
 
     private List<ConnectDto> connect() {
         try {
-            return RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByProtocol(PROTOCOL));
+            return RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByProtocol(ProtocolEnum.WINCC.name()));
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }

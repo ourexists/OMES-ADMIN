@@ -92,6 +92,6 @@ springdoc:
 mqtt:
   server-uri:
     - ${mqtt_server}
-  client-id: OEMS-TEST
+  client-id: OEMS
   username: 4G_user
   password: Pa$$WOr2
