@@ -173,8 +173,6 @@ var router = {
     "workshop_del": "/workshop/delete",
     "workshop_edit": "/workshop/addOrUpdate",
     "ecattr_page": "/ecattr/selectByPage",
-    "ecattr_insert": "/ecattr/insertBatch",
-    "ecrecord_page": "/ec_record/selectByCondition",
     "equipRecordRun_page": "/equipRecordRun/selectByPage",
     "equipRecordAlarm_page": "/equipRecordAlarm/selectByPage",
     "equipRecordOnline_page": "/equipRecordOnline/selectByPage",
@@ -204,6 +202,7 @@ var router = {
     workshop_config_collect: "/workshop/queryConfigCollect",
     workshop_setConfig_collect: "/workshop/setConfigCollect",
     workshop_collect_type: '/workshop/collectType',
+    workshop_collect_page: '/workshop/collect/selectByPage'
 }
 
 function getCommonHeader() {
