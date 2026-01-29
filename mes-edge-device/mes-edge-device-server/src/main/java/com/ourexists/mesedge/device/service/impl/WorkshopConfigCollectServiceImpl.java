@@ -16,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
-public class WorkshopConfigCollectServiceImpl extends AbstractMyBatisPlusService<WorkshopConfigCollectMapper, WorkshopConfigCollect> implements WorkshopConfigCollectService {
+public class WorkshopConfigCollectServiceImpl extends AbstractMyBatisPlusService<WorkshopConfigCollectMapper, WorkshopConfigCollect>
+        implements WorkshopConfigCollectService {
 
 
     @Override
@@ -47,6 +48,6 @@ public class WorkshopConfigCollectServiceImpl extends AbstractMyBatisPlusService
 
     @Override
     public List<WorkshopConfigCollect> queryAllConfigCollect() {
-        return this.list();
+        return this.list(new LambdaQueryWrapper<WorkshopConfigCollect>().orderByDesc(WorkshopConfigCollect::getWorkshopId));
     }
 }
