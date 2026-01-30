@@ -1,12 +1,17 @@
 package com.ourexists.mesedge.portal.config;
 
+import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.mesedge.portal.device.collect.TCMqttRealtimeCollector;
+import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.mesedge.device.core.equip.collect.EquipRealtimeCollectSelector;
+import com.ourexists.mesedge.device.core.equip.collect.EquipRealtimeCollector;
+import com.ourexists.mesedge.sync.feign.ConnectFeign;
+import com.ourexists.mesedge.sync.model.ConnectDto;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -18,45 +23,56 @@ import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannel
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 
-import java.util.List;
-
+@Slf4j
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "mqtt")
 public class MqttConfiguration {
 
-    private List<String> serverUri;
-
-    private String username;
-
-    private String password;
-
-    private String clientId;
+    @Value("${spring.application.name}")
+    private String projectName;
 
     private Integer connectionTimeout = 50;
 
     private Integer keepAliveInterval = 3;
 
-    public static final String CHANNEL_INPUT = "mqttInboundChannel";
+    public static final String CHANNEL_INPUT = "TC_Mqtt";
 
-    public static final String CHANNEL_OUTPUT = "mqttOutboundChannel";
+    private ConnectFeign connectFeign;
 
-    @Autowired
-    private TCMqttRealtimeCollector tcMqttRealtimeCollector;
+    private EquipRealtimeCollectSelector equipRealtimeCollectSelector;
+
+
+    private ConnectDto connectDto;
+
+    public MqttConfiguration(ConnectFeign connectFeign,
+                             EquipRealtimeCollectSelector equipRealtimeCollectSelector) {
+        this.connectFeign = connectFeign;
+        this.equipRealtimeCollectSelector = equipRealtimeCollectSelector;
+        UserContext.defaultTenant();
+        try {
+            connectDto = RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(CHANNEL_INPUT));
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
 
     @Bean
     public MqttConnectOptions mqttConnectOptions() {
+        if (connectDto == null) {
+            return null;
+        }
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setUserName(username);
-        options.setPassword(password.toCharArray());
-        options.setServerURIs(serverUri.toArray(new String[0]));
+        options.setUserName(connectDto.getUsername());
+        options.setPassword(connectDto.getPassword().toCharArray());
+        options.setServerURIs(new String[]{connectDto.getHost() + ":" + connectDto.getPort()});
         options.setConnectionTimeout(connectionTimeout);
         options.setKeepAliveInterval(keepAliveInterval);
         options.setAutomaticReconnect(true);
         options.setCleanSession(true);
         return options;
     }
+
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory(MqttConnectOptions options) {
@@ -78,30 +94,23 @@ public class MqttConfiguration {
         return message -> {
             UserContext.defaultTenant();
             String payload = (String) message.getPayload();
-            tcMqttRealtimeCollector.doCollect(payload);
+            EquipRealtimeCollector collector = equipRealtimeCollectSelector.getCollector(CHANNEL_INPUT);
+            if (collector != null) {
+                collector.doCollect(payload);
+            }
         };
     }
 
     @Bean
-    public MessageProducer inbound(MqttPahoClientFactory clientFactory, MessageChannel mqttInboundChannel) {
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId + "_input", clientFactory, "fxx/fb");
-        adapter.setOutputChannel(mqttInboundChannel);
+    public MessageProducer inbound(MqttPahoClientFactory clientFactory,
+                                   MessageChannel TC_Mqtt) {
+        if (connectDto == null) {
+            return null;
+        }
+        MqttPahoMessageDrivenChannelAdapter adapter =
+                new MqttPahoMessageDrivenChannelAdapter(projectName + "_listener", clientFactory, connectDto.getSuffix());
+        adapter.setOutputChannel(TC_Mqtt);
         adapter.setQos(1);
         return adapter;
     }
-
-//    @Bean(name = CHANNEL_OUTPUT)
-//    public MessageChannel mqttOutboundChannel() {
-//        return new PublishSubscribeChannel();
-//    }
-//
-//    @Bean
-//    @ServiceActivator(inputChannel = CHANNEL_OUTPUT)
-//    public MessageHandler mqttOutbound(MqttPahoClientFactory factory) {
-//        MqttPahoMessageHandler handler = new MqttPahoMessageHandler(clientId + "_output", factory);
-//        handler.setAsync(true);
-//        handler.setDefaultTopic("fxx/fb");
-//        return handler;
-//    }
-
 }
