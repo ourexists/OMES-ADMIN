@@ -13,7 +13,7 @@ public interface EquipRealtimeCollector {
 
     /**
      * 执行采集
-     * @param sourceJsonData 来源数据
+     * @param sourceData 来源数据
      */
-    void doCollect(String sourceJsonData);
+    void doCollect(Object sourceData);
 }

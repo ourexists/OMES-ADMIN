@@ -27,7 +27,8 @@ public class TCMqttRealtimeCollector implements EquipRealtimeCollector {
     }
 
     @Override
-    public void doCollect(String sourceJsonData) {
+    public void doCollect(Object sourceData) {
+        String sourceJsonData = (String) sourceData;
         JSONObject jsonObject = JSON.parseObject(sourceJsonData);
         String sn = jsonObject.getString("SN");
         JSONArray devArray = jsonObject.getJSONArray("dev");

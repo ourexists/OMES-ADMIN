@@ -19,20 +19,7 @@ public class EquipRealtimeCollectSelector {
         this.collectors = collectors;
     }
 
-    public void doCollect(String name, String sourceJSONData) {
-//        EquipRealtime equipRealtime = equipRealtimeManager.get(tenantId, sn);
-//        String collectType = equipRealtime.getEquipRealtimeConfig().getCollectType();
-//        if (!StringUtils.hasText(collectType)) {
-//            return;
-//        }
-        EquipRealtimeCollector collector = getCollector(name);
-        if (collector == null) {
-            return;
-        }
-        collector.doCollect(sourceJSONData);
-    }
-
-    private EquipRealtimeCollector getCollector(String name) {
+    public EquipRealtimeCollector getCollector(String name) {
         EquipRealtimeCollector collector = null;
         for (EquipRealtimeCollector r : collectors) {
             if (r.name().equals(name)) {
