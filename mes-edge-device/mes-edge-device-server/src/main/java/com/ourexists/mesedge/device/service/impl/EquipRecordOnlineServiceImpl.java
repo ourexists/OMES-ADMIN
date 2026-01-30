@@ -18,6 +18,7 @@ import com.ourexists.mesedge.device.model.EquipRecordOnlineVo;
 import com.ourexists.mesedge.device.pojo.EquipRecordOnline;
 import com.ourexists.mesedge.device.service.EquipRecordOnlineService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -29,9 +30,6 @@ import java.util.List;
 @Service
 public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<EquipRecordOnlineMapper, EquipRecordOnline>
         implements EquipRecordOnlineService {
-
-    @Autowired
-    private EquipRealtimeManager realtimeManager;
 
     @Override
     public Page<EquipRecordOnline> selectByPage(EquipRecordOnlinePageQuery dto) {
@@ -77,9 +75,8 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
     }
 
     @Override
-    public List<EquipRecordOnlineVo> countMerging(EquipRecordCountQuery query) {
+    public List<EquipRecordOnlineVo> countMerging(EquipRealtime equipRealtime, EquipRecordCountQuery query) {
         List<EquipRecordOnlineVo> r = new ArrayList<>();
-        EquipRealtime equipRealtime = realtimeManager.get(query.getSn());
         Date now = new Date();
         //限制最大查询时间不能大于当前时间
         if (query.getEndDate().after(now)) {
