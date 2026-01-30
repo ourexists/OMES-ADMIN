@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtime;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.mesedge.device.feign.EquipRecordOnlineFeign;
 import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
@@ -22,6 +24,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.ArrayList;
 import java.util.List;
 
 //@Tag(name = "配方管理")
@@ -32,6 +35,9 @@ public class EquipRecordOnlineViewer implements EquipRecordOnlineFeign {
 
     @Autowired
     private EquipRecordOnlineService service;
+
+    @Autowired
+    private EquipRealtimeManager realtimeManager;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -66,6 +72,8 @@ public class EquipRecordOnlineViewer implements EquipRecordOnlineFeign {
     @Operation(summary = "统计", description = "统计")
     @PostMapping("countMerging")
     public JsonResponseEntity<List<EquipRecordOnlineVo>> countMerging(@Validated @RequestBody EquipRecordCountQuery query) {
-        return JsonResponseEntity.success(service.countMerging(query));
+        List<EquipRecordOnlineVo> r = new ArrayList<>();
+        EquipRealtime equipRealtime = realtimeManager.get(query.getSn());
+        return JsonResponseEntity.success(service.countMerging(equipRealtime, query));
     }
 }

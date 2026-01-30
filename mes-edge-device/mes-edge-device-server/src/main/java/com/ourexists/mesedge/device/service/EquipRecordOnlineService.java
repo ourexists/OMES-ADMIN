@@ -6,6 +6,7 @@ package com.ourexists.mesedge.device.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
+import com.ourexists.mesedge.device.core.equip.cache.EquipRealtime;
 import com.ourexists.mesedge.device.model.EquipRecordCountQuery;
 import com.ourexists.mesedge.device.model.EquipRecordOnlineDto;
 import com.ourexists.mesedge.device.model.EquipRecordOnlinePageQuery;
@@ -27,5 +28,5 @@ public interface EquipRecordOnlineService extends IMyBatisPlusService<EquipRecor
 
     void add(EquipRecordOnlineDto dto);
 
-    List<EquipRecordOnlineVo> countMerging(EquipRecordCountQuery query);
+    List<EquipRecordOnlineVo> countMerging(EquipRealtime equipRealtime, EquipRecordCountQuery query);
 }
