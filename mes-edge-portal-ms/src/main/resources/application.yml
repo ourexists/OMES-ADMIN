@@ -11,7 +11,7 @@ spring:
   mvc:
     static-path-pattern: static/**
   application:
-    name: OEMS-ADMIN
+    name: OEMS-ADMIN-DEV
   config:
     location: classpath:/,file:config/
   profiles:
