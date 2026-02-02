@@ -48,4 +48,10 @@ public class EquipPageQuery extends PageQuery {
 
     @Schema(description = "是否限制用户场景")
     private Boolean limitUserWorkshop = false;
+
+    private Integer onlineState;
+
+    private Integer runState;
+
+    private Integer alarmState;
 }
