@@ -151,6 +151,9 @@
     let trendChart;
     let statusChart;
     let selected_tree_node;
+    let countLock = false;
+    let chartLock = false;
+    let messageLock = false;
     layui.use(function () {
         var table = layui.table;
         var $ = layui.$;
@@ -238,81 +241,105 @@
 
 
         function reloadMessage() {
-            table.reloadData('alarmTable', {
-                url: initRequestUrl(router.message_page),
-                where: {
-                    platform: client.platform,
-                    type: 1,
-                },
-            });
+            if (messageLock) {
+                return;
+            }
+            messageLock = true;
+            try {
+                table.reloadData('alarmTable', {
+                    url: initRequestUrl(router.message_page),
+                    where: {
+                        platform: client.platform,
+                        type: 1,
+                    },
+                });
+            } finally {
+                messageLock = false;
+            }
         }
 
     });
 
     function reloadCount() {
-        post(router.equip_count, {
-            needWorkshopCascade: true,
-            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-        }, function (result) {
-            $("#totalCount").text(result.total);
-            $("#onlineCount").text(result.online);
-            $("#offlineCount").text(result.offline);
-            $("#alarmCount").text(result.alarm);
-            $("#runCount").text(result.run);
-            $("#stopCount").text(result.stopped);
-            statusChart.setOption({
-                tooltip: {trigger: 'item'},
-                legend: {bottom: 0},
-                series: [{
-                    type: 'pie',
-                    radius: ['40%', '70%'],
-                    data: [
-                        {value: result.online, name: '在线'},
-                        {value: result.offline, name: '离线'},
-                        {value: result.alarm, name: '告警'}
-                    ]
-                }]
-            });
-        })
+        if (countLock) {
+            return
+        }
+        countLock = true;
+        try {
+            post(router.equip_count, {
+                needWorkshopCascade: true,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+            }, function (result) {
+                $("#totalCount").text(result.total);
+                $("#onlineCount").text(result.online);
+                $("#offlineCount").text(result.offline);
+                $("#alarmCount").text(result.alarm);
+                $("#runCount").text(result.run);
+                $("#stopCount").text(result.stopped);
+                statusChart.setOption({
+                    tooltip: {trigger: 'item'},
+                    legend: {bottom: 0},
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: [
+                            {value: result.online, name: '在线'},
+                            {value: result.offline, name: '离线'},
+                            {value: result.alarm, name: '告警'}
+                        ]
+                    }]
+                });
+            })
+        } finally {
+            countLock = false;
+        }
     }
 
     function reloadTrendChart() {
-        const end = new Date();
-        const start = new Date(end);
-        start.setDate(end.getDate() - 7);
+        if (chartLock) {
+            return
+        }
+        chartLock = true;
+        try {
+            const end = new Date();
+            const start = new Date(end);
+            start.setDate(end.getDate() - 7);
 
-        post(router.equip_state_snapshot_count, {
-            startDate: formatDate(start),
-            endDate: formatDate(end),
-            onlineState: 1,
-            countType: 1,
-            needWorkshopCascade: true,
-            workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
-        }, function (result) {
-            const data = [];
-            result.forEach(item => {
-                data.push([item.time, item.num]);
+            post(router.equip_state_snapshot_count, {
+                startDate: formatDate(start),
+                endDate: formatDate(end),
+                onlineState: 1,
+                countType: 1,
+                needWorkshopCascade: true,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
+            }, function (result) {
+                const data = [];
+                result.forEach(item => {
+                    data.push([item.time, item.num]);
+                })
+                trendChart.setOption({
+                    tooltip: {trigger: 'axis'},
+                    xAxis: {
+                        type: 'time',
+                        min: start,
+                        max: end
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 0,
+                        max: 500
+                    },
+                    series: [{
+                        name: '在线设备数',
+                        type: 'line',
+                        smooth: true,
+                        data: data
+                    }]
+                });
             })
-            trendChart.setOption({
-                tooltip: {trigger: 'axis'},
-                xAxis: {
-                    type: 'time',
-                    min: start,
-                    max: end
-                },
-                yAxis: {
-                    type: 'value',
-                    min: 0,
-                    max: 500
-                },
-                series: [{
-                    name: '在线设备数',
-                    type: 'line',
-                    smooth: true,
-                    data: data
-                }]
-            });
-        })
+        } finally {
+            chartLock = false;
+        }
     }
 </script>
 
