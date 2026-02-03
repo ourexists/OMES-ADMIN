@@ -1,18 +1,23 @@
-`<!--
+<!--
   ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
   -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
-    <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+    <!--    baidu map-->
+    <!--    <script src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=xqC8Us41v5zZxz5SGXOwslbpxAGakVMs"></script>-->
+    <!--    <script src="../static/map/baiduMap.js"></script>-->
+
+    <!--    leaflet map-->
+    <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
     <script src="../static/leaflet/leaflet.js"></script>
+    <script src="../static/map/leafletMap.js"></script>
 </head>
 <style>
     #map {
@@ -66,7 +71,7 @@
         <div class="layui-form-item">
             <div id="map"></div>
         </div>
-        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%; z-index: 999">
+        <div class="layui-form-item" style="text-align: right;">
             <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
             </button>
             <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
@@ -77,13 +82,11 @@
     var current_row_data;
     var selected_tree_node = parent.selected_tree_node;
     let map;
+    let marker;
+
     layui.use(function () {
         let form = layui.form,
             layer = layui.layer;
-
-
-        let ln = [32.060255, 118.796877]
-
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
                 $('#type').append(new Option(item, index));
@@ -92,6 +95,20 @@
         })
 
         let id = layui.url().search.id;
+
+        const selectMap = SelectMap({
+            onSetPointComplete: function (lat, lng) {
+                layui.form.val('common-edit-form', {
+                    lat: lat,
+                    lng: lng
+                });
+            },
+            onReverseAddressComplete: function (address) {
+                layui.form.val('common-edit-form', {
+                    address: address
+                });
+            }
+        });
 
         if (id != null) {
             get(router.equip_id, {id: id}, function (result) {
@@ -102,19 +119,17 @@
                 }
 
                 if (current_row_data.lat != null && current_row_data.lng != null) {
-                    ln = [current_row_data.lat, current_row_data.lng];
-                    initMap();
-                    setPoint(current_row_data.lat, current_row_data.lng);
+                    selectMap.init();
+                    selectMap.setPoint(current_row_data.lat, current_row_data.lng);
                 } else {
-                    initMap();
+                    selectMap.init();
                 }
             });
         } else {
             form.val("common-edit-form", {});
             current_row_data = {};
-            initMap();
+            selectMap.init();
         }
-
         // 提交事件
         form.on('submit(common-edit-button)', function (data) {
             var field = data.field; // 获取表单字段值
@@ -136,99 +151,6 @@
             return false;
         });
 
-        // ===== 搜索按钮 =====
-        $('#btnSearch').click(function () {
-            var keyword = $('#searchText').val();
-            if (!keyword) {
-                layer.msg('请输入搜索内容');
-                return;
-            }
-            searchLocation(keyword);
-        });
-
-        // ===== 搜索函数 =====
-        function searchLocation(keyword) {
-            fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(keyword)}`
-            )
-                .then(res => res.json())
-                .then(list => {
-                    if (!list || list.length === 0) {
-                        layer.msg('未找到位置');
-                        return;
-                    }
-                    var p = list[0];
-                    setPoint(p.lat, p.lon);
-                    form.val('common-edit-form', {
-                        address: p.display_name
-                    });
-                });
-        }
-
-        function initMap() {
-            map = L.map('map').setView(ln, 6);
-            let legend = L.control({position: 'topright'});
-            legend.onAdd = function () {
-                let div = L.DomUtil.create('div', 'map-legend');
-                div.innerHTML =
-                    `<div class="layui-form-item">
-                        <div class="layui-input-inline">
-                            <input type="text" id="searchText" class="layui-input">
-                        </div>
-                        <button type="button" class="layui-btn layui-btn-radius layui-btn-normal" id="btnSearch">
-                        <i class="layui-icon layui-icon-search"></i>
-                        </button>
-                    </div>`;
-                return div;
-            };
-
-            legend.addTo(map);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-                attribution: '地图数据 © OpenStreetMap'
-            }).addTo(map);
-
-            map.on('click', function (e) {
-                setPoint(e.latlng.lat, e.latlng.lng);
-                reverseAddress(e.latlng.lat, e.latlng.lng)
-            });
-        }
-
-        function setPoint(lat, lng) {
-            lat = Number(lat).toFixed(6);
-            lng = Number(lng).toFixed(6);
-            map.setView([lat, lng], 15);
-
-            // if (marker) {
-            //     map.removeLayer(marker);
-            // }
-
-            L.marker([lat, lng]).addTo(map);
-
-            form.val('common-edit-form', {
-                lat: lat,
-                lng: lng,
-            });
-        }
-
-        function reverseAddress(lat, lng) {
-            fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-            )
-                .then(res => res.json())
-                .then(data => {
-                    if (!data || !data.display_name) {
-                        return;
-                    }
-                    // display_name 就是完整可读地址
-                    form.val('common-edit-form', {
-                        address: data.display_name
-                    });
-                })
-                .catch(() => {
-                    layer.msg('地址解析失败');
-                });
-        }
     });
 </script>
 </body>
