@@ -176,17 +176,28 @@
                     type: 'pie',
                     radius: ['35%', '50%'],
                     avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        formatter: '{d}%'   // ⭐ 只显示百分比
+                    },
+                    // labelLine: {
+                    //     show: false
+                    // },
                     data: []
                 },
                 {
                     name: '运行状态',
                     type: 'pie',
-                    radius: ['15%', '30%'],
+                    radius: ['15%', '25%'],
                     avoidLabelOverlap: false,
                     label: {
-                        position: 'inside',
-                        fontSize: 12
+                        show: true,
+                        fontSize: 10,
+                        formatter: '{d}%'
                     },
+                    // labelLine: {
+                    //     show: false
+                    // },
                     data: []
                 }
             ]
@@ -351,6 +362,8 @@
                     yAxis: {
                         type: 'value',
                         min: 0,
+                        minInterval: 1,
+                        splitNumber: 4,
                     },
                     series: [{
                         name: '在线设备数',

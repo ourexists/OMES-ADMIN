@@ -394,21 +394,43 @@
 
         statusChart = echarts.init($('#statusChart')[0]);
         statusChart.setOption({
-            tooltip: {trigger: 'item'},
-            legend: {bottom: 0},
+            tooltip: {
+                trigger: 'item',
+            },
+            legend: {
+                bottom: 0
+            },
             series: [
                 {
                     name: '设备状态',
                     type: 'pie',
                     radius: ['35%', '50%'],
                     avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        color: '#fff',      // 深色背景下建议白色
+                        fontSize: 10,
+                        formatter: '{d}%'   // ⭐ 只显示百分比
+                    },
+                    // labelLine: {
+                    //     show: false
+                    // },
                     data: []
                 },
                 {
                     name: '运行状态',
                     type: 'pie',
-                    radius: ['15%', '30%'],
+                    radius: ['15%', '25%'],
                     avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        color: '#fff',
+                        fontSize: 10,
+                        formatter: '{d}%'
+                    },
+                    // labelLine: {
+                    //     show: false
+                    // },
                     data: []
                 }
             ]
@@ -457,6 +479,8 @@
             yAxis: {
                 type: 'value',
                 min: 0,
+                minInterval: 1,   // ⭐ 核心：最小间隔为 1
+                splitNumber: 4,   // 可选，控制刻度数量
                 axisLine: {
                     lineStyle: {
                         color: TREND_COLORS.axis
@@ -628,6 +652,8 @@
 
         if (unreadCount > 0) {
             el.innerText = `⚠ 当前场景存在 ${unreadCount} 台设备告警，请及时处理`;
+        } else {
+            el.innerText = '';
         }
     }
 
