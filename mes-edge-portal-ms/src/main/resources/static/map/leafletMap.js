@@ -236,7 +236,7 @@ function GISMap(options = {}) {
 
 
         // 更新 Popup
-        marker.setPopupContent(generateContext(context));
+        marker.setPopupContent(generateContext(device));
     }
 
     function iconByStatus(device) {

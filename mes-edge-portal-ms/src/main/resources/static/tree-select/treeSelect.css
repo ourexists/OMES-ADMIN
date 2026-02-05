@@ -5,14 +5,30 @@
     right: 0;
     width: 32px;
     height: 60px;
-    background: #1890ff;
-    color: #fff;
+
+    background: rgba(24, 144, 255, 0.55); /* 半透明蓝 */
+    backdrop-filter: blur(6px); /* 毛玻璃感（可选） */
+
+    color: #e6f7ff;
     cursor: pointer;
     z-index: 9999;
+
     border-radius: 6px 0 0 6px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    box-shadow: 0 0 12px rgba(24, 144, 255, 0.35),
+    inset 0 0 6px rgba(255, 255, 255, 0.15);
+
+    transition: all .25s ease;
+}
+
+.scene-tree-toggle:hover {
+    background: rgba(24, 144, 255, 0.8);
+    box-shadow: 0 0 18px rgba(24, 144, 255, 0.6),
+    inset 0 0 10px rgba(255, 255, 255, 0.25);
 }
 
 /* 面板 */
@@ -22,8 +38,11 @@
     right: -300px;
     width: 300px;
     height: 100%;
-    background: #fff;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+
+    background: rgba(255, 255, 255, 0.88); /* 半透明白 */
+
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+
     z-index: 9998;
     transition: right 0.3s ease;
 }
@@ -37,7 +56,7 @@
     line-height: 50px;
     padding: 0 15px;
     font-weight: 600;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.88);
 }
 
 .scene-tree-body {
@@ -47,5 +66,5 @@
 }
 
 .layui-tree-set-active > .layui-tree-entry .layui-tree-main {
-    background: #f2f2f2;
+    background: rgba(255, 255, 255, 0.88);
 }

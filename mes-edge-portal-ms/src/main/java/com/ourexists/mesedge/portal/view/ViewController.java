@@ -340,4 +340,9 @@ public class ViewController {
     public String workshop_scada() {
         return "workshop_scada";
     }
+
+    @RequestMapping("/view/equip_screen")
+    public String equip_screen() {
+        return "equip_screen";
+    }
 }

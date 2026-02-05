@@ -154,26 +154,44 @@
     let countLock = false;
     let chartLock = false;
     let messageLock = false;
+    let table;
     layui.use(function () {
-        var table = layui.table;
+        table = layui.table;
         var $ = layui.$;
 
         const fullscreen = new FullScreen();
 
         statusChart = echarts.init($('#statusChart')[0]);
-        trendChart = echarts.init($('#trendChart')[0]);
-
-        let opened = false;
-
-        // 折叠按钮点击
-        $('#sceneToggle').on('click', function () {
-            opened = !opened;
-            $('#scenePanel').toggleClass('open', opened);
-
-            $('#sceneToggle i')
-                .toggleClass('layui-icon-shrink-right', !opened)
-                .toggleClass('layui-icon-spread-left', opened);
+        statusChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: 'rgba(11,18,32,0.9)',
+                borderColor: '#1677ff',
+                textStyle: {color: '#e6f1ff'}
+            },
+            legend: {bottom: 0},
+            series: [
+                {
+                    name: '设备状态',
+                    type: 'pie',
+                    radius: ['35%', '50%'],
+                    avoidLabelOverlap: false,
+                    data: []
+                },
+                {
+                    name: '运行状态',
+                    type: 'pie',
+                    radius: ['15%', '30%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        position: 'inside',
+                        fontSize: 12
+                    },
+                    data: []
+                }
+            ]
         });
+        trendChart = echarts.init($('#trendChart')[0]);
 
         get(router.workshop_tree, null, function (result) {
                 const sceneTree = new TreeSelect({
@@ -238,27 +256,25 @@
             reloadTrendChart();
             reloadMessage();
         }, 30000)
-
-
-        function reloadMessage() {
-            if (messageLock) {
-                return;
-            }
-            messageLock = true;
-            try {
-                table.reloadData('alarmTable', {
-                    url: initRequestUrl(router.message_page),
-                    where: {
-                        platform: client.platform,
-                        type: 1,
-                    },
-                });
-            } finally {
-                messageLock = false;
-            }
-        }
-
     });
+
+    function reloadMessage() {
+        if (messageLock) {
+            return;
+        }
+        messageLock = true;
+        try {
+            table.reloadData('alarmTable', {
+                url: initRequestUrl(router.message_page),
+                where: {
+                    platform: client.platform,
+                    type: 1,
+                },
+            });
+        } finally {
+            messageLock = false;
+        }
+    }
 
     function reloadCount() {
         if (countLock) {
@@ -277,18 +293,34 @@
                 $("#runCount").text(result.run);
                 $("#stopCount").text(result.stopped);
                 statusChart.setOption({
-                    tooltip: {trigger: 'item'},
-                    legend: {bottom: 0},
-                    series: [{
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        data: [
-                            {value: result.online, name: '在线'},
-                            {value: result.offline, name: '离线'},
-                            {value: result.alarm, name: '告警'}
-                        ]
-                    }]
-                });
+                    series: [
+                        {
+                            data: [
+                                {value: result.online, name: '在线', itemStyle: {color: '#1890FF'}},
+                                {value: result.offline, name: '离线', itemStyle: {color: '#bfbfbf'}},
+                                {value: result.alarm, name: '告警', itemStyle: {color: '#ff4d4f'}}
+                            ]
+                        },
+                        {
+                            data: [
+                                {
+                                    value: result.run,
+                                    name: '运行',
+                                    itemStyle: {
+                                        color: '#52c41a'
+                                    }
+                                },
+                                {
+                                    value: result.stopped,
+                                    name: '停止',
+                                    itemStyle: {
+                                        color: '#FAAD14'
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }, false);
             })
         } finally {
             countLock = false;
