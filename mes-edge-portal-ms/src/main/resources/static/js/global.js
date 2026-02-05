@@ -453,4 +453,24 @@ function formatDate(date) {
     return `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }
 
+function isRecent(time, minutes) {
+    if (!time) return false;
+    const diff = Date.now() - new Date(time).getTime();
+    return diff < minutes * 60 * 1000;
+}
+
+function formatTime(time) {
+    if (!time) return '';
+    const d = new Date(time);
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+const COLORS = {
+    online:  '#1f6feb',   // 深蓝（在线）
+    offline: '#5a5f66',   // 深灰（离线）
+    alarm:   '#c6362b',   // 深红（告警）
+    running: '#2ea043',   // 深绿（运行）
+    stopped: '#a67410'    // 灰白（停止）
+};
+
 document.title = window.APP_CONFIG.systemName;

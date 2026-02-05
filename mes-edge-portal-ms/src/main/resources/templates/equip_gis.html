@@ -18,16 +18,16 @@
     <script src="../static/tree-select/treeSelect.js"></script>
     <script src="../static/fullscreen/fullscreen.js"></script>
 
-<!--    <script src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=xqC8Us41v5zZxz5SGXOwslbpxAGakVMs"></script>-->
-<!--    <script src="../static/map/baiduMap.js"></script>-->
+    <!--    <script src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=xqC8Us41v5zZxz5SGXOwslbpxAGakVMs"></script>-->
+    <!--    <script src="../static/map/baiduMap.js"></script>-->
 
 
-        <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
-        <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
-        <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
-        <script src="../static/leaflet/leaflet.js"></script>
-        <script src="../static/marker/leaflet.markercluster.js"></script>
-        <script src="../static/map/leafletMap.js"></script>
+    <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
+    <script src="../static/leaflet/leaflet.js"></script>
+    <script src="../static/marker/leaflet.markercluster.js"></script>
+    <script src="../static/map/leafletMap.js"></script>
 </head>
 <style>
     #map {
@@ -86,17 +86,12 @@
 <script th:inline="none">
     var current_row_data;
     var selected_tree_node;
-    var table;
-    var tree;
-    var map;
 
     let reloading = false;
     let form;
     let gisMap;
 
-    layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
-        table = layui.table;
-        tree = layui.tree;
+    layui.use(function () {
         form = layui.form;
 
         const fullscreen = new FullScreen({
