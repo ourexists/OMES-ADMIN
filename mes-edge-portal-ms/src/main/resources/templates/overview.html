@@ -207,7 +207,11 @@
                         selected_tree_node = obj;
                         reloadCount();
                         reloadTrendChart();
-                        $('#workshopName').text(obj.name);
+                        if (obj.selfCode == null) {
+                            $('#workshopName').text('');
+                        } else {
+                            $('#workshopName').text(obj.name);
+                        }
                     }
                 })
             }
@@ -298,25 +302,13 @@
                             data: [
                                 {value: result.online, name: '在线', itemStyle: {color: '#1890FF'}},
                                 {value: result.offline, name: '离线', itemStyle: {color: '#bfbfbf'}},
-                                {value: result.alarm, name: '告警', itemStyle: {color: '#ff4d4f'}}
                             ]
                         },
                         {
                             data: [
-                                {
-                                    value: result.run,
-                                    name: '运行',
-                                    itemStyle: {
-                                        color: '#52c41a'
-                                    }
-                                },
-                                {
-                                    value: result.stopped,
-                                    name: '停止',
-                                    itemStyle: {
-                                        color: '#FAAD14'
-                                    }
-                                }
+                                {value: result.run, name: '运行', itemStyle: {color: '#52c41a'}},
+                                {value: result.stopped, name: '停止', itemStyle: {color: '#FAAD14'}},
+                                {value: result.alarm, name: '告警', itemStyle: {color: '#ff4d4f'}}
                             ]
                         }
                     ]
@@ -336,14 +328,14 @@
             const end = new Date();
             const start = new Date(end);
             start.setDate(end.getDate() - 7);
-
+            console.info(selected_tree_node)
             post(router.equip_state_snapshot_count, {
                 startDate: formatDate(start),
                 endDate: formatDate(end),
                 onlineState: 1,
                 countType: 1,
                 needWorkshopCascade: true,
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
             }, function (result) {
                 const data = [];
                 result.forEach(item => {

@@ -83,7 +83,7 @@
         /* 左右面板 */
         .side-panel {
             width: 22%;
-            padding: 10px;
+            margin: 5px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -92,7 +92,7 @@
         /* 中间地图 */
         .center-map {
             width: 56%;
-            padding: 10px;
+            margin: 5px;
             color: #1f1f1f;
         }
 
@@ -175,7 +175,6 @@
             box-shadow: 0 -2px 12px rgba(0, 0, 0, .35);
 
             flex-shrink: 0; /* ⭐ 防止被压缩 */
-            margin-top: 10px;
         }
 
         @keyframes glow {
@@ -511,7 +510,11 @@
                         reloadCount();
                         reloadTrendChart();
                         reloadMap(true)
-                        $('#workshopName').text(obj.name);
+                        if (obj.selfCode == null) {
+                            $('#workshopName').text('');
+                        } else {
+                            $('#workshopName').text(obj.name);
+                        }
                     }
                 })
             }
@@ -602,13 +605,13 @@
                             data: [
                                 {value: result.online, name: '在线', itemStyle: {color: COLORS.online}},
                                 {value: result.offline, name: '离线', itemStyle: {color: COLORS.offline}},
-                                {value: result.alarm, name: '告警', itemStyle: {color: COLORS.alarm}}
                             ]
                         },
                         {
                             data: [
                                 {value: result.run, name: '运行', itemStyle: {color: COLORS.running}},
-                                {value: result.stopped, name: '停止', itemStyle: {color: COLORS.stopped}}
+                                {value: result.stopped, name: '停止', itemStyle: {color: COLORS.stopped}},
+                                {value: result.alarm, name: '告警', itemStyle: {color: COLORS.alarm}}
                             ]
                         }
                     ]
@@ -625,8 +628,6 @@
 
         if (unreadCount > 0) {
             el.innerText = `⚠ 当前场景存在 ${unreadCount} 台设备告警，请及时处理`;
-        } else {
-            el.innerText = `✅ 当前暂无未处理设备告警`;
         }
     }
 
@@ -639,14 +640,13 @@
             const end = new Date();
             const start = new Date(end);
             start.setDate(end.getDate() - 7);
-
             post(router.equip_state_snapshot_count, {
                 startDate: formatDate(start),
                 endDate: formatDate(end),
                 onlineState: 1,
                 countType: 1,
                 needWorkshopCascade: true,
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.id,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
             }, function (result) {
                 const data = [];
                 result.forEach(item => {
