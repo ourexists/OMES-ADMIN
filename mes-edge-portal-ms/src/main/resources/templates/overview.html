@@ -147,6 +147,15 @@
     </div>
 
 </div>
+<script type="text/html" id="material-tool">
+    <div class="layui-clear-space">
+        {{# if (d.readStatus===0) { }}
+        <a class="layui-btn layui-btn-xs " lay-event="read">
+            <i class="layui-icon layui-icon-success"></i>
+        </a>
+        {{# } }}
+    </div>
+</script>
 <script th:inline="none">
     let trendChart;
     let statusChart;
@@ -238,6 +247,13 @@
             cols: [[
                 {field: 'title', title: i18np.prop('message.title')},
                 {field: 'context', title: i18np.prop('message.context')},
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 200,
+                    minWidth: 125,
+                    templet: '#material-tool'
+                }
             ]],
             data: [],
             request: {
@@ -262,6 +278,15 @@
             size: 'lg',
             height: 'full'
         });
+
+        table.on('tool(alarmTable)', function (obj) { // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            current_row_data = data;
+            if (obj.event === 'read') {
+                markAlarmRead(data.id);
+            }
+        });
+
         reloadCount();
         reloadTrendChart();
         reloadMessage();
@@ -283,6 +308,7 @@
                 url: initRequestUrl(router.message_page),
                 where: {
                     platform: client.platform,
+                    limitCurrentUser: true,
                     type: 1,
                 },
             });
@@ -328,6 +354,12 @@
         } finally {
             countLock = false;
         }
+    }
+
+    function markAlarmRead(messageId) {
+        get(router.message_read, {messageId}, function (e) {
+            reloadMessage();
+        });
     }
 
     function reloadTrendChart() {

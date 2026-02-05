@@ -50,6 +50,9 @@ public class MessageController {
     @Operation(summary = "分页", description = "")
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<MessageVo>> selectByPage(@RequestBody MessagePageQuery dto) {
+        if (dto.getLimitCurrentUser()) {
+            dto.setAccId(UserContext.getUser().getId());
+        }
         return feign.selectByPage(dto);
     }
 

@@ -202,7 +202,8 @@ var router = {
     workshop_config_collect: "/workshop/queryConfigCollect",
     workshop_setConfig_collect: "/workshop/setConfigCollect",
     workshop_collect_type: '/workshop/collectType',
-    workshop_collect_page: '/workshop/collect/selectByPage'
+    workshop_collect_page: '/workshop/collect/selectByPage',
+    message_read: '/message/read'
 }
 
 function getCommonHeader() {
