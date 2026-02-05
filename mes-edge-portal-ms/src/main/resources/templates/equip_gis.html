@@ -112,7 +112,11 @@
                         //获取当前点击的节点数据
                         selected_tree_node = obj;
                         reloadMap(true);
-                        $(".workshopName").text(obj.name);
+                        if (obj.selfCode == null) {
+                            $('#workshopName').text('');
+                        } else {
+                            $('#workshopName').text(obj.name);
+                        }
                     }
                 })
             }
