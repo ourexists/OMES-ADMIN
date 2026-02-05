@@ -25,6 +25,9 @@ public class MessagePageQuery extends PageQuery {
     @Schema(description = "用户id")
     private String accId;
 
+    @Schema(description = "限制当前用户")
+    private Boolean limitCurrentUser = false;
+
     @Schema(description = "阅读状态")
     private Integer readStatus;
 

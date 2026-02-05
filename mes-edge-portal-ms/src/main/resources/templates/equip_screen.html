@@ -243,6 +243,8 @@
         }
 
         .alarm-title {
+            flex: 1; /* ⭐ 允许占剩余空间 */
+            min-width: 0; /* ⭐ 省略号生效关键 */
             color: #e6f1ff;
             font-weight: 500;
             white-space: nowrap;
@@ -264,6 +266,28 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .alarm-read-btn {
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #69b1ff;
+            background: rgba(22, 119, 255, 0.08);
+            border: 1px solid rgba(22, 119, 255, 0.45);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all .2s ease;
+        }
+
+        .alarm-read-btn:hover {
+            background: rgba(22, 119, 255, 0.18);
+            border-color: #69b1ff;
+            box-shadow: 0 0 6px rgba(22, 119, 255, 0.45);
+        }
+
+        /* 已读态 */
+        .alarm-item.read {
+            opacity: 0.6;
         }
 
         /* 新告警闪烁 */
@@ -576,6 +600,7 @@
                 page: 1,
                 pageSize: 10,
                 platform: client.platform,
+                limitCurrentUser: true,
                 type: 1   // 告警
             }, function (res) {
 
@@ -584,14 +609,24 @@
 
                 list.forEach(item => {
                     html += `
-                        <div class="alarm-item ${item.readStatus == 0 ? 'new' : ''}">
+                        <div class="alarm-item ${item.readStatus == 0 ? 'new' : 'read'}">
                             <div class="alarm-dot"></div>
 
                             <div class="alarm-body">
                                 <div class="alarm-header">
                                     <span class="alarm-title">${item.title}</span>
-                                    <span class="alarm-time">${item.createdTime}</span>
+
+                                    <div class="alarm-header-right">
+                                        <span class="alarm-time">${item.createdTime}</span>
+                                        ${item.readStatus == 0 ?
+                        `<button class="alarm-read-btn" onclick="markAlarmRead('${item.id}', this)">
+                                                       <icon class="layui-icon layui-icon-success"> </icon>
+                                                   </button>`
+                        : ''
+                    }
+                                    </div>
                                 </div>
+
                                 <div class="alarm-content" title="${item.context}">
                                     ${item.context}
                                 </div>
@@ -733,6 +768,16 @@
         } finally {
             reloading = false;
         }
+    }
+
+    function markAlarmRead(messageId, btn) {
+        get(router.message_read, {messageId}, function (e) {
+            const item = btn.closest('.alarm-item');
+            item.classList.remove('new');
+            item.classList.add('read');
+            // 移除按钮
+            btn.remove();
+        });
     }
 
     function calcStatus(d) {
