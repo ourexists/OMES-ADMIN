@@ -51,11 +51,12 @@ public interface EquipStateSnapshotMapper extends BaseMapper<EquipStateSnapshot>
     List<EquipStateSnapshotCountDto> countNumByTime(EquipStateSnapshotCountQuery dto);
 
     @Select("<script>" +
-            "select count(b.sn) as num, " +
-            "DATE(b.time) as time " +
+            " SELECT" +
+            " COUNT(*) AS num," +
+            " day AS time " +
             "from  " +
             "(" +
-            "SELECT * FROM t_equip_state_snapshot a " +
+            "SELECT sn, DATE(time) AS day, MAX(time) AS max_time FROM t_equip_state_snapshot a " +
             "<where>" +
             "<if test='runState!=null'>" +
             "and a.run_state = #{runState} " +
@@ -75,15 +76,14 @@ public interface EquipStateSnapshotMapper extends BaseMapper<EquipStateSnapshot>
             "#{code}" +
             "</foreach>) " +
             "</if>" +
-            "and a.time = (" +
-            "SELECT MAX(time) FROM t_equip_state_snapshot d " +
-            "WHERE d.sn = a.sn " +
-            "AND DATE(d.time) = DATE(a.time)" +
-            ") " +
+            "GROUP BY sn, day" +
             "</where>" +
-            ") b " +
-            "group by time " +
-            "order by time " +
+            ") t " +
+            "JOIN t_equip_state_snapshot s " +
+            "ON s.sn = t.sn " +
+            "AND s.time = t.max_time " +
+            "group by day " +
+            "order by day " +
             "</script>")
     List<EquipStateSnapshotCountDto> countNumByTimeDay(EquipStateSnapshotCountQuery dto);
 }

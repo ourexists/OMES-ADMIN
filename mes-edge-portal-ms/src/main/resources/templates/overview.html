@@ -169,50 +169,6 @@
         var $ = layui.$;
 
         const fullscreen = new FullScreen();
-
-        statusChart = echarts.init($('#statusChart')[0]);
-        statusChart.setOption({
-            tooltip: {
-                trigger: 'item',
-                backgroundColor: 'rgba(11,18,32,0.9)',
-                borderColor: '#1677ff',
-                textStyle: {color: '#e6f1ff'}
-            },
-            legend: {bottom: 0},
-            series: [
-                {
-                    name: '设备状态',
-                    type: 'pie',
-                    radius: ['35%', '50%'],
-                    avoidLabelOverlap: false,
-                    label: {
-                        show: true,
-                        formatter: '{d}%'   // ⭐ 只显示百分比
-                    },
-                    // labelLine: {
-                    //     show: false
-                    // },
-                    data: []
-                },
-                {
-                    name: '运行状态',
-                    type: 'pie',
-                    radius: ['15%', '25%'],
-                    avoidLabelOverlap: false,
-                    label: {
-                        show: true,
-                        fontSize: 10,
-                        formatter: '{d}%'
-                    },
-                    // labelLine: {
-                    //     show: false
-                    // },
-                    data: []
-                }
-            ]
-        });
-        trendChart = echarts.init($('#trendChart')[0]);
-
         get(router.workshop_tree, null, function (result) {
                 const sceneTree = new TreeSelect({
                     data: result,
@@ -287,16 +243,96 @@
             }
         });
 
-        reloadCount();
-        reloadTrendChart();
         reloadMessage();
+
+        setTimeout(() => {
+            initTrendChart();
+            initCountChart();
+        }, 200)
 
         setInterval(() => {
             reloadCount();
             reloadTrendChart();
             reloadMessage();
-        }, 30000)
+        }, 10000)
     });
+
+    function initCountChart() {
+        statusChart = echarts.init($('#statusChart')[0]);
+        statusChart.setOption({
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: 'rgba(11,18,32,0.9)',
+                borderColor: '#1677ff',
+                textStyle: {color: '#e6f1ff'}
+            },
+            legend: {
+                orient: 'vertical',
+                right: '5%',
+                top: 'middle',
+                textStyle: {
+                    fontSize: 12
+                }
+            },
+            series: [
+                {
+                    name: '设备状态',
+                    type: 'pie',
+                    radius: ['35%', '50%'],
+                    center: ['35%', '50%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        formatter: '{d}%'   // ⭐ 只显示百分比
+                    },
+                    // labelLine: {
+                    //     show: false
+                    // },
+                    data: []
+                },
+                {
+                    name: '运行状态',
+                    type: 'pie',
+                    radius: ['15%', '25%'],
+                    center: ['35%', '50%'],
+                    avoidLabelOverlap: false,
+                    label: {
+                        show: true,
+                        fontSize: 10,
+                        formatter: '{d}%'
+                    },
+                    // labelLine: {
+                    //     show: false
+                    // },
+                    data: []
+                }
+            ]
+        });
+        reloadCount();
+    }
+
+    function initTrendChart() {
+        trendChart = echarts.init($('#trendChart')[0]);
+        trendChart.setOption({
+            tooltip: {trigger: 'axis'},
+            xAxis: {
+                type: 'time',
+            },
+            yAxis: {
+                type: 'value',
+                min: 0,
+                minInterval: 1,
+                splitNumber: 4,
+            },
+            series: [{
+                name: '在线设备数',
+                type: 'line',
+                smooth: true,
+                data: []
+            }]
+        });
+        reloadTrendChart();
+    }
 
     function reloadMessage() {
         if (messageLock) {
@@ -371,7 +407,6 @@
             const end = new Date();
             const start = new Date(end);
             start.setDate(end.getDate() - 7);
-            console.info(selected_tree_node)
             post(router.equip_state_snapshot_count, {
                 startDate: formatDate(start),
                 endDate: formatDate(end),
@@ -385,25 +420,10 @@
                     data.push([item.time, item.num]);
                 })
                 trendChart.setOption({
-                    tooltip: {trigger: 'axis'},
-                    xAxis: {
-                        type: 'time',
-                        min: start,
-                        max: end
-                    },
-                    yAxis: {
-                        type: 'value',
-                        min: 0,
-                        minInterval: 1,
-                        splitNumber: 4,
-                    },
                     series: [{
-                        name: '在线设备数',
-                        type: 'line',
-                        smooth: true,
                         data: data
                     }]
-                });
+                }, false);
             })
         } finally {
             chartLock = false;

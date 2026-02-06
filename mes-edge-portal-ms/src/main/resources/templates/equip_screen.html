@@ -365,9 +365,9 @@
                 </div>
             </div>
 
-            <div class="panel-box">
+            <div class="panel-box" style="height: 45%">
                 <div class="panel-title" lang-i18n="title.equip_status"></div>
-                <div id="statusChart" style="height:240px; margin: 8px"></div>
+                <div id="statusChart" style="height:100%; padding: 5px"></div>
             </div>
         </div>
 
@@ -416,19 +416,95 @@
             elem: $('.container').get(0),
         });
 
+        get(router.workshop_tree, null, function (result) {
+                const sceneTree = new TreeSelect({
+                    container: '.container',
+                    data: result,
+                    needVirtualRoot: true,
+                    virtualRootName: i18np.prop('common.all'),
+                    customName: {
+                        title: 'name',
+                        field: 'selfCode'
+                    },
+                    onSelect: function (obj) {
+                        //获取当前点击的节点数据
+                        selected_tree_node = obj;
+                        reloadCount();
+                        reloadTrendChart();
+                        reloadMap(true)
+                        if (obj.selfCode == null) {
+                            $('#workshopName').text('');
+                        } else {
+                            $('#workshopName').text(obj.name);
+                        }
+                    }
+                })
+            }
+        )
+
+        reloadMessage();
+
+        setTimeout(() => {
+            initMap();
+        }, 100)
+
+        setTimeout(() => {
+            initCountEChart();
+            initTrendChart();
+        }, 400)
+
+        setInterval(() => {
+            $('#currentTime').text(new Date().toLocaleString());
+        }, 1000);
+
+        setInterval(async () => {
+            reloadCount();
+            reloadTrendChart();
+            reloadMessage();
+            reloadMap(false);
+        }, 30000);
+    })
+
+    function initMap() {
+        gisMap = new GISMap({
+            createPopupHtml: function (d) {
+                return createPopupHtml(d);
+            },
+            createIconUri: function (d) {
+                // 设备类型兜底
+                let type = d.type;
+                if (type !== 1 && type !== 2) {
+                    type = 0;
+                }
+                const status = calcStatus(d);
+                return `/static/img/map/map_${status}_${type}.svg`;
+            }
+        })
+        gisMap.init();
+        reloadMap(true);
+    }
+
+    function initCountEChart() {
         statusChart = echarts.init($('#statusChart')[0]);
         statusChart.setOption({
             tooltip: {
                 trigger: 'item',
             },
             legend: {
-                bottom: 0
+                orient: 'vertical',
+                right: '5%',
+                top: 'middle',
+                textStyle: {
+                    color: '#fff',
+                    fontSize: 12
+                }
             },
             series: [
                 {
                     name: '设备状态',
                     type: 'pie',
                     radius: ['35%', '50%'],
+                    center: ['35%', '50%'],
                     avoidLabelOverlap: false,
                     label: {
                         show: true,
@@ -436,15 +512,13 @@
                         fontSize: 10,
                         formatter: '{d}%'   // ⭐ 只显示百分比
                     },
-                    // labelLine: {
-                    //     show: false
-                    // },
                     data: []
                 },
                 {
                     name: '运行状态',
                     type: 'pie',
                     radius: ['15%', '25%'],
+                    center: ['35%', '50%'],
                     avoidLabelOverlap: false,
                     label: {
                         show: true,
@@ -452,13 +526,14 @@
                         fontSize: 10,
                         formatter: '{d}%'
                     },
-                    // labelLine: {
-                    //     show: false
-                    // },
                     data: []
                 }
             ]
-        })
+        });
+        reloadCount();
+    }
+
+    function initTrendChart() {
         trendChart = echarts.init($('#trendChart')[0]);
         const TREND_COLORS = {
             line: '#1f6feb',        // 深蓝主线（在线设备）
@@ -541,56 +616,9 @@
                 data: []
             }]
         });
-
-        get(router.workshop_tree, null, function (result) {
-                const sceneTree = new TreeSelect({
-                    container: '.container',
-                    data: result,
-                    needVirtualRoot: true,
-                    virtualRootName: i18np.prop('common.all'),
-                    customName: {
-                        title: 'name',
-                        field: 'selfCode'
-                    },
-                    onSelect: function (obj) {
-                        //获取当前点击的节点数据
-                        selected_tree_node = obj;
-                        reloadCount();
-                        reloadTrendChart();
-                        reloadMap(true)
-                        if (obj.selfCode == null) {
-                            $('#workshopName').text('');
-                        } else {
-                            $('#workshopName').text(obj.name);
-                        }
-                    }
-                })
-            }
-        )
-
-        reloadCount();
         reloadTrendChart();
-        reloadMessage();
+    }
 
-        gisMap = new GISMap({
-            createPopupHtml: function (d) {
-                return createPopupHtml(d);
-            },
-            createIconUri: function (d) {
-                // 设备类型兜底
-                let type = d.type;
-                if (type !== 1 && type !== 2) {
-                    type = 0;
-                }
-                const status = calcStatus(d);
-                return `/static/img/map/map_${status}_${type}.svg`;
-            }
-        })
-        gisMap.init();
-
-        reloadMap(true);
-
-    })
 
     function reloadMessage() {
         if (messageLock) return;
@@ -826,15 +854,9 @@
         };
     }
 
-    // // 时间
-    setInterval(() => {
-        $('#currentTime').text(new Date().toLocaleString());
-    }, 1000);
-
-    setInterval(async () => {
-        reloadCount();
-        reloadTrendChart();
-        reloadMessage();
-        reloadMap(false);
-    }, 30000);
+    window.onresize = () => {
+        statusChart.resize();
+        trendChart.resize();
+    };
 </script>
+`
