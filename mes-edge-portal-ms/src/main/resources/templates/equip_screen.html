@@ -544,14 +544,6 @@
     function initCurrentTrendChart() {
         currentTrendChart = echarts.init($('#currentTrendChart')[0]);
         const TREND_COLORS = {
-            online: '#2bd9a8',              // 在线（工业绿）
-            running: '#1f6feb',              // 运行（工业蓝）
-            alarm: '#ff4d4f',              // 报警（工业红）
-
-            onlineArea: 'rgba(43,217,168,.18)',
-            runningArea: 'rgba(31,111,235,.18)',
-            alarmArea: 'rgba(255,77,79,.22)',
-
             axis: '#2b3648',
             text: '#c9d1d9',
             split: 'rgba(255,255,255,.12)'
@@ -625,13 +617,13 @@
                     symbol: 'none',
                     lineStyle: {
                         width: 3,
-                        color: TREND_COLORS.online
+                        color: COLORS.online
                     },
                     itemStyle: {
-                        color: TREND_COLORS.online
+                        color: COLORS.online
                     },
                     areaStyle: {
-                        color: TREND_COLORS.onlineArea
+                        color: COLORS.onlineArea
                     },
                     data: []
                 },
@@ -643,13 +635,13 @@
                     symbol: 'none',
                     lineStyle: {
                         width: 3,
-                        color: TREND_COLORS.running
+                        color: COLORS.running
                     },
                     itemStyle: {
-                        color: TREND_COLORS.running
+                        color: COLORS.running
                     },
                     areaStyle: {
-                        color: TREND_COLORS.runningArea
+                        color: COLORS.runningArea
                     },
                     data: []
                 },
@@ -661,15 +653,15 @@
                     symbolSize: 7,
                     lineStyle: {
                         width: 3,
-                        color: TREND_COLORS.alarm,
+                        color: COLORS.alarm,
                         shadowColor: 'rgba(255,77,79,.6)',
                         shadowBlur: 10
                     },
                     itemStyle: {
-                        color: TREND_COLORS.alarm
+                        color: COLORS.alarm
                     },
                     areaStyle: {
-                        color: TREND_COLORS.alarmArea
+                        color: COLORS.alarmArea
                     },
                     emphasis: {
                         focus: 'series'
@@ -685,7 +677,6 @@
     function initTrendChart() {
         trendChart = echarts.init($('#trendChart')[0]);
         const TREND_COLORS = {
-            line: '#1f6feb',        // 深蓝主线（在线设备）
             area: 'rgba(31,111,235,.18)', // 面积渐变
             axis: '#3b4a63',        // 坐标轴
             text: '#9fb1c8',        // 文字
@@ -750,13 +741,13 @@
                 symbolSize: 6,
                 lineStyle: {
                     width: 3,
-                    color: TREND_COLORS.line
+                    color: COLORS.online
                 },
                 itemStyle: {
-                    color: TREND_COLORS.line
+                    color: COLORS.online
                 },
                 areaStyle: {
-                    color: TREND_COLORS.area
+                    color: COLORS.onlineArea
                 },
                 emphasis: {
                     focus: 'series'
@@ -794,7 +785,7 @@
                                     <div class="alarm-header-right">
                                         <span class="alarm-time">${item.createdTime}</span>
                                         ${item.readStatus == 0 ?
-                                                `<button class="alarm-read-btn" onclick="markAlarmRead('${item.id}', this)">
+                        `<button class="alarm-read-btn" onclick="markAlarmRead('${item.id}', this)">
                                                        <icon class="layui-icon layui-icon-success"> </icon>
                                                    </button>`
                         : ''
