@@ -467,11 +467,15 @@ function formatTime(time) {
 }
 
 const COLORS = {
-    online:  '#1f6feb',   // 深蓝（在线）
-    offline: '#5a5f66',   // 深灰（离线）
-    alarm:   '#c6362b',   // 深红（告警）
-    running: '#2ea043',   // 深绿（运行）
-    stopped: '#a67410'    // 灰白（停止）
+    online:  '#1f6feb',
+    offline: '#5a5f66',
+    alarm:   '#c6362b',
+    running: '#2ea043',
+    stopped: '#a67410',
+
+    runningArea: 'rgba(43,217,168,.18)',
+    onlineArea: 'rgba(31,111,235,.18)',
+    alarmArea: 'rgba(255,77,79,.22)',
 };
 
 document.title = window.APP_CONFIG.systemName;
