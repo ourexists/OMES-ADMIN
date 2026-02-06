@@ -404,9 +404,11 @@
         }
         chartLock = true;
         try {
-            const end = new Date();
-            const start = new Date(end);
-            start.setDate(end.getDate() - 7);
+            const now = new Date();
+            const end = new Date(now);
+            const start = new Date(now);
+            end.setDate(now.getDate() - 1);
+            start.setDate(now.getDate() - 8);
             post(router.equip_state_snapshot_count, {
                 startDate: formatDate(start),
                 endDate: formatDate(end),
