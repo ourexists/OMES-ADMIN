@@ -7,50 +7,129 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
-    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
     <script src="../static/js/echarts.min.js"></script>
 </head>
+<style>
+    /* ===== 查询区 ===== */
+    .header {
+        background: #ffffff;
+        padding: 10px 16px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    /* ===== 中部运行态图 ===== */
+    .mid {
+        height: 320px;
+        background: #ffffff;
+        border-radius: 4px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    #run-chart-container {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* ===== 底部趋势 / 表格 ===== */
+    .footer {
+        background: #ffffff;
+        border-radius: 4px;
+        padding: 0 12px 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    /* Tab 标题工业化 */
+    .footer .layui-tab-title {
+        border-bottom: 1px solid #e6e6e6;
+    }
+
+    .footer .layui-tab-title li {
+        font-size: 13px;
+        color: #666;
+    }
+
+    .footer .layui-tab-title .layui-this {
+        color: #1e9fff;
+        font-weight: 500;
+    }
+
+    /* Tab 内容区 */
+    .footer .layui-tab-content {
+        padding: 12px 0 0;
+    }
+
+</style>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
-    <form class="layui-form layui-row layui-col-space16">
-        <div class="layui-form-item">
-            <div class="layui-inline" id="timeduration">
-                <div class="layui-input-inline">
-                    <input type="text" autocomplete="off" id="startDate" name="startDate"
-                           class="layui-input"
-                           placeholder="startTime" lang-i18n="common.starttime">
+<div class="oemes-container" style="padding: 15px">
+    <!-- 查询条件（统一） -->
+    <div class="header">
+        <form class="layui-form layui-row layui-col-space16" id="queryForm">
+            <div class="layui-form-item">
+                <div class="layui-inline" id="timeduration">
+                    <div class="layui-input-inline">
+                        <input type="text" id="startDate" name="startDate"
+                               class="layui-input" lang-i18n="common.starttime">
+                    </div>
+                    <div class="layui-form-mid">-</div>
+                    <div class="layui-input-inline">
+                        <input type="text" id="endDate" name="endDate"
+                               class="layui-input" lang-i18n="common.endtime">
+                    </div>
                 </div>
-                <div class="layui-form-mid">-</div>
-                <div class="layui-input-inline">
-                    <input type="text" autocomplete="off" id="endDate" name="endDate" class="layui-input"
-                           placeholder="endTime" lang-i18n="common.endtime">
-                </div>
+                <button class="layui-btn layui-btn-sm"
+                        lay-submit lay-filter="doSearch"
+                        lang-i18n="common.search"></button>
             </div>
-            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="tb-common-search"
-                    lang-i18n="common.search">
-                Search
-            </button>
+        </form>
+    </div>
+
+    <div class="mid">
+        <div id="run-chart-container"></div>
+    </div>
+    <div class="footer layui-tab layui-tab-brief" lay-filter="collectTab">
+
+        <!-- Tab 标题（不要再包 footer-tab） -->
+        <ul class="layui-tab-title">
+            <li class="layui-this">趋势图</li>
+            <li>数据表</li>
+        </ul>
+
+        <!-- Tab 内容 -->
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <div id="chart-container"></div>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-hide" id="tb-common"></table>
+            </div>
         </div>
-    </form>
-    <div id="chart-container"></div>
+    </div>
 </div>
+
 
 <script th:inline="none">
     let datalist = [];
     let config_data = [];
     let sn;
-    let chart;
-
+    let table;
+    let tree;
+    let form;
+    let tread_chart;
+    let run_chart;
     layui.use(function () {
-        let form = layui.form;
+        form = layui.form;
+        table = layui.table;
+
         let laydate = layui.laydate;
 
         sn = layui.url().search.sn;
-
         laydate.render({
             elem: '#timeduration',
             range: ['#startDate', '#endDate'],
@@ -65,22 +144,43 @@
         $('#startDate').val(formatDate(startOfDay));
         $('#endDate').val(formatDate(endOfDay));
 
+
+        loadConfig();
+
         // 搜索提交
-        form.on('submit(tb-common-search)', function (data) {
+        form.on('submit(doSearch)', function (data) {
             let field = data.field;
             if (field.startDate !== null && field.endDate !== null
                 && field.startDate !== '' && field.endDate !== '') {
                 reloadTb();
+                reloadTread();
+                reloadRunCharts();
             }
             return false; // 阻止默认 form 跳转
         });
 
         setTimeout(() => {
-            reloadAll();
+            initTb();
+            initRunCharts();
+            initTread();
         }, 100)
     });
 
-    function reloadTb() {
+    function initTread() {
+        if (config_data.length > 0) {
+            let baseSize = 200;
+            let size = Math.ceil(config_data.length / 2) * baseSize;
+
+            $("#chart-container").css({
+                width: '100%',
+                height: size + 'px'
+            });
+            tread_chart = echarts.init($('#chart-container')[0]);
+            reloadTread()
+        }
+    }
+
+    function reloadTread() {
         post(router.equip_collect_page, {
             sn,
             startDate: $('#startDate').val(),
@@ -92,11 +192,87 @@
             }
             datalist = res;
             let option = generateOption(config_data);
-            chart.setOption(option);
+            tread_chart.setOption(option);
         })
     }
 
-    function reloadAll() {
+    function initTb() {
+        table.render({
+            elem: '#tb-common',
+            method: 'POST',
+            headers: getCommonHeader(),
+            contentType: 'application/json',
+            loading: false,
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            // totalRow: true,
+            cols: [[]],
+            data: [],
+            request: {
+                pageName: 'page',
+                limitName: 'pageSize'
+            },
+            response: {
+                statusName: 'code', //规定返回的状态码字段为code
+                statusCode: 200, //规定成功的状态码味200
+            },
+            parseData: function (res) {
+                return {
+                    "code": res.code,
+                    "msg": res.msg,
+                    "data": res.data
+                };
+            },
+            limit: 10,
+            limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full'
+        });
+        // 工具栏事件
+        table.on('toolbar(tb-common)', function (obj) {
+            if (selected_tree_node == null) {
+                layer.msg(i18np.prop("bomc.msg.select"));
+                return;
+            }
+            let id = obj.config.id;
+            let checkStatus = table.checkStatus(id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    let data = checkStatus.data;
+                    if (data.length === 0) {
+                        return layer.msg(i18np.prop('common.msg.least.one'));
+                    }
+                    layer.alert(layui.util.escape(JSON.stringify(data)));
+                    break;
+                case 'getData':
+                    let getData = table.getData(id);
+                    layer.alert(layui.util.escape(JSON.stringify(getData)));
+                    break;
+            }
+        });
+
+        // table 滚动时移除内部弹出的元素
+        let tableInst = table.getOptions('tb-common');
+        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+            dropdown.close('dropdown-table-tool');
+        });
+        reloadTbAll();
+    }
+
+    function reloadTb() {
+        let title = $('#startDate').val() + " ~ " + $('#endDate').val();
+        table.reload('tb-common', {
+            url: initRequestUrl(router.equip_collect_page),
+            customTitleRow: title,
+            where: {
+                sn,
+                startDate: $('#startDate').val(),
+                endDate: $('#endDate').val(),
+            },
+        });
+    }
+
+    function loadConfig() {
         get(router.equip_config_sn, {"equipSn": sn}, function (d) {
             if (d == null) {
                 return
@@ -105,26 +281,53 @@
                 return;
             }
             let r = d.config.attrs;
-            if (r.length > 0) {
-                r.forEach(e => {
-                    if (e.needCollect) {
-                        config_data.push(e);
-                    }
-                });
-            }
-            if (config_data.length > 0) {
-                let baseSize = 200;
-                let size = config_data.length * baseSize;
+            r.forEach(e => {
+                if (e.needCollect) {
+                    config_data.push(e);
+                }
+            });
+        });
+    }
 
-                $("#chart-container").css({
-                    width: '100%',
-                    height: size + 'px'
-                });
-                const dom = $('#chart-container')[0];
-                chart = echarts.init(dom);
-                reloadTb()
-            }
-        })
+    function reloadTbAll() {
+        let tbCols = []
+        let col = [];
+        if (config_data.length > 0) {
+            col.push({
+                field: 'time',
+                title: i18np.prop("common.time"),
+                fixed: 'left',
+            })
+            config_data.forEach(e => {
+                if (e.needCollect) {
+                    let k = {
+                        field: e.name, title: e.name, templet: function (d) {
+                            return d.data == null ? null : d.data[e.name]
+                        }
+                    }
+                    col.push(k);
+                }
+            });
+        }
+        tbCols.push(col)
+        if ($('#startDate').val() == null || $('#startDate').val() == ''
+            || $('#endDate').val() == null || $('#endDate').val() == '') {
+            table.reload('tb-common', {
+                cols: tbCols,
+            })
+        } else {
+            let title = $('#startDate').val() + "-" + $('#endDate').val();
+            table.reload('tb-common', {
+                cols: tbCols,
+                customTitleRow: title,
+                url: initRequestUrl(router.equip_collect_page),
+                where: {
+                    sn,
+                    startDate: $('#startDate').val(),
+                    endDate: $('#endDate').val(),
+                },
+            })
+        }
     }
 
     function generateOption() {
@@ -134,62 +337,107 @@
         let grid = [];
         let series = [];
         let title = [];
-        let single = 100 / config_data.length;
+
+        const COL = 2;                         // 每行 2 列
+        const ROW = Math.ceil(config_data.length / COL);
+
+        const GAP_X = 5;                       // 横向间距 %
+        const GAP_Y = 8;                       // 纵向间距 %
+        const MARGIN_TOP = 8;
+        const MARGIN_LEFT = 5;
+        const MARGIN_BOTTOM = 6;
+        const TITLE_HEIGHT = 6;
+
+        const gridWidth =
+            (100 - MARGIN_LEFT * 2 - GAP_X * (COL - 1)) / COL;
+
+        const gridHeight =
+            (100 - MARGIN_TOP - MARGIN_BOTTOM - GAP_Y * (ROW - 1)) / ROW;
 
         config_data.forEach((item, index) => {
-            visualMap.push(
-                {
-                    show: false,
-                    type: 'continuous',
-                    seriesIndex: index,
-                }
-            );
-            title.push({
-                top: (single / 15 + single * index) + '%',
-                left: 'center',
-                text: item.name
+            let row = Math.floor(index / COL);
+            let col = index % COL;
+            let left = 5 + col * (gridWidth + 5) + '%';
+
+            const titleTop =
+                MARGIN_TOP + row * (gridHeight + GAP_Y + TITLE_HEIGHT);
+
+            const gridTop = titleTop + TITLE_HEIGHT;
+
+            visualMap.push({
+                show: false,
+                type: 'continuous',
+                seriesIndex: index
             });
+
+            title.push({
+                left: (parseFloat(left) + 20) + '%',
+                top: titleTop + '%',
+                text: item.name,
+                textAlign: 'center',
+                textStyle: {
+                    fontSize: 12,           // 关键：变小
+                    fontWeight: 400,        // 细
+                    color: '#6b778c',       // 次级文字色
+                    lineHeight: 16,
+                    fontFamily: 'Inter, sans-serif'
+                }
+            });
+
+            grid.push({
+                left: MARGIN_LEFT + col * (gridWidth + GAP_X) + '%',
+                top: gridTop + '%',
+                width: gridWidth + '%',
+                height: gridHeight + '%'
+            });
+
             xAxis.push({
                 gridIndex: index,
                 type: 'time',
-                splitLine: {
-                    show: false
-                },
                 axisLabel: {
-                    rotate: 45,  // 旋转标签，避免重叠
-                    interval: "auto"  // 自动调整显示间隔
-                }
-            })
-            yAxis.push({
-                type: 'value',
-                gridIndex: index,
-                splitLine: {
-                    show: false
+                    rotate: 45,
+                    interval: 'auto'
                 },
-            })
-            grid.push({
-                top: (single / 5 + single * index) + '%',
-                height: (single * 3 / 5) + '%'
-            },)
-            let vList = []
-            datalist.forEach(item2 => {
-                let d = item2.data[item.name];
-                if (d != null) {
-                    vList.push([item2.time, d])
-                } else {
-                    vList.push([item2.time, ""])
-                }
-            })
+                splitLine: {show: false}
+            });
+
+            yAxis.push({
+                gridIndex: index,
+                type: 'value',
+                splitLine: {show: false}
+            });
+
+            let vList = [];
+            datalist.forEach(d => {
+                let val = d.data[item.name];
+                vList.push([d.time, val ?? null]);
+            });
+
             series.push({
                 type: 'line',
-                areaStyle: {},
-                smooth: true,
+                smooth: false,
                 showSymbol: false,
+                step: false,
+                lineStyle: {
+                    width: 1.5,         // 细但不虚
+                    type: 'solid',
+                    color: '#4FA6E8'    // 冷色系工业蓝
+                },
+                areaStyle: {
+                    opacity: 0.12
+                },
+                emphasis: {
+                    focus: 'series',
+                    lineStyle: {
+                        width: 2
+                    }
+                },
                 data: vList,
                 xAxisIndex: index,
                 yAxisIndex: index
-            })
-        })
+            });
+        });
+
         return {
             visualMap,
             title,
@@ -202,6 +450,201 @@
             series
         };
     }
+
+    function mergeRecords(data) {
+        // 先按照 type 和 startDate 排序
+        data.sort((a, b) => {
+            if (a[3] === b[3]) {
+                return a[1] - b[1];  // 如果类型相同，按 startDate 排序
+            }
+            return a[3] - b[3];  // 否则按类型排序
+        });
+
+        const mergedData = [];
+
+        for (let i = 0; i < data.length; i++) {
+            const current = data[i];
+
+            if (mergedData.length === 0) {
+                mergedData.push(current);
+                continue;
+            }
+
+            const last = mergedData[mergedData.length - 1];
+
+            // 判断时间段是否重叠或相邻
+            if (last[3] === current[3] && last[2] >= current[1]) {
+                // 如果时间段重叠或相邻，合并
+                last[2] = last[2] > current[2] ? last[2] : current[2]; // 更新 endDate 为最晚的 endDate
+            } else {
+                // 否则将当前记录添加到结果中
+                mergedData.push(current);
+            }
+        }
+
+        return mergedData;
+    }
+
+    function parseColor(api) {
+        let type = api.value(0);
+        let state = api.value(3);
+        if (type === 0) {
+            return state === 1 ? '#1890ff' : '#bfbfbf';
+        }
+        if (type === 1) {
+            return state === 1 ? '#52c41a' : '#FAAD14';
+        }
+        if (type === 2) {
+            return state === 1 ? '#ff4d4f' : '#bfbfbf';
+        }
+    }
+
+    function calcRecord(type,
+                        startDate,
+                        endDate) {
+        let r = [];
+        let url;
+        if (type === 1) {
+            url = router.equip_run_count;
+        } else if (type === 0) {
+            url = router.equip_online_count;
+        } else if (type === 2) {
+            url = router.equip_alarm_count;
+        }
+        //查询历史数据
+        post(
+            url,
+            {
+                sn: sn,
+                startDate: formatDate(startDate),
+                endDate: formatDate(endDate)
+            },
+            function (res) {
+                if (res === null) {
+                    return;
+                }
+                if (res == null || res.length <= 0) {
+                    return;
+                }
+                res.forEach(item => {
+                    r.push([type, parseDate(item.startTime), parseDate(item.endTime), item.state]);
+                })
+                r = mergeRecords(r);
+            }
+        )
+        return r;
+    }
+
+    function reloadRunCharts() {
+        let r = [];
+        let startDate = parseDate($('#startDate').val());
+        let endDate = parseDate($('#endDate').val());
+        let r1 = calcRecord(1, startDate, endDate);
+        let r0 = calcRecord(0, startDate, endDate);
+        let r2 = calcRecord(2, startDate, endDate);
+        if (r0.length > 0) {
+            r.push(...r0);
+        }
+        if (r1.length > 0) {
+            r.push(...r1);
+        }
+        if (r2.length > 0) {
+            r.push(...r2);
+        }
+        run_chart.setOption({
+            xAxis: {
+                min: startDate,
+                max: endDate
+            },
+            series: [
+                {
+                    data: r
+                }
+            ]
+        }, false);
+    }
+
+    function initRunCharts() {
+        run_chart = echarts.init($('#run-chart-container')[0]);
+        run_chart.setOption({
+            title: {
+                text: '设备运行趋势',
+                textStyle: {
+                    fontSize: 20,           // 关键：变小
+                    fontWeight: 400,        // 细
+                    color: '#6b778c',       // 次级文字色
+                    lineHeight: 16,
+                    fontFamily: 'Inter, sans-serif'
+                }
+            },
+            tooltip: {
+                confine: true,
+                formatter: (params) => {
+                    const type = params.data[0];
+                    const state = params.data[3];
+                    let desc = '';
+                    if (type === 0) {
+                        if (state === 1) {
+                            desc = '在线';
+                        } else {
+                            desc = '离线';
+                        }
+                    } else if (type === 1) {
+                        if (state === 1) {
+                            desc = '运行';
+                        } else {
+                            desc = '停止';
+                        }
+                    } else if (type === 2) {
+                        if (state === 1) {
+                            desc = '报警';
+                        } else {
+                            desc = '正常';
+                        }
+                    }
+                    const start = formatDate(params.data[1]);
+                    const end = formatDate(params.data[2]);
+                    return `${desc}\r\n${start}~${end}`;
+                }
+            },
+            xAxis: {
+                type: 'time',
+                axisLabel: {
+                    fontSize: 6 // Set the desired font size here
+                }
+            },
+            yAxis: {type: 'category', data: ['在线', '运行', '报警']},
+            series: [{
+                type: 'custom',
+                renderItem: (params, api) => {
+                    const yIndex = api.value(0);
+                    const start = api.coord([api.value(1), yIndex]);
+                    const end = api.coord([api.value(2), yIndex]);
+                    return {
+                        type: 'rect',
+                        shape: {
+                            x: start[0],
+                            y: start[1] - 10,
+                            width: end[0] - start[0],
+                            height: 20
+                        },
+                        style: {
+                            fill: parseColor(api)
+                        }
+                    };
+                },
+                encode: {x: [1, 2], y: 0},
+                data: [],
+            }]
+        })
+        reloadRunCharts();
+    }
+
+    window.onresize = () => {
+        tread_chart.resize();
+        run_chart.resize();
+    };
+
 </script>
 </body>
 </html>

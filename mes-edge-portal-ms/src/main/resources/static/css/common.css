@@ -1,3 +1,185 @@
+:root {
+    /* 背景体系 */
+    --bg-page: #f3f5f8; /* 页面背景 */
+    --bg-panel: #ffffff; /* 面板 / 卡片 */
+    --bg-panel-alt: #f7f9fc; /* 次级区域 */
+
+    /* 冷灰边框（统一偏蓝） */
+    --border-base: #e1e6ef;
+    --border-strong: #cfd6e4;
+
+    /* 工业主色（稍微降饱和） */
+    --ind-primary: #3a73e6;
+    --ind-primary-soft: rgba(58, 115, 230, 0.12);
+
+    /* 字体 */
+    --text-main: #1f2a3a;
+    --text-sub: #6b778c;
+    --text-placeholder: #a0aabc;
+
+    --border-hover: #9fb3d9; /* 悬浮时冷蓝灰 */
+    --border-disabled: #c5cede; /* 禁用边框 */
+    --bg-disabled: #e6ebf3; /* 禁用背景 */
+    --text-disabled: #8a95a6; /* 禁用文字 */
+
+    /* 扫描 / 结构光 */
+    --scan-line: rgba(58, 115, 230, 0.35);
+    --scan-line-strong: rgba(58, 115, 230, .45);
+    --scan-line-soft: rgba(160, 180, 220, 0.6);
+
+    /* === 工业结构边界 === */
+    --border-panel: #d5dbea;
+    --border-focus: #6f8fdc;
+
+    /* === 数字科技扩展 === */
+
+    /* 数字字体 */
+    --font-digital: "JetBrains Mono", "IBM Plex Mono", "DIN Alternate", monospace;
+
+    /* 数据蓝 / 荧光辅助色 */
+    --neon-blue: #4da3ff;
+    --neon-cyan: #5ee6ff;
+    --neon-green: #3cffb0;
+}
+
+html, body {
+    background-color: var(--bg-page);
+    color: var(--text-main);
+}
+
+.oemes-container {
+    background-color: var(--bg-page);
+}
+
+.layui-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.layui-btn::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -70%;
+    width: 30%;
+    height: 200%;
+    background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(200, 220, 255, .55),
+            transparent
+    );
+    transform: rotate(20deg);
+    transition: left .7s ease;
+}
+
+.layui-btn:hover::after {
+    left: 120%;
+}
+
+.layui-input::placeholder {
+    color: var(--text-placeholder);
+}
+
+.layui-input:focus,
+.layui-textarea:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 2px rgba(58, 115, 230, .18),
+    inset 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+.layui-input {
+    background-image: linear-gradient(
+            to right,
+            var(--ind-primary),
+            var(--ind-primary)
+    );
+    background-size: 0 1px;
+    background-repeat: no-repeat;
+    background-position: bottom;
+    transition: background-size .25s ease, border-color .15s ease;
+}
+
+.layui-input[disabled],
+.layui-textarea[disabled],
+.layui-select[disabled] {
+    background-color: var(--bg-disabled);
+    border: 1px solid var(--border-disabled);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .06);
+}
+
+.layui-input[disabled]::placeholder {
+    color: #a1abbc;
+}
+
+.layui-input[disabled]:hover,
+.layui-input[disabled]:focus,
+.layui-textarea[disabled]:hover,
+.layui-textarea[disabled]:focus {
+    border-color: var(--border-disabled);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .04);
+    background-size: 0;
+}
+
+
+.layui-input:focus {
+    background-size: 100% 1px;
+}
+
+.layui-tab-title li {
+    color: var(--text-sub);
+}
+
+.layui-tab-title .layui-this {
+    color: var(--ind-primary);
+    font-weight: 600;
+}
+
+.layui-tab-title .layui-this::after {
+    border-bottom-color: var(--ind-primary);
+}
+
+.layui-card {
+    border: 1px solid var(--border-base);
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(40, 60, 120, .06);
+    transition: border-color .15s ease,
+    box-shadow .15s ease,
+    transform .15s ease;
+}
+
+.layui-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(
+            90deg,
+            transparent,
+            var(--scan-line-soft),
+            transparent
+    );
+    opacity: .9;
+}
+
+.layui-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 10px 24px rgba(15, 25, 50, .12),
+    inset 0 0 0 1px rgba(58, 115, 230, .12);
+    transform: translateY(-2px);
+}
+
+
+.layui-tree-set-active > .layui-tree-entry .layui-tree-main {
+    background: rgba(58, 115, 230, 0.08);
+    border-radius: 4px;
+}
+
 .status-dot {
     display: inline-block;
     width: 20px;
@@ -7,6 +189,15 @@
     vertical-align: middle;
     box-sizing: border-box;
     border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.status-dot::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    box-shadow: 0 0 4px currentColor;
 }
 
 .status-dot-map {
@@ -94,8 +285,4 @@
     overflow-y: auto; /* 独立滚动 */
     padding-right: 10px;
     margin-top: 10px;
-}
-
-.oemes-container {
-    background: #ffffff;
 }

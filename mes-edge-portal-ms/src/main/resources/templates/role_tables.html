@@ -7,15 +7,16 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
 </head>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
+<div class="layui-tab-content" style="padding: 15px">
     <form class="layui-form layui-row layui-col-space16">
-        <div class="layui-col-md4">
+        <div class="layui-col-md3">
             <div class="layui-input-wrap">
                 <div class="layui-input-prefix">
                     <i class="layui-icon layui-icon-auz"></i>
@@ -25,7 +26,7 @@
                        lay-affix="clear" lang-i18n="role.name">
             </div>
         </div>
-        <div class="layui-col-md4">
+        <div class="layui-col-md3">
             <div class="layui-input-wrap">
                 <div class="layui-input-prefix">
                     <i class="layui-icon layui-icon-auz"></i>
@@ -34,10 +35,13 @@
                        lay-affix="clear" class="layui-input" lang-i18n="role.code">
             </div>
         </div>
-        <div class="layui-btn-container layui-col-xs12">
-            <button class="layui-btn" lay-submit lay-filter="common-search" lang-i18n="common.search">Search
+        <div class="layui-col-md3">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="tb-common-search"
+                    lang-i18n="common.search">
+                Search
             </button>
-            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+            <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">Clear
+            </button>
         </div>
     </form>
     <table class="layui-hide" id="tb-common"></table>

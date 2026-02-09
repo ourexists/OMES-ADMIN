@@ -10,10 +10,10 @@ layui.config({
     flowNode: "flowNode",
 });
 
-var i18np;
-var $ = layui.jquery;
+let i18np;
+let $ = layui.jquery;
 
-var store = {
+let store = {
     token_header: 'mes-token',
     user_info: 'user_info',
     language: 'mes-lang',
@@ -26,7 +26,7 @@ window.APP_CONFIG = {
 
 layui.use(['i18np'], function () {
     i18np = layui.i18np;
-    var language = localStorage.getItem(store.language);
+    let language = localStorage.getItem(store.language);
     if (language === null) {
         language = "zh";
     }
@@ -39,7 +39,7 @@ layui.use(['i18np'], function () {
     i18np.load(language);
 })
 
-var client = {
+let client = {
     id: 'mes',
     sc: 'admin123',
     grant_type: 'captcha',
@@ -47,7 +47,7 @@ var client = {
     platform: 'mes-edge'
 }
 
-var router = {
+let router = {
     "captcha": "/open/captcha",
     "auth_token": "/oauth2/token",
     "current_user": "/acc/currentUser",
@@ -220,11 +220,6 @@ function initRequestUrl(url) {
 
 function auth(url, param, successFunc, failFuc) {
     let req_url = initRequestUrl(url);
-    // if (param != null) {
-    //     layui.each(param, function (index, item) {
-    //         req_url += "&" + index + "=" + item;
-    //     })
-    // }
     const basicAuth = btoa(client.id + ":" + client.sc);
     $.ajax({
         url: req_url,
@@ -353,7 +348,7 @@ function delWindow(url, ids, successFuc, failFuc) {
             btn: [i18np.prop('common.msg.confirm'), i18np.prop('common.msg.cancel')]
         }, function (index, layero) {
             layer.close(index);
-            var param = {
+            let param = {
                 "ids": ids
             }
             post(url, param, successFuc)
@@ -364,12 +359,12 @@ function delWindow(url, ids, successFuc, failFuc) {
 }
 
 function closeWindow() {
-    var index = parent.layer.getFrameIndex(window.name);
+    let index = parent.layer.getFrameIndex(window.name);
     parent.layer.close(index);
 }
 
 function delTreeNode(url, ids, successFuc, failFuc) {
-    var param = {
+    let param = {
         "ids": ids
     }
     post(url, param, successFuc, function () {
@@ -381,10 +376,10 @@ function delTreeNode(url, ids, successFuc, failFuc) {
 }
 
 //定义函数 绑定增加tab，删除tab，切换tab几项事件
-var tabFunction = {
+let tabFunction = {
     //新增tab url 页面地址 id 对应data-id name标题
     tabAdd: function (url, id, name, filter) {
-        var iframeId = 'iframe_' + id;
+        let iframeId = 'iframe_' + id;
         layui.element.tabAdd(filter, {
             title: name,
             content: "<iframe id='" + iframeId + "' src='" + url + "' frameborder='0' ></iframe>",
@@ -415,7 +410,7 @@ function openTab(url, id, name, filter, element) {
         tabFunction.tabAdd(url, id, name, filter);
     } else {
         //判断tab是否已经存在
-        var isExist = false;
+        let isExist = false;
         $.each(element, function () {
             //筛选id是否存在
             if ($(this).attr('lay-id') === id) {
@@ -454,22 +449,10 @@ function formatDate(date) {
     return `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }
 
-function isRecent(time, minutes) {
-    if (!time) return false;
-    const diff = Date.now() - new Date(time).getTime();
-    return diff < minutes * 60 * 1000;
-}
-
-function formatTime(time) {
-    if (!time) return '';
-    const d = new Date(time);
-    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
-
 const COLORS = {
-    online:  '#1f6feb',
+    online: '#1f6feb',
     offline: '#5a5f66',
-    alarm:   '#c6362b',
+    alarm: '#c6362b',
     running: '#2ea043',
     stopped: '#a67410',
 

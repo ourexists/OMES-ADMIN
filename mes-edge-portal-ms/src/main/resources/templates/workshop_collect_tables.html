@@ -7,31 +7,26 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
-    <link rel="stylesheet" href="../static/layui/css/custom.css">
+    <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
 </head>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
-    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3">
-        <div class="layui-card">
-            <div class="layui-card-body mini-bar" id="ltTree">
-                <div class="layui-inline">
-                    <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
-                </div>
-                <a class="layui-btn layui-btn-sm layui-btn-primary" id="tree_query">
-                    <i class="layui-icon layui-icon-search"></i>
-                </a>
-                <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="reload">
-                    <i class="layui-icon layui-icon-refresh"></i>
-                </a>
-                <div id="left-tree"></div>
+<div class="layui-tab-content main-panel">
+    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3 left-panel layui-card">
+        <div class="layui-card-body mini-bar" id="ltTree">
+            <div class="layui-inline">
+                <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
             </div>
+            <a class="layui-btn layui-btn-sm layui-btn-primary" id="tree_query">
+                <i class="layui-icon layui-icon-search"></i>
+            </a>
+            <div id="left-tree"></div>
         </div>
     </div>
-    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9" style="padding: 15px;">
+    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9 right-panel">
         <form class="layui-form layui-row layui-col-space16">
             <div class="layui-col-md6">
                 <div class="layui-form-item">
@@ -49,11 +44,13 @@
                     </div>
                 </div>
             </div>
-            <div class="layui-btn-container layui-col-xs12">
-                <button class="layui-btn" lay-submit lay-filter="tb-common-search" lang-i18n="common.search">
+            <div class="layui-col-md3">
+                <button class="layui-btn layui-btn-sm" lay-submit lay-filter="tb-common-search"
+                        lang-i18n="common.search">
                     Search
                 </button>
-                <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
+                <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">Clear
+                </button>
             </div>
         </form>
         <table class="layui-hide" id="tb-common"></table>
@@ -74,8 +71,6 @@
     var selected_tree_node;
     var table;
     var tree;
-    var attrIds = [];
-
     layui.use(function () {
         table = layui.table;
         tree = layui.tree;
