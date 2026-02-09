@@ -310,17 +310,6 @@ public class ViewController {
         return "role_workshop";
     }
 
-
-    @RequestMapping("/view/equip_collect_tables")
-    public String equip_collect_tables() {
-        return "equip_collect_tables";
-    }
-
-    @RequestMapping("/view/equip_run_echarts")
-    public String equip_run_echarts() {
-        return "equip_run_echarts";
-    }
-
     @RequestMapping("/view/equip_collect_echarts")
     public String equip_collect_echarts() {
         return "equip_collect_echarts";

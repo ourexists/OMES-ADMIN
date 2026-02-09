@@ -7,7 +7,6 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
-    <link rel="stylesheet" href="../static/layui/css/custom.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
@@ -15,8 +14,8 @@
     <script src="../static/js/global.js"></script>
 </head>
 <body>
-<div class="layui-tab-content main-panel" style="padding: 15px;">
-    <div class="left-panel layui-card">
+<div class="layui-tab-content main-panel">
+    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3 left-panel layui-card">
         <div class="layui-card-body mini-bar" id="ltTree">
             <div class="layui-inline">
                 <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
@@ -27,8 +26,8 @@
             <div id="left-tree"></div>
         </div>
     </div>
-    <div class="right-panel">
-        <form class="layui-form layui-row">
+    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9 right-panel">
+        <form class="layui-form layui-row layui-col-space16">
             <div class="layui-col-md3">
                 <div class="layui-input-wrap">
                     <div class="layui-input-prefix">

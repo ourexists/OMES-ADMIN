@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/tree-select/treeSelect.css">
-    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
     <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
     <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
     <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
@@ -21,7 +20,6 @@
     <script src="../static/leaflet/leaflet.js"></script>
     <script src="../static/marker/leaflet.markercluster.js"></script>
     <script src="../static/tree-select/treeSelect.js"></script>
-    <script src="../static/fullscreen/fullscreen.js"></script>
 </head>
 <body>
 <div class="layui-tab-content main-panel oemes-container">
@@ -75,10 +73,14 @@
         <div class="layui-card device-card">
             <div class="layui-card-header">
                 <div class="card-header-1">
-                    <span>{{ item.name }}</span>
-                    <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"></span>
-                    <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"></span>
-                    <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"></span>
+                    <div class="card-header-1-left">
+                        <span>{{ item.name }}</span>
+                    </div>
+                    <div class="card-header-1-right">
+                        <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"></span>
+                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"></span>
+                        <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"></span>
+                    </div>
                 </div>
                 {{# layui.each(item.alarmTexts, function(index, t){ }}
                 <p style="color: red">{{ t }}</p>
@@ -99,19 +101,9 @@
                 <button class="layui-btn layui-btn-xs layui-btn-primary" onclick="openEdit('{{ item.id }}')">
                     <i class="layui-icon layui-icon-edit"></i>
                 </button>
-                {{# if (item.attrs!=null && item.attrs.length>0) { }}
-                <button class="layui-btn layui-btn-xs layui-btn-primary"
-                        onclick="openAttrHistory('{{ item.selfCode }}')">
-                    <i class="layui-icon layui-icon-log"></i>
-                </button>
                 <button class="layui-btn layui-btn-xs layui-btn-primary"
                         onclick="openCollectEcharts('{{ item.selfCode }}')">
                     <i class="layui-icon layui-icon-chart"></i>
-                </button>
-                {{# } }}
-                <button class="layui-btn layui-btn-xs layui-btn-primary"
-                        onclick="openRunEcharts('{{ item.selfCode }}')">
-                    <i class="layui-icon layui-icon-engine"></i>
                 </button>
             </div>
         </div>
@@ -134,8 +126,6 @@
         tree = layui.tree;
         form = layui.form;
         laytpl = layui.laytpl;
-
-        const fullscreen = new FullScreen();
 
         get(router.equip_type, null, function (result) {
             $.each(result, function (index, item) {
@@ -175,16 +165,8 @@
         openWindow('common.edit', '/view/equip_form_edit?id=' + id, ['90%', '90%']);
     }
 
-    function openAttrHistory(sn) {
-        openWindow('data.collect', '/view/equip_collect_tables?sn=' + sn, ['90%', '90%']);
-    }
-
     function openCollectEcharts(sn) {
-        openWindow('data.echart', '/view/equip_collect_echarts?sn=' + sn, ['40%', '90%']);
-    }
-
-    function openRunEcharts(sn) {
-        openWindow('data.echart', '/view/equip_run_echarts?sn=' + sn, ['40%', '70%']);
+        openWindow('data.echart', '/view/equip_collect_echarts?sn=' + sn, ['70%', '90%']);
     }
 
     function reloadData() {
@@ -227,63 +209,103 @@
 </body>
 
 <style>
-    .status-dot {
-        margin: 2px;
-    }
-
+    /* ===============================
+       设备卡整体（工业白卡）
+    ================================ */
     .device-card {
         margin: 5px;
         padding: 10px;
-        border: 1px solid #eceaea; /* 主边框颜色，可自定义 */
-        border-radius: 10px; /* 圆角 */
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 浅阴影增加浮雕感 */
-        transition: all 0.2s ease; /* hover 平滑过渡 */
-        background-color: #fff; /* 防止透明影响阴影 */
-        overflow: hidden; /* 防止子元素溢出 */
-    }
 
-    .device-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+        box-sizing: border-box;
+        overflow: hidden;
+
+        border: 1px solid #d9dee6;
+        border-radius: 4px;
+
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        color: #2f3b4a;
+
+        transition: border-color 0.2s ease;
     }
 
     .device-card .layui-card-header {
         display: flex;
-        align-items: center;
         flex-direction: column;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e4e8ee;
     }
 
+    /* 第一行：设备名 + 状态 */
     .card-header-1 {
+        width: 100%;
         display: flex;
+        align-items: center;
         justify-content: space-between;
+
+        font-size: 14px;
         font-weight: 600;
-        flex-direction: row;
     }
 
+    /* 第二行：编码 / 车间 */
     .card-header-2 {
         display: flex;
-        justify-content: space-between;
         flex-direction: column;
+        padding-top: 4px;
+
         font-size: 12px;
-        padding-top: 5px;
+        color: #6b7785;
+    }
+
+    .device-card .layui-card-header p {
+        width: 100%;
+        margin: 4px 0;
+        padding: 3px 6px;
+
+        font-size: 12px;
+        color: #5b6b82;
+
+        background: #ebf5fd;
+        border-left: 3px solid #5b6b82;
+    }
+
+
+    .device-card .layui-card-body {
+        font-size: 12px;
+        color: #4e5969;
+        padding-top: 6px;
+
+        height: 30px;
+        overflow-y: auto;
     }
 
     .card-attr {
         display: flex;
         justify-content: space-between;
-        flex-direction: column;
-        color: #2d93ca;
-        font-size: 14px;
-        margin-left: 10%;
+        margin: 2px 0;
+        padding-left: 6px;
+
+        font-family: Consolas, Menlo, monospace;
     }
 
-    .device-card .layui-card-body {
-        font-size: 13px;
-        height: 30px;
-        overflow-y: auto;
-    }
-
+    /* ===============================
+       Footer 操作区
+    ================================ */
     .layui-card-footer {
+        border-top: 1px solid #e4e8ee;
+        padding-top: 6px;
         text-align: right;
     }
+
+    .layui-card-footer .layui-btn {
+        background-color: transparent;
+        border: 1px solid #d9dee6;
+        color: #4e5969;
+    }
+
+    .layui-card-footer .layui-btn:hover {
+        border-color: #1890ff;
+        color: #1890ff;
+    }
+
 </style>
 </html>
