@@ -95,6 +95,11 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         if (!StringUtils.hasText(realtime.getId())) {
             throw new IllegalArgumentException("[WorkshopRealtime] id is required");
         }
+        if (realtime.getAttrsRealtime() == null) {
+            if (realtime.getConfig() != null && realtime.getConfig().getAttrs() != null) {
+                realtime.setAttrsRealtime(realtime.getConfig().getAttrs());
+            }
+        }
         nativeCache().put(realtime.getId(), realtime);
     }
 
@@ -103,6 +108,11 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         for (WorkshopRealtime realtime : realtimes) {
             if (!StringUtils.hasText(realtime.getId())) {
                 throw new IllegalArgumentException("[WorkshopRealtime] id is required");
+            }
+            if (realtime.getAttrsRealtime() == null) {
+                if (realtime.getConfig() != null && realtime.getConfig().getAttrs() != null) {
+                    realtime.setAttrsRealtime(realtime.getConfig().getAttrs());
+                }
             }
             map.put(realtime.getId(), realtime);
         }
