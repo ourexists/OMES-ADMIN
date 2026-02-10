@@ -192,4 +192,24 @@ public class WorkshopController {
     public JsonResponseEntity<List<String>> scadaServer() {
         return JsonResponseEntity.success(scadaPathManager.getAllRequesters());
     }
+
+    @Operation(summary = "获取场景实时采集数据")
+    @GetMapping("getWorkshopRealtimeCollect")
+    public JsonResponseEntity<List<WorkshopRealtimeCollect>> getWorkshopRealtimeCollect(@RequestParam String workshopCode) {
+        try {
+            WorkshopTreeNode workshopTreeNode =
+                    RemoteHandleUtils.getDataFormResponse(workshopFeign.selectByCode(workshopCode));
+            if (workshopTreeNode == null) {
+                return JsonResponseEntity.success(null);
+            }
+            WorkshopRealtime workshopRealtime = workshopRealtimeManager.get(workshopTreeNode.getId());
+            if (workshopRealtime != null) {
+                return JsonResponseEntity.success(workshopRealtime.getAttrsRealtime());
+            }
+            return JsonResponseEntity.success(null);
+        } catch (EraCommonException e) {
+            log.error(e.getMessage(), e);
+            throw new BusinessException(e.getMessage());
+        }
+    }
 }
