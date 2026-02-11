@@ -22,6 +22,7 @@ let store = {
 
 window.APP_CONFIG = {
     systemName: 'OMES ADMIN',
+    desc: '面向工业设备全生命周期管理的数字化平台<br>支持多场景建模 · 实时数据采集 · 设备运维管理'
 }
 
 layui.use(['i18np'], function () {

@@ -8,84 +8,224 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="icon" href="../static/img/favicon.ico" type="image/x-icon">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
     <style>
-        .easy-login-container {
-            width: 320px;
-            margin: 21px auto 0;
+        /* 页面基础 */
+        html,body{
+            height:100%;
+            margin:0;
+            font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
         }
 
-        .easy-login-other .layui-icon {
-            position: relative;
-            display: inline-block;
-            margin: 0 2px;
-            top: 2px;
-            font-size: 26px;
+        /* 整体布局 */
+        .login-page{
+            display:flex;
+            height:100vh;
+            background:url("../static/img/bg.jpg") center/cover no-repeat;
+        }
+
+        /* 左侧品牌区 */
+        .login-left{
+            flex:1.2;
+            color:white;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:linear-gradient(
+                    135deg,
+                    rgba(2,6,23,.85),
+                    rgba(15,23,42,.95)
+            );
+        }
+
+        /* 品牌内容 */
+        .brand-box{
+            max-width:480px;
+        }
+
+        .logo{
+            width:60px;
+            margin-bottom:20px;
+        }
+
+        /* 主标题 */
+        .brand-box h1{
+            font-size:36px;
+            margin-bottom:12px;
+            font-weight:600;
+
+            text-shadow:
+                    0 0 10px rgba(56,189,248,.8),
+                    0 0 30px rgba(56,189,248,.4);
+        }
+
+        /* 副标题 */
+        .sub{
+            color:#94a3b8;
+            margin-bottom:20px;
+        }
+
+        /* 描述 */
+        .desc{
+            color:#cbd5f5;
+            line-height:1.8;
+        }
+
+        /* 右侧登录区 */
+        .login-right{
+            flex:1;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(2,6,23,.6);
+        }
+
+        /* 登录卡片（玻璃态） */
+        .login-card{
+            width:380px;
+            padding:40px;
+            border-radius:16px;
+
+            background:rgba(255,255,255,.06);
+            backdrop-filter:blur(20px);
+
+            border:1px solid rgba(255,255,255,.1);
+
+            box-shadow:
+                    0 20px 60px rgba(0,0,0,.6);
+        }
+
+        /* 卡片标题 */
+        .card-title{
+            color:white;
+            font-size:22px;
+            margin-bottom:30px;
+            text-align:center;
+        }
+
+        /* 登录按钮 */
+        .login-btn{
+            margin-top:10px;
+            background:linear-gradient(135deg,#2563eb,#38bdf8);
+            border:none;
+        }
+
+        .captcha-row{
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+
+        /* 输入框占满 */
+        .captcha-input{
+            flex:1;
+        }
+
+        /* 图片容器 */
+        .captcha-img-box{
+            width:120px;
+            height:38px;   /* 和 layui-input 一样 */
+        }
+
+        /* 验证码图片 */
+        .captcha-img-box img{
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            border-radius:4px;
+            cursor:pointer;
         }
     </style>
 </head>
-<body background="../static/img/bg.jpg" style="background-size: cover;background-attachment: fixed;">
-<div class="layui-row">
-    <div class="layui-col-md9" style="padding-top: 20%;padding-left: 25%">
-        <form class="layui-form">
-            <div class="easy-login-container">
+<body class="login-bg">
+<div class="login-page">
+    <!-- 左侧品牌区 -->
+    <div class="login-left">
+        <div class="brand-box">
+            <h1 class="systemName"></h1>
+            <p class="sub">
+                Industrial Operation Management & Equipment System
+            </p>
+            <div class="desc systemDesc">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 右侧登录区 -->
+    <div class="login-right">
+        <div class="login-card">
+            <div class="card-title systemName"></div>
+            <form class="layui-form">
+                <!-- 用户名 -->
                 <div class="layui-form-item">
                     <div class="layui-input-wrap">
                         <div class="layui-input-prefix">
                             <i class="layui-icon layui-icon-username"></i>
                         </div>
-                        <input type="text" name="username" value="" lay-verify="required"
-                               lang-i18n="common.username"
-                               lay-reqtext="common.msg.username.lock" autocomplete="off" class="layui-input"
-                               lay-affix="clear">
+                        <input type="text" name="username" lay-verify="required"
+                               placeholder="用户名"
+                               class="layui-input">
                     </div>
                 </div>
+
+                <!-- 密码 -->
                 <div class="layui-form-item">
                     <div class="layui-input-wrap">
                         <div class="layui-input-prefix">
                             <i class="layui-icon layui-icon-password"></i>
                         </div>
-                        <input type="password" name="password" value="" lay-verify="required"
-                               lang-i18n="common.password"
-                               lay-reqtext="common.msg.password.lock" autocomplete="off" class="layui-input"
-                               lay-affix="eye">
+                        <input type="password" name="password"
+                               placeholder="密码"
+                               class="layui-input">
                     </div>
                 </div>
+
+                <!-- 验证码 -->
                 <div class="layui-form-item">
-                    <div class="layui-row">
-                        <div class="layui-col-xs7">
+                    <div class="captcha-row">
+                        <div class="captcha-input">
                             <div class="layui-input-wrap">
                                 <div class="layui-input-prefix">
                                     <i class="layui-icon layui-icon-vercode"></i>
                                 </div>
-                                <input type="text" name="captcha" value="" lay-verify="required" placeholder="验证码"
-                                       lay-reqtext="common.msg.captcha.lock" autocomplete="off" class="layui-input"
-                                       lay-affix="clear">
+                                <input type="text" name="captcha"
+                                       placeholder="验证码"
+                                       class="layui-input">
                             </div>
                         </div>
-                        <div class="layui-col-xs5">
-                            <div style="margin-left: 10px;position: relative;">
-                                <img id="captcha" src="" onclick=getCaptcha() style="width: 100%;height:auto">
-                            </div>
+
+                        <div class="captcha-img-box">
+                            <img id="captcha" src="" onclick="getCaptcha()">
                         </div>
+
                     </div>
                 </div>
-                <div class="layui-form-item">
-                    <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="auth">登录</button>
-                </div>
-            </div>
-        </form>
+
+                <button class="layui-btn layui-btn-fluid login-btn"
+                        lay-submit lay-filter="auth">
+                    登录
+                </button>
+
+            </form>
+        </div>
     </div>
 </div>
+
 <script th:inline="none">
     var uuid;
     layui.use(['form', 'layer'], function () {
         var form = layui.form;
         var layer = layui.layer;
         let redirect = layui.url().search.redirect;
+        var $ = layui.$;
+
+        $(".systemName").html(window.APP_CONFIG.systemName);
+        $(".systemDesc").html(window.APP_CONFIG.desc);
 
         getCaptcha();
         // 提交事件
