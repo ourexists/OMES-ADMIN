@@ -15,82 +15,203 @@
     <script src="../static/js/global.js"></script>
 </head>
 <style>
-    html, body {
-        height: 100%;
+    .layui-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+        height: 60px;
     }
 
-    .layui-layout-admin .layui-body {
-        bottom: 44px; /* footer 高度，默认是 44 */
+    .layui-header-left {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px; /* 防止挤压 */
+        flex-wrap: nowrap; /* 防止换行 */
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        padding-right: 12px;
+        flex-shrink: 0;
+    }
+
+    .systemName {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px; /* ⭐ 防止挤压 */
+        font-size: 18px;
+
+        color: #00bfa5; /* Layui增强青 */
+        font-weight: 700;
+        letter-spacing: 1px;
+
+        text-shadow:
+                0 0 6px rgba(0,191,165,0.5),
+                0 0 12px rgba(0,191,165,0.2);
     }
 
     .system-icon {
+        width: 40px;
+        margin: 5px;
+    }
+
+    .menuToggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
         width: 35px;
         height: 35px;
-        margin-right: 2px;
+
+        margin-left: 12px;
+
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+
+        font-size: 20px;
+        cursor: pointer;
+        transition: all .2s ease;
     }
 
-    .layui-body .layui-tab {
+
+    /* hover */
+    .menuToggle:hover {
+        background: #eef2f7;
+    }
+
+    /* 点击反馈 */
+    .menuToggle:active {
+        transform: scale(0.95);
+    }
+
+    .menuToggle i {
+        transition: transform .25s;
+    }
+
+    .layui-side.collapse ~ .layui-body .menuToggle i {
+        transform: rotate(180deg);
+    }
+
+    .layui-header .layui-layout-right {
+        position: static !important; /* 取消 absolute */
+        margin-left: auto; /* 推到右边 */
+        display: flex;
+        align-items: center;
+    }
+
+    /* ========= 左侧菜单 ========= */
+
+    .layui-side {
+        width: 220px;
+        transition: .25s;
+        background: #fff;
+        border-right: 1px solid #e2e8f0;
+    }
+
+    .layui-side.collapse {
+        width: 60px;
+    }
+
+    /* ========= 内容区域 ========= */
+
+    .layui-body {
         display: flex;
         flex-direction: column;
+        transition: .25s;
+    }
+
+    /*.layui-body.expand {*/
+    /*    left: 60px;*/
+    /*}*/
+
+    /* ========= 菜单 ========= */
+
+    .layui-nav-tree {
+        background: transparent;
+    }
+
+    /* 收缩隐藏文字 */
+    .layui-side.collapse .layui-nav-item a span {
+        display: none;
+    }
+
+    /* ========= tab ========= */
+
+    .layui-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        margin: 12px;
+    }
+
+    /* tab 内容撑满 */
+    .layui-tab-content {
+        flex: 1;
+        overflow: auto;
+    }
+
+    /* 每个 tab 页撑满 */
+    .layui-tab-item {
+        width: 100%;
         height: 100%;
     }
-
-    .layui-body .layui-tab-title {
-        flex: 0 0 auto; /* tab 标题固定 */
-    }
-
-    .layui-body .layui-tab-content {
-        height: 100%;
-        padding: 0;
-        overflow: hidden;
-    }
-
-    .layui-body .layui-tab-content .layui-tab-item {
-        height: 100%;
-        padding: 0;
-        overflow: hidden;
-    }
-
 
     .layui-tab-content iframe {
         width: 100%;
         height: 100%;
         border: none;
-        display: block;
     }
 </style>
 <body>
 <div class="layui-layout layui-layout-admin">
     <div class="layui-header">
-        <div class="layui-logo layui-hide-xs layui-bg-black" id="systemLogo">
+        <div class="layui-header-left">
+            <div class="logo">
+                <img src="/static/img/favicon.ico" class="system-icon">
+                <span class="systemName"></span>
+            </div>
+<!--            <div class="menuToggle">-->
+<!--                <i class="layui-icon layui-icon-shrink-right"></i>-->
+<!--            </div>-->
         </div>
-        <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
-                <a href="javascript:">
-                    <cite class="lan_show">简体中文</cite>
-                </a>
-                <dl class="layui-nav-child">
-                    <dd class="lang-language" onclick="changeLanguage('zh',this)"><a>简体中文</a></dd>
-                    <dd class="lang-language" onclick="changeLanguage('en', this)"><a>English</a></dd>
-                </dl>
-            </li>
-            <li class="layui-nav-item layui-hide layui-show-sm-inline-block"></li>
-            <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
-                <a href="javascript:;">
-                    <img src="//unpkg.com/outeres@0.0.10/img/layui/icon-v2.png" class="layui-nav-img">
-                    <span class="username">User</span>
-                </a>
-                <dl class="layui-nav-child">
-                    <dd id="signout"><a href="javascript:;">Sign out</a></dd>
-                </dl>
-            </li>
-            <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
-                <a href="javascript:">
-                    <i class="layui-icon layui-icon-more-vertical"></i>
-                </a>
-            </li>
-
-        </ul>
+        <div class="layui-layout-right">
+            <ul class="layui-nav">
+                <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
+                    <a href="javascript:">
+                        <cite class="lan_show">简体中文</cite>
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd class="lang-language" onclick="changeLanguage('zh',this)"><a>简体中文</a></dd>
+                        <dd class="lang-language" onclick="changeLanguage('en', this)"><a>English</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item layui-hide layui-show-sm-inline-block"></li>
+                <li class="layui-nav-item layui-hide layui-show-sm-inline-block">
+                    <a href="javascript:;">
+                        <img src="//unpkg.com/outeres@0.0.10/img/layui/icon-v2.png" class="layui-nav-img">
+                        <span class="username">User</span>
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd id="signout"><a href="javascript:;">Sign out</a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
+                    <a href="javascript:">
+                        <i class="layui-icon layui-icon-more-vertical"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
     <div class="layui-side layui-bg-black">
         <div class="layui-side-scroll">
@@ -112,8 +233,9 @@
     </div>
 </div>
 <script th:inline="javascript">
-    layui.use(['element', 'layer', 'jquery'], function () {
+    layui.use(function () {
         let element = layui.element;
+        var $ = layui.$;
 
         let lu = {
             "zh": "简体中文",
@@ -121,14 +243,22 @@
         }
 
 
-        const logoContainer = document.getElementById('systemLogo');
-        if (logoContainer) {
-            logoContainer.innerHTML = `
-        <img src="/static/img/favicon.ico" class="system-icon">
-        <span>${APP_CONFIG.systemName}</span>
-    `;
-        }
+        // 菜单收缩
+        let collapsed = false;
 
+        $('.systemName').html(APP_CONFIG.systemName);
+
+        $('.menuToggle').on('click', function () {
+
+            collapsed = !collapsed;
+
+            $('.layui-side').toggleClass('collapse');
+            $('.layui-body').toggleClass('expand');
+
+            $('.menuToggle i').toggleClass(
+                'layui-icon-shrink-right layui-icon-spread-left'
+            );
+        });
 
         let curLang = localStorage.getItem(store.language);
         if (curLang === null) {
