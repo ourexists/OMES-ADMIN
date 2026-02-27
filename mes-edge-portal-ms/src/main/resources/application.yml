@@ -57,12 +57,14 @@ era:
         - /
         - /templates/**
         - /view/**
+        - /files/**
       api_check:
         - /expose/**
         - /
         - /templates/**
         - /view/**
         - /expose/**
+        - /files/**
   token:
     store-type: Db
 feign:
