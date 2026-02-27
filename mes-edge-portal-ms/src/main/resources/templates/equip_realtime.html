@@ -54,7 +54,7 @@
                     </select>
                 </div>
             </div>
-            <div class="layui-col-md3">
+            <div class="layui-col-md2">
                 <button class="layui-btn layui-btn-sm" lay-submit lay-filter="tb-common-search"
                         lang-i18n="common.search">
                     Search
@@ -62,53 +62,125 @@
                 <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">Clear
                 </button>
             </div>
+            <div class="layui-col-md1 view-toggle-wrap">
+                <div class="view-toggle" title="卡片视图">
+                    <button type="button" class="view-btn active" data-view="card" id="viewBtnCard">
+                        <i class="layui-icon layui-icon-template-1"></i>
+                    </button>
+                    <button type="button" class="view-btn" data-view="list" id="viewBtnList">
+                        <i class="layui-icon layui-icon-list"></i>
+                    </button>
+                </div>
+            </div>
         </form>
-        <div id="cardContainer" class="common-data-container"></div>
+        <div id="cardContainer" class="common-data-container view-mode-card"></div>
     </div>
 </div>
 
 <script type="text/html" id="deviceCardTpl">
     {{# layui.each(d, function(index, item){ }}
     <div class="layui-col-md3 layui-col-sm6 device-container">
-        <div class="layui-card device-card">
-            <div class="layui-card-header">
-                <div class="card-header-1">
-                    <div class="card-header-1-left">
-                        <span>{{ item.name }}</span>
-                    </div>
-                    <div class="card-header-1-right">
-                        <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"></span>
-                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"></span>
-                        <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"></span>
+        <div class="layui-card device-card {{ item.onlineState!=1 ? 'device-card-offline' : 'device-card-online' }} {{ item.onlineState==1 && item.alarmState==1 ? 'device-card-alarm' : '' }}" data-id="{{ item.id }}" onclick="openDetail('{{ item.id }}')">
+            <div class="device-card-header">
+                <div class="card-header-row">
+                    <span class="card-vendor-tag card-tag-{{ index % 5 }}">{{ item.workshop && item.workshop.name ? item.workshop.name : (item.typeDesc || item.type || '设备') }}</span>
+                    <span class="card-device-name">{{ item.name }}</span>
+                    <div class="card-status-dots">
+                        <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"
+                              title="在线"></span>
+                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"
+                              title="运行"></span>
+                        <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"
+                              title="告警"></span>
                     </div>
                 </div>
-                {{# layui.each(item.alarmTexts, function(index, t){ }}
-                <p style="color: red">{{ t }}</p>
+                {{# if(item.alarmTexts && item.alarmTexts.length > 0){ }}
+                {{# layui.each(item.alarmTexts, function(i, t){ }}
+                <p class="card-alarm-text">{{ t }}</p>
                 {{# }); }}
-                <div class="card-header-2">
-                    <p>{{ i18np.prop('equip.code') }}:{{ item.selfCode }}</p>
-                    <p>{{ i18np.prop('workshop.name') }}:{{ item.workshop === null ? '' : item.workshop.name }}</p>
+                {{# } }}
+            </div>
+
+            <div class="device-card-body">
+                <div class="card-info-list">
+                    <div class="card-info-row">
+                        <span class="card-info-label">{{ i18np.prop('equip.code') }}</span>
+                        <span class="card-info-value">{{ item.selfCode }}</span>
+                    </div>
+                    <div class="card-info-row">
+                        <span class="card-info-label">{{ i18np.prop('workshop.name') }}</span>
+                        <span class="card-info-value">{{ item.workshop && item.workshop.name ? item.workshop.name : '-' }}</span>
+                    </div>
+                    {{# layui.each(item.attrs, function(i, t){ }}
+                    <div class="card-info-row">
+                        <span class="card-info-label">{{ t.name }}</span>
+                        <span class="card-info-value">{{ t.value == null ? 'unknow' : t.value }}</span>
+                    </div>
+                    {{# }); }}
+                </div>
+                <div class="card-device-thumb">
+                    <i class="layui-icon layui-icon-engine"></i>
                 </div>
             </div>
 
-            <div class="layui-card-body">
-                {{# layui.each(item.attrs, function(index, t){ }}
-                <p class="card-attr">{{ t.name }} : {{t.value == null ? 'unknow' : t.value }}</p>
-                {{# }); }}
-            </div>
-
-            <div class="layui-card-footer">
-                <button class="layui-btn layui-btn-xs layui-btn-primary" onclick="openEdit('{{ item.id }}')">
-                    <i class="layui-icon layui-icon-edit"></i>
-                </button>
-                <button class="layui-btn layui-btn-xs layui-btn-primary"
-                        onclick="openCollectEcharts('{{ item.selfCode }}')">
-                    <i class="layui-icon layui-icon-chart"></i>
-                </button>
+            <div class="device-card-footer">
+                <div class="card-footer-tags">
+                    {{# if(item.typeDesc || item.type){ }}
+                    <span class="card-footer-tag tag-purple">{{ item.typeDesc || item.type }}</span>
+                    {{# } }}
+                    <span class="card-footer-tag tag-green">{{ item.onlineState==1 ? (i18np.prop('equip.online')||'在线') : (i18np.prop('equip.offline')||'离线') }}</span>
+                </div>
+                <div class="card-footer-actions">
+                    <button type="button" class="card-action-btn" onclick="event.stopPropagation(); openEdit('{{ item.id }}')" title="编辑">
+                        <i class="layui-icon layui-icon-edit"></i>
+                    </button>
+                    <button type="button" class="card-action-btn" onclick="event.stopPropagation(); openCollectEcharts('{{ item.selfCode }}')"
+                            title="数据图表">
+                        <i class="layui-icon layui-icon-chart"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
     {{# }); }}
+</script>
+
+<script type="text/html" id="deviceListTpl">
+    <div class="device-list-table">
+        <div class="device-list-header">
+            <span class="col-name" lang-i18n="equip.name">设备名称</span>
+            <span class="col-code" lang-i18n="equip.code">设备编号</span>
+            <span class="col-workshop" lang-i18n="workshop.name">场景</span>
+            <span class="col-status" lang-i18n="equip.onlineState">状态</span>
+            <span class="col-actions"></span>
+        </div>
+        {{# layui.each(d, function(index, item){ }}
+        <div class="device-list-row layui-card device-card {{ item.onlineState!=1 ? 'device-card-offline' : '' }} {{ item.onlineState==1 && item.alarmState==1 ? 'device-card-alarm' : '' }}" data-id="{{ item.id }}" onclick="openDetail('{{ item.id }}')">
+            <span class="col-name">
+                <span class="card-vendor-tag card-tag-{{ index % 5 }}">{{ item.workshop && item.workshop.name ? item.workshop.name : (item.typeDesc || item.type || '设备') }}</span>
+                <span class="card-device-name">{{ item.name }}</span>
+                {{# if(item.alarmTexts && item.alarmTexts.length > 0){ }}
+                <span class="list-alarm-badge" title="{{ item.alarmTexts && item.alarmTexts.length ? item.alarmTexts.join(';') : '' }}">!</span>
+                {{# } }}
+            </span>
+            <span class="col-code">{{ item.selfCode }}</span>
+            <span class="col-workshop">{{ item.workshop && item.workshop.name ? item.workshop.name : '-' }}</span>
+            <span class="col-status">
+                <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}" title="在线"></span>
+                <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}" title="运行"></span>
+                <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}" title="告警"></span>
+            </span>
+            <span class="col-actions">
+                <button type="button" class="card-action-btn" onclick="event.stopPropagation(); openEdit('{{ item.id }}')" title="编辑">
+                    <i class="layui-icon layui-icon-edit"></i>
+                </button>
+                <button type="button" class="card-action-btn" onclick="event.stopPropagation(); openCollectEcharts('{{ item.selfCode }}')" title="数据图表">
+                    <i class="layui-icon layui-icon-chart"></i>
+                </button>
+            </span>
+        </div>
+        {{# }); }}
+    </div>
 </script>
 
 <script th:inline="none">
@@ -120,6 +192,7 @@
     let form;
     let dataList;
     let laytpl;
+    let viewMode = localStorage.getItem('equip_realtime_view') || 'card';
 
     layui.use(function () {
         table = layui.table;
@@ -154,6 +227,12 @@
 
         reloadData();
 
+        $('#viewBtnCard, #viewBtnList').on('click', function () {
+            let mode = $(this).data('view');
+            switchView(mode);
+        });
+
+        applyViewMode(viewMode);
 
         form.on('submit(tb-common-search)', function (data) {
             reloadData(true, data.field);
@@ -161,12 +240,41 @@
         });
     });
 
+    function openDetail(id) {
+        parent.openIndexTab('/view/equip_detail?id=' + id, id, i18np.prop('equip.detail'));
+    }
+
     function openEdit(id) {
-        openWindow('common.edit', '/view/equip_form_edit?id=' + id, ['90%', '90%']);
+        openWindow('common.edit', '/view/equip_form_edit?id=' + id);
     }
 
     function openCollectEcharts(sn) {
-        openWindow('data.echart', '/view/equip_collect_echarts?sn=' + sn, ['70%', '90%']);
+        openWindow('data.echart', '/view/equip_collect_echarts?sn=' + sn);
+    }
+
+    function switchView(mode) {
+        viewMode = mode;
+        localStorage.setItem('equip_realtime_view', mode);
+        applyViewMode(mode);
+        renderData();
+    }
+
+    function applyViewMode(mode) {
+        const container = document.getElementById('cardContainer');
+        container.className = 'common-data-container view-mode-' + mode;
+        $('.view-toggle .view-btn').removeClass('active');
+        $('#viewBtn' + (mode === 'card' ? 'Card' : 'List')).addClass('active');
+    }
+
+    function renderData() {
+        if (!dataList) return;
+        const container = document.getElementById('cardContainer');
+        const tplId = viewMode === 'card' ? 'deviceCardTpl' : 'deviceListTpl';
+        const tpl = document.getElementById(tplId).innerHTML;
+        laytpl(tpl).render(dataList, function (html) {
+            container.innerHTML = html;
+            layui.i18np && layui.i18np.apply && layui.i18np.apply('#cardContainer');
+        });
     }
 
     function reloadData() {
@@ -190,12 +298,7 @@
                     return;
                 }
                 dataList = e;
-                const tpl = document.getElementById('deviceCardTpl').innerHTML;
-                const container = document.getElementById('cardContainer');
-
-                laytpl(tpl).render(dataList, function (html) {
-                    container.innerHTML = html;
-                });
+                renderData();
             })
         } finally {
             reloading = false;
@@ -209,102 +312,407 @@
 </body>
 
 <style>
-    /*!* ===============================*/
-    /*   设备卡整体（工业白卡）*/
-    /*================================ *!*/
-    .device-card {
-        margin: 10px;
-        padding: 10px;
-
-        box-sizing: border-box;
-        overflow: hidden;
-
-        border: 1px solid #d9dee6;
-        border-radius: 10px;
-
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-        color: #2f3b4a;
-
-        transition: border-color 0.2s ease;
-    }
-
-    .device-card .layui-card-header {
+    /* 设备卡片网格布局 */
+    .right-panel .common-data-container {
         display: flex;
-        flex-direction: column;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #e4e8ee;
-    }
-
-    /* 第一行：设备名 + 状态 */
-    .card-header-1 {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    /* 第二行：编码 / 车间 */
-    .card-header-2 {
-        display: flex;
-        flex-direction: column;
-        padding-top: 4px;
-
-        font-size: 12px;
-        color: #6b7785;
-    }
-
-    .device-card .layui-card-header p {
-        width: 100%;
-        margin: 4px 0;
-        padding: 3px 6px;
-
-        font-size: 12px;
-        color: #5b6b82;
-
-        background: #ebf5fd;
-        border-left: 3px solid #5b6b82;
-    }
-
-
-    .device-card .layui-card-body {
-        font-size: 12px;
-        color: #4e5969;
-        padding-top: 6px;
-
-        height: 30px;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-content: flex-start;
         overflow-y: auto;
     }
 
-    .card-attr {
+    .device-container {
+        flex: 0 0 calc(25% - 12px);
+        max-width: calc(25% - 12px);
+    }
+
+    @media screen and (max-width: 1200px) {
+        .device-container {
+            flex: 0 0 calc(33.333% - 11px);
+            max-width: calc(33.333% - 11px);
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .device-container {
+            flex: 0 0 calc(50% - 8px);
+            max-width: calc(50% - 8px);
+        }
+    }
+
+    /* 设备卡片主体 - 整卡可点击进入详情 */
+    .device-card {
+        height: 100%;
+        margin: 0;
+        padding: 16px;
+        box-sizing: border-box;
+        overflow: hidden;
+        background: var(--bg-panel);
+        border: 1px solid var(--border-card);
+        border-radius: 12px;
+        box-shadow: var(--shadow-card);
+        color: var(--text-main);
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    .device-card:hover {
+        box-shadow: var(--shadow-card-hover);
+        border-color: var(--border-card-hover);
+    }
+
+    /* 在线卡片 - 绿色左边框标识 */
+    .device-card-online {
+        border-left: 3px solid var(--status-online);
+    }
+
+    /* 离线/未上线卡片 - 无背景色 */
+    .device-card-offline {
+        border-color: var(--border-strong);
+    }
+
+    /* 告警卡片 - 浅红背景 */
+    .device-card-alarm {
+        background: var(--bg-card-alarm);
+        border-color: var(--border-alarm);
+    }
+
+    .device-card-alarm:hover {
+        background: var(--bg-card-alarm);
+    }
+
+    /* 头部：品牌标签 + 设备名 + 状态点 */
+    .device-card-header {
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-card);
+        flex-shrink: 0;
+    }
+
+    .card-header-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .card-vendor-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-on-tag);
+        border-radius: 999px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .card-tag-0 { background: var(--tag-0); }
+    .card-tag-1 { background: var(--tag-1); }
+    .card-tag-2 { background: var(--tag-2); }
+    .card-tag-3 { background: var(--tag-3); }
+    .card-tag-4 { background: var(--tag-4); }
+
+    .card-device-name {
+        flex: 1;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-main);
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .card-status-dots {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .status-online { background: var(--status-online); }
+    .status-running { background: var(--status-running); }
+    .status-alarm { background: var(--status-alarm); }
+    .status-offline { background: var(--status-offline); }
+
+    .card-alarm-text {
+        margin: 6px 0 0;
+        padding: 4px 8px;
+        font-size: 12px;
+        color: var(--status-alarm-text);
+        background: var(--bg-alarm);
+        border-left: 3px solid var(--border-alarm);
+        border-radius: 2px;
+    }
+
+    /* 主体：左侧信息列表 + 右侧设备图标 */
+    .device-card-body {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        min-height: 80px;
+    }
+
+    .card-info-list {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        color: var(--text-sub);
+    }
+
+    .card-info-row {
         display: flex;
         justify-content: space-between;
-        margin: 2px 0;
-        padding-left: 6px;
-
-        font-family: Consolas, Menlo, monospace;
+        align-items: baseline;
+        margin-bottom: 6px;
+        gap: 8px;
     }
 
-    /* ===============================
-       Footer 操作区
-    ================================ */
-    .layui-card-footer {
-        border-top: 1px solid #e4e8ee;
-        padding-top: 6px;
+    .card-info-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .card-info-label {
+        color: var(--text-sub);
+        flex-shrink: 0;
+    }
+
+    .card-info-value {
+        color: var(--text-value);
+        font-weight: 500;
         text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .layui-card-footer .layui-btn {
-        background-color: transparent;
-        border: 1px solid #d9dee6;
-        color: #4e5969;
+    .card-device-thumb {
+        width: 56px;
+        height: 56px;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--bg-thumb-start) 0%, var(--bg-thumb-end) 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-thumb);
     }
 
-    .layui-card-footer .layui-btn:hover {
-        border-color: #1890ff;
-        color: #1890ff;
+    .card-device-thumb .layui-icon {
+        font-size: 28px;
+        color: var(--text-disabled);
+    }
+
+    /* 底部：标签 + 操作按钮 */
+    .device-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-card);
+    }
+
+    .card-footer-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .card-footer-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 11px;
+        color: var(--text-on-tag);
+        border-radius: 4px;
+    }
+
+    .tag-blue { background: var(--tag-blue); color: var(--text-on-tag); }
+    .tag-purple { background: var(--tag-purple); color: var(--text-on-tag); }
+    .tag-green { background: var(--tag-green); color: var(--text-on-tag); }
+    .tag-orange { background: var(--tag-orange); color: var(--text-on-tag); }
+
+    .card-footer-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .card-action-btn {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--text-disabled);
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s, background 0.2s;
+    }
+
+    .card-action-btn:hover {
+        color: var(--color-primary);
+        background: var(--bg-hover-soft);
+    }
+
+    /* 点击操作按钮时不触发卡片跳转 */
+    .card-action-btn:focus {
+        outline: none;
+    }
+
+    .card-action-btn .layui-icon {
+        font-size: 16px;
+    }
+
+    /* 视图切换 */
+    .view-toggle-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .view-toggle {
+        display: flex;
+        gap: 2px;
+        padding: 4px;
+        background: var(--bg-panel-alt);
+        border-radius: 6px;
+        border: 1px solid var(--border-base);
+    }
+
+    .view-toggle .view-btn {
+        width: 32px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--text-sub);
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s, background 0.2s;
+    }
+
+    .view-toggle .view-btn:hover {
+        color: var(--color-primary);
+        background: var(--bg-hover-soft);
+    }
+
+    .view-toggle .view-btn.active {
+        background: var(--color-primary);
+        color: var(--text-on-tag);
+    }
+
+    .view-toggle .view-btn .layui-icon {
+        font-size: 18px;
+    }
+
+    /* 列表视图 - 铺满宽度 */
+    .common-data-container.view-mode-list {
+        display: block !important;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .view-mode-list .device-container {
+        flex: none;
+        max-width: none;
+    }
+
+    .device-list-table {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .device-list-header {
+        display: grid;
+        grid-template-columns: 2fr 1.2fr 1.2fr 120px 80px;
+        gap: 12px;
+        padding: 10px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-sub);
+        background: var(--bg-panel-alt);
+        border-radius: 8px;
+    }
+
+    .device-list-row {
+        display: grid;
+        grid-template-columns: 2fr 1.2fr 1.2fr 120px 80px;
+        gap: 12px;
+        padding: 12px 16px;
+        min-height: auto;
+        align-items: center;
+        flex-direction: row !important;
+    }
+
+    .device-list-row .device-card-header,
+    .device-list-row .device-card-body,
+    .device-list-row .card-device-thumb {
+        display: none !important;
+    }
+
+    .device-list-row .device-card-footer {
+        display: none !important;
+    }
+
+    .device-list-row .col-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .device-list-row .card-device-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .device-list-row .col-code,
+    .device-list-row .col-workshop {
+        font-size: 12px;
+        color: var(--text-sub);
+    }
+
+    .device-list-row .col-status {
+        display: flex;
+        gap: 4px;
+    }
+
+    .device-list-row .col-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .list-alarm-badge {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        line-height: 14px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--status-alarm-text);
+        background: var(--bg-alarm);
+        border-radius: 50%;
     }
 </style>
 </html>

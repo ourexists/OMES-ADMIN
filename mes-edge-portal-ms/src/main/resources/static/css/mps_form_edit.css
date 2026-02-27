@@ -2,21 +2,23 @@
  * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
  */
 
+@import url('theme.css');
+
 .layui-table-highlight {
-    background-color: #5FB878;
-    color: #ffffff;
+    background-color: var(--table-highlight);
+    color: var(--text-on-tag);
 }
 
 .layui-table-error-highlight {
-    background-color: firebrick;
-    color: #ffffff;
+    background-color: var(--table-error);
+    color: var(--text-on-tag);
 }
 
 .layui-table-error-highlight:hover {
-    background-color: red;
-    color: #ffffff;
+    background-color: var(--status-alarm);
+    color: var(--text-on-tag);
 }
 
 .layui-table-highlight:hover {
-    background-color: #7ebd90 !important;
+    background-color: var(--table-highlight-hover) !important;
 }

@@ -1,0 +1,105 @@
+/*
+ * 主题色板 - 管理平台·科技浅色风格
+ * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+ */
+
+:root {
+    /* ========== 背景色（浅色管理风） ========== */
+    --bg-page: #f0f4f8;
+    --bg-panel: #ffffff;
+    --bg-panel-alt: #f8fafc;
+    --bg-disabled: #e6ebf3;
+    --bg-thumb-start: #f0f9ff;
+    --bg-thumb-end: #e0f2fe;
+    --bg-alarm: #fef2f2;
+    --bg-card-offline: #f1f5f9;
+    --bg-card-alarm: #fff5f5;
+    --bg-placeholder-disabled: #94a3b8;
+    --bg-hover-soft: rgba(14, 165, 233, 0.08);
+    --bg-tree-active: rgba(14, 165, 233, 0.08);
+
+    /* ========== 边框色（冷调科技蓝） ========== */
+    --border-base: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --border-panel: #e2e8f0;
+    --border-hover: #7dd3fc;
+    --border-disabled: #cbd5e1;
+    --border-card: #e2e8f0;
+    --border-card-hover: #38bdf8;
+    --border-alarm: #f87171;
+
+    /* ========== 主色（科技青蓝） ========== */
+    --color-primary: #0ea5e9;
+    --color-primary-soft: rgba(14, 165, 233, 0.12);
+    --color-primary-focus: rgba(14, 165, 233, 0.2);
+    --color-focus: #38bdf8;
+
+    /* ========== 文字色 ========== */
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --text-placeholder: #94a3b8;
+    --text-disabled: #94a3b8;
+    --text-value: #0ea5e9;
+    --text-on-tag: #ffffff;
+    --text-on-tag-dark: #1e293b;
+
+    /* ========== 状态色（科技感配色） ========== */
+    --status-online: #10b981;
+    --status-online-legacy: #0ea5e9;
+    --status-running: #0ea5e9;
+    --status-running-legacy: #10b981;
+    --status-alarm: #f43f5e;
+    --status-alarm-legacy: #f43f5e;
+    --status-offline: #94a3b8;
+    --status-offline-legacy: #94a3b8;
+    --status-stopped: #f59e0b;
+    --status-alarm-text: #dc2626;
+
+    /* ========== 品牌/标签色（科技风） ========== */
+    --tag-0: #0ea5e9;
+    --tag-1: #8b5cf6;
+    --tag-2: #a855f7;
+    --tag-3: #10b981;
+    --tag-4: #06b6d4;
+    --tag-blue: #38bdf8;
+    --tag-purple: #a78bfa;
+    --tag-green: #34d399;
+    --tag-orange: #fb923c;
+
+    /* ========== 阴影 ========== */
+    --shadow-card: 0 2px 12px rgba(14, 165, 233, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-card-hover: 0 8px 24px rgba(14, 165, 233, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+    --shadow-thumb: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-btn-glow: rgba(14, 165, 233, 0.35);
+    --shadow-input: 0 0 0 2px rgba(14, 165, 233, 0.25), inset 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-card-layui: 0 4px 14px rgba(14, 165, 233, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-card-layui-hover: 0 12px 28px rgba(14, 165, 233, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* ========== 扫描/结构光 ========== */
+    --scan-line: rgba(14, 165, 233, 0.35);
+    --scan-line-strong: rgba(14, 165, 233, 0.45);
+    --scan-line-soft: rgba(56, 189, 248, 0.35);
+
+    /* ========== 辅助色 ========== */
+    --neon-blue: #0ea5e9;
+    --neon-cyan: #06b6d4;
+    --neon-green: #10b981;
+    --font-digital: "JetBrains Mono", "IBM Plex Mono", "DIN Alternate", monospace;
+
+    /* ========== 布局/框架色 ========== */
+    --border-layout: #e2e8f0;
+    --bg-header: #ffffff;
+    --bg-toggle: #f8fafc;
+    --bg-toggle-hover: #f1f5f9;
+    --color-logo: #0ea5e9;
+    --shadow-logo: 0 0 12px rgba(14, 165, 233, 0.4), 0 0 24px rgba(14, 165, 233, 0.2);
+    --color-link: #0ea5e9;
+    --text-muted: #64748b;
+    --text-secondary: #64748b;
+    --bg-overlay: rgba(255, 255, 255, 0.9);
+
+    /* ========== 表格高亮 ========== */
+    --table-highlight: #10b981;
+    --table-highlight-hover: #34d399;
+    --table-error: #f43f5e;
+}

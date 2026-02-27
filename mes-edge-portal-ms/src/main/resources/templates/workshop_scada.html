@@ -29,7 +29,7 @@
     .loading {
         position: absolute;
         inset: 0;
-        background: rgba(255, 255, 255, 0.7);
+        background: var(--bg-overlay);
         z-index: 999;
         display: flex;
         align-items: center;
@@ -40,7 +40,7 @@
     .placeholder {
         position: absolute;
         inset: 0;
-        background: rgba(255, 255, 255, 0.7);
+        background: var(--bg-overlay);
         z-index: 999;
         display: flex;
         align-items: center;
@@ -50,12 +50,12 @@
 
     .loading i {
         font-size: 36px;
-        color: #1e9fff;
+        color: var(--color-primary);
     }
 
     .loading-text {
         margin-top: 8px;
-        color: #666;
+        color: var(--text-secondary);
     }
 </style>
 <body>

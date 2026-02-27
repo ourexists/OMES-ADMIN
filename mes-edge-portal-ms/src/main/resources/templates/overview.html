@@ -11,6 +11,7 @@
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+    <script src="../static/js/theme.js"></script>
     <script src="../static/js/echarts.min.js"></script>
     <script src="../static/tree-select/treeSelect.js"></script>
     <script src="../static/fullscreen/fullscreen.js"></script>
@@ -28,14 +29,25 @@
     }
 
     .kpi-title {
-        color: #888;
+        color: var(--text-muted);
         margin-top: 5px;
     }
+
+    .header-workshop { font-size: 14px; color: var(--color-link); }
+    .kpi-icon-online { font-size: 30px; color: var(--status-online-legacy); }
+    .kpi-icon-offline { font-size: 30px; color: var(--status-offline-legacy); }
+    .kpi-icon-alarm { font-size: 30px; color: var(--status-alarm-legacy); }
+    .kpi-icon-run { font-size: 30px; color: var(--status-running-legacy); }
+    .kpi-icon-stop { font-size: 30px; color: var(--status-stopped); }
 
     .header {
         display: flex;
         align-items: center; /* 上下居中 */
         justify-content: space-between;
+    }
+
+    .oemes-container {
+        background: var(--bg-page, #f3f5f8);
     }
 </style>
 <body>
@@ -46,7 +58,7 @@
             <div class="layui-card">
                 <div class="layui-card-body header">
                     <span style="font-size:20px;font-weight:600;">设备管理平台</span>
-                    <span style="font-size:14px;color: #0078d7;" id="workshopName"></span>
+                    <span class="header-workshop" id="workshopName"></span>
                 </div>
             </div>
         </div>
@@ -66,7 +78,7 @@
         <div class="layui-col-md2">
             <div class="layui-card">
                 <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-rss" style="font-size:30px;color:#1890FF;"></i>
+                    <i class="layui-icon layui-icon-rss kpi-icon-online"></i>
                     <div class="kpi-num" id="onlineCount">0</div>
                     <div class="kpi-title" lang-i18n="equip.online">在线设备</div>
                 </div>
@@ -75,7 +87,7 @@
         <div class="layui-col-md2">
             <div class="layui-card">
                 <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-rss" style="font-size:30px;color:#bfbfbf;"></i>
+                    <i class="layui-icon layui-icon-rss kpi-icon-offline"></i>
                     <div class="kpi-num" id="offlineCount">0</div>
                     <div class="kpi-title" lang-i18n="equip.offline">离线设备</div>
                 </div>
@@ -84,7 +96,7 @@
         <div class="layui-col-md2">
             <div class="layui-card">
                 <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-notice" style="font-size:30px;color:#ff4d4f;"></i>
+                    <i class="layui-icon layui-icon-notice kpi-icon-alarm"></i>
                     <div class="kpi-num" id="alarmCount">0</div>
                     <div class="kpi-title" lang-i18n="equip.alarm">告警设备</div>
                 </div>
@@ -93,7 +105,7 @@
         <div class="layui-col-md2">
             <div class="layui-card">
                 <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-loading" style="font-size:30px;color:#52c41a;"></i>
+                    <i class="layui-icon layui-icon-loading kpi-icon-run"></i>
                     <div class="kpi-num" id="runCount">0</div>
                     <div class="kpi-title" lang-i18n="equip.run">运行设备</div>
                 </div>
@@ -102,7 +114,7 @@
         <div class="layui-col-md2">
             <div class="layui-card">
                 <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-pause" style="font-size:30px;color:#ffb800;"></i>
+                    <i class="layui-icon layui-icon-pause kpi-icon-stop"></i>
                     <div class="kpi-num" id="stopCount">0</div>
                     <div class="kpi-title" lang-i18n="equip.stop">停止设备</div>
                 </div>
@@ -369,15 +381,15 @@
                     series: [
                         {
                             data: [
-                                {value: result.online, name: '在线', itemStyle: {color: '#1890FF'}},
-                                {value: result.offline, name: '离线', itemStyle: {color: '#bfbfbf'}},
+                                {value: result.online, name: '在线', itemStyle: {color: THEME.online}},
+                                {value: result.offline, name: '离线', itemStyle: {color: THEME.offline}},
                             ]
                         },
                         {
                             data: [
-                                {value: result.run, name: '运行', itemStyle: {color: '#52c41a'}},
-                                {value: result.stopped, name: '停止', itemStyle: {color: '#FAAD14'}},
-                                {value: result.alarm, name: '告警', itemStyle: {color: '#ff4d4f'}}
+                                {value: result.run, name: '运行', itemStyle: {color: THEME.running}},
+                                {value: result.stopped, name: '停止', itemStyle: {color: THEME.stopped}},
+                                {value: result.alarm, name: '告警', itemStyle: {color: THEME.alarm}}
                             ]
                         }
                     ]

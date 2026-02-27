@@ -181,6 +181,7 @@ let router = {
     "equip_edit": "/equip/addOrUpdate",
     "equip_del": "/equip/delete",
     "equip_id": "/equip/selectById",
+    "equip_selectRealtimeById": "/equip/selectRealtimeById",
     "equip_type": "/equip/equipType",
     "equip_config": "/equip/queryEquipConfig",
     "equip_config_sn": "/equip/queryEquipConfigBySn",
@@ -322,15 +323,15 @@ function get(url, param, successFunc, failFuc) {
 }
 
 function openWindow(name, url, area, successFunc) {
-    if (area == null) {
-        area = ['80%', '60%'];
-    }
-
+    // 统一从右侧伸出，高度全屏
+    area = ['50%', '100%'];
     layer.open({
         title: i18np.prop(name),
         type: 2,
         area: area,
-        offset: '5%',
+        offset: 'r',
+        anim: 'slideLeft',
+        shadeClose: true,
         content: url,
         loading: true,
         scrollbar: false,
@@ -340,7 +341,6 @@ function openWindow(name, url, area, successFunc) {
             }
         }
     });
-
 }
 
 function delWindow(url, ids, successFuc, failFuc) {
@@ -403,7 +403,8 @@ let tabFunction = {
                 layui.element.tabDelete(filter, item);
             });
     }
-}
+};
+window.tabFunction = tabFunction;
 
 function openTab(url, id, name, filter, element) {
     //判断右侧是否有tab

@@ -12,12 +12,13 @@
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+    <script src="../static/js/theme.js"></script>
     <script src="../static/js/echarts.min.js"></script>
 </head>
 <style>
     /* ===== 查询区 ===== */
     .header {
-        background: #ffffff;
+        background: var(--bg-panel);
         padding: 10px 16px;
         border-radius: 4px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
@@ -26,7 +27,7 @@
     /* ===== 中部运行态图 ===== */
     .mid {
         height: 320px;
-        background: #ffffff;
+        background: var(--bg-panel);
         border-radius: 4px;
         padding: 12px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
@@ -37,32 +38,43 @@
         height: 100%;
     }
 
-    /* ===== 底部趋势 / 表格 ===== */
+    /* ===== 底部趋势 / 表格（单层框，避免嵌套框） ===== */
     .footer {
-        background: #ffffff;
+        background: var(--bg-panel);
+        border: 1px solid var(--border-base);
         border-radius: 4px;
         padding: 0 12px 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
     }
 
-    /* Tab 标题工业化 */
     .footer .layui-tab-title {
-        border-bottom: 1px solid #e6e6e6;
+        border-bottom: 1px solid var(--border-base);
     }
 
     .footer .layui-tab-title li {
         font-size: 13px;
-        color: #666;
+        color: var(--text-secondary);
     }
 
     .footer .layui-tab-title .layui-this {
-        color: #1e9fff;
+        color: var(--color-primary);
         font-weight: 500;
     }
 
-    /* Tab 内容区 */
+    /* Tab 内容区：去掉内层边框/背景，与容器融为一体 */
     .footer .layui-tab-content {
         padding: 12px 0 0;
+        border: none;
+        background: transparent;
+    }
+
+    .footer .layui-tab-item {
+        border: none;
+        background: transparent;
+    }
+
+    #chart-container {
+        border: none;
+        background: transparent;
     }
 
 </style>
@@ -378,7 +390,7 @@
                 textStyle: {
                     fontSize: 12,           // 关键：变小
                     fontWeight: 400,        // 细
-                    color: '#6b778c',       // 次级文字色
+                    color: THEME.textSub,
                     lineHeight: 16,
                     fontFamily: 'Inter, sans-serif'
                 }
@@ -421,7 +433,7 @@
                 lineStyle: {
                     width: 1.5,         // 细但不虚
                     type: 'solid',
-                    color: '#4FA6E8'    // 冷色系工业蓝
+                    color: THEME.neonBlue
                 },
                 areaStyle: {
                     opacity: 0.12
@@ -488,15 +500,9 @@
     function parseColor(api) {
         let type = api.value(0);
         let state = api.value(3);
-        if (type === 0) {
-            return state === 1 ? '#1890ff' : '#bfbfbf';
-        }
-        if (type === 1) {
-            return state === 1 ? '#52c41a' : '#FAAD14';
-        }
-        if (type === 2) {
-            return state === 1 ? '#ff4d4f' : '#bfbfbf';
-        }
+        if (type === 0) return state === 1 ? THEME.online : THEME.offline;
+        if (type === 1) return state === 1 ? THEME.running : THEME.stopped;
+        if (type === 2) return state === 1 ? THEME.alarm : THEME.offline;
     }
 
     function calcRecord(type,
@@ -572,7 +578,7 @@
                 textStyle: {
                     fontSize: 20,           // 关键：变小
                     fontWeight: 400,        // 细
-                    color: '#6b778c',       // 次级文字色
+                    color: THEME.textSub,
                     lineHeight: 16,
                     fontFamily: 'Inter, sans-serif'
                 }
