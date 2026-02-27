@@ -462,4 +462,76 @@ const COLORS = {
     alarmArea: 'rgba(255,77,79,.22)',
 };
 
+const COMMENT_COLUMN = 50;
+
+function alignComment(line, comment) {
+    if (!comment) return line;
+    const padding = Math.max(1, COMMENT_COLUMN - line.length);
+    return line + ' '.repeat(padding) + `// ${comment}`;
+}
+
+function renderJsonWithComment(obj, indent = 0) {
+    const space = ' '.repeat(indent);
+
+    if (Array.isArray(obj)) {
+        let result = '[\n';
+        obj.forEach((item, idx) => {
+            result += space + '  ' + renderJsonWithComment(item, indent + 2);
+            if (idx < obj.length - 1) result += ',';
+            result += '\n';
+        });
+        result += space + ']';
+        return result;
+    }
+
+    if (obj && typeof obj === 'object') {
+        let result = '{\n';
+        const keys = Object.keys(obj);
+
+        keys.forEach((k, idx) => {
+            const val = obj[k];
+
+            // attrs / alarms
+            if (val && typeof val === 'object' && 'value' in val && 'comment' in val) {
+
+                if (Array.isArray(val.value)) {
+                    let line = `${space}  "${k}": [`;
+                    result += alignComment(line, val.comment) + '\n';
+
+                    val.value.forEach((item, i) => {
+                        result += space + '    ' + renderJsonWithComment(item, indent + 4);
+                        if (i < val.value.length - 1) result += ',';
+                        result += '\n';
+                    });
+
+                    result += space + '  ]';
+                } else {
+                    let line = `${space}  "${k}": ${renderJsonWithComment(val.value, indent + 2)}`;
+                    result += alignComment(line, val.comment);
+                }
+            }
+
+            // 普通对象
+            else if (val && typeof val === 'object' && 'value' in val && 'comment' in val) {
+                let v = typeof val.value === 'string' ? `"${val.value}"` : val.value;
+                let line = `${space}  "${k}": ${v}`;
+                result += alignComment(line, val.comment);
+            }
+
+            else {
+                result += `${space}  "${k}": ${renderJsonWithComment(val, indent + 2)}`;
+            }
+
+            if (idx < keys.length - 1) result += ',';
+            result += '\n';
+        });
+
+        result += space + '}';
+        return result;
+    }
+
+    if (typeof obj === 'string') return `"${obj}"`;
+    return obj;
+}
+
 document.title = window.APP_CONFIG.systemName;

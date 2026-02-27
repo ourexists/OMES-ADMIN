@@ -42,6 +42,11 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+        <dependency>
             <groupId>com.ourexists.mes-edge</groupId>
             <artifactId>mes-edge-mat-server</artifactId>
             <version>1.0.0-SNAPSHOT</version>
