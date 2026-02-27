@@ -1,0 +1,717 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/js/echarts.min.js"></script>
+</head>
+<style>
+    body {
+        background: var(--bg-page, #f3f5f8);
+    }
+
+    .equip-detail-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        background: var(--bg-panel, #fff);
+        border-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+        margin-bottom: 16px;
+        border: 1px solid var(--border-base, #e1e6ef);
+    }
+
+    .equip-overview {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .equip-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 28px;
+    }
+
+    .equip-icon.offline {
+        background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%);
+    }
+
+    .equip-name-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .equip-name {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2f3b4a;
+    }
+
+    .equip-status-tag {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .equip-status-tag.online {
+        background: #f6ffed;
+        color: #52c41a;
+        border: 1px solid #b7eb8f;
+    }
+
+    .equip-status-tag.offline {
+        background: #f5f5f5;
+        color: #8c8c8c;
+        border: 1px solid #d9d9d9;
+    }
+
+    .equip-meta {
+        font-size: 12px;
+        color: #6b7785;
+    }
+
+    .equip-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .info-section {
+        background: var(--bg-panel, #fff);
+        border-radius: 4px;
+        padding: 16px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+        border: 1px solid var(--border-base, #e1e6ef);
+    }
+
+    .info-section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #2f3b4a;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e4e8ee;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 6px 0;
+        font-size: 13px;
+    }
+
+    .info-label {
+        width: 120px;
+        color: var(--text-sub, #6b7785);
+        flex-shrink: 0;
+        padding-right: 12px;
+    }
+
+    .info-value {
+        color: #2f3b4a;
+    }
+
+    .copy-btn {
+        margin-left: 8px;
+        font-size: 12px;
+        padding: 0 6px;
+        height: 22px;
+        line-height: 22px;
+    }
+
+    .realtime-header {
+        background: var(--bg-panel, #fff);
+        padding: 10px 16px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        border: 1px solid var(--border-base, #e1e6ef);
+    }
+
+    .realtime-mid {
+        height: 320px;
+        background: var(--bg-panel, #fff);
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 12px;
+        border: 1px solid var(--border-base, #e1e6ef);
+    }
+
+    .realtime-mid #realtime-run-chart-container {
+        width: 100%;
+        height: 100%;
+    }
+
+    .realtime-footer {
+        background: var(--bg-panel, #fff);
+        border-radius: 4px;
+        padding: 0;
+        margin: 0;
+        /*border: 1px solid var(--border-base, #e1e6ef);*/
+    }
+
+    .layui-tab-title {
+        background: var(--bg-panel, #fff);
+        border: 1px solid var(--border-base, #e1e6ef);
+        border-radius: 4px 4px 0 0;
+    }
+
+    .layui-tab-content {
+        background: var(--bg-panel, #fff);
+        border: 1px solid var(--border-base, #e1e6ef);
+        border-top: none;
+        padding: 16px;
+        border-radius: 0 0 4px 4px;
+    }
+</style>
+<body>
+<div class="oemes-container" style="padding: 15px">
+    <!-- 顶部：设备概览 + 操作按钮 -->
+    <div class="equip-detail-header">
+        <div class="equip-overview">
+            <div class="equip-icon" id="equipIcon">
+                <i class="layui-icon layui-icon-template"></i>
+            </div>
+            <div>
+                <div class="equip-name-row">
+                    <span class="equip-name" id="equipName">-</span>
+                    <span class="equip-status-tag" id="equipStatusTag">-</span>
+                </div>
+                <div class="equip-meta">
+                    <span lang-i18n="equip.code"></span>: <span id="equipSn">-</span> &nbsp;
+                    <span lang-i18n="workshop.name"></span>: <span id="equipWorkshop">-</span>
+                </div>
+            </div>
+        </div>
+        <div class="equip-actions">
+            <button class="layui-btn layui-btn-sm" id="btnSyncStatus" lang-i18n="equip.sync_status"></button>
+            <button class="layui-btn layui-btn-sm layui-btn-primary" id="btnBackList"
+                    lang-i18n="equip.back_list"></button>
+        </div>
+    </div>
+
+    <!-- Tab 导航 -->
+    <div class="layui-tab layui-tab-brief" lay-filter="equipDetailTab">
+        <ul class="layui-tab-title">
+            <li class="layui-this" lay-id="info" lang-i18n="equip.basic_info"></li>
+            <li lay-id="realtime" lang-i18n="equip.realtime_status"></li>
+            <li lay-id="invoke" lang-i18n="equip.function_call"></li>
+            <li lay-id="log" lang-i18n="equip.log_view"></li>
+        </ul>
+        <div class="layui-tab-content">
+            <!-- Tab1: 设备信息 -->
+            <div class="layui-tab-item layui-show">
+                <div class="info-section">
+                    <div class="info-section-title" lang-i18n="equip.basic_info"></div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="equip.name"></span>
+                        <span class="info-value" id="infoName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="equip.code"></span>
+                        <span class="info-value" id="infoSn">-</span>
+                        <button class="layui-btn layui-btn-xs layui-btn-primary copy-btn" data-copy="infoSn">复制
+                        </button>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="equip.type"></span>
+                        <span class="info-value" id="infoType">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="equip.onlineState"></span>
+                        <span class="info-value" id="infoOnlineState">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="equip.runState"></span>
+                        <span class="info-value" id="infoRunState">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="equip.alarmState"></span>
+                        <span class="info-value" id="infoAlarmState">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="common.address"></span>
+                        <span class="info-value" id="infoAddress">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label" lang-i18n="common.lng"></span>
+                        <span class="info-value" id="infoLng">-</span>
+                        <span class="info-label" style="width:60px;margin-left: 50px" lang-i18n="common.lat"></span>
+                        <span class="info-value" id="infoLat">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">创建时间</span>
+                        <span class="info-value" id="infoCreateTime">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">最后在线</span>
+                        <span class="info-value" id="infoOnlineChangeTime">-</span>
+                    </div>
+                </div>
+                <div class="info-section" id="gatewaySection" style="display:none">
+                    <div class="info-section-title">网关信息</div>
+                    <div class="info-row"><span class="info-label">网关</span><span class="info-value" id="infoGateway">-</span>
+                    </div>
+                </div>
+                <div class="info-section" id="attrsSection" style="display:none">
+                    <div class="info-section-title" lang-i18n="equipattr.name"></div>
+                    <div id="attrsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Tab2: 实时状态（equip_collect_echarts 内容） -->
+            <div class="layui-tab-item" id="realtimeTabContent">
+                <div class="realtime-header">
+                    <form class="layui-form layui-row layui-col-space16" id="realtimeQueryForm">
+                        <div class="layui-form-item">
+                            <div class="layui-inline" id="realtime-timeduration">
+                                <div class="layui-input-inline">
+                                    <input type="text" id="realtime-startDate" name="startDate" class="layui-input"
+                                           lang-i18n="common.starttime">
+                                </div>
+                                <div class="layui-form-mid">-</div>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="realtime-endDate" name="endDate" class="layui-input"
+                                           lang-i18n="common.endtime">
+                                </div>
+                            </div>
+                            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="realtime-doSearch"
+                                    lang-i18n="common.search"></button>
+                        </div>
+                    </form>
+                </div>
+                <div class="realtime-mid">
+                    <div id="realtime-run-chart-container"></div>
+                </div>
+                <div class="layui-tab layui-tab-brief realtime-footer">
+                    <ul class="layui-tab-title">
+                        <li class="layui-this">趋势图</li>
+                        <li>数据表</li>
+                    </ul>
+                    <div class="layui-tab-content">
+                        <div class="layui-tab-item layui-show">
+                            <div id="realtime-chart-container"></div>
+                        </div>
+                        <div class="layui-tab-item">
+                            <table class="layui-hide" id="realtime-tb-common"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab3: 功能调用 -->
+            <div class="layui-tab-item">
+                <div class="info-section">
+                    <p class="layui-text" style="color:#8c8c8c">功能调用模块待扩展</p>
+                </div>
+            </div>
+
+            <!-- Tab4: 日志查看 -->
+            <div class="layui-tab-item">
+                <div class="info-section">
+                    <p class="layui-text" style="color:#8c8c8c">日志查看模块待扩展</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="none">
+    let equipId;
+    let equipData;
+    let sn;
+    let realtime_datalist = [];
+    let realtime_config_data = [];
+    let realtime_run_chart;
+    let realtime_tread_chart;
+    let realtime_table_inited = false;
+    let realtime_collect_inited = false;
+    let table;
+
+    layui.use(function () {
+        let form = layui.form;
+        table = layui.table;
+        let laydate = layui.laydate;
+        let element = layui.element;
+
+        equipId = layui.url().search.id;
+        if (!equipId) {
+            layer.msg('缺少设备ID');
+            return;
+        }
+
+        setTimeout(function () { loadEquipData(); }, 100);
+
+        document.getElementById('btnSyncStatus').onclick = function () {
+            loadEquipData(true);
+        };
+        document.getElementById('btnBackList').onclick = function () {
+            try {
+                parent.layui.element.tabDelete('tables', equipId);
+            } catch (e) {
+                window.history.back();
+            }
+        };
+
+        laydate.render({
+            elem: '#realtime-timeduration',
+            range: ['#realtime-startDate', '#realtime-endDate'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        $('#realtime-startDate').val(formatDate(startOfDay));
+        $('#realtime-endDate').val(formatDate(endOfDay));
+
+        form.on('submit(realtime-doSearch)', function () {
+            if (realtime_run_chart) reloadRealtimeRunCharts();
+            if (realtime_tread_chart) reloadRealtimeTread();
+            if (realtime_table_inited) reloadRealtimeTb();
+            return false;
+        });
+
+        element.on('tab(equipDetailTab)', function (data) {
+            if (data.index === 1) {
+                initRealtimeCollect();
+                setTimeout(function () {
+                    if (realtime_run_chart) realtime_run_chart.resize();
+                    if (realtime_tread_chart) realtime_tread_chart.resize();
+                }, 50);
+            }
+        });
+    });
+
+    function loadEquipData(realtime) {
+        let url = router.equip_selectRealtimeById;
+        let loadIndex = layer.load(1, {shade: [0.2, '#000']});
+        get(url, {id: equipId}, function (data) {
+            layer.close(loadIndex);
+            if (!data) return;
+            equipData = data;
+            sn = data.selfCode || '';
+            renderEquipInfo(data);
+            if (realtime) layer.msg(i18np.prop('common.reload') + ' OK');
+        }, function () {
+            layer.close(loadIndex);
+        });
+    }
+
+    function renderEquipInfo(d) {
+        if (!d) return;
+        let onlineText = d.onlineState === 1 ? i18np.prop('equip.online') : i18np.prop('equip.offline');
+        let runText = d.runState === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop');
+        let alarmText = d.alarmState === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common');
+
+        $('#equipName').text(d.name || '-');
+        $('#equipSn').text(d.selfCode || '-');
+        $('#equipWorkshop').text(d.workshop ? d.workshop.name : '-');
+        $('#equipStatusTag').text(onlineText).removeClass('online offline').addClass(d.onlineState === 1 ? 'online' : 'offline');
+        $('#equipIcon').removeClass('offline').toggleClass('offline', d.onlineState !== 1);
+
+        $('#infoName').text(d.name || '-');
+        $('#infoSn').text(d.selfCode || '-');
+        $('#infoType').text(d.typeDesc || '-');
+        $('#infoOnlineState').text(onlineText);
+        $('#infoRunState').text(runText);
+        $('#infoAlarmState').text(alarmText);
+        $('#infoAddress').text(d.address || '-');
+        $('#infoLng').text(d.lng != null ? d.lng : '-');
+        $('#infoLat').text(d.lat != null ? d.lat : '-');
+        $('#infoCreateTime').text(d.createTime ? formatDate(parseDate(d.createTime)) : '-');
+        $('#infoOnlineChangeTime').text(d.onlineChangeTime ? formatDate(parseDate(d.onlineChangeTime)) : '-');
+
+        if (d.attrs && d.attrs.length > 0) {
+            $('#attrsSection').show();
+            let html = '';
+            d.attrs.forEach(function (a) {
+                html += '<div class="info-row"><span class="info-label">' + (a.name || '-') + '</span><span class="info-value">' + (a.value != null ? a.value : '-') + '</span></div>';
+            });
+            $('#attrsContainer').html(html);
+        }
+    }
+
+    function initRealtimeCollect() {
+        if (!sn) return;
+        if (realtime_collect_inited) {
+            reloadRealtimeRunCharts();
+            if (realtime_tread_chart) reloadRealtimeTread();
+            if (realtime_table_inited) reloadRealtimeTbAll();
+            return;
+        }
+        loadRealtimeConfig(function () {
+            initRealtimeRunCharts();
+            initRealtimeTread();
+            initRealtimeTb();
+            realtime_collect_inited = true;
+        });
+    }
+
+    function loadRealtimeConfig(cb) {
+        realtime_config_data = [];
+        if (!sn) { if (typeof cb === 'function') cb(); return; }
+        get(router.equip_config_sn, {equipSn: sn}, function (d) {
+            if (d && d.config && d.config.attrs) {
+                (d.config.attrs || []).forEach(function (e) {
+                    if (e && e.needCollect) realtime_config_data.push(e);
+                });
+            }
+            if (typeof cb === 'function') cb();
+        });
+    }
+
+    function initRealtimeRunCharts() {
+        let dom = document.getElementById('realtime-run-chart-container');
+        if (!dom) return;
+        realtime_run_chart = echarts.init(dom);
+        realtime_run_chart.setOption({
+            title: {text: '设备运行趋势', textStyle: {fontSize: 14, fontWeight: 400, color: '#6b778c'}},
+            tooltip: {
+                confine: true,
+                formatter: function (params) {
+                    let type = params.data[0], state = params.data[3];
+                    let desc = type === 0 ? (state === 1 ? '在线' : '离线') : (type === 1 ? (state === 1 ? '运行' : '停止') : (state === 1 ? '报警' : '正常'));
+                    return desc + '\r\n' + formatDate(params.data[1]) + '~' + formatDate(params.data[2]);
+                }
+            },
+            xAxis: {type: 'time', axisLabel: {fontSize: 6}},
+            yAxis: {type: 'category', data: ['在线', '运行', '报警']},
+            series: [{
+                type: 'custom',
+                renderItem: function (params, api) {
+                    let yIndex = api.value(0), start = api.coord([api.value(1), yIndex]),
+                        end = api.coord([api.value(2), yIndex]);
+                    let type = api.value(0), state = api.value(3);
+                    let fill = type === 0 ? (state === 1 ? '#1890ff' : '#bfbfbf') : (type === 1 ? (state === 1 ? '#52c41a' : '#FAAD14') : (state === 1 ? '#ff4d4f' : '#bfbfbf'));
+                    return {
+                        type: 'rect',
+                        shape: {x: start[0], y: start[1] - 10, width: end[0] - start[0], height: 20},
+                        style: {fill: fill}
+                    };
+                },
+                encode: {x: [1, 2], y: 0}, data: []
+            }]
+        });
+        reloadRealtimeRunCharts();
+    }
+
+    function reloadRealtimeRunCharts() {
+        if (!realtime_run_chart || !sn) return;
+        let startDate = parseDate($('#realtime-startDate').val()), endDate = parseDate($('#realtime-endDate').val());
+        let r = [], pending = 3;
+        function done() {
+            if (--pending > 0) return;
+            r = mergeRealtimeRecords(r);
+            realtime_run_chart.setOption({xAxis: {min: startDate, max: endDate}, series: [{data: r}]}, false);
+        }
+        post(router.equip_online_count, {
+            sn: sn,
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+            requirePage: false
+        }, function (res) {
+            if (res && res.length > 0) res.forEach(function (item) {
+                r.push([0, parseDate(item.startTime), parseDate(item.endTime), item.state]);
+            });
+            done();
+        }, done);
+        post(router.equip_run_count, {
+            sn: sn,
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+            requirePage: false
+        }, function (res) {
+            if (res && res.length > 0) res.forEach(function (item) {
+                r.push([1, parseDate(item.startTime), parseDate(item.endTime), item.state]);
+            });
+            done();
+        }, done);
+        post(router.equip_alarm_count, {
+            sn: sn,
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate),
+            requirePage: false
+        }, function (res) {
+            if (res && res.length > 0) res.forEach(function (item) {
+                r.push([2, parseDate(item.startTime), parseDate(item.endTime), item.state]);
+            });
+            done();
+        }, done);
+    }
+
+    function mergeRealtimeRecords(data) {
+        data.sort(function (a, b) {
+            return a[3] === b[3] ? a[1] - b[1] : a[3] - b[3];
+        });
+        let merged = [];
+        for (let i = 0; i < data.length; i++) {
+            let cur = data[i];
+            if (merged.length === 0) {
+                merged.push([].concat(cur));
+                continue;
+            }
+            let last = merged[merged.length - 1];
+            if (last[3] === cur[3] && last[2] >= cur[1]) last[2] = Math.max(last[2], cur[2]);
+            else merged.push([].concat(cur));
+        }
+        return merged;
+    }
+
+    function initRealtimeTread() {
+        if (realtime_config_data.length === 0) return;
+        let baseSize = 200, size = Math.ceil(realtime_config_data.length / 2) * baseSize;
+        $('#realtime-chart-container').css({width: '100%', height: size + 'px'});
+        realtime_tread_chart = echarts.init(document.getElementById('realtime-chart-container'));
+        reloadRealtimeTread();
+    }
+
+    function reloadRealtimeTread() {
+        if (!realtime_tread_chart || !sn || realtime_config_data.length === 0) return;
+        post(router.equip_collect_page, {
+            sn: sn,
+            startDate: $('#realtime-startDate').val(),
+            endDate: $('#realtime-endDate').val(),
+            requirePage: false
+        }, function (res) {
+            realtime_datalist = (res && Array.isArray(res)) ? res : [];
+            realtime_tread_chart.setOption(generateRealtimeOption());
+        });
+    }
+
+    function generateRealtimeOption() {
+        let visualMap = [], xAxis = [], yAxis = [], grid = [], series = [], title = [];
+        const COL = 2, GAP_X = 5, GAP_Y = 8, MARGIN_TOP = 8, MARGIN_LEFT = 5, MARGIN_BOTTOM = 6, TITLE_HEIGHT = 6;
+        const gridWidth = (100 - MARGIN_LEFT * 2 - GAP_X * (COL - 1)) / COL;
+        const gridHeight = (100 - MARGIN_TOP - MARGIN_BOTTOM - GAP_Y * (Math.ceil(realtime_config_data.length / COL) - 1)) / Math.ceil(realtime_config_data.length / COL);
+        realtime_config_data.forEach(function (item, index) {
+            let row = Math.floor(index / COL), col = index % COL;
+            visualMap.push({show: false, type: 'continuous', seriesIndex: index});
+            title.push({
+                left: (MARGIN_LEFT + col * (gridWidth + GAP_X) + gridWidth / 2 - 5) + '%',
+                top: (MARGIN_TOP + row * (gridHeight + GAP_Y + TITLE_HEIGHT)) + '%',
+                text: item.name,
+                textAlign: 'center',
+                textStyle: {fontSize: 12, color: '#6b778c'}
+            });
+            grid.push({
+                left: MARGIN_LEFT + col * (gridWidth + GAP_X) + '%',
+                top: (MARGIN_TOP + row * (gridHeight + GAP_Y + TITLE_HEIGHT) + TITLE_HEIGHT) + '%',
+                width: gridWidth + '%',
+                height: gridHeight + '%'
+            });
+            xAxis.push({
+                gridIndex: index,
+                type: 'time',
+                axisLabel: {rotate: 45, interval: 'auto'},
+                splitLine: {show: false}
+            });
+            yAxis.push({gridIndex: index, type: 'value', splitLine: {show: false}});
+            let vList = [];
+            realtime_datalist.forEach(function (d) {
+                vList.push([d.time, d.data && d.data[item.name] != null ? d.data[item.name] : null]);
+            });
+            series.push({
+                type: 'line',
+                smooth: false,
+                showSymbol: false,
+                lineStyle: {width: 1.5, color: '#4FA6E8'},
+                areaStyle: {opacity: 0.12},
+                data: vList,
+                xAxisIndex: index,
+                yAxisIndex: index
+            });
+        });
+        return {visualMap, title, tooltip: {trigger: 'axis'}, xAxis, yAxis, grid, series};
+    }
+
+    function initRealtimeTb() {
+        table.render({
+            id: 'realtimeTbCommon',
+            elem: '#realtime-tb-common',
+            method: 'POST',
+            headers: getCommonHeader(),
+            contentType: 'application/json',
+            loading: false,
+            cols: [[]],
+            data: [],
+            request: {pageName: 'page', limitName: 'pageSize'},
+            response: {statusName: 'code', statusCode: 200},
+            parseData: function (res) {
+                return {code: res.code, msg: res.msg, data: res.data};
+            },
+            limit: 10, limits: [10, 20, 50, 100], page: true, height: 'full'
+        });
+        realtime_table_inited = true;
+        reloadRealtimeTbAll();
+    }
+
+    function reloadRealtimeTb() {
+        table.reload('realtimeTbCommon', {
+            url: initRequestUrl(router.equip_collect_page),
+            where: {sn: sn, startDate: $('#realtime-startDate').val(), endDate: $('#realtime-endDate').val()}
+        });
+    }
+
+    function reloadRealtimeTbAll() {
+        let col = [{field: 'time', title: i18np.prop('common.time'), fixed: 'left'}];
+        realtime_config_data.forEach(function (e) {
+            if (e.needCollect) col.push({
+                field: e.name, title: e.name, templet: function (d) {
+                    return d.data == null ? null : d.data[e.name];
+                }
+            });
+        });
+        let title = $('#realtime-startDate').val() + ' - ' + $('#realtime-endDate').val();
+        table.reload('realtimeTbCommon', {
+            cols: [col],
+            url: initRequestUrl(router.equip_collect_page),
+            where: {sn: sn, startDate: $('#realtime-startDate').val(), endDate: $('#realtime-endDate').val()}
+        });
+    }
+
+    document.querySelectorAll('[data-copy]').forEach(function (btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            let id = this.getAttribute('data-copy');
+            let text = document.getElementById(id).innerText;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    layer.msg('已复制');
+                });
+            } else {
+                let ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                layer.msg('已复制');
+            }
+        });
+    });
+
+    window.onresize = function () {
+        if (realtime_run_chart) realtime_run_chart.resize();
+        if (realtime_tread_chart) realtime_tread_chart.resize();
+    };
+</script>
+</body>
+</html>

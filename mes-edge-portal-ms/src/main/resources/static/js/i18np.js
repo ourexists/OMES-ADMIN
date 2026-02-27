@@ -8,37 +8,42 @@ layui.define(["jquery", "i18n"], function (exports) {
 
     var i18np = {};
 
+    function processLangI18n($scope) {
+        $scope = $scope || $(document);
+        $scope.find("[lang-i18n]").addBack("[lang-i18n]").each(function () {
+            var $el = $(this);
+            var key = $el.attr("lang-i18n");
+            if (!key) return;
+            var text = i18n.prop(key);
+            $el.attr("placeholder", text);
+            $el.attr("title", text);
+            $el.attr("data-title", text);
+            var tag = $el.prop("tagName") ? $el.prop("tagName").toLowerCase() : "";
+            if (tag === "input" || tag === "textarea" || tag === "select") {
+                // 表单控件只设置 placeholder/title，不修改 value/options
+            } else {
+                $el.text(text);
+            }
+        });
+    }
+
+    i18np.apply = function (scope) {
+        var $scope = scope ? (typeof scope === "string" ? $(scope) : $(scope)) : $(document);
+        processLangI18n($scope);
+    };
+
     i18np.load = function (lang) {
         i18n.properties({
-            name: "i18n", // 资源文件名称
-            path: "/static/i18n", // 资源文件所在目录路径
-            mode: "map", // 模式：变量或 Map
-            language: lang, // 对应的语言
+            name: "i18n",
+            path: "/static/i18n",
+            mode: "map",
+            language: lang,
             cache: false,
             callback: function () {
-                //这里是我通过对标签添加选择器来统一管理需要配置的地方
-                $("[lang-i18n]").each(function (e) {
-                    $(this).attr(
-                        "placeholder",
-                        i18n.prop($(this).attr("lang-i18n"))
-                    );
-                    $(this).attr(
-                        "title",
-                        i18n.prop($(this).attr("lang-i18n"))
-                    );
-                    $(this).attr(
-                        "data-title",
-                        i18n.prop($(this).attr("lang-i18n"))
-                    );
-                    $(this).html(i18n.prop($(this).attr("lang-i18n")));
-                    if ($(this).is("button")) {
-                        $(this).text(i18n.prop($(this).attr("lang-i18n")))
-                    }
+                processLangI18n($(document));
+                $('[lay-reqtext]').each(function () {
+                    $(this).attr('lay-reqtext', i18n.prop($(this).attr("lay-reqtext")));
                 });
-
-                $('[lay-reqtext]').each(function (e) {
-                    $(this).attr('lay-reqtext', i18n.prop($(this).attr("lay-reqtext")))
-                })
             },
         });
     };

@@ -6,6 +6,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="icon" href="../static/img/favicon.ico" type="image/x-icon">
@@ -20,8 +21,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 0 20px;
-        background: #fff;
-        border-bottom: 1px solid #e2e8f0;
+        background: var(--bg-header);
+        border-bottom: 1px solid var(--border-layout);
         height: 60px;
     }
 
@@ -47,13 +48,10 @@
         max-width: 140px; /* ⭐ 防止挤压 */
         font-size: 18px;
 
-        color: #00bfa5; /* Layui增强青 */
+        color: var(--color-logo);
         font-weight: 700;
         letter-spacing: 1px;
-
-        text-shadow:
-                0 0 6px rgba(0,191,165,0.5),
-                0 0 12px rgba(0,191,165,0.2);
+        text-shadow: var(--shadow-logo);
     }
 
     .system-icon {
@@ -72,8 +70,8 @@
         margin-left: 12px;
 
         border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
+        border: 1px solid var(--border-layout);
+        background: var(--bg-toggle);
 
         font-size: 20px;
         cursor: pointer;
@@ -81,9 +79,8 @@
     }
 
 
-    /* hover */
     .menuToggle:hover {
-        background: #eef2f7;
+        background: var(--bg-toggle-hover);
     }
 
     /* 点击反馈 */
@@ -95,8 +92,15 @@
         transition: transform .25s;
     }
 
-    .layui-side.collapse ~ .layui-body .menuToggle i {
-        transform: rotate(180deg);
+    /* 仅手机端显示菜单按钮 */
+    .menuToggle {
+        display: none;
+    }
+
+    @media screen and (max-width: 768px) {
+        .menuToggle {
+            display: flex;
+        }
     }
 
     .layui-header .layui-layout-right {
@@ -111,12 +115,17 @@
     .layui-side {
         width: 220px;
         transition: .25s;
-        background: #fff;
-        border-right: 1px solid #e2e8f0;
+        background: var(--bg-header);
+        border-right: 1px solid var(--border-layout);
     }
 
-    .layui-side.collapse {
-        width: 60px;
+    /* 内容区、页脚 */
+    .layui-layout-admin .layui-body {
+        left: 220px;
+    }
+
+    .layui-layout-admin .layui-footer {
+        left: 220px;
     }
 
     /* ========= 内容区域 ========= */
@@ -137,9 +146,53 @@
         background: transparent;
     }
 
-    /* 收缩隐藏文字 */
-    .layui-side.collapse .layui-nav-item a span {
+    /* ========= 手机端适配 ========= */
+    .side-shade {
         display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 999;
+        opacity: 0;
+        transition: opacity .25s;
+    }
+
+    .side-shade.show {
+        display: block;
+        opacity: 1;
+    }
+
+    @media screen and (max-width: 768px) {
+        .layui-header {
+            padding: 0 12px;
+        }
+
+        .layui-side {
+            position: fixed !important;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            z-index: 1000;
+            width: 260px !important;
+            transform: translateX(-100%);
+            transition: transform .25s ease;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .layui-side.mobile-open {
+            transform: translateX(0);
+        }
+
+        .layui-body, .layui-footer {
+            left: 0 !important;
+        }
+
+        .systemName {
+            max-width: 90px;
+        }
     }
 
     /* ========= tab ========= */
@@ -148,9 +201,9 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: #fff;
+        background: var(--bg-header);
         border-radius: 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-layout);
         margin: 12px;
     }
 
@@ -171,18 +224,41 @@
         height: 100%;
         border: none;
     }
+
+    /* tab 右键菜单 */
+    .tab-context-menu {
+        position: fixed;
+        min-width: 120px;
+        padding: 4px 0;
+        background: #fff;
+        border: 1px solid var(--border-layout, #e6e6e6);
+        border-radius: 6px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        z-index: 99999;
+        display: none;
+    }
+    .tab-context-menu.show { display: block; }
+    .tab-context-menu .tab-menu-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+    .tab-context-menu .tab-menu-item:hover {
+        background: #f2f2f2;
+    }
 </style>
 <body>
 <div class="layui-layout layui-layout-admin">
     <div class="layui-header">
         <div class="layui-header-left">
+            <div class="menuToggle" id="menuToggle" title="菜单">
+                <i class="layui-icon layui-icon-shrink-right"></i>
+            </div>
             <div class="logo">
                 <img src="/static/img/favicon.ico" class="system-icon">
                 <span class="systemName"></span>
             </div>
-<!--            <div class="menuToggle">-->
-<!--                <i class="layui-icon layui-icon-shrink-right"></i>-->
-<!--            </div>-->
         </div>
         <div class="layui-layout-right">
             <ul class="layui-nav">
@@ -213,7 +289,8 @@
             </ul>
         </div>
     </div>
-    <div class="layui-side layui-bg-black">
+    <div class="side-shade" id="sideShade"></div>
+    <div class="layui-side layui-bg-black" id="layuiSide">
         <div class="layui-side-scroll">
             <ul class="layui-nav layui-nav-tree" id="layui-nav-tree"></ul>
         </div>
@@ -224,6 +301,11 @@
             <ul class="layui-tab-title"></ul>
             <div class="layui-tab-content"></div>
         </div>
+    </div>
+    <div id="tabContextMenu" class="tab-context-menu">
+        <div class="tab-menu-item" data-action="close"><i class="layui-icon layui-icon-close"></i> <span class="tab-menu-close"></span></div>
+        <div class="tab-menu-item" data-action="closeOthers"><i class="layui-icon layui-icon-template-1"></i> <span class="tab-menu-closeOthers"></span></div>
+        <div class="tab-menu-item" data-action="closeAll"><i class="layui-icon layui-icon-delete"></i> <span class="tab-menu-closeAll"></span></div>
     </div>
     <div class="layui-footer" style="text-align: center">
         <!-- 底部固定区域 -->
@@ -243,21 +325,50 @@
         }
 
 
-        // 菜单收缩
-        let collapsed = false;
+        // 仅手机端：菜单抽屉
+        const $side = $('#layuiSide');
+        const $shade = $('#sideShade');
 
         $('.systemName').html(APP_CONFIG.systemName);
 
-        $('.menuToggle').on('click', function () {
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
 
-            collapsed = !collapsed;
+        function closeMobileMenu() {
+            $side.removeClass('mobile-open');
+            $shade.removeClass('show');
+        }
 
-            $('.layui-side').toggleClass('collapse');
-            $('.layui-body').toggleClass('expand');
+        function openMobileMenu() {
+            $side.addClass('mobile-open');
+            $shade.addClass('show');
+        }
 
-            $('.menuToggle i').toggleClass(
-                'layui-icon-shrink-right layui-icon-spread-left'
-            );
+        $('#menuToggle').on('click', function () {
+            if (!isMobile()) return;
+            if ($side.hasClass('mobile-open')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        });
+
+        $shade.on('click', function () {
+            closeMobileMenu();
+        });
+
+        $(window).on('resize', function () {
+            if (!isMobile()) {
+                closeMobileMenu();
+            }
+        });
+
+        // 手机端点击菜单项后自动关闭
+        $(document).on('click', '.layui-side .link-active', function () {
+            if (isMobile()) {
+                setTimeout(closeMobileMenu, 150);
+            }
         });
 
         let curLang = localStorage.getItem(store.language);
@@ -280,20 +391,24 @@
         let menu = JSON.parse(menuS);
         if (menu != null) {
             let menuHtml = '<ul class="layui-nav layui-nav-tree" id="layui-nav-tree" lay-filter="layui-nav-tree">';
+            const defaultIcons = ['layui-icon-website', 'layui-icon-template-1', 'layui-icon-console', 'layui-icon-component', 'layui-icon-chart-screen', 'layui-icon-set', 'layui-icon-list', 'layui-icon-read', 'layui-icon-form'];
+            let menuIndex = 0;
             layui.each(menu, function (i, item) {
                 if (item.type == 0 && item.strategy == 0) {
                     let name = item.name
                     if (item.i18n != null) {
                         name = i18np.prop(item.i18n);
                     }
+                    const icon = (item.icon != null && item.icon !== '' && String(item.icon).trim() !== '') ? String(item.icon).trim() : defaultIcons[menuIndex % defaultIcons.length];
+                    menuIndex++;
                     menuHtml += '<li class="layui-nav-item layui-nav-itemed">';
                     if (item.url == null || item.url === '') {
-                        menuHtml += '<a href="javascript:">' + name + '</a>';
+                        menuHtml += '<a href="javascript:"><i class="layui-icon ' + icon + '"></i><span>  ' + name + '</span></a>';
                     } else {
                         menuHtml += '<a href="javascript:" class="link-active" ' +
                             'lay-href="' + item.url + '" ' +
                             'data-id="' + item.code + '" ' +
-                            'data-title="' + name + '">' + name + '</a>';
+                            'data-title="' + name + '"><i class="layui-icon ' + icon + '"></i><span>  ' + name + '</span></a>';
                     }
                     menuHtml = child(item.children, menuHtml);
                     menuHtml += '</li>';
@@ -304,7 +419,7 @@
             element.render('layui-nav');
 
             //左侧菜单点击事件
-            $('.link-active').on('click', function () {
+            $('.link-active').on('click', function (e) {
                 var dataid = $(this);
                 openIndexTab(dataid.attr('lay-href'), dataid.attr('data-id'), dataid.attr('data-title'));
             });
@@ -326,26 +441,68 @@
             localStorage.removeItem(store.user_info);
             localStorage.removeItem(store.menu);
             window.location.href = '/view/login';
-        })
+        });
 
+        // tab 右键菜单：关闭、关闭其它、关闭所有
+        const TAB_FILTER = 'tables';
+        const $tabMenu = $('#tabContextMenu');
+        let tabMenuCurrentId = null;
+
+        function setTabMenuI18n() {
+            var text = typeof getprop === 'function' ? getprop : function (k) { return k; };
+            $tabMenu.find('.tab-menu-close').text(text('tab.close'));
+            $tabMenu.find('.tab-menu-closeOthers').text(text('tab.closeOthers'));
+            $tabMenu.find('.tab-menu-closeAll').text(text('tab.closeAll'));
+        }
+
+        $(document).on('contextmenu', '.layui-tab[lay-filter="tables"] .layui-tab-title li[lay-id]', function (e) {
+            e.preventDefault();
+            tabMenuCurrentId = $(this).attr('lay-id');
+            setTabMenuI18n();
+            $tabMenu.css({ left: e.pageX, top: e.pageY }).addClass('show');
+        });
+
+        $(document).on('click', '#tabContextMenu .tab-menu-item', function () {
+            var action = $(this).data('action');
+            var id = tabMenuCurrentId;
+            $tabMenu.removeClass('show');
+            if (!id) return;
+            var $tabs = $('.layui-tab[lay-filter="tables"] .layui-tab-title li[lay-id]');
+            var ids = $tabs.map(function () { return $(this).attr('lay-id'); }).get();
+            if (action === 'close') {
+                element.tabDelete(TAB_FILTER, id);
+            } else if (action === 'closeOthers') {
+                ids.forEach(function (tid) { if (tid !== id) element.tabDelete(TAB_FILTER, tid); });
+            } else if (action === 'closeAll') {
+                ids.forEach(function (tid) { element.tabDelete(TAB_FILTER, tid); });
+            }
+        });
+
+        $(document).on('click', function () { $tabMenu.removeClass('show'); });
     });
 
+    const childIcons = ['layui-icon-aim', 'layui-icon-template', 'layui-icon-table', 'layui-icon-list'];
+
     function child(children, menuHtml) {
+        if (!children) return menuHtml;
         layui.each(children, function (j, item) {
             let name = item.name
             if (item.i18n != null) {
                 name = i18np.prop(item.i18n);
             }
+            const hasIcon = item.icon != null && item.icon !== '' && String(item.icon).trim() !== '';
+            const subIcon = hasIcon ? String(item.icon).trim() : childIcons[(j + 1) % childIcons.length];
+            const iconHtml = hasIcon ? '<i class="layui-icon ' + subIcon + '"></i> ' : '';
             menuHtml += '<dl class="layui-nav-child"><dd>';
             if (item.url == null) {
-                menuHtml += '<a href="javascript:">' + name + '</a>';
+                menuHtml += '<a href="javascript:">' + iconHtml + name + '</a>';
             } else {
                 menuHtml += '<a href="javascript:" class="link-active" ' +
                     'lay-href="' + item.url + '" ' +
                     'data-id="' + item.code + '" ' +
-                    'data-title="' + name + '">' + name + '</a>';
+                    'data-title="' + name + '">' + iconHtml + name + '</a>';
             }
-            if (Object.keys(item.children).length > 0) {
+            if (Object.keys(item.children || {}).length > 0) {
                 menuHtml = child(item.children, menuHtml)
             }
             menuHtml += ' </dd></dl>';

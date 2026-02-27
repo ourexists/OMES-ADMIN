@@ -1,45 +1,10 @@
+@import url('theme.css');
+
+/* 兼容旧变量名 */
 :root {
-    /* 背景体系 */
-    --bg-page: #f3f5f8; /* 页面背景 */
-    --bg-panel: #ffffff; /* 面板 / 卡片 */
-    --bg-panel-alt: #f7f9fc; /* 次级区域 */
-
-    /* 冷灰边框（统一偏蓝） */
-    --border-base: #e1e6ef;
-    --border-strong: #cfd6e4;
-
-    /* 工业主色（稍微降饱和） */
-    --ind-primary: #3a73e6;
-    --ind-primary-soft: rgba(58, 115, 230, 0.12);
-
-    /* 字体 */
-    --text-main: #1f2a3a;
-    --text-sub: #6b778c;
-    --text-placeholder: #a0aabc;
-
-    --border-hover: #9fb3d9; /* 悬浮时冷蓝灰 */
-    --border-disabled: #c5cede; /* 禁用边框 */
-    --bg-disabled: #e6ebf3; /* 禁用背景 */
-    --text-disabled: #8a95a6; /* 禁用文字 */
-
-    /* 扫描 / 结构光 */
-    --scan-line: rgba(58, 115, 230, 0.35);
-    --scan-line-strong: rgba(58, 115, 230, .45);
-    --scan-line-soft: rgba(160, 180, 220, 0.6);
-
-    /* === 工业结构边界 === */
-    --border-panel: #d5dbea;
-    --border-focus: #6f8fdc;
-
-    /* === 数字科技扩展 === */
-
-    /* 数字字体 */
-    --font-digital: "JetBrains Mono", "IBM Plex Mono", "DIN Alternate", monospace;
-
-    /* 数据蓝 / 荧光辅助色 */
-    --neon-blue: #4da3ff;
-    --neon-cyan: #5ee6ff;
-    --neon-green: #3cffb0;
+    --ind-primary: var(--color-primary);
+    --ind-primary-soft: var(--color-primary-soft);
+    --border-focus: var(--color-focus);
 }
 
 html, body {
@@ -47,7 +12,6 @@ html, body {
 }
 
 .oemes-container {
-    background-color: var(--bg-page);
 }
 
 .layui-btn {
@@ -65,7 +29,7 @@ html, body {
     background: linear-gradient(
             90deg,
             transparent,
-            rgba(200, 220, 255, .55),
+            var(--shadow-btn-glow),
             transparent
     );
     transform: rotate(20deg);
@@ -83,15 +47,14 @@ html, body {
 .layui-input:focus,
 .layui-textarea:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 2px rgba(58, 115, 230, .18),
-    inset 0 1px 2px rgba(0, 0, 0, .05);
+    box-shadow: var(--shadow-input);
 }
 
 .layui-input {
     background-image: linear-gradient(
             to right,
-            var(--ind-primary),
-            var(--ind-primary)
+            var(--color-primary),
+            var(--color-primary)
     );
     background-size: 0 1px;
     background-repeat: no-repeat;
@@ -111,7 +74,7 @@ html, body {
 }
 
 .layui-input[disabled]::placeholder {
-    color: #a1abbc;
+    color: var(--bg-placeholder-disabled);
 }
 
 .layui-input[disabled]:hover,
@@ -133,18 +96,18 @@ html, body {
 }
 
 .layui-tab-title .layui-this {
-    color: var(--ind-primary);
+    color: var(--color-primary);
     font-weight: 600;
 }
 
 .layui-tab-title .layui-this::after {
-    border-bottom-color: var(--ind-primary);
+    border-bottom-color: var(--color-primary);
 }
 
 .layui-card {
     border: 1px solid var(--border-base);
     border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(40, 60, 120, .06);
+    box-shadow: var(--shadow-card-layui);
     transition: border-color .15s ease,
     box-shadow .15s ease,
     transform .15s ease;
@@ -168,14 +131,13 @@ html, body {
 
 .layui-card:hover {
     border-color: var(--border-hover);
-    box-shadow: 0 10px 24px rgba(15, 25, 50, .12),
-    inset 0 0 0 1px rgba(58, 115, 230, .12);
+    box-shadow: var(--shadow-card-layui-hover);
     transform: translateY(-2px);
 }
 
 
 .layui-tree-set-active > .layui-tree-entry .layui-tree-main {
-    background: rgba(58, 115, 230, 0.08);
+    background: var(--bg-tree-active);
     border-radius: 4px;
 }
 
@@ -187,7 +149,7 @@ html, body {
     margin-right: 12px;
     vertical-align: middle;
     box-sizing: border-box;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .status-dot::before {
@@ -207,48 +169,43 @@ html, body {
     margin-right: 8px;
     vertical-align: middle;
     box-sizing: border-box;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .status-alarm {
-    background: #FF4D4F;
-    box-shadow: 0 0 8px rgba(255, 77, 79, 0.9);
+    background: var(--status-alarm-legacy);
+    box-shadow: 0 0 6px rgba(244, 63, 94, 0.6);
     animation: alarmPulse 1.5s infinite;
 }
 
 @keyframes alarmPulse {
     0% {
-        box-shadow: 0 0 4px rgba(255, 77, 79, 0.9);
+        box-shadow: 0 0 6px rgba(244, 63, 94, 0.8);
     }
     70% {
-        box-shadow: 0 0 12px rgba(255, 77, 79, 0);
+        box-shadow: 0 0 12px rgba(244, 63, 94, 0);
     }
     100% {
-        box-shadow: 0 0 4px rgba(255, 77, 79, 0);
+        box-shadow: 0 0 6px rgba(244, 63, 94, 0);
     }
 }
 
 .status-running {
-    background: #52c41a;
-    box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
+    background: var(--status-running-legacy);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
 }
 
 .status-online {
-    background: #1890FF;
-    box-shadow: 0 0 6px rgba(24, 144, 255, 0.6);
+    background: var(--status-online-legacy);
+    box-shadow: 0 0 6px rgba(14, 165, 233, 0.5);
 }
 
 .status-offline {
-    background: #bfbfbf;
-}
-
-.status-alarm {
-    background: #ff4d4f;
-    box-shadow: 0 0 6px rgba(255, 77, 79, 0.8);
+    background: var(--status-offline-legacy);
 }
 
 .status-stopped {
-    background: #FAAD14;
+    background: var(--status-stopped);
     box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
 }
 
@@ -270,13 +227,64 @@ html, body {
     overflow: hidden; /* 防止外溢 */
     flex: 1 1 auto;
     overflow-y: auto; /* 独立纵向滚动 */
-    padding: 10px;
+    padding: 0 10px;
 }
 
 .right-panel > form {
     flex: 0 0 auto; /* 高度由内容决定 */
-    margin: 5px;
+    margin: 5px 2px;
     border-radius: 10px;
+}
+
+/* ========== 搜索/查询表单 - 全局主题适配 ========== */
+.layui-form.layui-row {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-card);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.layui-form.layui-row .layui-input-wrap {
+    border-color: var(--border-base);
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.layui-form.layui-row .layui-input-wrap:hover,
+.layui-form.layui-row .layui-input-wrap:focus-within {
+    border-color: var(--border-hover);
+}
+
+.layui-form.layui-row .layui-input-wrap .layui-input {
+    color: var(--text-main);
+}
+
+.layui-form.layui-row .layui-input-prefix .layui-icon {
+    color: var(--text-sub);
+}
+
+.layui-form.layui-row .layui-form-select .layui-input {
+    border-color: var(--border-base);
+}
+
+.layui-form.layui-row .layui-btn-primary {
+    border-color: var(--border-base);
+    color: var(--text-sub);
+}
+
+.layui-form.layui-row .layui-btn-primary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.layui-form.layui-row .layui-btn:not(.layui-btn-primary) {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.layui-form.layui-row .layui-btn:not(.layui-btn-primary):hover {
+    opacity: 0.9;
 }
 
 .right-panel .common-data-container {
@@ -284,4 +292,35 @@ html, body {
     overflow-y: auto; /* 独立滚动 */
     padding-right: 10px;
     margin-top: 10px;
+}
+
+/* 表格工具栏图标 - 避免与视图切换按钮样式冲突，保持中性外观 */
+.layui-table-tool .layui-table-tool-self .layui-inline[lay-event] {
+    background: transparent !important;
+    color: var(--text-sub, #64748b) !important;
+}
+
+.layui-table-tool .layui-table-tool-self .layui-inline[lay-event]:hover {
+    background: var(--bg-hover-soft, rgba(14, 165, 233, 0.08)) !important;
+    color: var(--color-primary, #0ea5e9) !important;
+}
+
+/* ========== 查询表单 + 表格布局 - 防止 form 与 table 重叠，全局通用 ========== */
+.form-table-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 15px;
+    overflow: auto;
+}
+
+.form-table-layout .layui-form {
+    flex-shrink: 0;
+    margin-bottom: 0;
+}
+
+.form-table-wrap {
+    flex: 1;
+    min-height: 400px;
+    overflow: hidden;
 }
