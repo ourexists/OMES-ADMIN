@@ -1,0 +1,92 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div style="padding: 16px;">
+    <form class="layui-form layui-form-pane" id="binding-form" lay-filter="binding-form">
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">*</span> 连接ID</label>
+            <div class="layui-input-block">
+                <input type="text" name="connectId" lay-verify="required" class="layui-input" placeholder="连接主键ID">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">*</span> <span lang-i18n="device.binding.equipSn">设备SN</span></label>
+            <div class="layui-input-block">
+                <input type="text" name="equipSn" lay-verify="required" class="layui-input" placeholder="Equip.selfCode">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span style="color:red">*</span> <span lang-i18n="device.binding.sourceKey">数据源键</span></label>
+            <div class="layui-input-block">
+                <input type="text" name="sourceKey" lay-verify="required" class="layui-input" placeholder="MQTT topic / OPC nodeId / Modbus key">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span lang-i18n="device.binding.parseRule">解析规则</span></label>
+            <div class="layui-input-block">
+                <textarea name="parseRuleJson" class="layui-textarea" placeholder='{"runState":"$.payload.run","onlineState":1,"alarmState":"$.payload.alarm"}'></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%;">
+            <button class="layui-btn" lay-submit lay-filter="binding-submit" lang-i18n="common.msg.confirm">确定</button>
+            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current_row_data = parent.current_row_data;
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form, layer = layui.layer;
+        var id = layui.url().search.id;
+        var connectIdParam = layui.url().search.connectId;
+        if (connectIdParam) {
+            form.val('binding-form', { connectId: connectIdParam });
+        }
+        if (id && current_row_data) {
+            form.val('binding-form', {
+                connectId: current_row_data.connectId,
+                equipSn: current_row_data.equipSn,
+                sourceKey: current_row_data.sourceKey,
+                parseRuleJson: current_row_data.parseRuleJson || ''
+            });
+        } else if (id) {
+            get(router.device_binding_id, { id: id }, function (r) {
+                if (r) form.val('binding-form', {
+                    connectId: r.connectId,
+                    equipSn: r.equipSn,
+                    sourceKey: r.sourceKey,
+                    parseRuleJson: r.parseRuleJson || ''
+                });
+            });
+        }
+        form.on('submit(binding-submit)', function (data) {
+            var dto = {
+                connectId: data.field.connectId,
+                equipSn: data.field.equipSn,
+                sourceKey: data.field.sourceKey,
+                parseRuleJson: data.field.parseRuleJson || null
+            };
+            if (id || (current_row_data && current_row_data.id)) dto.id = id || current_row_data.id;
+            post(router.device_binding_edit, dto, function () {
+                var i = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(i);
+                if (parent.reloadTb) parent.reloadTb();
+            }, function (c, msg) { layer.alert(msg, { title: 'error' }); });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

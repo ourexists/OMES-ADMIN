@@ -4,8 +4,10 @@
 
 package com.ourexists.mesedge.sync.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
 import com.ourexists.mesedge.sync.enums.ProtocolEnum;
+import com.ourexists.mesedge.sync.model.query.ConnectPageQuery;
 import com.ourexists.mesedge.sync.pojo.Connect;
 
 import java.util.List;
@@ -17,8 +19,12 @@ import java.util.List;
  */
 public interface ConnectService extends IMyBatisPlusService<Connect> {
 
-
     List<Connect> getConnectByProtocol(ProtocolEnum protocol);
 
     Connect getConnect(String serverName);
+
+    Page<Connect> selectByPage(ConnectPageQuery query);
+
+    /** 查询启用定时采集的连接 */
+    List<Connect> listCollectEnabledConnects();
 }

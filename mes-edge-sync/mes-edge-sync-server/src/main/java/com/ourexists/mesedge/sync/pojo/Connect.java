@@ -41,6 +41,9 @@ public class Connect extends EraEntity {
 
     private String protocol;
 
+    /** 采集 cron 表达式，与 collectIntervalSec 二选一 */
+    private String collectCron;
+
     private Integer validType;
 
     private String username;

@@ -49,6 +49,9 @@ public class ConnectDto {
 
     private Boolean enabled;
 
+    /** 采集 cron 表达式 */
+    private String collectCron;
+
     private Integer validType;
 
     private String username;
