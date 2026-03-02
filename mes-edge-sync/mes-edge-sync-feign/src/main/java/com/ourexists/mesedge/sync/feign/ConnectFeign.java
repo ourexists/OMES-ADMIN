@@ -34,8 +34,4 @@ public interface ConnectFeign {
 
     @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
-
-    /** 查询启用定时采集的连接列表 */
-    @GetMapping("listCollectEnabled")
-    JsonResponseEntity<List<ConnectDto>> listCollectEnabled();
 }
