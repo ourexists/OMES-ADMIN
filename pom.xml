@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright (C) 2025  ChengPeng
   ~
@@ -22,21 +22,21 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ourexists.mes-edge</groupId>
-    <artifactId>mes-edge</artifactId>
+    <groupId>com.ourexists.omes</groupId>
+    <artifactId>omes</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
     <modules>
-        <module>mes-edge-device</module>
-        <module>mes-edge-line</module>
-        <module>mes-edge-mat</module>
-        <module>mes-edge-mo</module>
-        <module>mes-edge-mps</module>
-        <module>mes-edge-portal-omes</module>
-        <module>mes-edge-sync</module>
-        <module>mes-edge-task</module>
-        <module>mes-edge-ucenter</module>
-        <module>mes-edge-message</module>
+        <module>omes-device</module>
+        <module>omes-line</module>
+        <module>omes-mat</module>
+        <module>omes-mo</module>
+        <module>omes-mps</module>
+        <module>omes-portal</module>
+        <module>omes-sync</module>
+        <module>omes-task</module>
+        <module>omes-ucenter</module>
+        <module>omes-message</module>
     </modules>
 
     <parent>

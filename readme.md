@@ -16,17 +16,17 @@
 
 | 模块 | 对应业务 |
 |------|----------|
-| mes-edge-device | 场景、设备、设备组、采集与 SCADA 配置、运行/告警数据 |
-| mes-edge-line | 产线、工位 |
-| mes-edge-mat | 物料主数据、BOM |
-| mes-edge-mo | 工单及明细 |
-| mes-edge-mps | 主生产计划、计划与产线/工位关联、手册 |
-| mes-edge-sync | 连接配置、同步任务、设备与采集通道绑定 |
-| mes-edge-task | 定时任务、配方 |
-| mes-edge-ucenter | 租户、账号、角色、权限、部门、平台 |
-| mes-edge-message | 消息、通知 |
-| mes-edge-portal-ms | 管理端 Web 应用（可执行） |
-| mes-edge-portal-dts | 数据同步/采集端应用（可执行） |
+| omes-device | 场景、设备、设备组、采集与 SCADA 配置、运行/告警数据 |
+| omes-line | 产线、工位 |
+| omes-mat | 物料主数据、BOM |
+| omes-mo | 工单及明细 |
+| omes-mps | 主生产计划、计划与产线/工位关联、手册 |
+| omes-sync | 连接配置、同步任务、设备与采集通道绑定 |
+| omes-task | 定时任务、配方 |
+| omes-ucenter | 租户、账号、角色、权限、部门、平台 |
+| omes-message | 消息、通知 |
+| omes-portal-ms | 管理端 Web 应用（可执行） |
+| omes-portal-dts | 数据同步/采集端应用（可执行） |
 
 ### 2.2 可运行应用
 
