@@ -1,0 +1,112 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content form-table-layout">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md3">
+            <input type="text" name="connectId" id="connectId" placeholder="连接ID" class="layui-input" lay-affix="clear">
+        </div>
+        <div class="layui-col-md3">
+            <input type="text" name="equipSn" id="equipSn" placeholder="" class="layui-input" lay-affix="clear" lang-i18n="device.binding.equipSn">
+        </div>
+        <div class="layui-col-md3">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="binding-search" lang-i18n="common.search">搜索</button>
+            <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">清空</button>
+        </div>
+    </form>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-common"></table>
+    </div>
+</div>
+<script type="text/html" id="tb-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i> {{ i18np.prop('common.edit') }}</a>
+        <a class="layui-btn layui-btn-xs layui-bg-red" lay-event="del"><i class="layui-icon layui-icon-delete"></i> {{ i18np.prop('common.delete') }}</a>
+    </div>
+</script>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="add"><i class="layui-icon layui-icon-add-1"></i> {{ i18np.prop('common.add') }}</button>
+        <button class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch"><i class="layui-icon layui-icon-delete"></i> {{ i18np.prop('common.delete.batch') }}</button>
+    </div>
+</script>
+<script th:inline="none">
+    var table;
+    layui.use(['form', 'table', 'layer'], function () {
+        table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var connectId = layui.url().search.connectId || '';
+
+        table.render({
+            elem: '#tb-common',
+            id: 'tb-common',
+            url: initRequestUrl(router.device_binding_page),
+            method: 'POST',
+            contentType: 'application/json',
+            headers: getCommonHeader(),
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', title: '', fixed: true},
+                {field: 'connectId', title: '连接ID', width: 120},
+                {field: 'equipSn', title: i18np.prop('device.binding.equipSn'), width: 140},
+                {field: 'sourceKey', title: i18np.prop('device.binding.sourceKey'), minWidth: 140},
+                {field: 'parseRuleJson', title: i18np.prop('device.binding.parseRule'), minWidth: 180},
+                {fixed: 'right', title: i18np.prop('common.operate'), width: 160, templet: '#tb-tool'}
+            ]],
+            request: { pageName: 'page', limitName: 'pageSize' },
+            response: { statusName: 'code', statusCode: 200 },
+            parseData: function (res) {
+                return { "code": res.code, "msg": res.msg, "count": res.pagination ? res.pagination.total : 0, "data": res.data || [] };
+            },
+            limit: 10,
+            limits: [10, 20, 50],
+            page: true,
+            height: 'full',
+            where: { connectId: connectId }
+        });
+
+        table.on('toolbar(tb-common)', function (obj) {
+            var checkStatus = table.checkStatus('tb-common');
+            if (obj.event === 'add') {
+                parent.current_row_data = { connectId: connectId || $('#connectId').val() };
+                openWindow(i18np.prop('common.add'), '/view/device_collect_binding_form_edit?connectId=' + (connectId || ''), ['560px', '420px']);
+            } else if (obj.event === 'deleteBatch') {
+                var data = checkStatus.data;
+                if (!data || data.length === 0) return layer.msg(i18np.prop('common.msg.least.one'));
+                delWindow(router.device_binding_del, data.map(function (n) { return n.id; }), reloadTb);
+            }
+        });
+
+        table.on('tool(tb-common)', function (obj) {
+            var d = obj.data;
+            if (obj.event === 'edit') {
+                parent.current_row_data = d;
+                openWindow(i18np.prop('common.edit'), '/view/device_collect_binding_form_edit?id=' + d.id, ['560px', '420px']);
+            } else if (obj.event === 'del') {
+                delWindow(router.device_binding_del, [d.id], reloadTb);
+            }
+        });
+
+        form.on('submit(binding-search)', function () { reloadTb(); return false; });
+    });
+
+    function reloadTb() {
+        table.reloadData('tb-common', { page: { curr: 1 }, where: { connectId: $('#connectId').val(), equipSn: $('#equipSn').val() } });
+    }
+</script>
+</body>
+</html>

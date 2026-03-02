@@ -149,6 +149,31 @@ public class ViewController {
         return "sync_form_edit";
     }
 
+    @RequestMapping("/view/connect_tables")
+    public String connect_tables() {
+        return "connect_tables";
+    }
+
+    @RequestMapping("/view/connect_form_edit")
+    public String connect_form_edit() {
+        return "connect_form_edit";
+    }
+
+    @RequestMapping("/view/connect_collect_config")
+    public String connect_collect_config() {
+        return "connect_collect_config";
+    }
+
+    @RequestMapping("/view/device_collect_binding_tables")
+    public String device_collect_binding_tables() {
+        return "device_collect_binding_tables";
+    }
+
+    @RequestMapping("/view/device_collect_binding_form_edit")
+    public String device_collect_binding_form_edit() {
+        return "device_collect_binding_form_edit";
+    }
+
     @RequestMapping("/view/devg_tables")
     public String devg_tables() {
         return "devg_tables";
@@ -278,7 +303,6 @@ public class ViewController {
     public String equip_record_online_tables() {
         return "equip_record_online_tables";
     }
-
 
     @RequestMapping("/view/equip_tables")
     public String equip_tables() {
