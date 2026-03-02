@@ -69,11 +69,4 @@ public class ConnectViewer implements ConnectFeign {
         connectService.removeByIds(idsDto.getIds());
         return JsonResponseEntity.success(true);
     }
-
-    @Override
-    @GetMapping("listCollectEnabled")
-    public JsonResponseEntity<List<ConnectDto>> listCollectEnabled() {
-        List<Connect> list = connectService.listCollectEnabledConnects();
-        return JsonResponseEntity.success(Connect.covert(list));
-    }
 }

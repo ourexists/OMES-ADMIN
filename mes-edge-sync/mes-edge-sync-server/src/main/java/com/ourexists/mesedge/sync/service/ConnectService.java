@@ -24,7 +24,4 @@ public interface ConnectService extends IMyBatisPlusService<Connect> {
     Connect getConnect(String serverName);
 
     Page<Connect> selectByPage(ConnectPageQuery query);
-
-    /** 查询启用定时采集的连接 */
-    List<Connect> listCollectEnabledConnects();
 }

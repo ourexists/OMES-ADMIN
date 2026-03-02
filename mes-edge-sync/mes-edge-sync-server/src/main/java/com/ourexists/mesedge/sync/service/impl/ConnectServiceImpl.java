@@ -39,11 +39,4 @@ public class ConnectServiceImpl extends AbstractMyBatisPlusService<ConnectMapper
                 .orderByAsc(Connect::getId);
         return this.page(new Page<>(query.getPage(), query.getPageSize()), wrapper);
     }
-
-    @Override
-    public List<Connect> listCollectEnabledConnects() {
-        return this.list(new LambdaQueryWrapper<Connect>()
-                .eq(Connect::getCollectEnabled, true)
-                .orderByAsc(Connect::getId));
-    }
 }
