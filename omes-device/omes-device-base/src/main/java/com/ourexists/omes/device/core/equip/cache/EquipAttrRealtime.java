@@ -13,7 +13,9 @@ public class EquipAttrRealtime {
 
     private String map;
 
+    private String unit;
+
     private Boolean needCollect = false;
-    
+
     private String value;
 }

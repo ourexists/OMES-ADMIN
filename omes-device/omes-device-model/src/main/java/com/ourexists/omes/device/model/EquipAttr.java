@@ -15,5 +15,7 @@ public class EquipAttr {
 
     private String value;
 
+    private String unit;
+
     private Boolean needCollect = false;
 }
