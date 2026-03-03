@@ -44,7 +44,7 @@
                            lay-affix="clear" class="layui-input" lang-i18n="equip.code">
                 </div>
             </div>
-            <div class="layui-col-md3">
+            <div class="layui-col-md1">
                 <div class="layui-input-wrap">
                     <div class="layui-input-prefix">
                         <i class="layui-icon layui-icon-auz"></i>
@@ -61,6 +61,25 @@
                 </button>
                 <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">Clear
                 </button>
+            </div>
+            <div class="layui-col-md2 state-filter-wrap">
+                <div class="state-filter" title="按状态筛选，再次点击取消">
+                    <button type="button" class="state-filter-btn" data-state="1" id="stateFilterOnline" title="在线">
+                        <span class="state-filter-dot state-filter-dot-online"></span>
+                    </button>
+                    <button type="button" class="state-filter-btn" data-state="0" id="stateFilterOffline" title="离线">
+                        <span class="state-filter-dot state-filter-dot-offline"></span>
+                    </button>
+                    <button type="button" class="state-filter-btn" data-state="run" id="stateFilterRun" title="运行">
+                        <span class="state-filter-dot state-filter-dot-running"></span>
+                    </button>
+                    <button type="button" class="state-filter-btn" data-state="stop" id="stateFilterStop" title="停止">
+                        <span class="state-filter-dot state-filter-dot-stopped"></span>
+                    </button>
+                    <button type="button" class="state-filter-btn" data-state="alarm" id="stateFilterAlarm" title="告警">
+                        <span class="state-filter-dot state-filter-dot-alarm"></span>
+                    </button>
+                </div>
             </div>
             <div class="layui-col-md1 view-toggle-wrap">
                 <div class="view-toggle" title="卡片视图">
@@ -193,6 +212,7 @@
     let dataList;
     let laytpl;
     let viewMode = localStorage.getItem('equip_realtime_view') || 'card';
+    let filterOnlineState = localStorage.getItem('equip_realtime_filter') !== null ? localStorage.getItem('equip_realtime_filter') : ''; // ''=全部, '1'=在线, '0'=离线, 'run'=运行, 'stop'=停止, 'alarm'=告警
 
     layui.use(function () {
         table = layui.table;
@@ -232,6 +252,16 @@
             switchView(mode);
         });
 
+        $('.state-filter-btn').on('click', function () {
+            let state = $(this).data('state');
+            filterOnlineState = (filterOnlineState === state) ? '' : state;
+            localStorage.setItem('equip_realtime_filter', filterOnlineState);
+            $('.state-filter-btn').removeClass('active');
+            $(this).toggleClass('active', filterOnlineState !== '');
+            renderData();
+        });
+        applyStateFilterUI();
+
         applyViewMode(viewMode);
 
         form.on('submit(tb-common-search)', function (data) {
@@ -266,12 +296,34 @@
         $('#viewBtn' + (mode === 'card' ? 'Card' : 'List')).addClass('active');
     }
 
+    function applyStateFilterUI() {
+        $('.state-filter-btn').removeClass('active');
+        if (filterOnlineState !== '') {
+            const map = { '1': '#stateFilterOnline', '0': '#stateFilterOffline', 'run': '#stateFilterRun', 'stop': '#stateFilterStop', 'alarm': '#stateFilterAlarm' };
+            const btn = map[filterOnlineState];
+            if (btn) $(btn).addClass('active');
+        }
+    }
+
     function renderData() {
         if (!dataList) return;
+        let list = dataList;
+        if (filterOnlineState !== '') {
+            if (filterOnlineState === 'run') {
+                list = dataList.filter(function (item) { return item.onlineState === 1 && item.runState === 1; });
+            } else if (filterOnlineState === 'stop') {
+                list = dataList.filter(function (item) { return item.onlineState === 1 && item.runState !== 1; });
+            } else if (filterOnlineState === 'alarm') {
+                list = dataList.filter(function (item) { return item.onlineState === 1 && item.alarmState === 1; });
+            } else {
+                const state = parseInt(filterOnlineState, 10);
+                if (!isNaN(state)) list = dataList.filter(function (item) { return item.onlineState === state; });
+            }
+        }
         const container = document.getElementById('cardContainer');
         const tplId = viewMode === 'card' ? 'deviceCardTpl' : 'deviceListTpl';
         const tpl = document.getElementById(tplId).innerHTML;
-        laytpl(tpl).render(dataList, function (html) {
+        laytpl(tpl).render(list, function (html) {
             container.innerHTML = html;
             layui.i18np && layui.i18np.apply && layui.i18np.apply('#cardContainer');
         });
@@ -363,9 +415,9 @@
         border-color: var(--border-card-hover);
     }
 
-    /* 在线卡片 - 绿色左边框标识 */
+    /* 在线卡片 - 蓝色左边框标识 */
     .device-card-online {
-        border-left: 3px solid var(--status-online);
+        border-left: 3px solid #3b82f6;
     }
 
     /* 离线/未上线卡片 - 无背景色 */
@@ -437,11 +489,12 @@
         flex-shrink: 0;
     }
 
-    .status-online { background: var(--status-online); }
-    .status-running { background: var(--status-running); }
-    .status-stopped { background: var(--status-stopped); }
+    /* 在线蓝、离线灰、运行绿、停止黄 */
+    .status-online { background: #3b82f6; }
+    .status-offline { background: #9ca3af; }
+    .status-running { background: #22c55e; }
+    .status-stopped { background: #eab308; }
     .status-alarm { background: var(--status-alarm); }
-    .status-offline { background: var(--status-offline); }
 
     .card-alarm-text {
         margin: 6px 0 0;
@@ -574,6 +627,72 @@
 
     .card-action-btn .layui-icon {
         font-size: 16px;
+    }
+
+    /* 三态筛选 */
+    .state-filter-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .state-filter {
+        display: flex;
+        gap: 6px;
+        padding: 6px 8px;
+        background: var(--bg-panel-alt);
+        border-radius: 6px;
+        border: 1px solid var(--border-base);
+    }
+
+    .state-filter-btn {
+        min-width: 28px;
+        height: 28px;
+        padding: 0 6px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s, background 0.2s;
+    }
+
+    .state-filter-btn:hover {
+        background: var(--bg-hover-soft);
+    }
+
+    .state-filter-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        transition: box-shadow 0.2s, background 0.2s;
+    }
+
+    /* 指示灯始终显示对应颜色 */
+    .state-filter-dot-online { background: #3b82f6; }
+    .state-filter-dot-offline { background: #9ca3af; }
+    .state-filter-dot-running { background: #22c55e; }
+    .state-filter-dot-stopped { background: #eab308; }
+    .state-filter-dot-alarm { background: var(--status-alarm); }
+
+    /* 选中时按钮加背景框 */
+    .state-filter-btn.active {
+        background: var(--bg-hover-soft);
+        box-shadow: 0 0 0 1px var(--color-primary);
+    }
+
+    .state-filter-btn.active .state-filter-dot-online,
+    .state-filter-btn.active .state-filter-dot-offline,
+    .state-filter-btn.active .state-filter-dot-running,
+    .state-filter-btn.active .state-filter-dot-stopped,
+    .state-filter-btn.active .state-filter-dot-alarm {
+        box-shadow: 0 0 0 1px var(--bg-panel);
+    }
+
+    .state-filter-btn:hover:not(.active) .state-filter-dot {
+        opacity: 0.85;
     }
 
     /* 视图切换 */
