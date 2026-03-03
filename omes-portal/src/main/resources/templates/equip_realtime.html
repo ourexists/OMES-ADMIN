@@ -88,7 +88,7 @@
                     <div class="card-status-dots">
                         <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"
                               title="在线"></span>
-                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}"
+                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-stopped') : 'status-offline' }}"
                               title="运行"></span>
                         <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"
                               title="告警"></span>
@@ -114,7 +114,7 @@
                     {{# layui.each(item.attrs, function(i, t){ }}
                     <div class="card-info-row">
                         <span class="card-info-label">{{ t.name }}</span>
-                        <span class="card-info-value">{{ t.value == null ? 'unknow' : t.value }}</span>
+                        <span class="card-info-value">{{ t.value == null ? 'unknow' : t.value }}{{ t.unit ? ' ' + t.unit : '' }}</span>
                     </div>
                     {{# }); }}
                 </div>
@@ -167,7 +167,7 @@
             <span class="col-workshop">{{ item.workshop && item.workshop.name ? item.workshop.name : '-' }}</span>
             <span class="col-status">
                 <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}" title="在线"></span>
-                <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-offline') : 'status-offline' }}" title="运行"></span>
+                <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-stopped') : 'status-offline' }}" title="运行"></span>
                 <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}" title="告警"></span>
             </span>
             <span class="col-actions">
@@ -439,6 +439,7 @@
 
     .status-online { background: var(--status-online); }
     .status-running { background: var(--status-running); }
+    .status-stopped { background: var(--status-stopped); }
     .status-alarm { background: var(--status-alarm); }
     .status-offline { background: var(--status-offline); }
 
