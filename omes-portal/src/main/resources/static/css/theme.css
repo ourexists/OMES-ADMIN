@@ -44,9 +44,10 @@
     --text-on-tag-dark: #1e293b;
 
     /* ========== 状态色（科技感配色） ========== */
-    --status-online: #10b981;
+    /* 在线=蓝色 运行=绿色 停止=黄色 */
+    --status-online: #0ea5e9;
     --status-online-legacy: #0ea5e9;
-    --status-running: #0ea5e9;
+    --status-running: #10b981;
     --status-running-legacy: #10b981;
     --status-alarm: #f43f5e;
     --status-alarm-legacy: #f43f5e;

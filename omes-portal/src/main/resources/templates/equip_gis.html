@@ -231,7 +231,7 @@
 
         if (d.attrs != null) {
             d.attrs.forEach(function (t) {
-                html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}`;
+                html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}${t.unit ? ' ' + t.unit : ''}`;
             })
         }
         return {

@@ -16,6 +16,8 @@ public class WorkshopConfigCollectAttr {
 
     private String value;
 
+    private String unit;
+
     private Boolean needCollect = false;
 
 }
