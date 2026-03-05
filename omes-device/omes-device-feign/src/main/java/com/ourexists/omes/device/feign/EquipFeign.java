@@ -2,7 +2,7 @@ package com.ourexists.omes.device.feign;
 
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
-import com.ourexists.omes.device.model.EquipConfigDto;
+import com.ourexists.omes.device.model.GwBindingDto;
 import com.ourexists.omes.device.model.EquipDto;
 import com.ourexists.omes.device.model.EquipPageQuery;
 import org.springframework.validation.annotation.Validated;
@@ -22,9 +22,9 @@ public interface EquipFeign {
     JsonResponseEntity<EquipDto> selectById(@RequestParam String id,
                                             @RequestParam Boolean needRealtime);
 
-    JsonResponseEntity<EquipConfigDto> queryEquipConfig(@RequestParam String equipId);
+    JsonResponseEntity<GwBindingDto> queryEquipConfig(@RequestParam String equipId);
 
-    JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto);
+    JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody GwBindingDto gwBindingDto);
 
-    JsonResponseEntity<EquipConfigDto> queryEquipConfigBySn(@RequestParam String equipSn);
+    JsonResponseEntity<GwBindingDto> queryEquipConfigBySn(@RequestParam String equipSn);
 }

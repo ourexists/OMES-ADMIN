@@ -56,7 +56,7 @@ public class EquipDto extends BaseDto {
 
     private WorkshopTreeNode workshop;
 
-    private EquipConfigDto config;
+    private GwBindingDto config;
 
     private List<EquipAttr> attrs;
 

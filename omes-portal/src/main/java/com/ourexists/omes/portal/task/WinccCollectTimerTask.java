@@ -7,9 +7,9 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.workshop.collect.WorkshopRealtimeCollectSelector;
 import com.ourexists.omes.device.core.workshop.collect.WorkshopRealtimeCollector;
 import com.ourexists.omes.portal.third.wincc.WinccApi;
-import com.ourexists.omes.sync.enums.ProtocolEnum;
-import com.ourexists.omes.sync.feign.ConnectFeign;
-import com.ourexists.omes.sync.model.ConnectDto;
+import com.ourexists.omes.device.enums.ProtocolEnum;
+import com.ourexists.omes.device.feign.GatewayFeign;
+import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class WinccCollectTimerTask extends TimerTask {
     private WinccApi winccApi;
 
     @Autowired
-    private ConnectFeign connectFeign;
+    private GatewayFeign gatewayFeign;
 
     @Autowired
     private WorkshopRealtimeCollectSelector selector;
@@ -39,11 +39,11 @@ public class WinccCollectTimerTask extends TimerTask {
     public void doRun() {
         UserContext.defaultTenant();
         //获取连接器
-        List<ConnectDto> connects = connect();
+        List<GatewayDto> connects = connect();
         if (CollectionUtils.isEmpty(connects)) {
             return;
         }
-        for (ConnectDto connect : connects) {
+        for (GatewayDto connect : connects) {
             //根据不同租户调整
             UserContext.getTenant().setTenantId(connect.getTenantId());
             WorkshopRealtimeCollector collector = selector.getCollector(connect.getServerName());
@@ -58,9 +58,9 @@ public class WinccCollectTimerTask extends TimerTask {
     }
 
 
-    private List<ConnectDto> connect() {
+    private List<GatewayDto> connect() {
         try {
-            return RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByProtocol(ProtocolEnum.WINCC.name()));
+            return RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByProtocol(ProtocolEnum.WINCC.name()));
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }

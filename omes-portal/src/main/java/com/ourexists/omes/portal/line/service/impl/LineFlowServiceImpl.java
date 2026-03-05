@@ -14,8 +14,8 @@ import com.ourexists.omes.mps.feign.MPSFeign;
 import com.ourexists.omes.portal.line.service.LineFlowService;
 import com.ourexists.omes.portal.sync.manager.push.LinePushTxManager;
 import com.ourexists.omes.portal.s7.ocpua.OpcUaContext;
-import com.ourexists.omes.sync.feign.ConnectFeign;
-import com.ourexists.omes.sync.model.ConnectDto;
+import com.ourexists.omes.device.feign.GatewayFeign;
+import com.ourexists.omes.device.model.GatewayDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ public class LineFlowServiceImpl implements LineFlowService {
     private OpcUaContext opcUaContext;
 
     @Autowired
-    private ConnectFeign connectFeign;
+    private GatewayFeign gatewayFeign;
 
     @Autowired
     private LinePushTxManager linePushSyncManager;
@@ -56,24 +56,24 @@ public class LineFlowServiceImpl implements LineFlowService {
 
     @Override
     public void downloadS7(String lineId, String serverName) {
-        ConnectDto connect = null;
+        GatewayDto connect = null;
         try {
-            connect = RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(serverName));
+            connect = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByName(serverName));
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }
         if (connect == null) {
             return;
         }
-        try {
-            opcUaContext.createClient(connect.getServerName(), connect.getHost(), connect.getPort(), connect.getSuffix());
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            throw new BusinessException("create OPCUA CLIENT ERROR");
-        }
-        JSONObject jo = new JSONObject();
-        jo.put("lineId", lineId);
-        jo.put("serverName", serverName);
-        linePushSyncManager.execute(jo.toJSONString());
+//        try {
+//            opcUaContext.createClient(connect.getServerName(), connect.getHost(), connect.getPort(), connect.getSuffix());
+//        } catch (Exception e) {
+//            log.error(e.getMessage(), e);
+//            throw new BusinessException("create OPCUA CLIENT ERROR");
+//        }
+//        JSONObject jo = new JSONObject();
+//        jo.put("lineId", lineId);
+//        jo.put("serverName", serverName);
+//        linePushSyncManager.execute(jo.toJSONString());
     }
 }

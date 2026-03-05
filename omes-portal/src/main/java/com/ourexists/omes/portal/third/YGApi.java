@@ -11,12 +11,11 @@ import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.DateUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.omes.device.feign.GatewayFeign;
+import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.portal.third.model.req.CompleteReq;
 import com.ourexists.omes.portal.third.model.resp.Order;
-import com.ourexists.omes.sync.feign.ConnectFeign;
-import com.ourexists.omes.sync.model.ConnectDto;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,7 +33,7 @@ public class YGApi {
     private RestTemplate restTemplate;
 
     @Autowired
-    private ConnectFeign connectFeign;
+    private GatewayFeign gatewayFeign;
 
     public static final String SERVER_NAME = "YG_API";
 
@@ -91,16 +90,12 @@ public class YGApi {
     }
 
     private String getUri() {
-        ConnectDto connect;
+        GatewayDto connect;
         try {
-            connect = RemoteHandleUtils.getDataFormResponse(connectFeign.selectConnectByName(SERVER_NAME));
+            connect = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByName(SERVER_NAME));
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }
-        String uri = connect.getHost() + ":" + connect.getPort();
-        if (StringUtils.isNotBlank(connect.getSuffix())) {
-            uri += "/" + connect.getSuffix();
-        }
-        return uri;
+        return connect.getUri();
     }
 }

@@ -52,6 +52,7 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
                 .eq(dto.getType() != null, Equip::getType, dto.getType())
                 .in(!CollectionUtils.isEmpty(dto.getWorkshopCodes()), Equip::getWorkshopCode, dto.getWorkshopCodes())
                 .like(StringUtils.hasText(dto.getName()), Equip::getName, dto.getName())
+                .inSql(StringUtils.hasText(dto.getGwId()), Equip::getId, "select equip_id from r_gw_binding where gw_id=" + dto.getGwId())
                 .orderByDesc(Equip::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }

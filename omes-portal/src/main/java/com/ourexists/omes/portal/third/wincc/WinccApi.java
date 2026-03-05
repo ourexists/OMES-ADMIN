@@ -8,9 +8,8 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.google.common.collect.Maps;
-import com.ourexists.omes.sync.enums.ConnectValidTypeEnum;
-import com.ourexists.omes.sync.feign.ConnectFeign;
-import com.ourexists.omes.sync.model.ConnectDto;
+import com.ourexists.omes.device.enums.ConnectValidTypeEnum;
+import com.ourexists.omes.device.model.GatewayDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +20,6 @@ import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -43,7 +41,6 @@ import java.util.Map;
 public class WinccApi {
 
     private RestTemplate restTemplate;
-
 
 
     public static final String TAG_PATH = "/tagManagement/Values";
@@ -102,8 +99,8 @@ public class WinccApi {
         return value;
     }
 
-    public Map<String, Object> pullTags(ConnectDto connect, List<String> variableNames) {
-        String url = getUri(connect) + TAG_PATH;
+    public Map<String, Object> pullTags(GatewayDto connect, List<String> variableNames) {
+        String url = connect.getUri() + TAG_PATH;
         Map<String, List<String>> params = Maps.newHashMap();
         params.put("variableNames", variableNames);
         log.info("【yg api调用器】[{}]开始调用[{}]", url, JSON.toJSONString(params));
@@ -142,7 +139,7 @@ public class WinccApi {
         }
     }
 
-    private HttpHeaders httpHeaders(ConnectDto connect) {
+    private HttpHeaders httpHeaders(GatewayDto connect) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Content-Type", "application/json;charset=UTF-8");
         ConnectValidTypeEnum validTypeEnum = ConnectValidTypeEnum.valueOf(connect.getValidType());
@@ -158,14 +155,4 @@ public class WinccApi {
         }
         return httpHeaders;
     }
-
-    private String getUri(ConnectDto connect) {
-        String uri = connect.getHost() + ":" + connect.getPort();
-        if (StringUtils.isNotBlank(connect.getSuffix())) {
-            uri += "/" + connect.getSuffix();
-        }
-        return uri;
-    }
-
-
 }

@@ -206,21 +206,15 @@ let router = {
     workshop_collect_type: '/workshop/collectType',
     workshop_collect_page: '/workshop/collect/selectByPage',
     message_read: '/message/read',
-    connect_getAll: '/connect/getAll',
-    connect_protocols: '/connect/protocols',
-    connect_getByProtocol: '/connect/getByProtocol',
-    connect_page: '/connect/selectByPage',
-    connect_id: '/connect/selectById',
-    connect_edit: '/connect/addOrUpdate',
-    connect_del: '/connect/delete',
-    connect_start: '/connect/start',
-    connect_stop: '/connect/stop',
-    connect_collect_config_get: '/connectCollectConfig/getByConnectId',
-    connect_collect_config_edit: '/connectCollectConfig/addOrUpdate',
-    device_binding_page: '/deviceCollectBinding/selectByPage',
-    device_binding_id: '/deviceCollectBinding/selectById',
-    device_binding_edit: '/deviceCollectBinding/addOrUpdate',
-    device_binding_del: '/deviceCollectBinding/delete'
+    gw_getAll: '/gateway/getAll',
+    gw_protocols: '/gateway/protocols',
+    gw_getByProtocol: '/gateway/getByProtocol',
+    gw_page: '/gateway/selectByPage',
+    gw_id: '/gateway/selectById',
+    gw_edit: '/gateway/addOrUpdate',
+    gw_del: '/gateway/delete',
+    gw_start: '/gateway/start',
+    gw_stop: '/gateway/stop',
 }
 
 function getCommonHeader() {
@@ -339,13 +333,56 @@ function get(url, param, successFunc, failFuc) {
 
 function openWindow(name, url, area, successFunc) {
     // 统一从右侧伸出，高度全屏
-    area = ['60%', '100%'];
+    layer.open({
+        title: i18np.prop(name),
+        type: 2,
+        area: ['60%', '100%'],
+        offset: 'r',
+        anim: 'slideLeft',
+        shadeClose: true,
+        content: url,
+        loading: true,
+        scrollbar: false,
+        success: function (layero, index) {
+            if (successFunc != null) {
+                successFunc();
+            }
+        }
+    });
+}
+
+function openAreaWindow(name, url, area, successFunc) {
+    if (area == null) {
+        area = ['60%', '100%'];
+    }
+    // 统一从右侧伸出，高度全屏
     layer.open({
         title: i18np.prop(name),
         type: 2,
         area: area,
         offset: 'r',
         anim: 'slideLeft',
+        shadeClose: true,
+        content: url,
+        loading: true,
+        scrollbar: false,
+        success: function (layero, index) {
+            if (successFunc != null) {
+                successFunc();
+            }
+        }
+    });
+}
+
+function openMidWindow(name, url, area, successFunc) {
+    // 统一从右侧伸出，高度全屏
+    if (area == null) {
+        area = ['80%', '100%'];
+    }
+    layer.open({
+        title: i18np.prop(name),
+        type: 2,
+        area: area,
         shadeClose: true,
         content: url,
         loading: true,
@@ -478,7 +515,7 @@ const COLORS = {
     alarmArea: 'rgba(255,77,79,.22)',
 };
 
-const COMMENT_COLUMN = 50;
+const COMMENT_COLUMN = 36;
 
 function alignComment(line, comment) {
     if (!comment) return line;
