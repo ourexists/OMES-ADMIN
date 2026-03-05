@@ -10,13 +10,12 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.omes.device.core.equip.collect.EquipRealtimeCollectSelector;
 import com.ourexists.omes.device.enums.EquipTypeEnum;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.feign.WorkshopFeign;
-import com.ourexists.omes.device.model.EquipConfigDto;
 import com.ourexists.omes.device.model.EquipDto;
 import com.ourexists.omes.device.model.EquipPageQuery;
+import com.ourexists.omes.device.model.GwBindingDto;
 import com.ourexists.omes.device.model.WorkshopTreeNode;
 import com.ourexists.omes.portal.device.model.EquipCountDto;
 import com.ourexists.omes.ucenter.feign.RoleFeign;
@@ -47,9 +46,6 @@ public class EquipController {
 
     @Autowired
     private RoleFeign roleFeign;
-
-    @Autowired
-    private EquipRealtimeCollectSelector equipRealtimeCollectSelector;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -155,25 +151,19 @@ public class EquipController {
 
     @Operation(summary = "查询设备配置", description = "查询设备配置")
     @GetMapping("queryEquipConfig")
-    public JsonResponseEntity<EquipConfigDto> queryEquipConfig(@RequestParam String equipId) {
+    public JsonResponseEntity<GwBindingDto> queryEquipConfig(@RequestParam String equipId) {
         return feign.queryEquipConfig(equipId);
     }
 
     @Operation(summary = "查询设备配置", description = "查询设备配置")
     @GetMapping("queryEquipConfigBySn")
-    public JsonResponseEntity<EquipConfigDto> queryEquipConfigBySn(@RequestParam String equipSn) {
+    public JsonResponseEntity<GwBindingDto> queryEquipConfigBySn(@RequestParam String equipSn) {
         return feign.queryEquipConfigBySn(equipSn);
     }
 
     @Operation(summary = "设置设备配置", description = "设置设备配置")
     @PostMapping("setEquipConfig")
-    public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
-        return feign.setEquipConfig(equipConfigDto);
-    }
-
-    @Operation(summary = "所有采集方式")
-    @GetMapping("collectType")
-    public JsonResponseEntity<List<String>> collectType() {
-        return JsonResponseEntity.success(equipRealtimeCollectSelector.getAllNames());
+    public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody GwBindingDto gwBindingDto) {
+        return feign.setEquipConfig(gwBindingDto);
     }
 }

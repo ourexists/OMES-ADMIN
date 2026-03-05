@@ -149,29 +149,29 @@ public class ViewController {
         return "sync_form_edit";
     }
 
-    @RequestMapping("/view/connect_tables")
-    public String connect_tables() {
-        return "connect_tables";
+    @RequestMapping("/view/gw_tables")
+    public String gw_tables() {
+        return "gw_tables";
     }
 
-    @RequestMapping("/view/connect_form_edit")
-    public String connect_form_edit() {
-        return "connect_form_edit";
+    @RequestMapping("/view/gw_form_edit")
+    public String gw_form_edit() {
+        return "gw_form_edit";
     }
 
-    @RequestMapping("/view/connect_collect_config")
-    public String connect_collect_config() {
-        return "connect_collect_config";
+    @RequestMapping("/view/gw_collect_config")
+    public String gw_collect_config() {
+        return "gw_collect_config";
     }
 
-    @RequestMapping("/view/device_collect_binding_tables")
-    public String device_collect_binding_tables() {
-        return "device_collect_binding_tables";
+    @RequestMapping("/view/gw_binding_tables")
+    public String gw_binding_tables() {
+        return "gw_binding_tables";
     }
 
-    @RequestMapping("/view/device_collect_binding_form_edit")
-    public String device_collect_binding_form_edit() {
-        return "device_collect_binding_form_edit";
+    @RequestMapping("/view/gw_binding_form_edit")
+    public String gw_binding_form_edit() {
+        return "gw_binding_form_edit";
     }
 
     @RequestMapping("/view/devg_tables")

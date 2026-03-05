@@ -11,6 +11,8 @@ import java.util.List;
 @Accessors(chain = true)
 public class EquipRealtimeConfig {
 
+    private String gwId;
+
     private String collectType;
 
     private String runMap;

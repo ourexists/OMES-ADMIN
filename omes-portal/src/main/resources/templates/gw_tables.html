@@ -1,0 +1,484 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <style>
+        /* 连接卡片 - 行布局：占满宽度 + 多列网格 */
+        .right-panel #card-container.common-data-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-right: 10px;
+            box-sizing: border-box;
+        }
+
+        /* 使用 flex 网格保证卡片始终多列排列，不依赖 layui 栅格 */
+        #card-container.gateway-card-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            margin-left: -7.5px;
+            margin-right: -7.5px;
+        }
+
+        #card-container.gateway-card-row > .gateway-col {
+            flex: 0 0 25%;
+            display: flex;
+            width: 25%;
+            padding: 7.5px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+
+        @media screen and (max-width: 1200px) {
+            #card-container.gateway-card-row > .gateway-col {
+                flex: 0 0 33.333%;
+                max-width: 33.333%;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            #card-container.gateway-card-row > .gateway-col {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+        }
+
+        .gateway-card {
+            height: 100%;
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow: hidden;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-card);
+            color: var(--text-main);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gateway-card:hover {
+            box-shadow: var(--shadow-card-hover);
+            border-color: var(--border-card-hover);
+        }
+
+        .gateway-card .device-card-header {
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-card);
+            flex-shrink: 0;
+        }
+
+        .gateway-card .card-header-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .gateway-card .card-vendor-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-on-tag);
+            border-radius: 999px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .gateway-card .card-tag-0 {
+            background: var(--tag-0);
+        }
+
+        .gateway-card .card-tag-1 {
+            background: var(--tag-1);
+        }
+
+        .gateway-card .card-tag-2 {
+            background: var(--tag-2);
+        }
+
+        .gateway-card .card-tag-3 {
+            background: var(--tag-3);
+        }
+
+        .gateway-card .card-tag-4 {
+            background: var(--tag-4);
+        }
+
+        .gateway-card .card-device-name {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gateway-card .card-check {
+            flex-shrink: 0;
+        }
+
+        .gateway-card .device-card-body {
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            min-height: 60px;
+        }
+
+        .gateway-card .card-info-list {
+            flex: 1;
+            min-width: 0;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .gateway-card .card-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+
+        .gateway-card .card-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .gateway-card .card-info-label {
+            color: var(--text-sub);
+            flex-shrink: 0;
+        }
+
+        .gateway-card .card-info-value {
+            color: var(--text-value);
+            font-weight: 500;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gateway-card .card-device-thumb {
+            width: 56px;
+            height: 56px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--bg-thumb-start) 0%, var(--bg-thumb-end) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-thumb);
+        }
+
+        .gateway-card .card-device-thumb .layui-icon {
+            font-size: 28px;
+            color: var(--text-disabled);
+        }
+
+        .gateway-card .device-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-card);
+        }
+
+        .gateway-card .card-footer-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .gateway-card .card-footer-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 11px;
+            color: var(--text-on-tag);
+            border-radius: 4px;
+        }
+
+        .gateway-card .tag-purple {
+            background: var(--tag-purple);
+        }
+
+        .gateway-card .tag-green {
+            background: #16b777;
+            color: #fff;
+        }
+
+        .gateway-card .card-footer-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .gateway-card .card-action-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: var(--text-disabled);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .gateway-card .card-action-btn:hover {
+            color: var(--color-primary);
+            background: var(--bg-hover-soft);
+        }
+
+        .gateway-card .card-action-btn .layui-icon {
+            font-size: 16px;
+        }
+
+        .gateway-card .card-action-btn.disabled,
+        .gateway-card .card-action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* 启用状态：卡片左侧颜色条 */
+        .gateway-card.gateway-card-enabled {
+            border-left: 4px solid #16b777;
+        }
+
+        .gateway-card.gateway-card-enabled:hover {
+            border-left-color: #16b777;
+        }
+
+        /* 查询与工具栏之间的分隔线 */
+        .gw-toolbar-divider {
+            height: 0;
+            border-bottom: 1px solid var(--border-card, #e6e6e6);
+            margin: 12px 0 10px 0;
+        }
+        .gw-toolbar-row {
+            margin-bottom: 10px;
+        }
+        /* 工具栏：新增按钮等屏宽 */
+        .gw-toolbar-actions {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+        }
+        .gw-toolbar-btn {
+            height: 36px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+        }
+        .gw-toolbar-btn .layui-icon {
+            font-size: 18px;
+        }
+        .gw-toolbar-btn span {
+            margin-left: 6px;
+        }
+        /* 新增：无配色，默认样式 */
+        .gw-toolbar-btn#btn-add {
+            flex: 1;
+            width: 100%;
+            background: var(--bg-panel, #f8f8f8);
+            color: var(--text-main, #333);
+            border: 1px solid var(--border-card, #e6e6e6);
+        }
+        .gw-toolbar-btn#btn-add:hover {
+            background: var(--bg-hover-soft, #eee);
+            border-color: var(--border-card-hover, #ddd);
+            box-shadow: none;
+            transform: none;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-tab-content main-panel oemes-container">
+    <div class="layui-col-md12 right-panel">
+        <form class="layui-form layui-row layui-col-space16">
+            <div class="layui-col-md3">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix"><i class="layui-icon layui-icon-link"></i></div>
+                    <select name="protocol" id="protocol">
+                        <option value="" lang-i18n="gateway.protocol">协议</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-col-md3">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix"><i class="layui-icon layui-icon-username"></i></div>
+                    <input type="text" name="serverName" id="serverName" placeholder="" class="layui-input"
+                           lay-affix="clear" lang-i18n="gateway.serverName">
+                </div>
+            </div>
+            <div class="layui-col-md2">
+                <button class="layui-btn layui-btn-sm" lay-submit lay-filter="gateway-search" lang-i18n="common.search">
+                    搜索
+                </button>
+                <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary" lang-i18n="common.clear">清空
+                </button>
+            </div>
+        </form>
+        <div class="gw-toolbar-divider"></div>
+        <div class="gw-toolbar-row">
+            <div class="gw-toolbar-actions">
+                <button type="button" class="gw-toolbar-btn" id="btn-add" title="" data-i18n-title="common.add"><i class="layui-icon layui-icon-add-1"></i><span lang-i18n="common.add">新增</span></button>
+            </div>
+        </div>
+        <div id="card-container" class="common-data-container gateway-card-row"></div>
+    </div>
+</div>
+
+<script th:inline="none">
+    var current_row_data;
+
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.$;
+
+        get(router.gw_protocols, null, function (result) {
+            $('#protocol').append($('<option value="">').text(i18np.prop('common.all')));
+            $.each(result, function (index, item) {
+                $('#protocol').append(new Option(item.name, item.id));
+            });
+            form.render();
+        });
+
+        $('#btn-add').attr('title', i18np.prop('common.add') || '新增');
+
+        function renderCards(list) {
+            var html = '';
+            if (!list || list.length === 0) {
+                html = '<div class="gateway-col" style="flex: 0 0 100%; max-width: 100%; text-align: center; padding: 48px; color: var(--text-sub);">' + (i18np.prop('common.placeholder') || '暂无数据') + '</div>';
+            } else {
+                $.each(list, function (i, d) {
+                    var tagClass = 'card-tag-' + (i % 5);
+                    var enabledClass = d.enabled ? ' gateway-card-enabled' : '';
+                    html += '<div class="gateway-col">' +
+                        '<div class="gateway-card layui-card' + enabledClass + '">' +
+                        '<div class="device-card-header">' +
+                        '<div class="card-header-row">' +
+                        '<span class="card-vendor-tag ' + tagClass + '">' + (d.protocol || '-') + '</span>' +
+                        '<span class="card-device-name" title="' + (d.serverName || '') + '">' + (d.serverName || '-') + '</span>' +
+                        '</div></div>' +
+                        '<div class="device-card-body">' +
+                        '<div class="card-info-list">' +
+                        '<div class="card-info-row"><span class="card-info-label">' + (i18np.prop('gateway.host') || '连接地址') + '</span><span class="card-info-value">' + (d.uri || '-') + '</span></div>' +
+                        '<div class="card-info-row"><span class="card-info-label">' + (i18np.prop('gateway.protocol') || '协议类型') + '</span><span class="card-info-value">' + (d.protocol || '-') + '</span></div>' +
+                        '</div>' +
+                        '<div class="card-device-thumb"><i class="layui-icon layui-icon-link"></i></div>' +
+                        '</div>' +
+                        '<div class="device-card-footer">' +
+                        '<div class="card-footer-tags">' +
+                        '<span class="card-footer-tag tag-purple">' + (d.protocol || '-') + '</span>' +
+                        '</div>' +
+                        '<div class="card-footer-actions">' +
+                        (d.enabled ? '<button type="button" class="card-action-btn lay-event-disable" data-id="' + (d.id || '') + '" title="' + (i18np.prop('gateway.disable') || '停用') + '"><i class="layui-icon layui-icon-pause"></i></button>' :
+                            '<button type="button" class="card-action-btn lay-event-enable" data-id="' + (d.id || '') + '" title="' + (i18np.prop('gateway.enable') || '启用') + '"><i class="layui-icon layui-icon-play"></i></button>') +
+                        '<button type="button" class="card-action-btn lay-event-edit' + (d.enabled ? ' disabled' : '') + '" data-id="' + (d.id || '') + '"' + (d.enabled ? ' disabled title="' + (i18np.prop('gateway.disableFirst') || '请先停用') + '"' : ' title="' + (i18np.prop('common.edit') || '编辑') + '"') + '><i class="layui-icon layui-icon-edit"></i></button>' +
+                        '<button type="button" class="card-action-btn lay-event-del' + (d.enabled ? ' disabled' : '') + '" data-id="' + (d.id || '') + '"' + (d.enabled ? ' disabled title="' + (i18np.prop('gateway.disableFirst') || '请先停用') + '"' : ' title="' + (i18np.prop('common.delete') || '删除') + '"') + '><i class="layui-icon layui-icon-delete"></i></button>' +
+                        '<button type="button" class="card-action-btn lay-event-binding" data-id="' + (d.id || '') + '" data-name="' + (d.serverName || '') + '" title="设备绑定"><i class="layui-icon layui-icon-component"></i></button>' +
+                        '</div></div>' +
+                        '</div>' +
+                        '</div>';
+                });
+            }
+            $('#card-container').html(html);
+        }
+
+        function loadData() {
+            post(router.gw_page, {
+                requirePage: false,
+                protocol: $('#protocol').val(),
+                serverName: $('#serverName').val(),
+            }, function (data) {
+                renderCards(data);
+            })
+        }
+
+        $('#btn-add').on('click', function () {
+            current_row_data = null;
+            openWindow(i18np.prop('common.add'), '/view/gw_form_edit', ['560px', '520px']);
+        });
+
+        $('#card-container').on('click', '.lay-event-enable', function (e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            get(router.gw_start, {id: id}, function () {
+                layer.msg((i18np.prop('gateway.enable') || '启用') + (i18np.prop('common.success') || '成功'));
+                loadData();
+            });
+        });
+        $('#card-container').on('click', '.lay-event-disable', function (e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            get(router.gw_stop, {id: id}, function () {
+                layer.msg(((i18np.prop('gateway.disable') || '停用')) + (i18np.prop('common.success') || '成功'));
+                loadData();
+            });
+        });
+        $('#card-container').on('click', '.lay-event-edit', function (e) {
+            e.stopPropagation();
+            if ($(this).prop('disabled')) return;
+            var id = $(this).data('id');
+            current_row_data = null;
+            openWindow(i18np.prop('common.edit'), '/view/gw_form_edit?id=' + id, ['560px', '520px']);
+        });
+        $('#card-container').on('click', '.lay-event-del', function (e) {
+            e.stopPropagation();
+            if ($(this).prop('disabled')) return;
+            var id = $(this).data('id');
+            delWindow(router.gw_del, [id], function () {
+                loadData();
+            });
+        });
+        $('#card-container').on('click', '.lay-event-binding', function (e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            if (parent.openIndexTab) parent.openIndexTab('/view/gw_binding_tables?connectId=' + id, 'binding_' + id, '设备绑定-' + (name || id));
+        });
+
+        form.on('submit(gateway-search)', function () {
+            loadData();
+            return false;
+        });
+
+        window.loadConnectCards = loadData;
+        loadData();
+    });
+
+    function reloadTb() {
+        if (window.loadConnectCards) window.loadConnectCards();
+    }
+</script>
+</body>
+</html>

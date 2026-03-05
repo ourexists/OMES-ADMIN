@@ -47,9 +47,20 @@
         color: #fff;
         font-size: 28px;
     }
-
     .equip-icon.offline {
         background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%);
+    }
+    .equip-icon.alarm {
+        background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+    }
+    .equip-icon.run {
+        background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+    }
+    .equip-icon.stop {
+        background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%);
+    }
+    .equip-icon.online {
+        background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
     }
 
     .equip-name-row {
@@ -76,11 +87,25 @@
         color: #52c41a;
         border: 1px solid #b7eb8f;
     }
-
     .equip-status-tag.offline {
         background: #f5f5f5;
         color: #8c8c8c;
         border: 1px solid #d9d9d9;
+    }
+    .equip-status-tag.alarm {
+        background: #fff2f0;
+        color: #ff4d4f;
+        border: 1px solid #ffccc7;
+    }
+    .equip-status-tag.run {
+        background: #f6ffed;
+        color: #52c41a;
+        border: 1px solid #b7eb8f;
+    }
+    .equip-status-tag.stop {
+        background: #fff7e6;
+        color: #fa8c16;
+        border: 1px solid #ffd591;
     }
 
     .equip-meta {
@@ -177,6 +202,62 @@
         border-top: none;
         padding: 16px;
         border-radius: 0 0 4px 4px;
+    }
+
+    /* 设备属性卡片 */
+    .attrs-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+    }
+    .attr-card {
+        position: relative;
+        background: var(--bg-panel, #fff);
+        border: 1px solid var(--border-base, #e1e6ef);
+        border-radius: 8px;
+        padding: 16px 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .attr-card:nth-child(6n+1) { background: #e6f7ff; border-color: #91d5ff; }
+    .attr-card:nth-child(6n+2) { background: #f6ffed; border-color: #b7eb8f; }
+    .attr-card:nth-child(6n+3) { background: #fff7e6; border-color: #ffd591; }
+    .attr-card:nth-child(6n+4) { background: #fff1f0; border-color: #ffa39e; }
+    .attr-card:nth-child(6n+5) { background: #f9f0ff; border-color: #d3adf7; }
+    .attr-card:nth-child(6n+6) { background: #e6fffb; border-color: #87e8de; }
+    .attr-card .attr-pin {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        color: #1890ff;
+        font-size: 16px;
+        pointer-events: none;
+    }
+    .attr-card .attr-label {
+        font-size: 16px;
+        color: var(--text-sub, #6b7785);
+        margin-bottom: 6px;
+        line-height: 1.25;
+    }
+    .attr-card .attr-value-wrap {
+        line-height: 1.25;
+        word-break: break-all;
+    }
+    .attr-card .attr-value {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2f3b4a;
+    }
+    .attr-card .attr-unit {
+        font-size: 15px;
+        font-weight: 400;
+        color: var(--text-sub, #8c8c8c);
+        margin-left: 4px;
     }
 </style>
 <body>
@@ -298,7 +379,7 @@
                 <div class="realtime-mid">
                     <div id="realtime-run-chart-container"></div>
                 </div>
-                <div class="layui-tab layui-tab-brief realtime-footer">
+                <div class="layui-tab layui-tab-brief realtime-footer" id="realtimeFooter" style="display: none;">
                     <ul class="layui-tab-title">
                         <li class="layui-this">趋势图</li>
                         <li>数据表</li>
@@ -420,11 +501,23 @@
         let runText = d.runState === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop');
         let alarmText = d.alarmState === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common');
 
+        var statusClass, statusText;
+        if (d.alarmState === 1) {
+            statusClass = 'alarm';
+            statusText = alarmText;
+        } else if (d.onlineState !== 1) {
+            statusClass = 'offline';
+            statusText = onlineText;
+        } else {
+            statusClass = d.runState === 1 ? 'run' : 'stop';
+            statusText = runText;
+        }
+
         $('#equipName').text(d.name || '-');
         $('#equipSn').text(d.selfCode || '-');
         $('#equipWorkshop').text(d.workshop ? d.workshop.name : '-');
-        $('#equipStatusTag').text(onlineText).removeClass('online offline').addClass(d.onlineState === 1 ? 'online' : 'offline');
-        $('#equipIcon').removeClass('offline').toggleClass('offline', d.onlineState !== 1);
+        $('#equipStatusTag').text(statusText).removeClass('online offline alarm run stop').addClass(statusClass);
+        $('#equipIcon').removeClass('offline alarm run stop online').addClass(statusClass);
 
         $('#infoName').text(d.name || '-');
         $('#infoSn').text(d.selfCode || '-');
@@ -440,10 +533,13 @@
 
         if (d.attrs && d.attrs.length > 0) {
             $('#attrsSection').show();
-            let html = '';
+            let html = '<div class="attrs-cards">';
             d.attrs.forEach(function (a) {
-                html += '<div class="info-row"><span class="info-label">' + (a.name || '-') + '</span><span class="info-value">' + (a.value != null ? a.value : '-') + '</span></div>';
+                var val = a.value != null ? (typeof a.value === 'object' ? JSON.stringify(a.value) : String(a.value)) : '-';
+                var unitHtml = (a.unit && a.unit.trim()) ? ('<span class="attr-unit">' + a.unit.trim() + '</span>') : '';
+                html += '<div class="attr-card"><i class="layui-icon layui-icon-flag attr-pin"></i><div class="attr-label">' + (a.name || '-') + '</div><div class="attr-value-wrap"><span class="attr-value">' + val + '</span>' + unitHtml + '</div></div>';
             });
+            html += '</div>';
             $('#attrsContainer').html(html);
         }
     }
@@ -466,13 +562,18 @@
 
     function loadRealtimeConfig(cb) {
         realtime_config_data = [];
-        if (!sn) { if (typeof cb === 'function') cb(); return; }
+        if (!sn) {
+            $('#realtimeFooter').toggle(false);
+            if (typeof cb === 'function') cb();
+            return;
+        }
         get(router.equip_config_sn, {equipSn: sn}, function (d) {
             if (d && d.config && d.config.attrs) {
                 (d.config.attrs || []).forEach(function (e) {
                     if (e && e.needCollect) realtime_config_data.push(e);
                 });
             }
+            $('#realtimeFooter').toggle(realtime_config_data.length > 0);
             if (typeof cb === 'function') cb();
         });
     }

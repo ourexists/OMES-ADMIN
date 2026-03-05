@@ -15,9 +15,9 @@ import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.Equip;
-import com.ourexists.omes.device.pojo.EquipConfig;
+import com.ourexists.omes.device.pojo.GwBinding;
 import com.ourexists.omes.device.pojo.Workshop;
-import com.ourexists.omes.device.service.EquipConfigService;
+import com.ourexists.omes.device.service.GwBindingService;
 import com.ourexists.omes.device.service.EquipService;
 import com.ourexists.omes.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,7 +47,7 @@ public class EquipViewer implements EquipFeign {
     private WorkshopService workshopService;
 
     @Autowired
-    private EquipConfigService equipConfigService;
+    private GwBindingService gwBindingService;
 
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
@@ -57,14 +57,14 @@ public class EquipViewer implements EquipFeign {
         List<EquipDto> r = Equip.covert(page.getRecords());
         if (!CollectionUtils.isEmpty(r)) {
             List<WorkshopTreeNode> workshopDtos = null;
-            List<EquipConfigDto> equipConfigs = null;
+            List<GwBindingDto> equipConfigs = null;
             if (dto.getQueryWorkshop()) {
                 List<String> codes = r.stream().map(EquipDto::getWorkshopCode).toList();
                 workshopDtos = Workshop.covert(workshopService.queryByCodes(codes));
             }
             if (dto.getQueryConfig()) {
                 List<String> ids = r.stream().map(EquipDto::getId).toList();
-                equipConfigs = EquipConfig.covert(equipConfigService.queryByEquip(ids));
+                equipConfigs = GwBinding.covert(gwBindingService.queryByEquip(ids));
             }
             for (EquipDto equipDto : r) {
                 if (!CollectionUtils.isEmpty(workshopDtos)) {
@@ -76,9 +76,9 @@ public class EquipViewer implements EquipFeign {
                     }
                 }
                 if (!CollectionUtils.isEmpty(equipConfigs)) {
-                    for (EquipConfigDto equipConfigDto : equipConfigs) {
-                        if (equipConfigDto.getEquipId().equals(equipDto.getId())) {
-                            equipDto.setConfig(equipConfigDto);
+                    for (GwBindingDto gwBindingDto : equipConfigs) {
+                        if (gwBindingDto.getEquipId().equals(equipDto.getId())) {
+                            equipDto.setConfig(gwBindingDto);
                             break;
                         }
                     }
@@ -159,24 +159,24 @@ public class EquipViewer implements EquipFeign {
     @Override
     @Operation(summary = "查询设备配置", description = "查询设备配置")
     @GetMapping("queryEquipConfig")
-    public JsonResponseEntity<EquipConfigDto> queryEquipConfig(@RequestParam String equipId) {
-        return JsonResponseEntity.success(EquipConfig.covert(equipConfigService.queryByEquip(equipId)));
+    public JsonResponseEntity<GwBindingDto> queryEquipConfig(@RequestParam String equipId) {
+        return JsonResponseEntity.success(GwBinding.covert(gwBindingService.queryByEquip(equipId)));
     }
 
     @Override
     @Operation(summary = "设置设备配置", description = "设置设备配置")
     @GetMapping("setEquipConfig")
-    public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody EquipConfigDto equipConfigDto) {
-        equipConfigService.addOrUpdate(equipConfigDto);
+    public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody GwBindingDto gwBindingDto) {
+        gwBindingService.addOrUpdate(gwBindingDto);
         return JsonResponseEntity.success(true);
     }
 
     @Override
-    public JsonResponseEntity<EquipConfigDto> queryEquipConfigBySn(String equipSn) {
+    public JsonResponseEntity<GwBindingDto> queryEquipConfigBySn(String equipSn) {
         Equip equip = service.getOne(new LambdaQueryWrapper<Equip>().eq(Equip::getSelfCode, equipSn));
         if (equip == null) {
             return JsonResponseEntity.success(null);
         }
-        return JsonResponseEntity.success(EquipConfig.covert(equipConfigService.queryByEquip(equip.getId())));
+        return JsonResponseEntity.success(GwBinding.covert(gwBindingService.queryByEquip(equip.getId())));
     }
 }

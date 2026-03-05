@@ -8,60 +8,122 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/css/json-box.css">
+    <style>
+        .gateway-select-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .gateway-select-row .layui-btn {
+            flex-shrink: 0;
+        }
+
+        .selected-gateway-wrap {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .gateway-card-single {
+            padding: 16px;
+            background: var(--bg-panel, #f8f9fa);
+            border: 1px solid var(--border-card, #e6e8eb);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .gateway-card-single .card-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main, #333);
+        }
+
+        .gateway-card-single .card-row {
+            font-size: 12px;
+            color: var(--text-sub, #666);
+        }
+
+        .gateway-card-single .card-row span:first-child {
+            margin-right: 8px;
+        }
+
+        .gateway-placeholder {
+            padding: 24px;
+            text-align: center;
+            color: var(--text-sub, #999);
+            font-size: 13px;
+            border: 1px dashed var(--border-card, #e6e8eb);
+            border-radius: 12px;
+            background: var(--bg-panel, #fafafa);
+        }
+
+        #gateway-picker-container {
+            padding: 12px;
+        }
+
+        .gateway-picker-layer .layui-layer-content {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #gateway-picker-container .gateway-picker-card {
+            padding: 14px;
+            margin-bottom: 10px;
+            border: 1px solid #e6e8eb;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #fff;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        #gateway-picker-container .gateway-picker-card:hover {
+            border-color: var(--border-card-hover, #1e9fff);
+            box-shadow: 0 2px 12px rgba(30, 159, 255, 0.15);
+        }
+
+        #gateway-picker-container .gateway-picker-card .pick-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        #gateway-picker-container .gateway-picker-card .pick-info {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
-    <style>
-        .json-container {
-            display: flex;
-            gap: 16px;
-        }
-
-        .json-box {
-            flex: 1;
-            padding: 10px;
-        }
-
-        .json-box textarea {
-            width: 100%;
-            height: 400px;
-            font-family: monospace;
-            font-size: 13px;
-            padding: 8px;
-            resize: none;
-        }
-
-        .json-box .title {
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        #json-template {
-            font-weight: bold;
-        }
-
-    </style>
 </head>
 <body>
 <div style="padding: 16px;">
     <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
         <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="data.collect_type" style="font-weight: bold "></label>
-            <div class="layui-input-block">
-                <select name="collectType" id="collectType">
-                </select>
+            <div id="btn-select-gateway">
+                <div class="selected-gateway-wrap" id="selected-gateway-wrap">
+                    <div class="gateway-placeholder" id="gateway-placeholder" lang-i18n="gateway.pleaseSelect">
+                        请选择网关
+                    </div>
+                    <div class="gateway-card-single" id="selected-gateway-card" style="display: none;"></div>
+                </div>
             </div>
         </div>
         <div class="json-container">
             <!-- 左侧 JSON 输入 -->
             <div class="json-box">
-                <div class="title">属性配置(JSON)</div>
-                <textarea id="json-input" placeholder='{}'></textarea>
+                <div class="title"><i class="layui-icon layui-icon-edit"></i>属性配置 (JSON)</div>
+                <textarea name="config" id="json-input"
+                          placeholder='输入或粘贴 JSON，例如：{"runMap":{"value":"run"},"attrs":{"value":[]}}'></textarea>
             </div>
             <!-- 右侧 JSON 模板 -->
-            <div class="json-box">
-                <div class="title">配置模板示例</div>
+            <div class="json-box readonly">
+                <div class="title"><i class="layui-icon layui-icon-template-1"></i>配置模板示例</div>
                 <textarea id="json-template" readonly disabled></textarea>
             </div>
         </div>
@@ -72,26 +134,78 @@
         </div>
     </form>
 </div>
-<script type="text/html" id="tb-tool">
-    <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="del">
-            <i class="layui-icon layui-icon-subtraction"></i>
-        </a>
-    </div>
-</script>
-<script type="text/html" id="tb-tool-2">
-    <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="del">
-            <i class="layui-icon layui-icon-subtraction"></i>
-        </a>
-    </div>
-</script>
 <script th:inline="none">
-    var current_data;
+    var selectedGwId = null;
+    var selectedGateway = null;
+
+    function renderSelectedGatewayCard() {
+        if (!selectedGateway) {
+            $('#gateway-placeholder').show().text(i18np.prop('gateway.pleaseSelect') || '请选择网关');
+            $('#selected-gateway-card').hide().empty();
+            return;
+        }
+        var d = selectedGateway;
+        var hostLabel = i18np.prop('gateway.host') || '连接地址';
+        var protocolLabel = i18np.prop('gateway.protocol') || '协议';
+        $('#gateway-placeholder').hide();
+        $('#selected-gateway-card').show().html(
+            '<div class="card-name">' + (d.serverName || '-') + '</div>' +
+            '<div class="card-row"><span>' + hostLabel + '</span><span>' + (d.uri || '-') + '</span></div>' +
+            '<div class="card-row"><span>' + protocolLabel + '</span><span>' + (d.protocol || '-') + '</span></div>'
+        );
+    }
+
+    function openGatewayPicker() {
+        var content = '<div id="gateway-picker-container">' + (i18np.prop('common.placeholder') || '加载中...') + '</div>';
+        var pickerLayer = layer.open({
+            type: 1,
+            title: (i18np.prop('gateway.select') || '选择网关'),
+            area: ['480px', '460px'],
+            skin: 'gateway-picker-layer',
+            content: content,
+            success: function () {
+                $.ajax({
+                    url: initRequestUrl(router.gw_page),
+                    data: JSON.stringify({requirePage: false}),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    headers: getCommonHeader(),
+                    success: function (data) {
+                        var list = (data && data.code === 200 && data.data) ? data.data : [];
+                        var html = '';
+                        if (list.length === 0) {
+                            html = '<div class="gateway-placeholder">' + (i18np.prop('common.placeholder') || '暂无网关') + '</div>';
+                        } else {
+                            $.each(list, function (i, d) {
+                                html += '<div class="gateway-picker-card" data-idx="' + i + '">' +
+                                    '<div class="pick-name">' + (d.serverName || '-') + '</div>' +
+                                    '<div class="pick-info">' + (i18np.prop('gateway.host') || '连接地址') + ': ' + (d.uri || '-') + ' | ' + (i18np.prop('gateway.protocol') || '协议') + ': ' + (d.protocol || '-') + '</div></div>';
+                            });
+                        }
+                        $('#gateway-picker-container').html(html);
+                        $('#gateway-picker-container .gateway-picker-card').on('click', function () {
+                            var idx = parseInt($(this).data('idx'), 10);
+                            if (list[idx]) {
+                                selectedGateway = list[idx];
+                                selectedGwId = selectedGateway.id || null;
+                                renderSelectedGatewayCard();
+                                layer.close(pickerLayer);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     layui.use(function () {
         let form = layui.form,
             layer = layui.layer;
         const jsonTemplate = {
+            collectType: {
+                value: "Tc_mqtt", comment: "自定义解析器,通用化不用"
+            },
             runMap: {
                 value: "run", comment: i18np.prop("equip.runMap")
             },
@@ -125,45 +239,58 @@
         $('#json-template').html(renderJsonWithComment(jsonTemplate));
 
         let id = layui.url().search.id;
+        if (!id) {
+            layer.msg(i18np.prop('common.placeholder') || '缺少设备ID');
+            return;
+        }
 
-        get(router.equip_collect_type, null, function (result) {
-            $.each(result, function (index, item) {
-                $('#collectType').append(new Option(item, item));
-            })
-            form.render();
-        })
+        $('#btn-select-gateway').on('click', function () {
+            openGatewayPicker();
+        });
 
         get(router.equip_config, {"equipId": id}, function (r) {
             if (r == null) {
-                current_data = {};
-                attrDetails = [];
                 form.val("common-edit-form", {});
-            } else {
-                current_data = r.config;
-                if (current_data != null) {
-                    form.val("common-edit-form", Object.assign({}, current_data));
-                    // 将 attrs & alarms 转成 JSON 填入 textarea
-                    const jsonText = JSON.stringify(
-                        current_data,
-                        (key, value) => key === "collectType" ? undefined : value,
-                        4)
-                    $('#json-input').val(jsonText);
-                } else {
-                    form.val("common-edit-form", {});
-                    current_data = {};
-                }
+                renderSelectedGatewayCard();
+                return;
             }
-        })
+            if (r.gwId) {
+                selectedGwId = r.gwId;
+                get(router.gw_id, {id: r.gwId}, function (gw) {
+                    selectedGateway = gw || {id: r.gwId};
+                    renderSelectedGatewayCard();
+                });
+            } else {
+                renderSelectedGatewayCard();
+            }
+            var loadedConfig = r.config || {};
+            if (Object.keys(loadedConfig).length) {
+                var jsonText = JSON.stringify(
+                    loadedConfig,
+                    function (key, value) {
+                        return key === "gwId" ? undefined : value;
+                    },
+                    4);
+                $('#json-input').val(jsonText);
+            }
+        });
         // 提交事件
         form.on('submit(common-edit-button)', function (data) {
+            if (!id) {
+                layer.msg(i18np.prop('common.placeholder') || '缺少设备ID');
+                return false;
+            }
             let config = $("#json-input").val();
-            let configJSON = JSON.parse(config);
-            let field = data.field; // 获取表单字段值
-            for (let key in field) {
-                configJSON[key] = field[key];
+            let configJSON = {};
+            try {
+                configJSON = JSON.parse(config);
+            } catch (e) {
+                layer.msg('JSON格式错误');
+                return false;
             }
             post(router.equip_setConfig, {
                 "equipId": id,
+                "gwId": selectedGwId || null,
                 "config": configJSON
             }, function () {
                 let index = parent.layer.getFrameIndex(window.name);

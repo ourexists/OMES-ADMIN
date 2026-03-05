@@ -85,6 +85,11 @@
         </a>
     </div>
 </script>
+<script type="text/html" id="tb-select-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs" lay-event="select">{{ i18np.prop('common.select') }}</a>
+    </div>
+</script>
 <script type="text/html" id="tb-toolbar">
     <div class="layui-btn-container">
         <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="add">
@@ -97,8 +102,6 @@
             <span>{{= d.lineStyle ? i18np.prop('common.mode.multi') : i18np.prop('common.mode.single') }}</span>
             <i class="layui-icon layui-icon-down layui-font-12"></i>
         </button>
-        <!--        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">{{ i18np.prop('common.row.data') }}</button>-->
-        <!--        <button class="layui-btn layui-btn-sm" lay-event="getData">{{ i18np.prop('common.page.data') }}</button>-->
     </div>
 </script>
 
@@ -116,30 +119,67 @@
         var dropdown = layui.dropdown;
         var layer = layui.layer;
 
-        let view_operate = {
-            'tbDefaultToolbar': ['filter', 'exports', 'print'],
-            'tbToolbar': '#tb-toolbar',
-            'tbCols': [[
-                {type: 'checkbox', title: '', fixed: true},
-                {field: 'id', title: 'ID', fixed: true},
-                {field: 'name', title: i18np.prop('equip.name')},
-                {field: 'selfCode', title: i18np.prop('equip.code')},
-                {field: 'typeDesc', title: i18np.prop('equip.type')},
-                {
-                    field: 'workshop', title: i18np.prop('workshop.name'), templet: function (e) {
-                        if (e.workshop != null) {
-                            return e.workshop.name
+
+        var page_params = {
+            default_param: {
+                cols: [[
+                    {type: 'checkbox', title: '', fixed: true},
+                    {field: 'id', title: 'ID', fixed: true},
+                    {field: 'name', title: i18np.prop('equip.name')},
+                    {field: 'selfCode', title: i18np.prop('equip.code')},
+                    {field: 'typeDesc', title: i18np.prop('equip.type')},
+                    {
+                        field: 'workshop', title: i18np.prop('workshop.name'), templet: function (e) {
+                            if (e.workshop != null) {
+                                return e.workshop.name
+                            }
                         }
+                    },
+                    {
+                        fixed: 'right',
+                        title: i18np.prop('common.operate'),
+                        width: 200,
+                        minWidth: 125,
+                        templet: '#tb-tool'
                     }
-                },
-                {
-                    fixed: 'right',
-                    title: i18np.prop('common.operate'),
-                    width: 200,
-                    minWidth: 125,
-                    templet: '#tb-tool'
-                }
-            ]]
+                ]],
+                toolbar: '#tb-toolbar',
+                defaultToolbar: ['filter', 'exports', 'print'],
+            },
+            select_param: {
+                cols: [[
+                    {type: 'checkbox', title: '', fixed: true},
+                    {field: 'id', title: 'ID', fixed: true},
+                    {field: 'name', title: i18np.prop('equip.name')},
+                    {field: 'selfCode', title: i18np.prop('equip.code')},
+                    {field: 'typeDesc', title: i18np.prop('equip.type')},
+                    {
+                        field: 'workshop', title: i18np.prop('workshop.name'), templet: function (e) {
+                            if (e.workshop != null) {
+                                return e.workshop.name
+                            }
+                        }
+                    },
+                    {
+                        fixed: 'right',
+                        title: i18np.prop('common.operate'),
+                        width: 200,
+                        minWidth: 125,
+                        templet: '#tb-select-tool'
+                    }
+                ]],
+                toolbar: '#tb-add-toolbar',
+                defaultToolbar: ''
+            }
+        }
+
+        let page_type = layui.url().search.page_type;
+
+        let view_operate;
+        if (page_type != null && page_type === '2') {
+            view_operate = page_params.select_param;
+        } else {
+            view_operate = page_params.default_param;
         }
 
         get(router.equip_type, null, function (result) {
@@ -182,9 +222,9 @@
             headers: getCommonHeader(),
             contentType: 'application/json',
             loading: false,
-            toolbar: view_operate.tbToolbar,
-            defaultToolbar: view_operate.tbDefaultToolbar,
-            cols: view_operate.tbCols,
+            toolbar: view_operate.toolbar,
+            defaultToolbar: view_operate.defaultToolbar,
+            cols: view_operate.cols,
             done: function () {
                 // 行模式
                 dropdown.render({
@@ -276,11 +316,14 @@
         table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
             var data = obj.data; // 获得当前行数据
             if (obj.event === 'edit') {
-                openWindow('common.edit', '/view/equip_form_edit?id=' + data.id, ['90%', '90%']);
+                openWindow('common.edit', '/view/equip_form_edit?id=' + data.id);
             } else if (obj.event === 'del') {
                 delWindow(router.equip_del, [data.id], reloadTb);
             } else if (obj.event === 'equipAttr') {
-                openWindow('equipattr.name', '/view/equipattr_form_edit?id=' + data.id, ['80%', '90%']);
+                openAreaWindow('equipattr.name', '/view/equipattr_form_edit?id=' + data.id, ['70%', '100%']);
+            } else if (obj.event === 'select') {
+                parent.selectEquip(obj.data);
+                closeWindow();
             }
         });
         // table 滚动时移除内部弹出的元素

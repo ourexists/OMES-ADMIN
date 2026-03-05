@@ -1,0 +1,70 @@
+/*
+ * JSON 编辑/展示框样式（属性配置等）
+ */
+.json-container {
+    display: flex;
+    gap: 20px;
+}
+
+.json-box {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fafbfc;
+    border: 1px solid #e8eaed;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.json-box .title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e8eaed;
+}
+
+.json-box .title i {
+    margin-right: 6px;
+    color: #009688;
+}
+
+.json-box textarea {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    height: 380px;
+    font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 12px 14px;
+    resize: vertical;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fff;
+    color: #24292f;
+    tab-size: 4;
+}
+
+.json-box textarea:focus {
+    border-color: #009688;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.12);
+}
+
+#json-input::placeholder {
+    color: #9ca3af;
+}
+
+.json-box.readonly textarea {
+    background: #f6f8fa;
+    color: #57606a;
+    cursor: default;
+}
+
+#json-template {
+    font-weight: normal;
+    font-size: 12px;
+}
