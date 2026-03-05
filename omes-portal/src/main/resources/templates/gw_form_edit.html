@@ -42,9 +42,9 @@
             </div>
         </div>
         <div class="layui-form-item" id="suffix-form-item" style="display: none;">
-            <label class="layui-form-label"><span lang-i18n="mqtt.topic">订阅</span></label>
+            <label class="layui-form-label"><span id="topic-required-star" style="color:red;display:none">*</span> <span lang-i18n="mqtt.topic">订阅主题</span></label>
             <div class="layui-input-block">
-                <input type="text" name="topic" autocomplete="off" class="layui-input" placeholder="/mqtt 或 topic 等">
+                <input type="text" name="topic" id="topic-input" autocomplete="off" class="layui-input" placeholder="/mqtt 或 topic 等">
             </div>
         </div>
         <div class="layui-form-item">
@@ -60,9 +60,9 @@
             </div>
         </div>
         <div class="layui-form-item" id="collect-cron-form-item">
-            <label class="layui-form-label">采集Cron</label>
+            <label class="layui-form-label"><span id="cron-required-star" style="color:red;display:none">*</span> 采集Cron</label>
             <div class="layui-input-block">
-                <input type="text" name="collectCron" placeholder="如 0 * * * * ? 每分钟" class="layui-input">
+                <input type="text" name="collectCron" id="collect-cron-input" placeholder="如 0 * * * * ? 每分钟" class="layui-input">
             </div>
         </div>
 
@@ -83,6 +83,19 @@
             var isMqtt = protocol && String(protocol).toLowerCase() === 'mqtt';
             $('#suffix-form-item').toggle(isMqtt);
             $('#collect-enabled-form-item, #collect-interval-form-item, #collect-cron-form-item').toggle(!isMqtt);
+            // MQTT 时订阅主题必填，其它协议 cron 必填
+            if (isMqtt) {
+                $('#topic-required-star').show();
+                $('#topic-input').attr('lay-verify', 'required');
+                $('#cron-required-star').hide();
+                $('#collect-cron-input').removeAttr('lay-verify');
+            } else {
+                $('#topic-required-star').hide();
+                $('#topic-input').removeAttr('lay-verify');
+                $('#cron-required-star').show();
+                $('#collect-cron-input').attr('lay-verify', 'required');
+            }
+            form.render();
         }
 
         get(router.gw_protocols, null, function (result) {
@@ -93,6 +106,12 @@
             form.on('select(protocol-select)', function (data) {
                 toggleByProtocol(data.value);
             });
+            // 新建时协议默认选第一个
+            if (!id && result && result.length > 0) {
+                $('#protocol').val(result[0].id);
+                form.render('select');
+                toggleByProtocol(result[0].id);
+            }
         });
 
         var id = layui.url().search.id;

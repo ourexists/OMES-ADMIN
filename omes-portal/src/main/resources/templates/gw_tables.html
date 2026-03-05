@@ -365,7 +365,6 @@
         var $ = layui.$;
 
         get(router.gw_protocols, null, function (result) {
-            $('#protocol').append($('<option value="">').text(i18np.prop('common.all')));
             $.each(result, function (index, item) {
                 $('#protocol').append(new Option(item.name, item.id));
             });
