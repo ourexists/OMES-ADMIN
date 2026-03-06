@@ -10,17 +10,6 @@
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/css/json-box.css">
     <style>
-        .gateway-select-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .gateway-select-row .layui-btn {
-            flex-shrink: 0;
-        }
-
         .selected-gateway-wrap {
             flex: 1;
             min-width: 200px;
@@ -95,6 +84,145 @@
             font-size: 12px;
             color: #666;
         }
+
+        .dynamic-form-box {
+            flex: 1;
+            min-width: 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fafbfc;
+            border: 1px solid #e8eaed;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .dynamic-form-box .title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .dynamic-form-box .title i {
+            margin-right: 6px;
+            color: #009688;
+        }
+
+        .dynamic-form-box .toolbar {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .dynamic-form-box .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .dynamic-form-box .form-table th,
+        .dynamic-form-box .form-table td {
+            padding: 8px 6px;
+            border: 1px solid #e8eaed;
+            vertical-align: middle;
+        }
+
+        .dynamic-form-box .form-table th {
+            background: #f0f2f5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .dynamic-form-box .form-table input,
+        .dynamic-form-box .form-table select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 4px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .dynamic-form-box .form-table .col-op {
+            width: 60px;
+            text-align: center;
+        }
+
+        .dynamic-form-box .form-table .col-check {
+            width: 80px;
+            text-align: center;
+        }
+
+        .json-paste-layer {
+            padding: 12px;
+            box-sizing: border-box;
+            display: flex;
+            gap: 16px;
+            min-height: 420px;
+        }
+
+        .json-paste-layer .json-paste-section {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .json-paste-layer .json-paste-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .json-paste-layer .json-paste-label i {
+            margin-right: 4px;
+            color: #009688;
+        }
+
+        .json-paste-layer .json-paste-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .json-paste-layer .json-paste-head .json-paste-label {
+            margin-bottom: 0;
+        }
+
+        .json-paste-layer .json-paste-section textarea {
+            flex: 1;
+            min-height: 320px;
+            width: 100%;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            resize: none;
+            background: #fff;
+            color: #24292f;
+        }
+
+        .json-paste-layer .json-paste-section textarea:focus {
+            border-color: #009688;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.12);
+        }
+
+        .json-paste-layer .json-paste-template-ta {
+            cursor: default;
+            background: #f6f8fa;
+            color: #57606a;
+        }
     </style>
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
@@ -114,21 +242,84 @@
                 </div>
             </div>
         </div>
-        <div class="json-container">
-            <!-- 左侧 JSON 输入 -->
-            <div class="json-box">
-                <div class="title"><i class="layui-icon layui-icon-edit"></i>属性配置 (JSON)</div>
-                <textarea name="config" id="json-input"
-                          placeholder='输入或粘贴 JSON，例如：{"runMap":{"value":"run"},"attrs":{"value":[]}}'></textarea>
-            </div>
-            <!-- 右侧 JSON 模板 -->
-            <div class="json-box readonly">
-                <div class="title"><i class="layui-icon layui-icon-template-1"></i>配置模板示例</div>
-                <textarea id="json-template" readonly disabled></textarea>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="equip.collectType">采集类型</label>
+            <div class="layui-input-block">
+                <input type="text" name="collectType" id="input-collectType" placeholder="如：Tc_mqtt" autocomplete="off"
+                       class="layui-input">
             </div>
         </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="equip.runMap">运行映射</label>
+            <div class="layui-input-block">
+                <input type="text" name="runMap" id="input-runMap" placeholder="如：run" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="dynamic-form-box" style="margin-bottom: 12px;">
+            <div class="title"><i class="layui-icon layui-icon-edit"></i><span
+                    lang-i18n="equipattr.attrConfig">属性配置</span></div>
+            <div class="toolbar">
+                <button type="button" class="layui-btn layui-btn-sm" id="btn-add-attr-row" lang-i18n="equipattr.addRow">
+                    新增一行
+                </button>
+                <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-attr-json-paste"
+                        lang-i18n="equipattr.openJsonPaste">JSON配置模式
+                </button>
+            </div>
+            <table class="form-table layui-table" id="attr-table">
+                <thead>
+                <tr>
+                    <th lang-i18n="equipattr.name">设备属性</th>
+                    <th lang-i18n="equipattr.map">属性映射</th>
+                    <th lang-i18n="equipattr.value">属性默认值</th>
+                    <th lang-i18n="equipattr.unit">单位</th>
+                    <th class="col-check" lang-i18n="equipattr.needCollect">是否采集</th>
+                    <th class="col-op" lang-i18n="common.operate">操作</th>
+                </tr>
+                </thead>
+                <tbody id="attr-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="dynamic-form-box">
+            <div class="title"><i class="layui-icon layui-icon-edit"></i><span
+                    lang-i18n="equipattr.alarmConfig">报警配置</span></div>
+            <div class="toolbar">
+                <button type="button" class="layui-btn layui-btn-sm" id="btn-add-alarm-row"
+                        lang-i18n="equipattr.addRow">新增一行
+                </button>
+                <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-alarm-json-paste"
+                        lang-i18n="equipattr.openJsonPaste">JSON配置模式
+                </button>
+            </div>
+            <table class="form-table layui-table" id="alarm-table">
+                <thead>
+                <tr>
+                    <th lang-i18n="equipattr.alarmMapField">映射字段</th>
+                    <th lang-i18n="equipattr.alarmType">类型</th>
+                    <th lang-i18n="equipattr.alarmThreshold">阈值</th>
+                    <th lang-i18n="equipattr.alarmMin">下限</th>
+                    <th lang-i18n="equipattr.alarmMax">上限</th>
+                    <th lang-i18n="equipattr.alarmText">报警描述</th>
+                    <th class="col-op" lang-i18n="common.operate">操作</th>
+                </tr>
+                </thead>
+                <tbody id="alarm-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- 隐藏的 JSON 存储，用于从剪贴板填入时同步 -->
+        <textarea name="config" id="json-input" style="display:none;"></textarea>
+        <textarea name="alarmConfig" id="json-alarm-input" style="display:none;"></textarea>
 
         <div class="layui-form-item" style="text-align: right;margin-top: 10px">
+            <button type="button" class="layui-btn layui-btn-primary" id="btn-onekey-copy"
+                    lang-i18n="equipattr.onekeyCopy">一键复制
+            </button>
+            <button type="button" class="layui-btn layui-btn-primary" id="btn-paste-fill"
+                    lang-i18n="equipattr.pasteFromClipboard">从剪贴板填入
+            </button>
             <button class="layui-btn" lay-submit lay-filter="common-edit-button"
                     lang-i18n="common.msg.confirm"></button>
         </div>
@@ -164,36 +355,28 @@
             skin: 'gateway-picker-layer',
             content: content,
             success: function () {
-                $.ajax({
-                    url: initRequestUrl(router.gw_page),
-                    data: JSON.stringify({requirePage: false}),
-                    type: 'POST',
-                    dataType: 'json',
-                    contentType: 'application/json',
-                    headers: getCommonHeader(),
-                    success: function (data) {
-                        var list = (data && data.code === 200 && data.data) ? data.data : [];
-                        var html = '';
-                        if (list.length === 0) {
-                            html = '<div class="gateway-placeholder">' + (i18np.prop('common.placeholder') || '暂无网关') + '</div>';
-                        } else {
-                            $.each(list, function (i, d) {
-                                html += '<div class="gateway-picker-card" data-idx="' + i + '">' +
-                                    '<div class="pick-name">' + (d.serverName || '-') + '</div>' +
-                                    '<div class="pick-info">' + (i18np.prop('gateway.host') || '连接地址') + ': ' + (d.uri || '-') + ' | ' + (i18np.prop('gateway.protocol') || '协议') + ': ' + (d.protocol || '-') + '</div></div>';
-                            });
-                        }
-                        $('#gateway-picker-container').html(html);
-                        $('#gateway-picker-container .gateway-picker-card').on('click', function () {
-                            var idx = parseInt($(this).data('idx'), 10);
-                            if (list[idx]) {
-                                selectedGateway = list[idx];
-                                selectedGwId = selectedGateway.id || null;
-                                renderSelectedGatewayCard();
-                                layer.close(pickerLayer);
-                            }
+                post(router.gw_page, {requirePage: false}, function (data) {
+                    var list = (data != null && Array.isArray(data)) ? data : [];
+                    var html = '';
+                    if (list.length === 0) {
+                        html = '<div class="gateway-placeholder">' + (i18np.prop('common.placeholder') || '暂无网关') + '</div>';
+                    } else {
+                        $.each(list, function (i, d) {
+                            html += '<div class="gateway-picker-card" data-idx="' + i + '">' +
+                                '<div class="pick-name">' + (d.serverName || '-') + '</div>' +
+                                '<div class="pick-info">' + (i18np.prop('gateway.host') || '连接地址') + ': ' + (d.uri || '-') + ' | ' + (i18np.prop('gateway.protocol') || '协议') + ': ' + (d.protocol || '-') + '</div></div>';
                         });
                     }
+                    $('#gateway-picker-container').html(html);
+                    $('#gateway-picker-container .gateway-picker-card').on('click', function () {
+                        var idx = parseInt($(this).data('idx'), 10);
+                        if (list[idx]) {
+                            selectedGateway = list[idx];
+                            selectedGwId = selectedGateway.id || null;
+                            renderSelectedGatewayCard();
+                            layer.close(pickerLayer);
+                        }
+                    });
                 });
             }
         });
@@ -202,41 +385,257 @@
     layui.use(function () {
         let form = layui.form,
             layer = layui.layer;
-        const jsonTemplate = {
-            collectType: {
-                value: "Tc_mqtt", comment: "自定义解析器,通用化不用"
-            },
-            runMap: {
-                value: "run", comment: i18np.prop("equip.runMap")
-            },
-            alarmMap: {
-                value: "run", comment: i18np.prop("equip.alarmMap")
-            },
-            attrs: {
-                comment: "设备属性配置",
-                value: [
-                    {
-                        name: {value: "attributeName", comment: i18np.prop("equipattr.name")},
-                        map: {value: "mapField", comment: i18np.prop("equipattr.map")},
-                        value: {value: "defaultValue", comment: i18np.prop("equipattr.value")},
-                        unit: {value: "ml", comment: i18np.prop("equipattr.unit")},
-                        needCollect: {value: true, comment: "是否采集"},
-
-                    }
-                ]
-            },
-            alarms: {
-                value: [
-                    {
-                        map: {value: "alarmMap", comment: i18np.prop("equipattr.map")},
-                        val: {value: "triggerValue", comment: i18np.prop("equipattr.alarmVal")},
-                        text: {value: "alarmDescription", comment: i18np.prop("equipattr.alarmText")}
-                    }
-                ],
-                comment: "设备报警属性"
+        var attrTemplateForComment = [
+            {
+                name: {value: "attributeName", comment: i18np.prop("equipattr.name") || "设备属性"},
+                map: {value: "mapField", comment: i18np.prop("equipattr.map") || "属性映射"},
+                value: {value: "defaultValue", comment: i18np.prop("equipattr.value") || "属性默认值"},
+                unit: {value: "ml", comment: i18np.prop("equipattr.unit") || "单位"},
+                needCollect: {value: true, comment: i18np.prop("equipattr.needCollect") || "是否采集"}
             }
-        };
-        $('#json-template').html(renderJsonWithComment(jsonTemplate));
+        ];
+        var alarmTemplateForComment = [
+            {
+                map: {value: "temperature", comment: "映射字段"},
+                type: {value: 2, comment: "0相等 1大于 2大于等于 3小于 4小于等于 5范围"},
+                val: {value: "100", comment: "阈值"},
+                text: {value: "温度过高", comment: "报警描述"}
+            },
+            {
+                map: {value: "pressure", comment: "映射字段"},
+                type: {value: 5, comment: "5范围：超出[min,max]报警"},
+                min: {value: "0.1", comment: "下限"},
+                max: {value: "0.9", comment: "上限"},
+                text: {value: "压力异常", comment: "报警描述"}
+            }
+        ];
+        var attrTemplateRendered = renderJsonWithComment(attrTemplateForComment);
+        var alarmTemplateRendered = renderJsonWithComment(alarmTemplateForComment);
+
+        // ---------- 属性配置动态表单（扁平结构：name/map/value/unit/needCollect） ----------
+        function getAttrRowData(tr) {
+            var $tr = $(tr);
+            return {
+                name: $tr.find('.attr-name').val() || '',
+                map: $tr.find('.attr-map').val() || '',
+                value: $tr.find('.attr-value').val() || '',
+                unit: $tr.find('.attr-unit').val() || '',
+                needCollect: $tr.find('.attr-needCollect').prop('checked')
+            };
+        }
+
+        function getAttrsFromForm() {
+            var list = [];
+            $('#attr-tbody tr').each(function () {
+                list.push(getAttrRowData(this));
+            });
+            return list;
+        }
+
+        function flatAttr(item, key) {
+            if (item[key] != null && typeof item[key] === 'object' && 'value' in item[key]) return item[key].value;
+            return item[key];
+        }
+
+        function addAttrRow(data) {
+            data = data || {};
+            var n = flatAttr(data, 'name') || '', m = flatAttr(data, 'map') || '', v = flatAttr(data, 'value') || '',
+                u = flatAttr(data, 'unit') || '';
+            var needCollect = data.needCollect === true || (data.needCollect && data.needCollect.value);
+            var checked = needCollect ? ' checked' : '';
+            var row = '<tr>' +
+                '<td><input type="text" class="layui-input attr-name" value="' + (n + '').replace(/"/g, '&quot;') + '"></td>' +
+                '<td><input type="text" class="layui-input attr-map" value="' + (m + '').replace(/"/g, '&quot;') + '"></td>' +
+                '<td><input type="text" class="layui-input attr-value" value="' + (v + '').replace(/"/g, '&quot;') + '"></td>' +
+                '<td><input type="text" class="layui-input attr-unit" value="' + (u + '').replace(/"/g, '&quot;') + '"></td>' +
+                '<td class="col-check"><input type="checkbox" class="attr-needCollect" lay-skin="primary"' + checked + '></td>' +
+                '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-attr">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
+            $('#attr-tbody').append(row);
+        }
+
+        function setAttrsFromArray(attrs) {
+            $('#attr-tbody').empty();
+            if (!Array.isArray(attrs)) attrs = [];
+            for (var i = 0; i < attrs.length; i++) {
+                var item = attrs[i];
+                addAttrRow({
+                    name: flatAttr(item, 'name'),
+                    map: flatAttr(item, 'map'),
+                    value: flatAttr(item, 'value'),
+                    unit: flatAttr(item, 'unit'),
+                    needCollect: item.needCollect === true || (item.needCollect && item.needCollect.value)
+                });
+            }
+            layui.form.render('checkbox');
+        }
+
+        $('#btn-add-attr-row').on('click', function () {
+            addAttrRow();
+        });
+        $(document).on('click', '.btn-remove-attr', function () {
+            $(this).closest('tr').remove();
+        });
+        $('#btn-attr-json-paste').on('click', function () {
+            var currentJson = JSON.stringify(getAttrsFromForm(), null, 4);
+            var content = '<div class="json-paste-layer">' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-edit"></i> 输入/粘贴 JSON</label><textarea id="attr-json-paste-ta" placeholder="粘贴属性配置 JSON 数组"></textarea></div>' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-template-1"></i> 模板示例</label><textarea id="attr-json-template-ta" readonly class="json-paste-template-ta"></textarea></div>' +
+                '</div>';
+            var idx = layer.open({
+                type: 1,
+                title: (i18np.prop('equipattr.openJsonPaste') || 'JSON配置模式') + ' - ' + (i18np.prop('equipattr.attrConfig') || '属性配置'),
+                area: ['920px', '560px'],
+                content: content,
+                success: function (layero) {
+                    $(layero).find('#attr-json-paste-ta').val(currentJson).focus();
+                    $(layero).find('#attr-json-template-ta').val(attrTemplateRendered);
+                },
+                btn: [(i18np.prop('common.msg.confirm') || '确定'), (i18np.prop('common.msg.cancel') || '取消')],
+                yes: function () {
+                    var raw = ($('#attr-json-paste-ta').val() || '').trim();
+                    try {
+                        var parsed = raw ? JSON.parse(raw) : [];
+                        var arr = Array.isArray(parsed) ? parsed : (parsed && parsed.attrs) ? parsed.attrs : [];
+                        setAttrsFromArray(arr);
+                        layer.msg(i18np.prop('equipattr.pasteFromClipboard.success') || '已填入');
+                        layer.close(idx);
+                    } catch (e) {
+                        layer.msg((i18np.prop('equipattr.pasteFromClipboard.invalid') || 'JSON 格式错误') + ': ' + (e.message || ''));
+                    }
+                }
+            });
+        });
+
+        // ---------- 报警配置动态表单（扁平结构：map/type/val|min,max/text） ----------
+        var alarmTypeOptions = [
+            {v: 0, t: '0 相等'}, {v: 1, t: '1 大于'}, {v: 2, t: '2 大于等于'}, {v: 3, t: '3 小于'}, {
+                v: 4,
+                t: '4 小于等于'
+            }, {v: 5, t: '5 范围'}
+        ];
+
+        function getAlarmRowData(tr) {
+            var $tr = $(tr);
+            var type = parseInt($tr.find('.alarm-type').val(), 10) || 0;
+            var row = {
+                map: $tr.find('.alarm-map').val() || '',
+                type: type,
+                text: $tr.find('.alarm-text').val() || ''
+            };
+            if (type === 5) {
+                row.min = $tr.find('.alarm-min').val() || '';
+                row.max = $tr.find('.alarm-max').val() || '';
+            } else {
+                row.val = $tr.find('.alarm-val').val() || '';
+            }
+            return row;
+        }
+
+        function getAlarmsFromForm() {
+            var list = [];
+            $('#alarm-tbody tr').each(function () {
+                list.push(getAlarmRowData(this));
+            });
+            return list;
+        }
+
+        function flatAlarm(item, key) {
+            if (item[key] != null && typeof item[key] === 'object' && 'value' in item[key]) return item[key].value;
+            return item[key];
+        }
+
+        function addAlarmRow(data) {
+            data = data || {};
+            var type = (data.type != null && data.type !== undefined) ? (typeof data.type === 'object' ? parseInt(data.type.value, 10) : parseInt(data.type, 10)) : 0;
+            if (type !== 5) type = isNaN(type) ? 0 : type;
+            var opts = alarmTypeOptions.map(function (o) {
+                return '<option value="' + o.v + '"' + (o.v === type ? ' selected' : '') + '>' + o.t + '</option>';
+            }).join('');
+            var isRange = (type === 5);
+            var valStr = (flatAlarm(data, 'val') || '').replace(/"/g, '&quot;');
+            var minStr = (flatAlarm(data, 'min') || '').replace(/"/g, '&quot;');
+            var maxStr = (flatAlarm(data, 'max') || '').replace(/"/g, '&quot;');
+            var mapStr = (flatAlarm(data, 'map') || '').replace(/"/g, '&quot;');
+            var textStr = (flatAlarm(data, 'text') || '').replace(/"/g, '&quot;');
+            var valCell = '<td><input type="text" class="layui-input alarm-val" value="' + valStr + '" placeholder="阈值"' + (isRange ? ' style="visibility:hidden;height:0;padding:0;border:0;"' : '') + '></td>';
+            var minCell = '<td><input type="text" class="layui-input alarm-min" value="' + minStr + '" placeholder="下限"' + (!isRange ? ' style="visibility:hidden;height:0;padding:0;border:0;"' : '') + '></td>';
+            var maxCell = '<td><input type="text" class="layui-input alarm-max" value="' + maxStr + '" placeholder="上限"' + (!isRange ? ' style="visibility:hidden;height:0;padding:0;border:0;"' : '') + '></td>';
+            var row = '<tr data-type="' + type + '">' +
+                '<td><input type="text" class="layui-input alarm-map" value="' + mapStr + '"></td>' +
+                '<td><select class="alarm-type" lay-filter="alarm-type-select">' + opts + '</select></td>' +
+                valCell + minCell + maxCell +
+                '<td><input type="text" class="layui-input alarm-text" value="' + textStr + '"></td>' +
+                '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-alarm">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
+            $('#alarm-tbody').append(row);
+            form.render('select');
+        }
+
+        function toggleAlarmTypeCells($tr, isRange) {
+            if (!$tr || !$tr.length) return;
+            var hideStyle = { visibility: 'hidden', height: 0, padding: 0, border: 0, minHeight: 0 };
+            var showStyle = { visibility: 'visible', height: '', padding: '', border: '', minHeight: '' };
+            $tr.find('.alarm-val').css(isRange ? hideStyle : showStyle);
+            $tr.find('.alarm-min, .alarm-max').css(isRange ? showStyle : hideStyle);
+        }
+        form.on('select(alarm-type-select)', function (data) {
+            var t = parseInt(data.value, 10);
+            var $tr = $(data.elem).closest('tr');
+            toggleAlarmTypeCells($tr, t === 5);
+        });
+
+        function setAlarmsFromArray(alarms) {
+            $('#alarm-tbody').empty();
+            if (!Array.isArray(alarms)) alarms = [];
+            for (var i = 0; i < alarms.length; i++) {
+                var item = alarms[i];
+                addAlarmRow({
+                    map: flatAlarm(item, 'map'),
+                    type: item.type != null && typeof item.type === 'object' ? parseInt(item.type.value, 10) : parseInt(item.type, 10) || 0,
+                    val: flatAlarm(item, 'val'),
+                    min: flatAlarm(item, 'min'),
+                    max: flatAlarm(item, 'max'),
+                    text: flatAlarm(item, 'text')
+                });
+            }
+            form.render('select');
+        }
+
+        $('#btn-add-alarm-row').on('click', function () {
+            addAlarmRow();
+        });
+        $(document).on('click', '.btn-remove-alarm', function () {
+            $(this).closest('tr').remove();
+        });
+        $('#btn-alarm-json-paste').on('click', function () {
+            var currentJson = JSON.stringify(getAlarmsFromForm(), null, 4);
+            var content = '<div class="json-paste-layer">' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-edit"></i> 输入/粘贴 JSON</label><textarea id="alarm-json-paste-ta" placeholder="粘贴报警配置 JSON 数组"></textarea></div>' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-template-1"></i> 模板示例</label><textarea id="alarm-json-template-ta" readonly class="json-paste-template-ta"></textarea></div>' +
+                '</div>';
+            var idx = layer.open({
+                type: 1,
+                title: (i18np.prop('equipattr.openJsonPaste') || 'JSON配置模式') + ' - ' + (i18np.prop('equipattr.alarmConfig') || '报警配置'),
+                area: ['920px', '560px'],
+                content: content,
+                success: function (layero) {
+                    $(layero).find('#alarm-json-paste-ta').val(currentJson).focus();
+                    $(layero).find('#alarm-json-template-ta').val(alarmTemplateRendered);
+                },
+                btn: [(i18np.prop('common.msg.confirm') || '确定'), (i18np.prop('common.msg.cancel') || '取消')],
+                yes: function () {
+                    var raw = ($('#alarm-json-paste-ta').val() || '').trim();
+                    try {
+                        var parsed = raw ? JSON.parse(raw) : [];
+                        var arr = Array.isArray(parsed) ? parsed : (parsed && parsed.alarms) ? parsed.alarms : [];
+                        setAlarmsFromArray(arr);
+                        layer.msg(i18np.prop('equipattr.pasteFromClipboard.success') || '已填入');
+                        layer.close(idx);
+                    } catch (e) {
+                        layer.msg((i18np.prop('equipattr.pasteFromClipboard.invalid') || 'JSON 格式错误') + ': ' + (e.message || ''));
+                    }
+                }
+            });
+        });
 
         let id = layui.url().search.id;
         if (!id) {
@@ -247,6 +646,125 @@
         $('#btn-select-gateway').on('click', function () {
             openGatewayPicker();
         });
+
+        function fillFormFromConfig(loadedConfig) {
+            if (!loadedConfig || typeof loadedConfig !== 'object') return;
+            var alarms = loadedConfig.alarms;
+            var ct = loadedConfig.collectType;
+            var rm = loadedConfig.runMap;
+            var attrs = loadedConfig.attrs;
+            var gwId = loadedConfig.gwId;
+
+            $('#input-collectType').val(typeof ct === 'object' && ct && ct.value != null ? ct.value : (ct || ''));
+            $('#input-runMap').val(typeof rm === 'object' && rm && rm.value != null ? rm.value : (rm || ''));
+            $('#json-input').val(JSON.stringify(attrs != null ? attrs : [], null, 4));
+            $('#json-alarm-input').val(JSON.stringify(alarms != null ? alarms : [], null, 4));
+            setAttrsFromArray(attrs || []);
+            setAlarmsFromArray(alarms || []);
+            if (gwId != null && gwId !== '') {
+                selectedGwId = gwId;
+                get(router.gw_id, {id: gwId}, function (gw) {
+                    selectedGateway = gw || {id: gwId};
+                    renderSelectedGatewayCard();
+                });
+            }
+        }
+
+        function applyPasteConfigText(text) {
+            text = (text || '').trim();
+            if (!text) {
+                layer.msg(i18np.prop('equipattr.pasteFromClipboard.empty') || '剪贴板为空');
+                return;
+            }
+            try {
+                var parsed = JSON.parse(text);
+                var config = parsed && (parsed.config != null ? parsed.config : parsed);
+                if (typeof config !== 'object') config = {};
+                fillFormFromConfig(config);
+                layer.msg(i18np.prop('equipattr.pasteFromClipboard.success') || '已填入');
+            } catch (e) {
+                layer.msg((i18np.prop('equipattr.pasteFromClipboard.invalid') || 'JSON 格式错误') + ': ' + (e.message || ''));
+            }
+        }
+
+        function getCurrentConfigJSON() {
+            var config = {
+                collectType: ($('#input-collectType').val() || '').trim(),
+                runMap: ($('#input-runMap').val() || '').trim(),
+                attrs: getAttrsFromForm(),
+                alarms: getAlarmsFromForm(),
+                gwId: selectedGwId || null
+            };
+            return JSON.stringify(config, null, 4);
+        }
+
+        function openManualPasteLayer(initialText, options) {
+            options = options || {};
+            var hint = options.hint || (i18np.prop('equipattr.pasteFromClipboard.manualHint') || '当前为 config 结构，可编辑或粘贴覆盖后点击确定填入');
+            var title = options.title || ((i18np.prop('equipattr.onekeyCopy') || '一键复制') + ' / ' + (i18np.prop('equipattr.pasteFromClipboard') || '从剪贴板填入'));
+            var content = '<div style="padding:12px;">' +
+                '<p style="margin-bottom:8px;color:#666;font-size:13px;">' + hint + '</p>' +
+                '<textarea id="manual-paste-ta" style="width:100%;height:420px;font-family:Consolas,Monaco,monospace;font-size:13px;padding:10px;border:1px solid #e0e0e0;border-radius:6px;box-sizing:border-box;" placeholder="config JSON..."></textarea></div>';
+            var btn1 = (options.confirmApply === false) ? (i18np.prop('common.close') || '关闭') : (i18np.prop('common.msg.confirm') || '确定');
+            var manualLayerIdx = layer.open({
+                type: 1,
+                title: title,
+                area: ['560px', '560px'],
+                content: content,
+                btn: [btn1, (i18np.prop('common.msg.cancel') || '取消')],
+                success: function (layero) {
+                    $(layero).find('#manual-paste-ta').val(initialText || '');
+                    setTimeout(function () {
+                        $('#manual-paste-ta').focus();
+                    }, 80);
+                },
+                yes: function () {
+                    if (options.confirmApply === false) {
+                        layer.close(manualLayerIdx);
+                        return;
+                    }
+                    var text = $('#manual-paste-ta').val();
+                    applyPasteConfigText(text);
+                    layer.close(manualLayerIdx);
+                }
+            });
+        }
+
+        function copyConfigToClipboard() {
+            var text = getCurrentConfigJSON();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    layer.msg(i18np.prop('equipattr.copySuccess') || '已复制到剪贴板');
+                }).catch(function () {
+                    openManualPasteLayer(text, {
+                        title: i18np.prop('equipattr.onekeyCopy') || '一键复制',
+                        hint: i18np.prop('equipattr.copyManualHint') || '当前环境无法写入剪贴板，请选择下方内容后手动复制 (Ctrl+C)',
+                        confirmApply: false
+                    });
+                });
+            } else {
+                openManualPasteLayer(text, {
+                    title: i18np.prop('equipattr.onekeyCopy') || '一键复制',
+                    hint: i18np.prop('equipattr.copyManualHint') || '当前环境无法写入剪贴板，请选择下方内容后手动复制 (Ctrl+C)',
+                    confirmApply: false
+                });
+            }
+        }
+
+        function pasteConfigFromClipboard() {
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                navigator.clipboard.readText().then(function (text) {
+                    applyPasteConfigText(text);
+                }).catch(function () {
+                    openManualPasteLayer('', {title: i18np.prop('equipattr.pasteFromClipboard') || '从剪贴板填入'});
+                });
+            } else {
+                openManualPasteLayer('', {title: i18np.prop('equipattr.pasteFromClipboard') || '从剪贴板填入'});
+            }
+        }
+
+        $('#btn-onekey-copy').on('click', copyConfigToClipboard);
+        $('#btn-paste-fill').on('click', pasteConfigFromClipboard);
 
         get(router.equip_config, {"equipId": id}, function (r) {
             if (r == null) {
@@ -265,29 +783,20 @@
             }
             var loadedConfig = r.config || {};
             if (Object.keys(loadedConfig).length) {
-                var jsonText = JSON.stringify(
-                    loadedConfig,
-                    function (key, value) {
-                        return key === "gwId" ? undefined : value;
-                    },
-                    4);
-                $('#json-input').val(jsonText);
+                fillFormFromConfig(loadedConfig);
             }
         });
-        // 提交事件
+        // 提交事件：从动态表单构建 config
         form.on('submit(common-edit-button)', function (data) {
             if (!id) {
                 layer.msg(i18np.prop('common.placeholder') || '缺少设备ID');
                 return false;
             }
-            let config = $("#json-input").val();
-            let configJSON = {};
-            try {
-                configJSON = JSON.parse(config);
-            } catch (e) {
-                layer.msg('JSON格式错误');
-                return false;
-            }
+            var configJSON = {};
+            configJSON.attrs = getAttrsFromForm();
+            configJSON.alarms = getAlarmsFromForm();
+            configJSON.collectType = ($("#input-collectType").val() || "").trim();
+            configJSON.runMap = ($("#input-runMap").val() || "").trim();
             post(router.equip_setConfig, {
                 "equipId": id,
                 "gwId": selectedGwId || null,
@@ -302,7 +811,8 @@
             })
             return false;
         });
-    });
+    })
+    ;
 </script>
 </body>
 </html>

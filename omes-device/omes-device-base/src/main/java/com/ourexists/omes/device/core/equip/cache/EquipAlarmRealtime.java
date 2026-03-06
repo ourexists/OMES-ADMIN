@@ -10,8 +10,12 @@ import lombok.experimental.Accessors;
 public class EquipAlarmRealtime {
 
     private String map;
-
-    private String text;
-
+    /** 比较类型: 0=相等, 1=大于, 2=大于等于, 3=小于, 4=小于等于, 5=范围 */
+    private Integer type;
     private String val;
+    /** 范围比较时的下限 (类型5时使用) */
+    private String min;
+    /** 范围比较时的上限 (类型5时使用) */
+    private String max;
+    private String text;
 }
