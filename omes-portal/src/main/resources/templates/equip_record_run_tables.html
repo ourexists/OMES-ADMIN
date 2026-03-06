@@ -204,7 +204,7 @@
         });
 
         // 搜索提交
-        form.on('submit(common-search)', function (data) {
+        form.on('submit(tb-common-search)', function (data) {
             if ($('#startDate').val() == null || $('#startDate').val() == ''
                 || $('#endDate').val() == null || $('#endDate').val() == '') {
                 layer.alert(i18np.prop('common.msg.selecttime'));
