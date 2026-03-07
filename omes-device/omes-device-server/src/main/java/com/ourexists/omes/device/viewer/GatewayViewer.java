@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
-import com.ourexists.omes.device.enums.ProtocolEnum;
 import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.device.model.GatewayPageQuery;
@@ -40,7 +39,7 @@ public class GatewayViewer implements GatewayFeign {
 
     @Override
     public JsonResponseEntity<List<GatewayDto>> selectConnectByProtocol(@RequestParam String protocol) {
-        List<Gateway> gateways = gatewayService.getConnectByProtocol(ProtocolEnum.valueOf(protocol));
+        List<Gateway> gateways = gatewayService.getConnectByProtocol(protocol);
         return JsonResponseEntity.success(Gateway.covert(gateways));
     }
 

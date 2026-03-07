@@ -6,10 +6,9 @@ import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.workshop.collect.WorkshopRealtimeCollectSelector;
 import com.ourexists.omes.device.core.workshop.collect.WorkshopRealtimeCollector;
-import com.ourexists.omes.portal.third.wincc.WinccApi;
-import com.ourexists.omes.device.enums.ProtocolEnum;
 import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.model.GatewayDto;
+import com.ourexists.omes.portal.third.wincc.WinccApi;
 import com.ourexists.omes.task.process.task.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +59,7 @@ public class WinccCollectTimerTask extends TimerTask {
 
     private List<GatewayDto> connect() {
         try {
-            return RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByProtocol(ProtocolEnum.WINCC.name()));
+            return RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByProtocol("WINCC"));
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }

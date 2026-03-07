@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolExecutor;
-import com.ourexists.omes.device.enums.ProtocolEnum;
 import com.ourexists.omes.device.mapper.GatewayMapper;
 import com.ourexists.omes.device.model.GatewayPageQuery;
 import com.ourexists.omes.device.pojo.Gateway;
@@ -30,8 +29,8 @@ public class GatewayServiceImpl extends AbstractMyBatisPlusService<GatewayMapper
     private ProtocolExecutor protocolExecutor;
 
     @Override
-    public List<Gateway> getConnectByProtocol(ProtocolEnum protocol) {
-        return this.list(new LambdaQueryWrapper<Gateway>().eq(Gateway::getProtocol, protocol.name()).orderByAsc(Gateway::getId));
+    public List<Gateway> getConnectByProtocol(String protocol) {
+        return this.list(new LambdaQueryWrapper<Gateway>().eq(Gateway::getProtocol, protocol).orderByAsc(Gateway::getId));
     }
 
     @Override
@@ -43,6 +42,7 @@ public class GatewayServiceImpl extends AbstractMyBatisPlusService<GatewayMapper
     public Page<Gateway> selectByPage(GatewayPageQuery query) {
         LambdaQueryWrapper<Gateway> wrapper = new LambdaQueryWrapper<Gateway>()
                 .eq(StringUtils.hasText(query.getProtocol()), Gateway::getProtocol, query.getProtocol())
+                .eq(query.getEnabled() != null, Gateway::getEnabled, query.getEnabled())
                 .like(StringUtils.hasText(query.getServerName()), Gateway::getServerName, query.getServerName())
                 .orderByAsc(Gateway::getId);
         return this.page(new Page<>(query.getPage(), query.getPageSize()), wrapper);

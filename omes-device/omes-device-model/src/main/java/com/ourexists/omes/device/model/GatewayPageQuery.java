@@ -21,4 +21,7 @@ public class GatewayPageQuery extends PageQuery {
 
     @Schema(description = "服务名")
     private String serverName;
+
+    @Schema(description = "启用的")
+    private Boolean enabled;
 }

@@ -11,8 +11,7 @@ import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.omes.device.core.equip.protocol.ProtocolExecutor;
-import com.ourexists.omes.device.enums.ProtocolEnum;
+import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.device.model.GatewayPageQuery;
@@ -24,9 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -39,7 +36,7 @@ public class GatewayController {
     private GatewayFeign gatewayFeign;
 
     @Autowired
-    private ProtocolExecutor protocolExecutor;
+    private List<ProtocolManager> protocolManagers;
 
     @Operation(summary = "分页查询", description = "连接分页列表")
     @PostMapping("selectByPage")
@@ -68,24 +65,19 @@ public class GatewayController {
     @Operation(summary = "协议枚举列表", description = "返回所有支持的协议类型，用于下拉/配置")
     @GetMapping("protocols")
     public JsonResponseEntity<List<MapDto>> getProtocols() {
-        List<MapDto> list = Arrays.stream(ProtocolEnum.values())
-                .map(p -> new MapDto().setId(p.name()).setName(p.getDesc()))
-                .collect(Collectors.toList());
+        List<MapDto> list = new ArrayList<>();
+        for (ProtocolManager protocolManager : protocolManagers) {
+            list.add(new MapDto().setId(protocolManager.protocol()).setName(protocolManager.protocol()));
+        }
         return JsonResponseEntity.success(list);
     }
 
     @Operation(summary = "按协议查询连接列表", description = "返回指定协议下的所有连接，protocol 取 protocols 接口的 id")
     @GetMapping("getByProtocol")
     public JsonResponseEntity<List<GatewayDto>> getByProtocol(@RequestParam String protocol) {
-        ProtocolEnum protocolEnum;
-        try {
-            protocolEnum = ProtocolEnum.valueOf(protocol);
-        } catch (IllegalArgumentException e) {
-            return JsonResponseEntity.success(new ArrayList<>());
-        }
         try {
             List<GatewayDto> connects = RemoteHandleUtils.getDataFormResponse(
-                    gatewayFeign.selectConnectByProtocol(protocolEnum.name()));
+                    gatewayFeign.selectConnectByProtocol(protocol));
             return JsonResponseEntity.success(connects != null ? connects : new ArrayList<>());
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
@@ -97,7 +89,7 @@ public class GatewayController {
     public JsonResponseEntity<List<MapDto>> getAll() {
         List<GatewayDto> connects;
         try {
-            connects = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByProtocol(ProtocolEnum.opc_ua.name()));
+            connects = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByProtocol("opc_ua"));
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }

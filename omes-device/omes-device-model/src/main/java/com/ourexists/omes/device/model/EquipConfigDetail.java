@@ -15,6 +15,8 @@ public class EquipConfigDetail {
 
     private String collectType;
 
+    private String deviceIdMap;
+
     private String runMap;
 
     private String alarmMap;

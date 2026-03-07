@@ -13,11 +13,9 @@ public class EquipRealtimeConfig {
 
     private String gwId;
 
-    private String collectType;
+    private String deviceIdMap;
 
     private String runMap;
-
-    private String alarmMap;
 
     private List<EquipAttrRealtime> attrs;
 

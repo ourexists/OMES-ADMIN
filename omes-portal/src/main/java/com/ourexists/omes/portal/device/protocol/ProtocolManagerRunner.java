@@ -9,9 +9,9 @@ import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
-import com.ourexists.omes.device.enums.ProtocolEnum;
 import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.model.GatewayDto;
+import com.ourexists.omes.device.model.GatewayPageQuery;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,10 @@ public class ProtocolManagerRunner implements ApplicationRunner {
         UserContext.defaultTenant();
         List<GatewayDto> gateways;
         try {
-            gateways = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByProtocol(ProtocolEnum.MQTT.name()));
+            GatewayPageQuery query = new GatewayPageQuery();
+            query.setRequirePage(false);
+            query.setEnabled(true);
+            gateways = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectByPage(query));
         } catch (EraCommonException e) {
             log.error("Failed to load MQTT gateways: {}", e.getMessage(), e);
             return;
@@ -62,14 +65,6 @@ public class ProtocolManagerRunner implements ApplicationRunner {
             return;
         }
         for (GatewayDto gw : gateways) {
-            if (Boolean.FALSE.equals(gw.getEnabled())) {
-                log.debug("Skip disabled gateway: {}", gw.getServerName());
-                continue;
-            }
-            if (gw.getUri() == null || gw.getUri().isEmpty() || gw.getTopic() == null || gw.getTopic().isEmpty()) {
-                log.warn("Gateway {} has invalid uri or topic, skip", gw.getServerName());
-                continue;
-            }
             ProtocolManager protocolManager = getProtocolManager(gw.getProtocol());
             if (protocolManager == null) {
                 continue;
