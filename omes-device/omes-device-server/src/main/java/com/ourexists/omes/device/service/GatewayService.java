@@ -6,7 +6,6 @@ package com.ourexists.omes.device.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
-import com.ourexists.omes.device.enums.ProtocolEnum;
 import com.ourexists.omes.device.model.GatewayPageQuery;
 import com.ourexists.omes.device.pojo.Gateway;
 
@@ -19,7 +18,7 @@ import java.util.List;
  */
 public interface GatewayService extends IMyBatisPlusService<Gateway> {
 
-    List<Gateway> getConnectByProtocol(ProtocolEnum protocol);
+    List<Gateway> getConnectByProtocol(String protocol);
 
     Gateway getConnect(String serverName);
 

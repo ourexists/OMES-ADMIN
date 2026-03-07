@@ -93,7 +93,7 @@
             background: #fafbfc;
             border: 1px solid #e8eaed;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .dynamic-form-box .title {
@@ -153,6 +153,16 @@
         .dynamic-form-box .form-table .col-check {
             width: 80px;
             text-align: center;
+        }
+
+        /* 报警配置中类型下拉框不被遮挡 */
+        .dynamic-form-box .layui-form-select {
+            position: relative;
+            z-index: 1;
+        }
+        .dynamic-form-box .layui-form-select.layui-form-selected + dl,
+        .dynamic-form-box .layui-form-select dl {
+            z-index: 99999;
         }
 
         .json-paste-layer {
@@ -243,9 +253,9 @@
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="equip.collectType">采集类型</label>
+            <label class="layui-form-label" lang-i18n="equip.deviceIdMap">设备识别标号映射</label>
             <div class="layui-input-block">
-                <input type="text" name="collectType" id="input-collectType" placeholder="如：Tc_mqtt" autocomplete="off"
+                <input type="text" name="deviceIdMap" id="input-deviceIdMap" placeholder="如：deviceId" autocomplete="off"
                        class="layui-input">
             </div>
         </div>
@@ -650,12 +660,12 @@
         function fillFormFromConfig(loadedConfig) {
             if (!loadedConfig || typeof loadedConfig !== 'object') return;
             var alarms = loadedConfig.alarms;
-            var ct = loadedConfig.collectType;
+            var deviceIdMap = loadedConfig.deviceIdMap;
             var rm = loadedConfig.runMap;
             var attrs = loadedConfig.attrs;
             var gwId = loadedConfig.gwId;
 
-            $('#input-collectType').val(typeof ct === 'object' && ct && ct.value != null ? ct.value : (ct || ''));
+            $('#input-deviceIdMap').val(typeof deviceIdMap === 'object' && deviceIdMap && deviceIdMap.value != null ? deviceIdMap.value : (deviceIdMap || ''));
             $('#input-runMap').val(typeof rm === 'object' && rm && rm.value != null ? rm.value : (rm || ''));
             $('#json-input').val(JSON.stringify(attrs != null ? attrs : [], null, 4));
             $('#json-alarm-input').val(JSON.stringify(alarms != null ? alarms : [], null, 4));
@@ -689,7 +699,7 @@
 
         function getCurrentConfigJSON() {
             var config = {
-                collectType: ($('#input-collectType').val() || '').trim(),
+                deviceIdMap: ($('#input-deviceIdMap').val() || '').trim(),
                 runMap: ($('#input-runMap').val() || '').trim(),
                 attrs: getAttrsFromForm(),
                 alarms: getAlarmsFromForm(),
@@ -795,7 +805,7 @@
             var configJSON = {};
             configJSON.attrs = getAttrsFromForm();
             configJSON.alarms = getAlarmsFromForm();
-            configJSON.collectType = ($("#input-collectType").val() || "").trim();
+            configJSON.deviceIdMap = ($("#input-deviceIdMap").val() || "").trim();
             configJSON.runMap = ($("#input-runMap").val() || "").trim();
             post(router.equip_setConfig, {
                 "equipId": id,

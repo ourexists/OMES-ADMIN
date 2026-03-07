@@ -5,7 +5,6 @@
 package com.ourexists.omes.portal.device.protocol;
 
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.omes.device.core.equip.collect.DataCollectChain;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -21,36 +19,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 /**
  * 统一 MQTT 订阅管理器：根据网关配置动态创建/销毁订阅连接，支持启停控制。
  * 使用 Eclipse Paho 原生 MqttClient，避免 Spring Integration 适配器导致的“一连接/一收消息就断”问题。
  */
 @Slf4j
-@Component
-public class MqttSubscriptionManager implements ProtocolManager {
+public abstract class AbstractMqttProtocolManager implements ProtocolManager {
 
     private static final int CONNECTION_TIMEOUT = 30;
     private static final int KEEP_ALIVE_INTERVAL = 30;
-    private static final String DEFAULT_CONNECTION_KEY = "mqtt_default";
 
-
-    private final DataCollectChain dataCollectChain;
-
-    private static final Executor MQTT_HANDLER_EXECUTOR = Executors.newFixedThreadPool(4, r -> {
-        Thread t = new Thread(r, "mqtt-handler");
-        t.setDaemon(true);
-        return t;
-    });
 
     /** key: gatewayId，value: 该网关的 MqttClient */
     private final Map<String, MqttClient> connectionMap = new ConcurrentHashMap<>();
 
-    public MqttSubscriptionManager(DataCollectChain dataCollectChain) {
-        this.dataCollectChain = dataCollectChain;
-    }
 
     @Override
     public synchronized void stopAll() {
@@ -58,11 +41,6 @@ public class MqttSubscriptionManager implements ProtocolManager {
         for (String key : keys) {
             stop(key);
         }
-    }
-
-    @Override
-    public String protocol() {
-        return "MQTT";
     }
 
     @Override
@@ -107,8 +85,7 @@ public class MqttSubscriptionManager implements ProtocolManager {
     }
 
     private MqttClient createAndConnect(ProtocolConnect gw) throws MqttException {
-        String serverName = gw.getServerName() != null ? gw.getServerName() : DEFAULT_CONNECTION_KEY;
-        String baseId = StringUtils.hasText(gw.getId()) ? gw.getId() : serverName;
+        String baseId = gw.getId();
         String clientId = "omes_mqtt_" + baseId;
 
         MqttClient client = new MqttClient(gw.getUri(), clientId, null);
@@ -123,29 +100,14 @@ public class MqttSubscriptionManager implements ProtocolManager {
         options.setAutomaticReconnect(true);
         options.setMaxReconnectDelay(10_000);
         options.setCleanSession(true);
-
         client.connect(options);
-
-        IMqttMessageListener listener = (topic, message) -> {
-            String payload = decodePayload(message.getPayload());
-            if (payload == null) {
-                return;
-            }
-            MQTT_HANDLER_EXECUTOR.execute(() -> {
-                UserContext.defaultTenant();
-                try {
-                    dataCollectChain.doCollect(gw.getId(), payload);
-                } catch (Exception e) {
-                    log.error("MQTT message handle error, payload length: {}", payload.length(), e);
-                }
-            });
-        };
-
-        client.subscribe(gw.getTopic(), 1, listener);
+        client.subscribe(gw.getTopic(), 1, getListener(gw));
         return client;
     }
 
-    private static String decodePayload(byte[] payload) {
+    protected abstract IMqttMessageListener getListener(ProtocolConnect gw);
+
+    public static String decodePayload(byte[] payload) {
         if (payload == null || payload.length == 0) {
             return null;
         }
