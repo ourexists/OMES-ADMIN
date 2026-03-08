@@ -9,6 +9,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,6 +21,9 @@ public class JSONEquipDataParser implements EquipDataParser {
 
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
+
+    @Autowired
+    private AlarmRuleProcessor alarmRuleProcessor;
 
     @Override
     public List<EquipRealtime> parse(String gwId, String sourceData) {
@@ -46,7 +50,7 @@ public class JSONEquipDataParser implements EquipDataParser {
             }
 
             for (JSONObject object : devArrays) {
-                String ssn = object.getString(equipRealtimeConfig.getDeviceIdMap());
+                String ssn = getStringByPath(object, equipRealtimeConfig.getDeviceIdMap());
                 if (!equipRealtime.getSelfCode().equals(ssn)) {
                     continue;
                 }
@@ -62,7 +66,7 @@ public class JSONEquipDataParser implements EquipDataParser {
         target.setTime(new Date());
         target.online();
 
-        Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
+        Integer runVal = getIntegerByPath(parsedObj, equipRealtime.getEquipRealtimeConfig().getRunMap());
         if (runVal != null && runVal == 1) {
             target.run();
         } else {
@@ -70,14 +74,15 @@ public class JSONEquipDataParser implements EquipDataParser {
         }
         if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
             for (EquipAttrRealtime attr : target.getEquipAttrRealtimes()) {
-                attr.setValue(parsedObj.getString(attr.getMap()));
+                attr.setValue(getStringByPath(parsedObj, attr.getMap()));
             }
         }
         int alarm = 0;
         if (!CollectionUtils.isEmpty(equipRealtime.getEquipRealtimeConfig().getAlarms())) {
             List<String> alarms = new ArrayList<>();
             for (EquipAlarmRealtime alarmRealtime : equipRealtime.getEquipRealtimeConfig().getAlarms()) {
-                if (matchAlarm(parsedObj, alarmRealtime)) {
+                Object raw = getByPath(parsedObj, alarmRealtime.getMap());
+                if (alarmRuleProcessor.match(raw, alarmRealtime)) {
                     alarm = 1;
                     alarms.add(alarmRealtime.getText());
                 }
@@ -92,54 +97,60 @@ public class JSONEquipDataParser implements EquipDataParser {
         return target;
     }
 
-    /** 判断单条报警条件是否命中。类型: 0=相等, 1=大于, 2=大于等于, 3=小于, 4=小于等于, 5=范围(超出[min,max]报警) */
-    private boolean matchAlarm(JSONObject o, EquipAlarmRealtime alarmRealtime) {
-        Integer type = alarmRealtime.getType();
-        if (type == null) {
-            type = 0;
-        }
-        Object raw = o.get(alarmRealtime.getMap());
-        String strVal = raw != null ? raw.toString() : null;
-        if (strVal == null) {
-            return false;
-        }
-        if (type == 0) {
-            return strVal.equals(alarmRealtime.getVal());
-        }
-        Double numVal = parseDouble(strVal);
-        if (numVal == null) {
-            return false;
-        }
-        switch (type) {
-            case 1: // 大于
-                return numVal > parseDouble(alarmRealtime.getVal(), 0);
-            case 2: // 大于等于
-                return numVal >= parseDouble(alarmRealtime.getVal(), 0);
-            case 3: // 小于
-                return numVal < parseDouble(alarmRealtime.getVal(), 0);
-            case 4: // 小于等于
-                return numVal <= parseDouble(alarmRealtime.getVal(), 0);
-            case 5: { // 范围：超出 [min,max] 报警
-                Double min = parseDouble(alarmRealtime.getMin(), Double.NEGATIVE_INFINITY);
-                Double max = parseDouble(alarmRealtime.getMax(), Double.POSITIVE_INFINITY);
-                return numVal < min || numVal > max;
+    /** 按路径获取 JSON 值，支持 data.status、data.items[0].value 等嵌套模式 */
+    private static Object getByPath(Object root, String path) {
+        if (root == null || !StringUtils.hasText(path)) return null;
+        String trimmed = path.trim();
+        if (!trimmed.contains(".") && !trimmed.contains("[")) return getDirect(root, trimmed);
+        String[] parts = trimmed.split("\\.", -1);
+        Object current = root;
+        for (String part : parts) {
+            if (current == null) return null;
+            part = part.trim();
+            if (part.isEmpty()) continue;
+            int bracket = part.indexOf('[');
+            if (bracket >= 0) {
+                String key = bracket == 0 ? "" : part.substring(0, bracket);
+                if (key.length() > 0) current = getDirect(current, key);
+                int end = part.indexOf(']', bracket);
+                while (bracket >= 0 && end >= 0) {
+                    try {
+                        int idx = Integer.parseInt(part.substring(bracket + 1, end).trim());
+                        if (current instanceof JSONArray) current = ((JSONArray) current).get(idx);
+                        else return null;
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                    bracket = part.indexOf('[', end + 1);
+                    end = bracket >= 0 ? part.indexOf(']', bracket) : -1;
+                }
+            } else {
+                current = getDirect(current, part);
             }
-            default:
-                return strVal.equals(alarmRealtime.getVal());
         }
+        return current;
     }
 
-    private static Double parseDouble(String s) {
-        if (s == null || s.isEmpty()) return null;
+    private static Object getDirect(Object obj, String key) {
+        if (obj == null || key == null) return null;
+        if (obj instanceof JSONObject) return ((JSONObject) obj).get(key);
+        if (obj instanceof Map) return ((Map<?, ?>) obj).get(key);
+        return null;
+    }
+
+    private static String getStringByPath(Object root, String path) {
+        Object v = getByPath(root, path);
+        return v != null ? v.toString() : null;
+    }
+
+    private static Integer getIntegerByPath(Object root, String path) {
+        Object v = getByPath(root, path);
+        if (v == null) return null;
+        if (v instanceof Number) return ((Number) v).intValue();
         try {
-            return Double.parseDouble(s.trim());
+            return Integer.parseInt(v.toString().trim());
         } catch (NumberFormatException e) {
             return null;
         }
-    }
-
-    private static double parseDouble(String s, double defaultValue) {
-        Double d = parseDouble(s);
-        return d != null ? d : defaultValue;
     }
 }

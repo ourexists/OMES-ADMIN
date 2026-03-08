@@ -233,6 +233,52 @@
             background: #f6f8fa;
             color: #57606a;
         }
+
+        .map-examples-box {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #f8fbff;
+            border: 1px solid #d4e8f7;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .map-examples-box .map-examples-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .map-examples-box .map-examples-title i {
+            margin-right: 6px;
+            color: #1e9fff;
+        }
+        .map-examples-box .map-examples-content {
+            color: #555;
+        }
+        .map-examples-box .map-protocol-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 4px;
+            border-left: 3px solid #1e9fff;
+        }
+        .map-examples-box .map-protocol-item:last-child {
+            margin-bottom: 0;
+        }
+        .map-examples-box .map-protocol-name {
+            font-weight: 600;
+            color: #1e9fff;
+            margin-bottom: 4px;
+        }
+        .map-examples-box .map-example-line {
+            font-family: Consolas, Monaco, monospace;
+            font-size: 11px;
+            color: #333;
+            margin: 2px 0;
+        }
     </style>
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
@@ -251,6 +297,13 @@
                     <div class="gateway-card-single" id="selected-gateway-card" style="display: none;"></div>
                 </div>
             </div>
+        </div>
+        <div class="map-examples-box" id="map-examples-box">
+            <div class="map-examples-title">
+                <i class="layui-icon layui-icon-tips"></i>
+                <span id="map-examples-title-text">映射格式参考（请先选择网关）</span>
+            </div>
+            <div class="map-examples-content" id="map-examples-content"></div>
         </div>
         <div class="layui-form-item">
             <label class="layui-form-label" lang-i18n="equip.deviceIdMap">设备识别标号映射</label>
@@ -339,10 +392,53 @@
     var selectedGwId = null;
     var selectedGateway = null;
 
+    var MAP_EXAMPLES = {
+        'Modbus TCP': '<div class="map-protocol-item"><div class="map-protocol-name">Modbus TCP</div>' +
+            '<div class="map-example-line">属性映射：holding-register:1、input-register:1、coil:1、discrete-input:1</div>' +
+            '<div class="map-example-line">或数字：40001(保持)、30001(输入)、10001(线圈)</div>' +
+            '<div class="map-example-line">运行映射示例：holding-register:0</div></div>',
+        'OPC UA': '<div class="map-protocol-item"><div class="map-protocol-name">OPC UA</div>' +
+            '<div class="map-example-line">属性映射：ns=2;s=Machine/Temperature、ns=1;i=1337</div>' +
+            '<div class="map-example-line">运行映射示例：ns=2;s=Machine/Run</div></div>',
+        'S7': '<div class="map-protocol-item"><div class="map-protocol-name">S7</div>' +
+            '<div class="map-example-line">属性映射：%DB1:0:INT、%DB2:10:REAL、%M0:BYTE</div>' +
+            '<div class="map-example-line">运行映射示例：%M0:BOOL</div></div>',
+        'WINCC': '<div class="map-protocol-item"><div class="map-protocol-name">WINCC</div>' +
+            '<div class="map-example-line">属性映射：WinCC 变量名，如 Machine1.Temperature、Tag_001</div>' +
+            '<div class="map-example-line">运行映射示例：Process.RunStatus</div></div>',
+        'default': '<div class="map-protocol-item"><div class="map-protocol-name">REST / MQTT / 其他</div>' +
+            '<div class="map-example-line">属性映射：JSON 键或路径，如 temperature、data.status</div>' +
+            '<div class="map-example-line">运行映射示例：run、status</div></div>'
+    };
+
+    function getMapExampleForProtocol(protocol) {
+        if (!protocol) return null;
+        var p = (protocol || '').toLowerCase();
+        if (p.indexOf('modbus') >= 0) return MAP_EXAMPLES['Modbus TCP'];
+        if (p.indexOf('opc') >= 0 || p.indexOf('ua') >= 0) return MAP_EXAMPLES['OPC UA'];
+        if (p === 's7' || p.indexOf('s7') >= 0) return MAP_EXAMPLES['S7'];
+        if (p.indexOf('wincc') >= 0) return MAP_EXAMPLES['WINCC'];
+        return MAP_EXAMPLES['default'];
+    }
+
+    function renderMapExamples(protocol) {
+        var titleText = '映射格式参考';
+        var content = '';
+        if (!protocol) {
+            $('#map-examples-title-text').text(titleText + '（请先选择网关）');
+            $('#map-examples-content').html('<div class="map-examples-placeholder" style="color:#999;font-size:12px;">选择网关后，将显示该协议下的映射格式参考</div>');
+            return;
+        }
+        content = getMapExampleForProtocol(protocol) || MAP_EXAMPLES['default'];
+        $('#map-examples-title-text').text(titleText + ' - ' + (selectedGateway ? (selectedGateway.protocol || protocol) : protocol));
+        $('#map-examples-content').html(content);
+    }
+
     function renderSelectedGatewayCard() {
         if (!selectedGateway) {
             $('#gateway-placeholder').show().text(i18np.prop('gateway.pleaseSelect') || '请选择网关');
             $('#selected-gateway-card').hide().empty();
+            renderMapExamples(null);
             return;
         }
         var d = selectedGateway;
@@ -354,7 +450,12 @@
             '<div class="card-row"><span>' + hostLabel + '</span><span>' + (d.uri || '-') + '</span></div>' +
             '<div class="card-row"><span>' + protocolLabel + '</span><span>' + (d.protocol || '-') + '</span></div>'
         );
+        renderMapExamples(d.protocol);
     }
+
+    $(function () {
+        renderMapExamples(null);
+    });
 
     function openGatewayPicker() {
         var content = '<div id="gateway-picker-container">' + (i18np.prop('common.placeholder') || '加载中...') + '</div>';

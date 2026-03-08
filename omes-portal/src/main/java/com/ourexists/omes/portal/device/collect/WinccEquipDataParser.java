@@ -25,6 +25,9 @@ public class WinccEquipDataParser implements EquipDataParser {
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
 
+    @Autowired
+    private AlarmRuleProcessor alarmRuleProcessor;
+
     @Override
     public List<EquipRealtime> parse(String gwId, String sourceData) {
         Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll();
@@ -90,7 +93,8 @@ public class WinccEquipDataParser implements EquipDataParser {
         if (!CollectionUtils.isEmpty(equipRealtime.getEquipRealtimeConfig().getAlarms())) {
             var alarms = new ArrayList<String>();
             for (EquipAlarmRealtime ar : equipRealtime.getEquipRealtimeConfig().getAlarms()) {
-                if (matchAlarm(parsedObj, ar)) {
+                Object raw = parsedObj.get(ar.getMap());
+                if (alarmRuleProcessor.match(raw, ar)) {
                     alarm = 1;
                     alarms.add(ar.getText());
                 }
@@ -105,39 +109,4 @@ public class WinccEquipDataParser implements EquipDataParser {
         return target;
     }
 
-    private boolean matchAlarm(Map<String, Object> o, EquipAlarmRealtime alarmRealtime) {
-        Integer type = alarmRealtime.getType() != null ? alarmRealtime.getType() : 0;
-        Object raw = o.get(alarmRealtime.getMap());
-        String strVal = raw != null ? raw.toString() : null;
-        if (strVal == null) return false;
-        if (type == 0) return strVal.equals(alarmRealtime.getVal());
-        Double numVal = parseDouble(strVal);
-        if (numVal == null) return false;
-        return switch (type) {
-            case 1 -> numVal > parseDouble(alarmRealtime.getVal(), 0);
-            case 2 -> numVal >= parseDouble(alarmRealtime.getVal(), 0);
-            case 3 -> numVal < parseDouble(alarmRealtime.getVal(), 0);
-            case 4 -> numVal <= parseDouble(alarmRealtime.getVal(), 0);
-            case 5 -> {
-                Double min = parseDouble(alarmRealtime.getMin(), Double.NEGATIVE_INFINITY);
-                Double max = parseDouble(alarmRealtime.getMax(), Double.POSITIVE_INFINITY);
-                yield numVal < min || numVal > max;
-            }
-            default -> strVal.equals(alarmRealtime.getVal());
-        };
-    }
-
-    private static Double parseDouble(String s) {
-        if (s == null || s.isEmpty()) return null;
-        try {
-            return Double.parseDouble(s.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static double parseDouble(String s, double defaultValue) {
-        Double d = parseDouble(s);
-        return d != null ? d : defaultValue;
-    }
 }
