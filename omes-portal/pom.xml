@@ -137,6 +137,20 @@
             <version>0.13.1</version>
         </dependency>
 
+        <!-- Apache PLC4X Modbus driver (plc4j) for Modbus TCP polling -->
+        <dependency>
+            <groupId>org.apache.plc4x</groupId>
+            <artifactId>plc4j-driver-modbus</artifactId>
+            <version>0.13.1</version>
+        </dependency>
+
+        <!-- Apache PLC4X OPC UA driver (plc4j) for OPC UA polling -->
+        <dependency>
+            <groupId>org.apache.plc4x</groupId>
+            <artifactId>plc4j-driver-opcua</artifactId>
+            <version>0.13.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
