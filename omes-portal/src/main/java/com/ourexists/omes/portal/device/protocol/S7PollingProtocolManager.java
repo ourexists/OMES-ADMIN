@@ -4,6 +4,9 @@
 package com.ourexists.omes.portal.device.protocol;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.github.s7connector.api.DaveArea;
+import com.github.s7connector.api.S7Connector;
+import com.github.s7connector.api.factory.S7ConnectorFactory;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
@@ -14,65 +17,88 @@ import com.ourexists.omes.portal.device.collect.S7EquipDataParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.plc4x.java.api.PlcConnection;
-import org.apache.plc4x.java.api.PlcDriverManager;
-import org.apache.plc4x.java.api.messages.PlcReadRequest;
-import org.apache.plc4x.java.api.messages.PlcReadResponse;
-import org.apache.plc4x.java.api.types.PlcResponseCode;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * S7 定时轮询协议管理器（基于 Apache PLC4X plc4j）：
- * - start：为指定 connect 建立 cron 定时任务，按 params 配置的 tag 地址读 PLC 并上报
- * - stop：移除并取消该 connect 的定时任务，关闭连接
- *
- * 注意：该类内部单独维护 scheduler/taskMap，不依赖全局任务管理器。
- * 连接采用长连接模式：启动时建立连接并常驻，轮询时复用；异常时自动重连；stop 时关闭。
- *
+ * S7 统一定时轮询协议管理器（基于 s7connector 库）。
+ * <p>
+ * 同时支持 S7-200 Smart、S7-300、S7-400、S7-1200、S7-1500 等西门子 PLC，
+ * 使用 s7connector（nodave）协议栈，通过 rack/slot 区分不同控制器类型。
+ * <p>
+ * 常见 rack/slot 参考：
+ * <ul>
+ *   <li>S7-200 Smart: rack=0, slot=1</li>
+ *   <li>S7-300: rack=0, slot=2</li>
+ *   <li>S7-400: rack=0, slot=3</li>
+ *   <li>S7-1200: rack=0, slot=1</li>
+ *   <li>S7-1500: rack=0, slot=1</li>
+ * </ul>
+ * <p>
  * params JSON 示例：
+ * <pre>
  * {
  *   "remoteRack": 0,
  *   "remoteSlot": 1,
- *   "controllerType": "S7_1200",
- *   "tags": { "tag1": "%DB1:0:INT", "tag2": "%M0:BYTE" }
+ *   "timeout": 5000
  * }
- * 或 "tags" 为数组: [ {"name":"tag1","address":"%DB1:0:INT"} ]
+ * </pre>
+ *
+ * 设备 map 地址格式：
+ * <ul>
+ *   <li>V 区（S7-200 Smart）：VB100, VW100, VD100, V100.0</li>
+ *   <li>I 区：IB0, IW0, I0.0</li>
+ *   <li>Q 区：QB0, QW0, Q0.0</li>
+ *   <li>M 区：MB0, MW0, MD0, M0.0</li>
+ *   <li>DB 区：DB1.DBB0, DB1.DBW0, DB1.DBD0</li>
+ * </ul>
  */
 @Slf4j
 @Component
 public class S7PollingProtocolManager implements ProtocolManager {
 
+    private static final int DEFAULT_PORT = 102;
+    private static final int DEFAULT_RACK = 0;
+    private static final int DEFAULT_SLOT = 1;
+    private static final int DEFAULT_TIMEOUT_MS = 5_000;
     private static final int DEFAULT_POOL_SIZE = 4;
-    private static final int READ_TIMEOUT_MS = 10_000;
+    private static final int MAX_READ_RETRIES = 3;
+    private static final long RETRY_DELAY_MS = 1_000L;
+
+    private static final Pattern V_BWD = Pattern.compile("V([BWD])(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern V_BIT = Pattern.compile("V(\\d+)\\.(\\d)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IQM_BWD = Pattern.compile("([IQM])([BWD])(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IQM_BIT = Pattern.compile("([IQM])(\\d+)\\.(\\d)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DB_BWD = Pattern.compile("DB(\\d+)\\.DB([BWD])(\\d+)", Pattern.CASE_INSENSITIVE);
 
     private final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
     private final Map<String, ScheduledFuture<?>> taskMap = new ConcurrentHashMap<>();
-    private final Map<String, S7ConnectSpec> connectSpecMap = new ConcurrentHashMap<>();
-    private final Map<String, PlcConnection> connectionMap = new ConcurrentHashMap<>();
-    private final Map<String, Object> connectLocks = new ConcurrentHashMap<>();
+    private final Map<String, S7Connector> connectorMap = new ConcurrentHashMap<>();
 
-    private PlcDriverManager plcDriverManager;
+    private final EquipFeign equipFeign;
+    private final S7EquipDataParser equipDataParser;
 
-    private EquipFeign equipFeign;
-
-    private S7EquipDataParser equipDataParser;
-
-    public S7PollingProtocolManager(EquipFeign equipFeign,
-                                    S7EquipDataParser equipDataParser) {
-        this.plcDriverManager = PlcDriverManager.getDefault();
+    public S7PollingProtocolManager(EquipFeign equipFeign, S7EquipDataParser equipDataParser) {
         this.equipFeign = equipFeign;
         this.equipDataParser = equipDataParser;
+    }
+
+    @Override
+    public String protocol() {
+        return "S7";
     }
 
     @PostConstruct
@@ -86,15 +112,12 @@ public class S7PollingProtocolManager implements ProtocolManager {
     @PreDestroy
     public void destroy() {
         stopAll();
+        connectorMap.forEach((id, c) -> closeQuietly(c));
+        connectorMap.clear();
         try {
             scheduler.shutdown();
         } catch (Exception ignored) {
         }
-    }
-
-    @Override
-    public String protocol() {
-        return "S7";
     }
 
     @Override
@@ -108,7 +131,7 @@ public class S7PollingProtocolManager implements ProtocolManager {
             return false;
         }
         if (!StringUtils.hasText(connect.getUri())) {
-            log.warn("S7 polling skipped: uri (PLC IP) is empty, connectId={}", connectId);
+            log.warn("S7 polling skipped: uri is empty, connectId={}", connectId);
             return false;
         }
         if (!StringUtils.hasText(connect.getCollectCron())) {
@@ -116,36 +139,29 @@ public class S7PollingProtocolManager implements ProtocolManager {
             return false;
         }
 
-        // tags 优先从该网关下设备的采集配置查询，若无则从 params 解析
-        Map<String, String> tagsFromConfig = buildTagsFromGatewayConfig(connectId);
-        if (tagsFromConfig == null || tagsFromConfig.isEmpty()) {
+        Map<String, String> tags = buildTagsFromGatewayConfig(connectId);
+        if (tags == null || tags.isEmpty()) {
             return false;
         }
-        S7ConnectSpec spec = S7ConnectSpec.from(connect, tagsFromConfig);
-        if (spec == null) {
-            return false;
-        }
-        if (spec.tagNames.isEmpty()) {
-            log.warn("S7 polling skipped: no tags from gateway device config or params, connectId={}", connectId);
-            return false;
-        }
+
+        ConnectConfig config = parseConnectConfig(connect);
 
         Runnable job = () -> {
             UserContext.defaultTenant();
             try {
-                String payload = doRead(connectId, spec);
+                String payload = doRead(connectId, config, tags);
                 if (StringUtils.hasText(payload)) {
                     equipDataParser.parse(connectId, payload);
                 }
             } catch (Exception e) {
-                log.error("S7 polling error, connectId={}, uri={}", connectId, spec.connectionUrl, e);
+                log.error("S7 polling error, connectId={}, host={}", connectId, config.host, e);
             }
         };
 
         ScheduledFuture<?> future = scheduler.schedule(job, new CronTrigger(connect.getCollectCron()));
         taskMap.put(connectId, future);
-        connectSpecMap.put(connectId, spec);
-        log.info("S7 polling started, connectId={}, cron={}, uri={}", connectId, connect.getCollectCron(), connect.getUri());
+        log.info("S7 polling started, connectId={}, cron={}, host={}:{}",
+                connectId, connect.getCollectCron(), config.host, config.port);
         return true;
     }
 
@@ -155,14 +171,9 @@ public class S7PollingProtocolManager implements ProtocolManager {
             return false;
         }
         ScheduledFuture<?> future = taskMap.remove(connectId);
-        connectSpecMap.remove(connectId);
-        Object lock = connectLocks.computeIfAbsent(connectId, k -> new Object());
-        synchronized (lock) {
-            closeConnection(connectId);
-        }
-        connectLocks.remove(connectId);
         if (future != null) {
-            future.cancel(true);
+            future.cancel(false);
+            closeConnector(connectId);
             log.info("S7 polling stopped, connectId={}", connectId);
             return true;
         }
@@ -171,16 +182,199 @@ public class S7PollingProtocolManager implements ProtocolManager {
 
     @Override
     public synchronized void stopAll() {
-        List<String> keys = new ArrayList<>(taskMap.keySet());
-        for (String key : keys) {
-            stop(key);
+        new ArrayList<>(taskMap.keySet()).forEach(this::stop);
+    }
+
+    // ---- connection management ----
+
+    private S7Connector getOrCreateConnector(String connectId, ConnectConfig config) {
+        S7Connector connector = connectorMap.get(connectId);
+        if (connector != null) {
+            return connector;
+        }
+        connector = S7ConnectorFactory
+                .buildTCPConnector()
+                .withHost(config.host)
+                .withPort(config.port)
+                .withRack(config.rack)
+                .withSlot(config.slot)
+                .withTimeout(config.timeout)
+                .build();
+        connectorMap.put(connectId, connector);
+        log.info("S7 connection established, connectId={}, host={}:{}, rack={}, slot={}",
+                connectId, config.host, config.port, config.rack, config.slot);
+        return connector;
+    }
+
+    private void closeConnector(String connectId) {
+        closeQuietly(connectorMap.remove(connectId));
+    }
+
+    private static void closeQuietly(S7Connector connector) {
+        if (connector != null) {
+            try {
+                connector.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 
-    /**
-     * 通过网关 id 查询该网关下设备的采集配置，汇总需要采集的属性映射（tag 名 -> S7 地址）。
-     * tag 名使用 设备编号_属性名，与解析端一致。
-     */
+    // ---- reading ----
+
+    private String doRead(String connectId, ConnectConfig config, Map<String, String> tags) throws Exception {
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= MAX_READ_RETRIES; attempt++) {
+            try {
+                S7Connector connector = getOrCreateConnector(connectId, config);
+                Map<String, Object> result = new LinkedHashMap<>();
+                for (Map.Entry<String, String> entry : tags.entrySet()) {
+                    S7Address addr = parseAddress(entry.getValue());
+                    byte[] data = connector.read(addr.area, addr.areaNumber, addr.byteCount, addr.offset);
+                    if (data != null && data.length >= addr.byteCount) {
+                        result.put(entry.getKey(), convertValue(data, addr));
+                    }
+                }
+                return result.isEmpty() ? null : JSONObject.toJSONString(result);
+            } catch (Exception e) {
+                lastException = e;
+                closeConnector(connectId);
+                log.warn("S7 read attempt {}/{} failed (connectId={}, host={}): {}",
+                        attempt, MAX_READ_RETRIES, connectId, config.host, e.getMessage());
+                if (attempt < MAX_READ_RETRIES) {
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+        throw lastException;
+    }
+
+    // ---- address parsing ----
+
+    static S7Address parseAddress(String raw) {
+        String addr = raw.trim().toUpperCase();
+        Matcher m;
+
+        m = V_BWD.matcher(addr);
+        if (m.matches()) {
+            char type = m.group(1).charAt(0);
+            int offset = Integer.parseInt(m.group(2));
+            return new S7Address(DaveArea.DB, 1, sizeOf(type), offset, type, -1);
+        }
+
+        m = V_BIT.matcher(addr);
+        if (m.matches()) {
+            int offset = Integer.parseInt(m.group(1));
+            int bit = Integer.parseInt(m.group(2));
+            return new S7Address(DaveArea.DB, 1, 1, offset, 'X', bit);
+        }
+
+        m = IQM_BWD.matcher(addr);
+        if (m.matches()) {
+            DaveArea area = areaOf(m.group(1).charAt(0));
+            char type = m.group(2).charAt(0);
+            int offset = Integer.parseInt(m.group(3));
+            return new S7Address(area, 0, sizeOf(type), offset, type, -1);
+        }
+
+        m = IQM_BIT.matcher(addr);
+        if (m.matches()) {
+            DaveArea area = areaOf(m.group(1).charAt(0));
+            int offset = Integer.parseInt(m.group(2));
+            int bit = Integer.parseInt(m.group(3));
+            return new S7Address(area, 0, 1, offset, 'X', bit);
+        }
+
+        m = DB_BWD.matcher(addr);
+        if (m.matches()) {
+            int dbNum = Integer.parseInt(m.group(1));
+            char type = m.group(2).charAt(0);
+            int offset = Integer.parseInt(m.group(3));
+            return new S7Address(DaveArea.DB, dbNum, sizeOf(type), offset, type, -1);
+        }
+
+        throw new IllegalArgumentException("Unsupported S7 address: " + raw);
+    }
+
+    private static DaveArea areaOf(char c) {
+        return switch (c) {
+            case 'I' -> DaveArea.INPUTS;
+            case 'Q' -> DaveArea.OUTPUTS;
+            case 'M' -> DaveArea.FLAGS;
+            default -> throw new IllegalArgumentException("Unknown area: " + c);
+        };
+    }
+
+    private static int sizeOf(char type) {
+        return switch (type) {
+            case 'B' -> 1;
+            case 'W' -> 2;
+            case 'D' -> 4;
+            default -> throw new IllegalArgumentException("Unknown type: " + type);
+        };
+    }
+
+    private static Object convertValue(byte[] data, S7Address addr) {
+        if (addr.type == 'X') {
+            return (data[0] >> addr.bitNumber) & 1;
+        }
+        ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN);
+        return switch (addr.type) {
+            case 'B' -> buf.get() & 0xFF;
+            case 'W' -> buf.getShort() & 0xFFFF;
+            case 'D' -> buf.getInt() & 0xFFFFFFFFL;
+            default -> buf.getInt();
+        };
+    }
+
+    // ---- config parsing ----
+
+    private ConnectConfig parseConnectConfig(ProtocolConnect connect) {
+        String uri = connect.getUri().trim();
+        if (uri.startsWith("s7://")) {
+            uri = uri.substring("s7://".length());
+        }
+        String hostPart = uri.split("\\?")[0];
+        String host;
+        int port = DEFAULT_PORT;
+        if (hostPart.contains(":")) {
+            String[] parts = hostPart.split(":", 2);
+            host = parts[0];
+            try {
+                port = Integer.parseInt(parts[1].trim());
+            } catch (NumberFormatException e) {
+                port = DEFAULT_PORT;
+            }
+        } else {
+            host = hostPart;
+        }
+
+        int rack = DEFAULT_RACK;
+        int slot = DEFAULT_SLOT;
+        int timeout = DEFAULT_TIMEOUT_MS;
+
+        if (StringUtils.hasText(connect.getParams())) {
+            try {
+                JSONObject jo = JSONObject.parseObject(connect.getParams());
+                if (jo != null) {
+                    rack = jo.getIntValue("remoteRack", rack);
+                    slot = jo.getIntValue("remoteSlot", slot);
+                    timeout = jo.getIntValue("timeout", timeout);
+                }
+            } catch (Exception e) {
+                log.debug("Parse S7 params failed: {}", e.getMessage());
+            }
+        }
+
+        return new ConnectConfig(host, port, rack, slot, timeout);
+    }
+
+    // ---- tag loading ----
+
     private Map<String, String> buildTagsFromGatewayConfig(String gwId) {
         Map<String, String> tagNames = new LinkedHashMap<>();
         try {
@@ -198,161 +392,63 @@ public class S7PollingProtocolManager implements ProtocolManager {
                     continue;
                 }
                 EquipConfigDetail config = binding.getConfig();
-                String selfCode = equip.getSelfCode() != null ? equip.getSelfCode() : equip.getId();
-                tagNames.put(selfCode + "_run", config.getRunMap());
+                if (StringUtils.hasText(config.getRunMap())) {
+                    tagNames.put(config.getRunMap().trim(), config.getRunMap().trim());
+                }
                 if (config.getAttrs() != null) {
                     for (EquipAttr attr : config.getAttrs()) {
                         if (StringUtils.hasText(attr.getMap())) {
-                            String tagName = selfCode + "_" + attr.getMap();
-                            tagNames.put(tagName, attr.getMap().trim());
+                            tagNames.put(attr.getMap(), attr.getMap().trim());
                         }
                     }
                 }
                 if (config.getAlarms() != null) {
                     for (EquipAlarm alarm : config.getAlarms()) {
                         if (StringUtils.hasText(alarm.getMap())) {
-                            String tagName = selfCode + "_" + alarm.getMap();
-                            tagNames.put(tagName, alarm.getMap().trim());
+                            tagNames.put(alarm.getMap(), alarm.getMap().trim());
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            log.debug("Load S7 tags from gateway device config failed, gwId={}: {}", gwId, e.getMessage());
+            log.debug("Load S7 tags failed, gwId={}: {}", gwId, e.getMessage());
         }
         return tagNames;
     }
 
-    private String doRead(String connectId, S7ConnectSpec spec) throws Exception {
-        Object lock = connectLocks.computeIfAbsent(connectId, k -> new Object());
-        synchronized (lock) {
-            return doReadWithConnection(connectId, spec);
+    // ---- inner classes ----
+
+    static class S7Address {
+        final DaveArea area;
+        final int areaNumber;
+        final int byteCount;
+        final int offset;
+        final char type;
+        final int bitNumber;
+
+        S7Address(DaveArea area, int areaNumber, int byteCount, int offset, char type, int bitNumber) {
+            this.area = area;
+            this.areaNumber = areaNumber;
+            this.byteCount = byteCount;
+            this.offset = offset;
+            this.type = type;
+            this.bitNumber = bitNumber;
         }
     }
 
-    private String doReadWithConnection(String connectId, S7ConnectSpec spec) throws Exception {
-        PlcConnection connection = getOrCreateConnection(connectId, spec);
-        if (connection == null) {
-            return null;
-        }
-        try {
-            if (!connection.getMetadata().isReadSupported()) {
-                log.warn("S7 connection does not support read: {}", spec.connectionUrl);
-                return null;
-            }
-            PlcReadRequest.Builder builder = connection.readRequestBuilder();
-            for (Map.Entry<String, String> e : spec.tagNames.entrySet()) {
-                builder.addTagAddress(e.getKey(), e.getValue());
-            }
-            PlcReadRequest readRequest = builder.build();
-            PlcReadResponse response = readRequest.execute().get(READ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    static class ConnectConfig {
+        final String host;
+        final int port;
+        final int rack;
+        final int slot;
+        final int timeout;
 
-            Map<String, Object> result = new LinkedHashMap<>();
-            for (String tagName : spec.tagNames.keySet()) {
-                if (PlcResponseCode.OK.equals(response.getResponseCode(tagName))) {
-                    Object value = response.getObject(tagName);
-                    result.put(tagName, value);
-                }
-            }
-            return result.isEmpty() ? null : JSONObject.toJSONString(result);
-        } catch (Exception e) {
-            invalidateConnection(connectId);
-            throw e;
-        }
-    }
-
-    private PlcConnection getOrCreateConnection(String connectId, S7ConnectSpec spec) {
-        PlcConnection conn = connectionMap.get(connectId);
-        // 连接有效性预检：若已断开则失效并重建，实现健康复用
-        if (conn != null) {
-            try {
-                if (conn.isConnected()) {
-                    return conn;
-                }
-            } catch (Exception e) {
-                log.debug("S7 connection health check failed, connectId={}, will reconnect: {}", connectId, e.getMessage());
-            }
-            invalidateConnection(connectId);
-        }
-        try {
-            conn = plcDriverManager.getConnectionManager().getConnection(spec.connectionUrl);
-            connectionMap.put(connectId, conn);
-            log.debug("S7 long connection established, connectId={}, uri={}", connectId, spec.connectionUrl);
-            return conn;
-        } catch (Exception e) {
-            log.warn("S7 connection failed, connectId={}, uri={}: {}", connectId, spec.connectionUrl, e.getMessage());
-            return null;
-        }
-    }
-
-    private void invalidateConnection(String connectId) {
-        PlcConnection conn = connectionMap.remove(connectId);
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (Exception e) {
-                log.debug("S7 connection close error, connectId={}: {}", connectId, e.getMessage());
-            }
-            log.debug("S7 connection invalidated, connectId={}, will reconnect on next poll", connectId);
-        }
-    }
-
-    private void closeConnection(String connectId) {
-        PlcConnection conn = connectionMap.remove(connectId);
-        if (conn != null) {
-            try {
-                conn.close();
-            } catch (Exception e) {
-                log.debug("S7 connection close error, connectId={}: {}", connectId, e.getMessage());
-            }
-        }
-    }
-
-    private static class S7ConnectSpec {
-        final String connectionUrl;
-        final Map<String, String> tagNames;
-
-        S7ConnectSpec(String connectionUrl, Map<String, String> tagNames) {
-            this.connectionUrl = connectionUrl;
-            this.tagNames = tagNames;
-        }
-
-        static S7ConnectSpec from(ProtocolConnect connect, Map<String, String> tagsFromConfig) {
-            String host = connect.getUri().trim();
-            if (!host.contains("://")) {
-                host = "s7://" + host;
-            }
-            StringBuilder url = new StringBuilder(host);
-            Map<String, String> tags = new LinkedHashMap<>();
-
-            // 若已从网关设备配置加载到 tags，直接使用
-            if (tagsFromConfig != null && !tagsFromConfig.isEmpty()) {
-                tags.putAll(tagsFromConfig);
-            }
-
-            if (StringUtils.hasText(connect.getParams())) {
-                try {
-                    JSONObject jo = JSONObject.parseObject(connect.getParams());
-                    if (jo != null) {
-                        int remoteRack = jo.getIntValue("remoteRack", 0);
-                        int remoteSlot = jo.getIntValue("remoteSlot", 1);
-                        String controllerType = jo.getString("controllerType");
-                        url.append(url.toString().contains("?") ? "&" : "?");
-                        url.append("remote-rack=").append(remoteRack)
-                                .append("&remote-slot=").append(remoteSlot);
-                        if (StringUtils.hasText(controllerType)) {
-                            url.append("&controller-type=").append(controllerType.trim());
-                        }
-                        // 仅当未从设备配置加载到 tags 时，才从 params 解析 tags
-                        if (tags.isEmpty()) {
-                            return null;
-                        }
-                    }
-                } catch (Exception e) {
-                    log.debug("Parse S7 params failed: {}", e.getMessage());
-                }
-            }
-            return new S7ConnectSpec(url.toString(), tags);
+        ConnectConfig(String host, int port, int rack, int slot, int timeout) {
+            this.host = host;
+            this.port = port;
+            this.rack = rack;
+            this.slot = slot;
+            this.timeout = timeout;
         }
     }
 }

@@ -54,24 +54,21 @@
                 <label class="layui-form-label">Rack</label>
                 <div class="layui-input-block" style="margin-left:110px;">
                     <input type="number" id="s7-remote-rack" min="0" value="0" class="layui-input" placeholder="0">
+                    <div class="layui-form-mid layui-word-aux" style="padding:0 0 0 2px;font-size:12px;">机架号，通常为 0</div>
                 </div>
             </div>
             <div class="layui-form-item">
                 <label class="layui-form-label">Slot</label>
                 <div class="layui-input-block" style="margin-left:110px;">
-                    <input type="number" id="s7-remote-slot" min="0" value="1" class="layui-input" placeholder="1">
+                    <input type="number" id="s7-remote-slot" min="0" value="1" class="layui-input"
+                           placeholder="200Smart/1200/1500=1, 300=2, 400=3">
+                    <div class="layui-form-mid layui-word-aux" style="padding:0 0 0 2px;font-size:12px;">插槽号：S7-200 Smart / 1200 / 1500 填 1，S7-300 填 2，S7-400 填 3</div>
                 </div>
             </div>
-            <div class="layui-form-item" id="s7-username-form-item">
-                <label class="layui-form-label"><span lang-i18n="common.username">用户名</span></label>
-                <div class="layui-input-block">
-                    <input type="text" name="username" autocomplete="off" class="layui-input">
-                </div>
-            </div>
-            <div class="layui-form-item" id="s7-password-form-item">
-                <label class="layui-form-label"><span lang-i18n="common.password">密码</span></label>
-                <div class="layui-input-block">
-                    <input type="password" name="password" autocomplete="off" class="layui-input">
+            <div class="layui-form-item">
+                <label class="layui-form-label">超时(ms)</label>
+                <div class="layui-input-block" style="margin-left:110px;">
+                    <input type="number" id="s7-timeout" min="1000" value="5000" class="layui-input" placeholder="5000">
                 </div>
             </div>
             <div class="layui-form-item" id="collect-cron-form-item">
@@ -96,14 +93,12 @@
         var layer = layui.layer;
 
         function toggleByProtocol(protocol) {
-            var isMqtt = protocol && String(protocol).toLowerCase() === 'mqtt';
-            var isS7 = protocol && String(protocol).toLowerCase() === 's7';
+            var p = protocol ? String(protocol).toLowerCase() : '';
+            var isMqtt = p === 'mqtt';
+            var isS7 = p === 's7';
             $('#suffix-form-item').toggle(isMqtt);
             $('#s7-form-item').toggle(isS7);
-            // S7 协议隐藏用户名、密码
-            $('#s7-username-form-item, #s7-password-form-item').toggle(!isS7);
             $('#collect-enabled-form-item, #collect-interval-form-item, #collect-cron-form-item').toggle(!isMqtt);
-            // MQTT 时订阅主题必填，其它协议 cron 必填
             if (isMqtt) {
                 $('#topic-required-star').show();
                 $('#topic-input').attr('lay-verify', 'required');
@@ -119,76 +114,24 @@
         }
 
         function buildS7Params() {
-            var tags = {};
-            $('#s7-tags-tbody tr').each(function () {
-                var name = $(this).find('.s7-tag-name').val();
-                var addr = $(this).find('.s7-tag-address').val();
-                if (name && addr) {
-                    tags[name.trim()] = addr.trim();
-                }
-            });
-            var params = {
+            return {
                 remoteRack: parseInt($('#s7-remote-rack').val(), 10) || 0,
                 remoteSlot: parseInt($('#s7-remote-slot').val(), 10) || 1,
-                tags: tags
+                timeout: parseInt($('#s7-timeout').val(), 10) || 5000
             };
-            var ct = $('#s7-controller-type').val();
-            if (ct) params.controllerType = ct;
-            return params;
         }
 
         function setS7Params(params) {
             if (!params) {
                 $('#s7-remote-rack').val(0);
                 $('#s7-remote-slot').val(1);
-                $('#s7-controller-type').val('');
-                $('#s7-tags-tbody').empty();
-                $('#s7-tags-tbody').append(
-                    '<tr><td><input type="text" class="s7-tag-name layui-input" placeholder="tag1"></td>' +
-                    '<td><input type="text" class="s7-tag-address layui-input" placeholder="%DB1:0:INT"></td>' +
-                    '<td><button type="button" class="layui-btn layui-btn-sm layui-btn-danger s7-tag-del">删</button></td></tr>'
-                );
+                $('#s7-timeout').val(5000);
                 return;
             }
             $('#s7-remote-rack').val(params.remoteRack != null ? params.remoteRack : 0);
             $('#s7-remote-slot').val(params.remoteSlot != null ? params.remoteSlot : 1);
-            if (params.controllerType) $('#s7-controller-type').val(params.controllerType);
-            var tbody = $('#s7-tags-tbody');
-            tbody.empty();
-            var tagMap = params.tags;
-            if (tagMap && typeof tagMap === 'object' && !Array.isArray(tagMap)) {
-                for (var name in tagMap) {
-                    if (tagMap.hasOwnProperty(name)) {
-                        tbody.append(
-                            '<tr><td><input type="text" class="s7-tag-name layui-input" value="' + (name || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '"></td>' +
-                            '<td><input type="text" class="s7-tag-address layui-input" value="' + (tagMap[name] || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '"></td>' +
-                            '<td><button type="button" class="layui-btn layui-btn-sm layui-btn-danger s7-tag-del">删</button></td></tr>'
-                        );
-                    }
-                }
-            }
-            if (tbody.find('tr').length === 0) {
-                tbody.append(
-                    '<tr><td><input type="text" class="s7-tag-name layui-input" placeholder="tag1"></td>' +
-                    '<td><input type="text" class="s7-tag-address layui-input" placeholder="%DB1:0:INT"></td>' +
-                    '<td><button type="button" class="layui-btn layui-btn-sm layui-btn-danger s7-tag-del">删</button></td></tr>'
-                );
-            }
+            $('#s7-timeout').val(params.timeout != null ? params.timeout : 5000);
         }
-
-        function addS7TagRow() {
-            $('#s7-tags-tbody').append(
-                '<tr><td><input type="text" class="s7-tag-name layui-input" placeholder="tag名"></td>' +
-                '<td><input type="text" class="s7-tag-address layui-input" placeholder="%DB1:0:INT"></td>' +
-                '<td><button type="button" class="layui-btn layui-btn-sm layui-btn-danger s7-tag-del">删</button></td></tr>'
-            );
-        }
-
-        $(document).on('click', '#s7-tag-add', addS7TagRow);
-        $(document).on('click', '.s7-tag-del', function () {
-            var tr = $(this).closest('tr');
-            if ($('#s7-tags-tbody tr').length > 1) tr.remove(); else tr.find('input').val('');
-        });
 
         get(router.gw_protocols, null, function (result) {
             $.each(result, function (index, item) {
@@ -212,7 +155,8 @@
                 current_row_data = result;
                 form.val("common-edit-form", Object.assign({}, current_row_data));
                 toggleByProtocol(result.protocol);
-                if (result.protocol && String(result.protocol).toLowerCase() === 's7' && result.params) {
+                var proto = result.protocol ? String(result.protocol).toLowerCase() : '';
+                if (proto === 's7' && result.params) {
                     try {
                         var p = typeof result.params === 'string' ? JSON.parse(result.params) : result.params;
                         setS7Params(p);

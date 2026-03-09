@@ -6,6 +6,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,11 +50,15 @@ public class S7EquipDataParser implements EquipDataParser {
         target.setTime(new Date());
         target.online();
 
-        Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
-        if (runVal != null && runVal == 1) {
-            target.run();
+        if (StringUtils.hasText(equipRealtime.getEquipRealtimeConfig().getRunMap())) {
+            Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
+            if (runVal != null && runVal == 1) {
+                target.run();
+            } else {
+                target.stop();
+            }
         } else {
-            target.stop();
+            target.run();
         }
 
         if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
