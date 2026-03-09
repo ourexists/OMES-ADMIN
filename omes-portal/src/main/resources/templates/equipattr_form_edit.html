@@ -400,9 +400,13 @@
         'OPC UA': '<div class="map-protocol-item"><div class="map-protocol-name">OPC UA</div>' +
             '<div class="map-example-line">属性映射：ns=2;s=Machine/Temperature、ns=1;i=1337</div>' +
             '<div class="map-example-line">运行映射示例：ns=2;s=Machine/Run</div></div>',
-        'S7': '<div class="map-protocol-item"><div class="map-protocol-name">S7</div>' +
-            '<div class="map-example-line">属性映射：%DB1:0:INT、%DB2:10:REAL、%M0:BYTE</div>' +
-            '<div class="map-example-line">运行映射示例：%M0:BOOL</div></div>',
+        'S7': '<div class="map-protocol-item"><div class="map-protocol-name">S7（支持 S7-200 Smart / 300 / 400 / 1200 / 1500）</div>' +
+            '<div class="map-example-line">V 区（200 Smart）：VB100（字节）、VW100（字）、VD100（双字）、V100.0（位）</div>' +
+            '<div class="map-example-line">I 区：IB0（字节）、IW0（字）、I0.0（位）</div>' +
+            '<div class="map-example-line">Q 区：QB0（字节）、QW0（字）、Q0.0（位）</div>' +
+            '<div class="map-example-line">M 区：MB0（字节）、MW0（字）、MD0（双字）、M0.0（位）</div>' +
+            '<div class="map-example-line">DB 区：DB1.DBB0、DB1.DBW0、DB1.DBD0</div>' +
+            '<div class="map-example-line">运行映射示例：VW0、M0.0、I0.0</div></div>',
         'WINCC': '<div class="map-protocol-item"><div class="map-protocol-name">WINCC</div>' +
             '<div class="map-example-line">属性映射：WinCC 变量名，如 Machine1.Temperature、Tag_001</div>' +
             '<div class="map-example-line">运行映射示例：Process.RunStatus</div></div>',
@@ -416,7 +420,7 @@
         var p = (protocol || '').toLowerCase();
         if (p.indexOf('modbus') >= 0) return MAP_EXAMPLES['Modbus TCP'];
         if (p.indexOf('opc') >= 0 || p.indexOf('ua') >= 0) return MAP_EXAMPLES['OPC UA'];
-        if (p === 's7' || p.indexOf('s7') >= 0) return MAP_EXAMPLES['S7'];
+        if (p.indexOf('s7') >= 0) return MAP_EXAMPLES['S7'];
         if (p.indexOf('wincc') >= 0) return MAP_EXAMPLES['WINCC'];
         return MAP_EXAMPLES['default'];
     }

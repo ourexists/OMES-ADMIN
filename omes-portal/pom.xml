@@ -130,10 +130,10 @@
             <artifactId>spring-integration-mqtt</artifactId>
         </dependency>
 
-        <!-- Apache PLC4X S7 driver (plc4j) for Siemens S7 polling -->
+        <!-- Apache PLC4X connection cache (plc4j) -->
         <dependency>
             <groupId>org.apache.plc4x</groupId>
-            <artifactId>plc4j-driver-s7</artifactId>
+            <artifactId>plc4j-connection-cache</artifactId>
             <version>0.13.1</version>
         </dependency>
 
@@ -149,6 +149,13 @@
             <groupId>org.apache.plc4x</groupId>
             <artifactId>plc4j-driver-opcua</artifactId>
             <version>0.13.1</version>
+        </dependency>
+
+        <!-- S7Connector (nodave) for Siemens S7 PLC -->
+        <dependency>
+            <groupId>com.github.s7connector</groupId>
+            <artifactId>s7connector</artifactId>
+            <version>2.1</version>
         </dependency>
 
     </dependencies>
