@@ -363,4 +363,9 @@ public class ViewController {
     public String equip_screen() {
         return "equip_screen";
     }
+
+    @RequestMapping("/view/equip_screen_tech")
+    public String equip_screen_tech() {
+        return "equip_screen_tech";
+    }
 }

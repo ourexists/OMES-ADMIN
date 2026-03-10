@@ -20,6 +20,7 @@ import com.ourexists.omes.device.service.WorkshopConfigCollectService;
 import com.ourexists.omes.device.service.WorkshopConfigScadaService;
 import com.ourexists.omes.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -165,11 +166,16 @@ public class WorkshopViewer implements WorkshopFeign {
         return JsonResponseEntity.success(true);
     }
 
-
     @Operation(summary = "所有场景采集配置", description = "所有场景采集配置")
     @GetMapping("queryAllConfigCollect")
     public JsonResponseEntity<List<WorkshopConfigCollectDto>> queryAllConfigCollect() {
         return JsonResponseEntity.success(WorkshopConfigCollect.covert(workshopConfigCollectService.queryAllConfigCollect()));
+    }
+
+    @Operation(summary = "按网关ID查询场景采集配置", description = "用于 tags 快速查询")
+    @GetMapping("queryConfigCollectByGwId")
+    public JsonResponseEntity<List<WorkshopConfigCollectDto>> queryConfigCollectByGwId(@RequestParam String gatewayId) {
+        return JsonResponseEntity.success(WorkshopConfigCollect.covert(workshopConfigCollectService.queryByGwId(gatewayId)));
     }
 
 }

@@ -13,132 +13,189 @@
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
     <style>
-        .json-container {
-            display: flex;
-            gap: 16px;
-        }
-
-        .json-box {
-            flex: 1;
-            padding: 10px;
-        }
-
-        .json-box textarea {
-            width: 100%;
-            height: 400px;
-            font-family: monospace;
-            font-size: 13px;
-            padding: 8px;
-            resize: none;
-        }
-
-        .json-box .title {
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-
-        #json-template {
-            font-weight: bold;
-        }
+        .collect-config-page { max-width: 960px; }
+        .dynamic-form-box { margin-bottom: 16px; padding: 12px; border-radius: 8px; background: #fafbfc; border: 1px solid #e8eaed; }
+        .dynamic-form-box .title { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e8eaed; }
+        .dynamic-form-box .toolbar { margin-bottom: 10px; }
+        .dynamic-form-box .form-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .dynamic-form-box .form-table th, .dynamic-form-box .form-table td { padding: 8px 6px; border: 1px solid #e8eaed; vertical-align: middle; }
+        .dynamic-form-box .form-table th { background: #f0f2f5; font-weight: 600; color: #333; }
+        .dynamic-form-box .form-table input, .dynamic-form-box .form-table select { width: 100%; box-sizing: border-box; padding: 4px 8px; border: 1px solid #e0e0e0; border-radius: 4px; }
+        .dynamic-form-box .form-table .col-op { width: 60px; text-align: center; }
+        .dynamic-form-box .form-table .col-check { width: 70px; text-align: center; }
+        .form-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; text-align: right; }
+        .json-paste-layer { padding: 12px; box-sizing: border-box; display: flex; gap: 16px; min-height: 420px; }
+        .json-paste-layer .json-paste-section { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .json-paste-layer .json-paste-label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; flex-shrink: 0; }
+        .json-paste-layer .json-paste-label i { margin-right: 4px; color: #009688; }
+        .json-paste-layer .json-paste-section textarea { flex: 1; min-height: 320px; width: 100%; font-family: Consolas, Monaco, monospace; font-size: 13px; line-height: 1.6; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 6px; box-sizing: border-box; resize: none; background: #fff; color: #24292f; }
+        .json-paste-layer .json-paste-section textarea:focus { border-color: #009688; outline: none; box-shadow: 0 0 0 2px rgba(0, 150, 136, 0.12); }
+        .json-paste-layer .json-paste-template-ta { cursor: default; background: #f6f8fa; color: #57606a; }
     </style>
 </head>
 <body>
-<div style="padding: 16px;">
-    <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="data.collect_type" style="font-weight: bold;"></label>
-            <div class="layui-input-block">
-                <select name="collectType" id="collectType">
-                </select>
+<div class="collect-config-page" style="padding: 20px;">
+    <form class="layui-form" action="" id="common-edit-form" lay-filter="common-edit-form">
+        <div class="dynamic-form-box">
+            <div class="title" lang-i18n="workshop.config_collect_attrs">场景属性</div>
+            <div class="toolbar">
+                <button type="button" class="layui-btn layui-btn-sm" id="btn-add-attr-row" lang-i18n="equipattr.addRow">新增一行</button>
+                <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-attr-json-paste" lang-i18n="equipattr.openJsonPaste">JSON配置模式</button>
             </div>
-        </div>
-        <div class="json-container">
-            <div class="json-box">
-                <div class="title" lang-i18n="workshop.config_collect_json">采集配置(JSON)</div>
-                <textarea id="json-input" placeholder='{"attrs":[]}'></textarea>
-            </div>
-            <div class="json-box">
-                <div class="title">配置模板示例</div>
-                <textarea id="json-template" readonly disabled></textarea>
-            </div>
+            <table class="form-table layui-table" id="attr-table">
+                <thead>
+                <tr>
+                    <th lang-i18n="workshop.config_collect_name">场景属性</th>
+                    <th lang-i18n="workshop.config_collect_map">属性映射</th>
+                    <th lang-i18n="workshop.config_collect_gw">关联网关</th>
+                    <th lang-i18n="workshop.config_collect_value">属性默认值</th>
+                    <th lang-i18n="equipattr.unit">单位</th>
+                    <th class="col-check" lang-i18n="equipattr.needCollect">是否采集</th>
+                    <th class="col-op" lang-i18n="common.operate">操作</th>
+                </tr>
+                </thead>
+                <tbody id="attr-tbody"></tbody>
+            </table>
         </div>
 
-        <div class="layui-form-item" style="text-align: right; margin-top: 10px">
-            <button class="layui-btn" lay-submit lay-filter="common-edit-button"
-                    lang-i18n="common.msg.confirm"></button>
+        <div class="form-footer">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm"></button>
         </div>
     </form>
 </div>
 <script th:inline="none">
-    var current_data;
+    var gatewayList = [];
     layui.use(function () {
-        let form = layui.form,
-            layer = layui.layer;
-
-        const jsonTemplate = {
-            attrs: {
-                comment: (i18np.prop("workshop.config_collect_attrs") || "采集项配置"),
-                value: [
-                    {
-                        name: { value: "attributeName", comment: (i18np.prop("workshop.config_collect_name") || "名称") },
-                        map: { value: "mapField", comment: (i18np.prop("workshop.config_collect_map") || "映射") },
-                        value: { value: "defaultValue", comment: (i18np.prop("workshop.config_collect_value") || "默认值") },
-                        unit: { value: "", comment: (i18np.prop("equipattr.unit") || "单位") },
-                        needCollect: { value: true, comment: (i18np.prop("data.collect") || "是否采集") }
-                    }
-                ]
-            }
-        };
-        $('#json-template').val(renderJsonWithComment(jsonTemplate));
-
+        let form = layui.form, layer = layui.layer;
         let id = layui.url().search.id;
 
-        get(router.workshop_collect_type, null, function (result) {
-            $.each(result, function (index, item) {
-                $('#collectType').append(new Option(item, item));
+        function getAttrRowData(tr) {
+            var $tr = $(tr);
+            return {
+                name: $tr.find('.attr-name').val() || '',
+                map: $tr.find('.attr-map').val() || '',
+                gwId: $tr.find('.attr-gwId').val() || '',
+                value: $tr.find('.attr-value').val() || '',
+                unit: $tr.find('.attr-unit').val() || '',
+                needCollect: $tr.find('.attr-needCollect').prop('checked')
+            };
+        }
+
+        function getAttrsFromForm() {
+            var list = [];
+            $('#attr-tbody tr').each(function () {
+                list.push(getAttrRowData(this));
             });
-            form.render();
+            return list;
+        }
+
+        function addAttrRow(data) {
+            data = data || {};
+            var n = (data.name || '').replace(/"/g, '&quot;');
+            var m = (data.map || '').replace(/"/g, '&quot;');
+            var gid = data.gwId || '';
+            var v = (data.value || '').replace(/"/g, '&quot;');
+            var u = (data.unit || '').replace(/"/g, '&quot;');
+            var checked = data.needCollect ? ' checked' : '';
+            var opts = '<option value="">--</option>';
+            gatewayList.forEach(function (gw) {
+                opts += '<option value="' + (gw.id || '') + '"' + (gid === gw.id ? ' selected' : '') + '>' + (gw.serverName || '-') + '</option>';
+            });
+            var row = '<tr>' +
+                '<td><input type="text" class="layui-input attr-name" value="' + n + '"></td>' +
+                '<td><input type="text" class="layui-input attr-map" value="' + m + '"></td>' +
+                '<td><select class="attr-gwId layui-select">' + opts + '</select></td>' +
+                '<td><input type="text" class="layui-input attr-value" value="' + v + '"></td>' +
+                '<td><input type="text" class="layui-input attr-unit" value="' + u + '"></td>' +
+                '<td class="col-check"><input type="checkbox" class="attr-needCollect" lay-skin="primary"' + checked + '></td>' +
+                '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-attr">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
+            $('#attr-tbody').append(row);
+            form.render('select');
+            form.render('checkbox');
+        }
+
+        function setAttrsFromArray(attrs) {
+            $('#attr-tbody').empty();
+            if (!Array.isArray(attrs) || attrs.length === 0) {
+                addAttrRow();
+            } else {
+                attrs.forEach(function (a) {
+                    addAttrRow({
+                        name: a.name,
+                        map: a.map,
+                        gwId: a.gwId,
+                        value: a.value,
+                        unit: a.unit,
+                        needCollect: a.needCollect === true
+                    });
+                });
+            }
+        }
+
+        post(router.gw_page, { requirePage: false }, function (data) {
+            gatewayList = (data != null && Array.isArray(data)) ? data : [];
         });
 
         get(router.workshop_config_collect, {"workshopId": id}, function (r) {
-            if (r == null) {
-                current_data = {};
-                form.val("common-edit-form", {});
-                $('#json-input').val(JSON.stringify({ attrs: [] }, null, 4));
-            } else {
-                current_data = r.config || {};
-                form.val("common-edit-form", Object.assign({}, current_data));
-                var jsonText = JSON.stringify(
-                    current_data,
-                    function (key, value) { return key === "collectType" ? undefined : value; },
-                    4);
-                $('#json-input').val(jsonText || '{"attrs":[]}');
+            var attrs = [];
+            if (r && r.config && r.config.attrs) attrs = r.config.attrs;
+            setAttrsFromArray(attrs);
+        });
+
+        var attrTemplateForComment = [
+            {
+                name: {value: "attributeName", comment: (i18np.prop("workshop.config_collect_name") || "属性名称")},
+                map: {value: "mapField", comment: (i18np.prop("workshop.config_collect_map") || "属性映射")},
+                gwId: {value: "gatewayId", comment: (i18np.prop("workshop.config_collect_gw") || "关联网关")},
+                value: {value: "defaultValue", comment: (i18np.prop("workshop.config_collect_value") || "属性默认值")},
+                unit: {value: "", comment: (i18np.prop("equipattr.unit") || "单位")},
+                needCollect: {value: true, comment: (i18np.prop("equipattr.needCollect") || "是否采集")}
             }
+        ];
+        var attrTemplateRendered = renderJsonWithComment(attrTemplateForComment);
+
+        $('#btn-add-attr-row').on('click', function () {
+            addAttrRow();
+        });
+        $('#btn-attr-json-paste').on('click', function () {
+            var currentJson = JSON.stringify(getAttrsFromForm(), null, 4);
+            var content = '<div class="json-paste-layer">' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-edit"></i> 输入/粘贴 JSON</label><textarea id="attr-json-paste-ta" placeholder="粘贴场景属性配置 JSON 数组"></textarea></div>' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-template-1"></i> 模板示例</label><textarea id="attr-json-template-ta" readonly class="json-paste-template-ta"></textarea></div>' +
+                '</div>';
+            var idx = layer.open({
+                type: 1,
+                title: (i18np.prop('equipattr.openJsonPaste') || 'JSON配置模式') + ' - ' + (i18np.prop('workshop.config_collect_attrs') || '场景属性'),
+                area: ['920px', '560px'],
+                content: content,
+                success: function (layero) {
+                    $(layero).find('#attr-json-paste-ta').val(currentJson).focus();
+                    $(layero).find('#attr-json-template-ta').val(attrTemplateRendered);
+                },
+                btn: [(i18np.prop('common.msg.confirm') || '确定'), (i18np.prop('common.msg.cancel') || '取消')],
+                yes: function () {
+                    var raw = ($('#attr-json-paste-ta').val() || '').trim();
+                    try {
+                        var parsed = raw ? JSON.parse(raw) : [];
+                        var arr = Array.isArray(parsed) ? parsed : (parsed && parsed.attrs) ? parsed.attrs : [];
+                        setAttrsFromArray(arr);
+                        layer.msg(i18np.prop('equipattr.pasteFromClipboard.success') || '已填入');
+                        layer.close(idx);
+                    } catch (e) {
+                        layer.msg((i18np.prop('equipattr.pasteFromClipboard.invalid') || 'JSON 格式错误') + ': ' + (e.message || ''));
+                    }
+                }
+            });
+        });
+        $(document).on('click', '.btn-remove-attr', function () {
+            $(this).closest('tr').remove();
         });
 
         form.on('submit(common-edit-button)', function (data) {
-            var raw = $("#json-input").val().trim();
-            if (!raw) {
-                layer.msg(i18np.prop("common.msg.json_invalid") || "请填写有效 JSON");
-                return false;
-            }
-            var configJSON;
-            try {
-                configJSON = JSON.parse(raw);
-            } catch (e) {
-                layer.msg((i18np.prop("common.msg.json_invalid") || "JSON 格式错误") + ": " + e.message);
-                return false;
-            }
-            var field = data.field;
-            for (var key in field) {
-                configJSON[key] = field[key];
-            }
-            if (!configJSON.attrs) {
-                configJSON.attrs = [];
-            }
+            var attrs = getAttrsFromForm();
             post(router.workshop_setConfig_collect, {
-                "workshopId": id,
-                "config": configJSON
+                workshopId: id,
+                config: { attrs: attrs }
             }, function () {
                 var index = parent.layer.getFrameIndex(window.name);
                 parent.layer.close(index);

@@ -114,6 +114,7 @@
 
         // 创建表格实例
         table.render({
+            id: 'tb-common',
             elem: '#tb-common',
             method: 'POST',
             headers: getCommonHeader(),
@@ -160,11 +161,17 @@
                 statusCode: 200, //规定成功的状态码味200
             },
             parseData: function (res) {
+                // 兼容：1) 响应体直接为数组  2) { code, data: 数组 }  3) { code, data: { data: [], calc } }
+                if (Array.isArray(res)) {
+                    return { code: 200, msg: '', data: res, totalRow: {} };
+                }
+                var list = Array.isArray(res.data) ? res.data : ((res.data && res.data.data) ? res.data.data : []);
+                var totalRow = (res.data && !Array.isArray(res.data) && res.data.calc) ? res.data.calc : {};
                 return {
                     "code": res.code,
                     "msg": res.msg,
-                    "data": res.data.data,
-                    "totalRow": res.data.calc
+                    "data": list,
+                    "totalRow": totalRow
                 };
             },
             page: false,
@@ -202,10 +209,15 @@
         // 搜索提交
         form.on('submit(tb-common-search)', function (data) {
             let field = data.field;
-            if (selected_tree_node !== null && field.startDate !== null && field.endDate !== null
-                && field.startDate !== '' && field.endDate !== '') {
-                reloadTb();
+            if (selected_tree_node == null) {
+                layer.msg(i18np.prop("bomc.msg.select"));
+                return false;
             }
+            if (!field.startDate || !field.endDate || field.startDate === '' || field.endDate === '') {
+                layer.msg(i18np.prop('common.msg.selecttime'));
+                return false;
+            }
+            reloadTb();
             return false; // 阻止默认 form 跳转
         });
 
@@ -232,21 +244,21 @@
         table.reload('tb-common', {
             url: initRequestUrl(router.workshop_collect_page),
             customTitleRow: title,
+            text: { none: i18np.prop('workshop.report.nodata') || '该时间范围内暂无采集数据' },
             where: {
                 workshopId: selected_tree_node.id,
-                startTime: $('#startDate').val(),
-                endTime: $('#endDate').val(),
+                startDate: $('#startDate').val(),
+                endDate: $('#endDate').val(),
             },
         });
     }
 
     function reloadAll() {
         get(router.workshop_config_collect, {"workshopId": selected_tree_node.id}, function (d) {
-            if (d == null || d.config == null || d.config.attrs == null) {
-                table.reload('tb-common', {
-                    cols: [],
-                })
-                return
+            if (d == null || d.config == null || d.config.attrs == null || d.config.attrs.length === 0) {
+                table.reload('tb-common', { cols: [[]], data: [] });
+                layer.msg(i18np.prop('workshop.report.no_config') || '该场景未配置采集属性');
+                return;
             }
             let tbCols = []
             let col = [];
@@ -281,8 +293,8 @@
                     url: initRequestUrl(router.workshop_collect_page),
                     where: {
                         workshopId: selected_tree_node.id,
-                        startTime: $('#startDate').val(),
-                        endTime: $('#endDate').val(),
+                        startDate: $('#startDate').val(),
+                        endDate: $('#endDate').val(),
                     },
                 })
             }
@@ -290,9 +302,9 @@
     }
 
     function reloadTree() {
-        get(router.platform_all, null, function (result) {
+        get(router.workshop_tree, null, function (result) {
             tree.reload("left-tree", {data: result});
-        })
+        });
     }
 </script>
 </body>

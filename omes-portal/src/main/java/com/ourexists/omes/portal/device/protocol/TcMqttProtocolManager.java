@@ -6,6 +6,7 @@ package com.ourexists.omes.portal.device.protocol;
 
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.portal.device.collect.TcMqttEquipDataParser;
+import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
     @Autowired
     private TcMqttEquipDataParser tcMqttEquipDataParser;
 
+    @Autowired
+    private JSONWorkshopDataParser JSONWorkshopDataParser;
+
     @Override
     public String protocol() {
         return "TC_MQTT";
@@ -35,6 +39,7 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
                 return;
             }
             tcMqttEquipDataParser.parse(gw.getId(), payload);
+            JSONWorkshopDataParser.parse(gw.getId(), payload);
         };
     }
 }

@@ -14,7 +14,6 @@ import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtime;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeCollect;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeConfig;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeManager;
-import com.ourexists.omes.device.core.workshop.collect.WorkshopRealtimeCollectSelector;
 import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.portal.device.ScadaPathManager;
@@ -49,9 +48,6 @@ public class WorkshopController {
 
     @Autowired
     private WorkshopRealtimeManager workshopRealtimeManager;
-
-    @Autowired
-    private WorkshopRealtimeCollectSelector workshopRealtimeCollectSelector;
 
 
     @Operation(summary = "查询所有树", description = "查询所有树")
@@ -103,20 +99,18 @@ public class WorkshopController {
     public JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto) {
         try {
             RemoteHandleUtils.getDataFormResponse(workshopFeign.setConfigCollect(dto));
-            WorkshopRealtime workshopRealtime = new WorkshopRealtime();
-            workshopRealtime.setId(dto.getWorkshopId());
-            WorkshopRealtimeConfig workshopRealtimeConfig = new WorkshopRealtimeConfig();
-            BeanUtils.copyProperties(dto.getConfig(), workshopRealtimeConfig);
-            List<WorkshopRealtimeCollect> attrconfigs = new ArrayList<>();
-            for (WorkshopConfigCollectAttr attr : dto.getConfig().getAttrs()) {
-                WorkshopRealtimeCollect workshopRealtimeCollect = new WorkshopRealtimeCollect();
-                BeanUtils.copyProperties(attr, workshopRealtimeCollect);
-                attrconfigs.add(workshopRealtimeCollect);
+            WorkshopConfigCollectDto enriched = RemoteHandleUtils.getDataFormResponse(workshopFeign.queryConfigCollect(dto.getWorkshopId()));
+            if (enriched != null && enriched.getConfig() != null) {
+                WorkshopRealtime workshopRealtime = new WorkshopRealtime();
+                workshopRealtime.setId(dto.getWorkshopId());
+                WorkshopRealtimeConfig workshopRealtimeConfig = new WorkshopRealtimeConfig();
+                BeanUtils.copyProperties(enriched.getConfig(), workshopRealtimeConfig);
+                List<WorkshopRealtimeCollect> attrconfigs = toRealtimeCollectList(enriched.getConfig());
+                workshopRealtimeConfig.setAttrs(attrconfigs);
+                workshopRealtime.setConfig(workshopRealtimeConfig);
+                workshopRealtime.setAttrsRealtime(null);
+                workshopRealtimeManager.build(workshopRealtime);
             }
-            workshopRealtimeConfig.setAttrs(attrconfigs);
-            workshopRealtime.setConfig(workshopRealtimeConfig);
-            workshopRealtime.setAttrsRealtime(null);
-            workshopRealtimeManager.build(workshopRealtime);
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
             throw new BusinessException(e.getMessage());
@@ -124,16 +118,26 @@ public class WorkshopController {
         return JsonResponseEntity.success(true);
     }
 
+    private List<WorkshopRealtimeCollect> toRealtimeCollectList(WorkshopConfigCollectDetail config) {
+        List<WorkshopRealtimeCollect> result = new ArrayList<>();
+        if (config != null && config.getAttrs() != null) {
+            for (WorkshopConfigCollectAttr attr : config.getAttrs()) {
+                result.add(toRealtimeCollect(attr));
+            }
+        }
+        return result;
+    }
+
+    private WorkshopRealtimeCollect toRealtimeCollect(WorkshopConfigCollectAttr attr) {
+        WorkshopRealtimeCollect c = new WorkshopRealtimeCollect();
+        BeanUtils.copyProperties(attr, c);
+        return c;
+    }
+
     @Operation(summary = "场景采集配置")
     @GetMapping("queryConfigCollect")
     public JsonResponseEntity<WorkshopConfigCollectDto> queryConfigCollect(@RequestParam String workshopId) {
         return workshopFeign.queryConfigCollect(workshopId);
-    }
-
-    @Operation(summary = "场景采集方式")
-    @GetMapping("collectType")
-    public JsonResponseEntity<List<String>> collectType() {
-        return JsonResponseEntity.success(workshopRealtimeCollectSelector.getAllNames());
     }
 
     @Operation(summary = "场景SCADA配置")

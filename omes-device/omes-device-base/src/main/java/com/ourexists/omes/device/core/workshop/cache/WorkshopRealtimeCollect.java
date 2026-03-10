@@ -15,6 +15,8 @@ public class WorkshopRealtimeCollect {
 
     private String unit;
 
+    private String gwId;
+
     private Boolean needCollect = false;
 
     private String value;

@@ -9,8 +9,10 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.EquipFeign;
+import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.device.model.*;
-import com.ourexists.omes.portal.device.collect.S7EquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -60,16 +62,22 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
 
     private final PlcConnectionManager connectionManager;
     private final EquipFeign equipFeign;
-    private final S7EquipDataParser equipDataParser;
+    private final WorkshopFeign workshopFeign;
+    private final PlcEquipDataParser equipDataParser;
+    private final PlcWorkshopDataParser workshopDataParser;
     private final int readTimeoutMs;
     private final String threadPrefix;
 
     protected AbstractPlc4xPollingProtocolManager(EquipFeign equipFeign,
-                                                  S7EquipDataParser equipDataParser,
+                                                  WorkshopFeign workshopFeign,
+                                                  PlcEquipDataParser equipDataParser,
+                                                  PlcWorkshopDataParser workshopDataParser,
                                                   int readTimeoutMs,
                                                   String threadPrefix) {
         this.equipFeign = equipFeign;
+        this.workshopFeign = workshopFeign;
         this.equipDataParser = equipDataParser;
+        this.workshopDataParser = workshopDataParser;
         this.readTimeoutMs = readTimeoutMs;
         this.threadPrefix = threadPrefix;
         this.connectionManager = CachedPlcConnectionManager.getBuilder()
@@ -162,6 +170,7 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
                     String payload = doRead(connectId, spec);
                     if (StringUtils.hasText(payload)) {
                         equipDataParser.parse(connectId, payload);
+                        workshopDataParser.parse(connectId, payload);
                     }
                 } catch (Exception e) {
                     log.error("{} polling error, connectId={}, uri={}", protocol(), connectId, spec.connectionUrl, e);
@@ -258,6 +267,7 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
                     String payload = doRead(connectId, spec);
                     if (StringUtils.hasText(payload)) {
                         equipDataParser.parse(connectId, payload);
+                        workshopDataParser.parse(connectId, payload);
                     }
                 } catch (Exception e) {
                     log.debug("{} read-after-write failed, connectId={}: {}", protocol(), connectId, e.getMessage());
@@ -312,6 +322,22 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
             }
         } catch (Exception e) {
             log.debug("Load {} tags from gateway config failed, gwId={}: {}", protocol(), gwId, e.getMessage());
+        }
+        try {
+            List<WorkshopConfigCollectDto> allCollect = RemoteHandleUtils.getDataFormResponse(workshopFeign.queryConfigCollectByGwId(gwId));
+            if (allCollect != null) {
+                for (WorkshopConfigCollectDto dto : allCollect) {
+                    if (dto == null || dto.getConfig() == null || dto.getConfig().getAttrs() == null) continue;
+                    for (WorkshopConfigCollectAttr attr : dto.getConfig().getAttrs()) {
+                        if (gwId.equals(attr.getGwId()) && StringUtils.hasText(attr.getMap())) {
+                            String map = attr.getMap().trim();
+                            tagNames.put(map, map);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Load {} tags from workshop config collect failed, gwId={}: {}", protocol(), gwId, e.getMessage());
         }
         return tagNames;
     }

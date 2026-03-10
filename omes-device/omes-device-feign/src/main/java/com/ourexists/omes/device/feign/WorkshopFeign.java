@@ -47,4 +47,7 @@ public interface WorkshopFeign {
     JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto);
 
     JsonResponseEntity<List<WorkshopConfigCollectDto>> queryAllConfigCollect();
+
+    /** 按关联网关ID查询场景采集配置（用于 tags 快速查询） */
+    JsonResponseEntity<List<WorkshopConfigCollectDto>> queryConfigCollectByGwId(@RequestParam String gatewayId);
 }

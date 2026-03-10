@@ -5,6 +5,7 @@ package com.ourexists.omes.portal.device.protocol;
 
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.portal.device.collect.JSONEquipDataParser;
+import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,9 @@ public class CommonRestPollingProtocolManager extends AbstractRestPollingProtoco
     @Autowired
     private JSONEquipDataParser equipDataParser;
 
+    @Autowired
+    private JSONWorkshopDataParser JSONWorkshopDataParser;
+
     @Override
     public String protocol() {
         return "Rest";
@@ -39,6 +43,7 @@ public class CommonRestPollingProtocolManager extends AbstractRestPollingProtoco
     @Override
     protected void respHandle(ProtocolConnect connect, String payload) {
         equipDataParser.parse(connect.getId(), payload);
+        JSONWorkshopDataParser.parse(connect.getId(), payload);
     }
 
     @Override

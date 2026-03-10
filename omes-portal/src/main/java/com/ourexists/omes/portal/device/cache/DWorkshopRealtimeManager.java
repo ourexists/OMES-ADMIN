@@ -163,13 +163,8 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
                 workshopRealtime.setId(dto.getWorkshopId());
                 WorkshopRealtimeConfig configRealtime = new WorkshopRealtimeConfig();
                 BeanUtils.copyProperties(config, configRealtime);
-                if (!CollectionUtils.isEmpty(config.getAttrs())) {
-                    List<WorkshopRealtimeCollect> attrs = new ArrayList<>();
-                    for (WorkshopConfigCollectAttr attr : config.getAttrs()) {
-                        WorkshopRealtimeCollect realtimeCollect = new WorkshopRealtimeCollect();
-                        BeanUtils.copyProperties(attr, realtimeCollect);
-                        attrs.add(realtimeCollect);
-                    }
+                List<WorkshopRealtimeCollect> attrs = toRealtimeCollectList(config);
+                if (!attrs.isEmpty()) {
                     configRealtime.setAttrs(attrs);
                 }
                 workshopRealtime.setConfig(configRealtime);
@@ -179,5 +174,21 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         } catch (EraCommonException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<WorkshopRealtimeCollect> toRealtimeCollectList(WorkshopConfigCollectDetail config) {
+        List<WorkshopRealtimeCollect> result = new ArrayList<>();
+        if (config != null && !CollectionUtils.isEmpty(config.getAttrs())) {
+            for (WorkshopConfigCollectAttr attr : config.getAttrs()) {
+                result.add(toRealtimeCollect(attr));
+            }
+        }
+        return result;
+    }
+
+    private WorkshopRealtimeCollect toRealtimeCollect(WorkshopConfigCollectAttr attr) {
+        WorkshopRealtimeCollect c = new WorkshopRealtimeCollect();
+        BeanUtils.copyProperties(attr, c);
+        return c;
     }
 }

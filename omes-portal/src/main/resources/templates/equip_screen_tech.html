@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>OMES - 设备监控大屏</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/tree-select/treeSelect.css">
+    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/js/echarts.min.js"></script>
+    <script src="../static/tree-select/treeSelect.js"></script>
+    <script src="../static/fullscreen/fullscreen.js"></script>
+
+    <!--    <script src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=xqC8Us41v5zZxz5SGXOwslbpxAGakVMs"></script>-->
+    <!--    <script src="../static/map/baiduMap.js"></script>-->
+
+
+    <link rel="stylesheet" href="../static/leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.css"/>
+    <link rel="stylesheet" href="../static/marker/MarkerCluster.Default.css"/>
+    <script src="../static/leaflet/leaflet.js"></script>
+    <script src="../static/marker/leaflet.markercluster.js"></script>
+    <script src="../static/map/leafletMap.js"></script>
+    <style>
+        /* 科技风：优先使用本地字体，Orbitron 可选 */
+        html, body {
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background: #030712;
+            color: #e2e8f0;
+            font-family: "DIN", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        }
+
+        /* 科技风背景：网格 + 渐变 */
+        .tech-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(180deg, rgba(6, 22, 45, 0.97) 0%, #030712 40%, #020617 100%),
+            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 229, 255, 0.03) 2px, rgba(0, 229, 255, 0.03) 4px),
+            repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 229, 255, 0.03) 2px, rgba(0, 229, 255, 0.03) 4px);
+            pointer-events: none;
+        }
+
+        /* 扫描线动画 */
+        .scan-line {
+            position: fixed;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.15), transparent);
+            animation: scan 8s linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+
+        :root {
+            --tech-cyan: #00e5ff;
+            --tech-blue: #0ea5e9;
+            --tech-border: rgba(0, 229, 255, 0.35);
+            --tech-glow: rgba(0, 229, 255, 0.5);
+            --panel-bg: rgba(6, 22, 45, 0.75);
+            --scroll-track: rgba(6, 22, 45, 0.6);
+            --scroll-thumb: rgba(0, 229, 255, 0.5);
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ========== 顶部：科技风标题栏 ========== */
+        .screen-header {
+            height: 72px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 36px;
+            background: linear-gradient(180deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--tech-border);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .screen-title-wrap {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .screen-title {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #f0f9ff;
+            text-shadow: 0 0 20px var(--tech-glow), 0 0 40px rgba(14, 165, 233, 0.4);
+        }
+
+        .screen-title-accent {
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--tech-cyan), var(--tech-blue));
+            margin-right: 12px;
+            vertical-align: middle;
+            box-shadow: 0 0 12px var(--tech-cyan);
+            animation: pulse-bar 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-bar {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        #workshopName {
+            font-size: 14px;
+            color: var(--tech-cyan);
+            letter-spacing: 2px;
+            margin-left: 8px;
+        }
+
+        .header-time {
+            font-size: 15px;
+            color: var(--tech-cyan);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--tech-glow);
+        }
+
+        /* ========== 主体 ========== */
+        .screen-body {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            padding: 8px;
+            gap: 8px;
+        }
+
+        .side-panel {
+            width: 22%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .center-map {
+            flex: 1;
+            min-width: 0;
+            color: #1f1f1f;
+        }
+
+        /* ========== 科技风面板：棱角边框 + 四角装饰 ========== */
+        .panel-box {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel-bg);
+            border: 1px solid var(--tech-border);
+            box-shadow: inset 0 0 30px rgba(0, 229, 255, 0.06), 0 0 20px rgba(0, 0, 0, 0.4);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .panel-box::before,
+        .panel-box::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--tech-cyan);
+            border-style: solid;
+            border-width: 0;
+            box-shadow: 0 0 8px var(--tech-glow);
+        }
+
+        .panel-box::before {
+            top: 6px;
+            left: 6px;
+            border-top-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .panel-box::after {
+            top: 6px;
+            right: 6px;
+            border-top-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .panel-box .corner-br,
+        .panel-box .corner-bl {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--tech-cyan);
+            border-style: solid;
+            border-width: 0;
+            box-shadow: 0 0 8px var(--tech-glow);
+        }
+
+        .panel-box .corner-br {
+            bottom: 6px;
+            right: 6px;
+            border-bottom-width: 2px;
+            border-right-width: 2px;
+        }
+
+        .panel-box .corner-bl {
+            bottom: 6px;
+            left: 6px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+
+        .panel-title {
+            position: relative;
+            padding: 10px 14px 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .panel-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 14px;
+            background: linear-gradient(180deg, var(--tech-cyan), var(--tech-blue));
+            box-shadow: 0 0 10px var(--tech-cyan);
+        }
+
+        /* ========== KPI 数字块 ========== */
+        .kpi {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 10px 8px;
+            gap: 4px;
+        }
+
+        .kpi-item {
+            flex: 1 1 calc(33.33% - 8px);
+            min-width: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 4px;
+            background: rgba(0, 229, 255, 0.04);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            border-radius: 2px;
+        }
+
+        .kpi-num {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tech-cyan);
+            text-shadow: 0 0 12px var(--tech-glow);
+            line-height: 1.2;
+        }
+
+        .kpi-title {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* ========== 图表容器 ========== */
+        .panel-box .chart-wrap {
+            flex: 1;
+            min-height: 0;
+            padding: 6px;
+        }
+
+        #statusChart, #trendChart, #currentTrendChart {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ========== 告警列表 ========== */
+        .alarm-panel {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .alarm-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 8px;
+            font-size: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+        }
+
+        .alarm-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .alarm-list::-webkit-scrollbar-track {
+            background: var(--scroll-track);
+            border-radius: 3px;
+        }
+
+        .alarm-list::-webkit-scrollbar-thumb {
+            background: var(--scroll-thumb);
+            border-radius: 3px;
+        }
+
+        .alarm-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 8px 6px;
+            border-bottom: 1px dashed rgba(0, 229, 255, 0.2);
+            transition: background 0.2s;
+        }
+
+        .alarm-item:hover {
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        .alarm-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 4px 10px 0 0;
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+            flex-shrink: 0;
+        }
+
+        .alarm-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .alarm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alarm-title {
+            flex: 1;
+            min-width: 0;
+            color: #f1f5f9;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .alarm-time {
+            color: #64748b;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .alarm-content {
+            margin-top: 2px;
+            color: #94a3b8;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .alarm-read-btn {
+            padding: 2px 8px;
+            font-size: 11px;
+            color: var(--tech-cyan);
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .alarm-read-btn:hover {
+            background: rgba(0, 229, 255, 0.2);
+            box-shadow: 0 0 8px var(--tech-glow);
+        }
+
+        .alarm-item.read {
+            opacity: 0.6;
+        }
+
+        .alarm-item.new .alarm-dot {
+            animation: blink 1.2s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* ========== 底部 ========== */
+        .screen-footer {
+            height: 48px;
+            flex-shrink: 0;
+            padding: 0 24px;
+            background: rgba(6, 22, 45, 0.9);
+            border-top: 1px solid var(--tech-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        #alarmMarquee {
+            color: #fca5a5;
+            font-weight: 500;
+        }
+
+        /* 地图面板全高 */
+        .center-map .panel-box {
+            height: 100%;
+        }
+
+        #map {
+            height: 100%;
+            background: #0f172a;
+        }
+    </style>
+</head>
+<body>
+<div class="tech-bg"></div>
+<div class="scan-line"></div>
+
+<div class="container">
+    <header class="screen-header">
+        <div class="screen-title-wrap">
+            <span class="screen-title-accent"></span>
+            <span class="screen-title">设备监控</span>
+            <span id="workshopName"></span>
+        </div>
+        <div id="currentTime" class="header-time"></div>
+    </header>
+
+    <main class="screen-body">
+        <aside class="side-panel">
+            <div class="panel-box">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="panel-title" lang-i18n="common.overview"></div>
+                <div class="kpi">
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="totalCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.total"></div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="onlineCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.online"></div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="offlineCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.offline"></div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="alarmCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.alarm"></div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="runCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.run"></div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="stopCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.stop"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box" style="flex: 1; min-height: 180px;">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="panel-title" lang-i18n="title.equip_status"></div>
+                <div class="chart-wrap">
+                    <div id="statusChart" style="height:100%;"></div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="center-map">
+            <div class="panel-box" style="height:100%;">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div id="map" style="height:100%;"></div>
+            </div>
+        </section>
+
+        <aside class="side-panel">
+            <div class="panel-box" style="height: 28%; min-height: 140px;">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="panel-title" lang-i18n="title.equip_trend_7"></div>
+                <div class="chart-wrap">
+                    <div id="trendChart" style="height:100%;"></div>
+                </div>
+            </div>
+            <div class="panel-box" style="height: 28%; min-height: 140px;">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="panel-title" lang-i18n="title.equip_trend"></div>
+                <div class="chart-wrap">
+                    <div id="currentTrendChart" style="height:100%;"></div>
+                </div>
+            </div>
+            <div class="panel-box alarm-panel">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="panel-title">最近告警</div>
+                <div class="alarm-list" id="alarmList"></div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="screen-footer">
+        <marquee id="alarmMarquee"></marquee>
+    </footer>
+</div>
+
+<script th:inline="none">
+    let statusChart;
+    let trendChart;
+    let gisMap;
+    let selected_tree_node;
+    let currentTrendChart;
+    let currentTrendChartLock = false;
+    let countLock = false;
+    let chartLock = false;
+    let messageLock = false;
+    let reloading = false;
+
+    layui.use(function () {
+        var $ = layui.$;
+
+        const fullscreen = new FullScreen({
+            elem: $('.container').get(0),
+        });
+
+        get(router.workshop_tree, null, function (result) {
+            const sceneTree = new TreeSelect({
+                container: '.container',
+                data: result,
+                needVirtualRoot: true,
+                virtualRootName: i18np.prop('common.all'),
+                customName: {
+                    title: 'name',
+                    field: 'selfCode'
+                },
+                onSelect: function (obj) {
+                    selected_tree_node = obj;
+                    reloadCount();
+                    reloadTrendChart();
+                    reloadMap(true);
+                    if (obj.selfCode == null) {
+                        $('#workshopName').text('');
+                    } else {
+                        $('#workshopName').text(obj.name);
+                    }
+                }
+            });
+        });
+
+        reloadMessage();
+
+        setTimeout(() => {
+            initMap();
+        }, 100);
+
+        setTimeout(() => {
+            initCountEChart();
+            initTrendChart();
+            initCurrentTrendChart();
+        }, 400);
+
+        setInterval(() => {
+            $('#currentTime').text(new Date().toLocaleString());
+        }, 1000);
+
+        setInterval(async () => {
+            reloadCount();
+            reloadCurrentTrendChart();
+            reloadMessage();
+            reloadMap(false);
+        }, 30000);
+    });
+
+    function initMap() {
+        gisMap = new GISMap({
+            createPopupHtml: function (d) {
+                return createPopupHtml(d);
+            },
+            createIconUri: function (d) {
+                let type = d.type;
+                if (type !== 1 && type !== 2) {
+                    type = 0;
+                }
+                const status = calcStatus(d);
+                return `/static/img/map/map_${status}_${type}.svg`;
+            }
+        });
+        gisMap.init();
+        reloadMap(true);
+    }
+
+    function initCountEChart() {
+        statusChart = echarts.init($('#statusChart')[0]);
+        statusChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: {trigger: 'item'},
+            legend: {
+                orient: 'vertical',
+                right: '5%',
+                top: 'middle',
+                textStyle: {color: '#94a3b8', fontSize: 11}
+            },
+            series: [
+                {
+                    name: '设备状态',
+                    type: 'pie',
+                    radius: ['35%', '50%'],
+                    center: ['35%', '50%'],
+                    avoidLabelOverlap: false,
+                    label: {show: true, color: '#e2e8f0', fontSize: 10, formatter: '{d}%'},
+                    data: []
+                },
+                {
+                    name: '运行状态',
+                    type: 'pie',
+                    radius: ['15%', '25%'],
+                    center: ['35%', '50%'],
+                    avoidLabelOverlap: false,
+                    label: {show: true, color: '#e2e8f0', fontSize: 10, formatter: '{d}%'},
+                    data: []
+                }
+            ]
+        });
+        reloadCount();
+    }
+
+    function initCurrentTrendChart() {
+        currentTrendChart = echarts.init($('#currentTrendChart')[0]);
+        const TREND_COLORS = {
+            axis: '#334155',
+            text: '#94a3b8',
+            split: 'rgba(0,229,255,.12)'
+        };
+        currentTrendChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {type: 'line', lineStyle: {type: 'dashed', color: TREND_COLORS.split}}
+            },
+            legend: {top: 8, left: 'center', textStyle: {color: TREND_COLORS.text, fontSize: 10}},
+            grid: {left: 8, right: 8, top: 28, bottom: 0, containLabel: true},
+            xAxis: {
+                type: 'time',
+                axisLine: {lineStyle: {color: TREND_COLORS.axis}},
+                axisLabel: {color: TREND_COLORS.text, rotate: 20},
+                splitLine: {show: false}
+            },
+            yAxis: {
+                type: 'value',
+                min: 0,
+                minInterval: 1,
+                splitNumber: 4,
+                axisLine: {lineStyle: {color: TREND_COLORS.axis}},
+                axisLabel: {color: TREND_COLORS.text},
+                splitLine: {lineStyle: {color: TREND_COLORS.split}}
+            },
+            series: [
+                {
+                    name: '在线',
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false,
+                    symbol: 'none',
+                    lineStyle: {width: 2, color: COLORS.online},
+                    itemStyle: {color: COLORS.online},
+                    areaStyle: {color: COLORS.onlineArea},
+                    data: []
+                },
+                {
+                    name: '运行',
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false,
+                    symbol: 'none',
+                    lineStyle: {width: 2, color: COLORS.running},
+                    itemStyle: {color: COLORS.running},
+                    areaStyle: {color: COLORS.runningArea},
+                    data: []
+                },
+                {
+                    name: '报警',
+                    type: 'line',
+                    showSymbol: false,
+                    symbol: 'none',
+                    symbolSize: 6,
+                    lineStyle: {width: 2, color: COLORS.alarm},
+                    itemStyle: {color: COLORS.alarm},
+                    areaStyle: {color: COLORS.alarmArea},
+                    data: []
+                }
+            ]
+        });
+        reloadCurrentTrendChart();
+    }
+
+    function initTrendChart() {
+        trendChart = echarts.init($('#trendChart')[0]);
+        const TREND_COLORS = {axis: '#334155', text: '#94a3b8', split: 'rgba(0,229,255,.1)'};
+        trendChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: {trigger: 'axis'},
+            grid: {left: 8, right: 8, top: 8, bottom: 8, containLabel: true},
+            xAxis: {
+                type: 'time',
+                axisLine: {lineStyle: {color: TREND_COLORS.axis}},
+                axisLabel: {color: TREND_COLORS.text},
+                splitLine: {show: false}
+            },
+            yAxis: {
+                type: 'value',
+                min: 0,
+                minInterval: 1,
+                splitNumber: 4,
+                axisLine: {lineStyle: {color: TREND_COLORS.axis}},
+                axisLabel: {color: TREND_COLORS.text},
+                splitLine: {lineStyle: {color: TREND_COLORS.split}}
+            },
+            series: [{
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 5,
+                lineStyle: {width: 2, color: COLORS.online},
+                itemStyle: {color: COLORS.online},
+                areaStyle: {color: COLORS.onlineArea},
+                data: []
+            }]
+        });
+        reloadTrendChart();
+    }
+
+    function reloadMessage() {
+        if (messageLock) return;
+        messageLock = true;
+        try {
+            post(router.message_page, {
+                page: 1,
+                pageSize: 10,
+                platform: client.platform,
+                limitCurrentUser: true,
+                type: 1
+            }, function (res) {
+                const list = res || [];
+                let html = '';
+                list.forEach(item => {
+                    html += `
+                        <div class="alarm-item ${item.readStatus == 0 ? 'new' : 'read'}">
+                            <div class="alarm-dot"></div>
+                            <div class="alarm-body">
+                                <div class="alarm-header">
+                                    <span class="alarm-title">${item.title}</span>
+                                    <div class="alarm-header-right">
+                                        <span class="alarm-time">${item.createdTime}</span>
+                                        ${item.readStatus == 0 ? `<button class="alarm-read-btn" onclick="markAlarmRead('${item.id}', this)"><icon class="layui-icon layui-icon-success"> </icon></button>` : ''}
+                                    </div>
+                                </div>
+                                <div class="alarm-content" title="${item.context}">${item.context}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                $('#alarmList').html(html);
+            });
+        } finally {
+            messageLock = false;
+        }
+    }
+
+    function reloadCount() {
+        if (countLock) return;
+        countLock = true;
+        try {
+            post(router.equip_count, {
+                needWorkshopCascade: true,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+            }, function (result) {
+                $("#totalCount").text(result.total);
+                $("#onlineCount").text(result.online);
+                $("#offlineCount").text(result.offline);
+                $("#alarmCount").text(result.alarm);
+                $("#runCount").text(result.run);
+                $("#stopCount").text(result.stopped);
+                statusChart.setOption({
+                    series: [
+                        {
+                            data: [
+                                {value: result.online, name: '在线', itemStyle: {color: COLORS.online}},
+                                {value: result.offline, name: '离线', itemStyle: {color: COLORS.offline}},
+                            ]
+                        },
+                        {
+                            data: [
+                                {value: result.run, name: '运行', itemStyle: {color: COLORS.running}},
+                                {value: result.stopped, name: '停止', itemStyle: {color: COLORS.stopped}},
+                                {value: result.alarm, name: '告警', itemStyle: {color: COLORS.alarm}}
+                            ]
+                        }
+                    ]
+                }, false);
+                updateAlarmMarquee(result.alarm);
+            });
+        } finally {
+            countLock = false;
+        }
+    }
+
+    function updateAlarmMarquee(unreadCount) {
+        const el = document.getElementById('alarmMarquee');
+        if (unreadCount > 0) {
+            el.innerText = `⚠ 当前场景存在 ${unreadCount} 台设备告警，请及时处理`;
+        } else {
+            el.innerText = '';
+        }
+    }
+
+    async function reloadTrendChart() {
+        if (chartLock) return;
+        chartLock = true;
+        try {
+            const now = new Date();
+            const end = new Date(now);
+            const start = new Date(now);
+            end.setDate(now.getDate() - 1);
+            start.setDate(now.getDate() - 8);
+            post(router.equip_state_snapshot_count, {
+                startDate: formatDate(start),
+                endDate: formatDate(end),
+                onlineState: 1,
+                countType: 1,
+                needWorkshopCascade: true,
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+            }, function (result) {
+                const data = (result || []).map(item => [item.time, item.num]);
+                trendChart.setOption({
+                    xAxis: {min: start, max: end},
+                    series: [{data: data}]
+                }, false);
+            });
+        } finally {
+            chartLock = false;
+        }
+    }
+
+    async function reloadCurrentTrendChart() {
+        if (currentTrendChartLock) return;
+        currentTrendChartLock = true;
+        const end = new Date();
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        let onlineData = [];
+        let alarmData = [];
+        let runData = [];
+        let pending = 3;
+        const check = () => {
+            if (--pending !== 0) return;
+            currentTrendChart.setOption({
+                xAxis: {min: start, max: end},
+                series: [{data: onlineData}, {data: runData}, {data: alarmData}]
+            }, false);
+            currentTrendChartLock = false;
+        };
+        post(router.equip_state_snapshot_count, {
+            startDate: formatDate(start), endDate: formatDate(end), onlineState: 1,
+            needWorkshopCascade: true, workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            onlineData = (result || []).map(item => [item.time, item.num]);
+            check();
+        });
+        post(router.equip_state_snapshot_count, {
+            startDate: formatDate(start), endDate: formatDate(end), alarmState: 1,
+            needWorkshopCascade: true, workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            alarmData = (result || []).map(item => [item.time, item.num]);
+            check();
+        });
+        post(router.equip_state_snapshot_count, {
+            startDate: formatDate(start), endDate: formatDate(end), runState: 1,
+            needWorkshopCascade: true, workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            runData = (result || []).map(item => [item.time, item.num]);
+            check();
+        });
+    }
+
+    async function reloadMap(needViewReset, data) {
+        if (reloading) return;
+        reloading = true;
+        try {
+            let params = {
+                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+                needRealtime: true,
+                requirePage: false,
+                needWorkshopCascade: true,
+                queryWorkshop: true,
+                queryAttrs: true,
+            };
+            if (data != null) {
+                for (let key in data) params[key] = data[key];
+            }
+            post(router.equip_page, params, function (e) {
+                if (e == null) return;
+                let r = e.filter(item => item.lng != null && item.lat != null);
+                if (needViewReset) gisMap.adjustMapView(r);
+                gisMap.refreshMarkers(r);
+            });
+        } finally {
+            reloading = false;
+        }
+    }
+
+    function markAlarmRead(messageId, btn) {
+        get(router.message_read, {messageId}, function () {
+            const item = btn.closest('.alarm-item');
+            item.classList.remove('new');
+            item.classList.add('read');
+            btn.remove();
+        });
+    }
+
+    function calcStatus(d) {
+        if (d.onlineState === 0) return 'offline';
+        if (d.alarmState >= 1) return 'alarm';
+        if (d.runState === 1) return 'running';
+        if (d.runState === 0) return 'stop';
+        if (d.onlineState === 1) return 'online';
+        return 'offline';
+    }
+
+    function createPopupHtml(d) {
+        let runSpan = '<span class="status-dot-map status-offline"></span>';
+        if (d.onlineState === 1) {
+            runSpan = d.runState === 1 ? '<span class="status-dot-map status-running"></span>' : '<span class="status-dot-map status-stopped"></span>';
+        }
+        let html =
+            i18np.prop("workshop.name") + `：${d.workshop === null ? '' : d.workshop.name}<br/>` +
+            i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
+            i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
+            i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
+            i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
+        if (d.attrs != null) {
+            d.attrs.forEach(function (t) {
+                html += `<br/>${t.name}：${t.value == null ? 'unknow' : t.value}${t.unit ? ' ' + t.unit : ''}`;
+            });
+        }
+        return {title: `<b>${d.name}</b>`, body: html};
+    }
+
+    window.onresize = () => {
+        statusChart && statusChart.resize();
+        trendChart && trendChart.resize();
+        currentTrendChart && currentTrendChart.resize();
+    };
+</script>
+</body>
+</html>

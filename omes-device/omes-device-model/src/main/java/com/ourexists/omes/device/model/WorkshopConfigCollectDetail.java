@@ -12,8 +12,10 @@ import java.util.List;
 @Accessors(chain = true)
 public class WorkshopConfigCollectDetail {
 
-    private String collectType;
-
+    /**
+     * 场景属性配置，每个 attr 通过 gwId 关联网关
+     * 结构：name/map/gwId/value/unit/needCollect
+     * 由设备监控对象 needCollect 派生
+     */
     private List<WorkshopConfigCollectAttr> attrs;
-
 }
