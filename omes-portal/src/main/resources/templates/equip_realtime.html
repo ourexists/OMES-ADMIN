@@ -102,7 +102,7 @@
         <div class="layui-card device-card {{ item.onlineState!=1 ? 'device-card-offline' : 'device-card-online' }} {{ item.onlineState==1 && item.alarmState==1 ? 'device-card-alarm' : '' }}" data-id="{{ item.id }}" onclick="openDetail('{{ item.id }}')">
             <div class="device-card-header">
                 <div class="card-header-row">
-                    <span class="card-vendor-tag card-tag-{{ index % 5 }}">{{ item.workshop && item.workshop.name ? item.workshop.name : (item.typeDesc || item.type || '设备') }}</span>
+                    <span class="card-vendor-tag">{{ item.workshop && item.workshop.name ? item.workshop.name : (item.typeDesc || item.type || '设备') }}</span>
                     <span class="card-device-name">{{ item.name }}</span>
                     <div class="card-status-dots">
                         <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"
@@ -176,7 +176,7 @@
         {{# layui.each(d, function(index, item){ }}
         <div class="device-list-row layui-card device-card {{ item.onlineState!=1 ? 'device-card-offline' : '' }} {{ item.onlineState==1 && item.alarmState==1 ? 'device-card-alarm' : '' }}" data-id="{{ item.id }}" onclick="openDetail('{{ item.id }}')">
             <span class="col-name">
-                <span class="card-vendor-tag card-tag-{{ index % 5 }}">{{ item.workshop && item.workshop.name ? item.workshop.name : (item.typeDesc || item.type || '设备') }}</span>
+                <span class="card-vendor-tag">{{ item.workshop && item.workshop.name ? item.workshop.name : (item.typeDesc || item.type || '设备') }}</span>
                 <span class="card-device-name">{{ item.name }}</span>
                 {{# if(item.alarmTexts && item.alarmTexts.length > 0){ }}
                 <span class="list-alarm-badge" title="{{ item.alarmTexts && item.alarmTexts.length ? item.alarmTexts.join(';') : '' }}">!</span>
@@ -454,17 +454,12 @@
         padding: 2px 10px;
         font-size: 12px;
         font-weight: 500;
-        color: var(--text-on-tag);
+        color: #374151;
+        background: #e5e7eb;
         border-radius: 999px;
         white-space: nowrap;
         flex-shrink: 0;
     }
-
-    .card-tag-0 { background: var(--tag-0); }
-    .card-tag-1 { background: var(--tag-1); }
-    .card-tag-2 { background: var(--tag-2); }
-    .card-tag-3 { background: var(--tag-3); }
-    .card-tag-4 { background: var(--tag-4); }
 
     .card-device-name {
         flex: 1;
