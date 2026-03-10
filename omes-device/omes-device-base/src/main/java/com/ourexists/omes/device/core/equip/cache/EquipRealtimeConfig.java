@@ -20,4 +20,6 @@ public class EquipRealtimeConfig {
     private List<EquipAttrRealtime> attrs;
 
     private List<EquipAlarmRealtime> alarms;
+
+    private List<EquipControlRealtime> controls;
 }

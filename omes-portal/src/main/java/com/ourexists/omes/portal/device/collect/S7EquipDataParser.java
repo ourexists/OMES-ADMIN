@@ -63,7 +63,19 @@ public class S7EquipDataParser implements EquipDataParser {
 
         if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
             for (EquipAttrRealtime attr : target.getEquipAttrRealtimes()) {
-                attr.setValue(parsedObj.getString(attr.getMap()));
+                String val = parsedObj.getString(attr.getMap());
+                if (val != null) {
+                    attr.setValue(val);
+                }
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(target.getEquipControlRealtimes())) {
+            for (EquipControlRealtime ctrl : target.getEquipControlRealtimes()) {
+                String val = parsedObj.getString(ctrl.getMap());
+                if (val != null) {
+                    ctrl.setValue(val);
+                }
             }
         }
 

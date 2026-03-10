@@ -24,4 +24,6 @@ public class EquipConfigDetail {
     private List<EquipAttr> attrs;
 
     private List<EquipAlarm> alarms;
+
+    private List<EquipControl> controls;
 }

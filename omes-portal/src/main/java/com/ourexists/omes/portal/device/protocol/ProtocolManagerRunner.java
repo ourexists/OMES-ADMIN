@@ -89,7 +89,7 @@ public class ProtocolManagerRunner implements ApplicationRunner {
         log.info("MQTT subscription manager stopped");
     }
 
-    private ProtocolManager getProtocolManager(String protocol) {
+    public ProtocolManager getProtocolManager(String protocol) {
         for (ProtocolManager protocolManager : protocolManagers) {
             if (protocolManager.protocol().equals(protocol)) {
                 return protocolManager;

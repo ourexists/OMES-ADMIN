@@ -4,26 +4,32 @@
 
 package com.ourexists.omes.portal.device.controller;
 
+import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.omes.device.core.equip.cache.EquipControlRealtime;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtimeConfig;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
+import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.enums.EquipTypeEnum;
 import com.ourexists.omes.device.feign.EquipFeign;
+import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.feign.WorkshopFeign;
-import com.ourexists.omes.device.model.EquipDto;
-import com.ourexists.omes.device.model.EquipPageQuery;
-import com.ourexists.omes.device.model.GwBindingDto;
-import com.ourexists.omes.device.model.WorkshopTreeNode;
+import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.portal.device.model.EquipCountDto;
+import com.ourexists.omes.portal.device.protocol.ProtocolManagerRunner;
 import com.ourexists.omes.ucenter.feign.RoleFeign;
 import com.ourexists.omes.ucenter.role.RoleDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,6 +52,15 @@ public class EquipController {
 
     @Autowired
     private RoleFeign roleFeign;
+
+    @Autowired
+    private GatewayFeign gatewayFeign;
+
+    @Autowired
+    private EquipRealtimeManager equipRealtimeManager;
+
+    @Autowired
+    private ProtocolManagerRunner protocolManagerRunner;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -165,5 +180,73 @@ public class EquipController {
     @PostMapping("setEquipConfig")
     public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody GwBindingDto gwBindingDto) {
         return feign.setEquipConfig(gwBindingDto);
+    }
+
+    @Operation(summary = "控制写入", description = "向设备写入开关量/模拟量控制值")
+    @PostMapping("writeControl")
+    public JsonResponseEntity<Boolean> writeControl(@Validated @RequestBody EquipControlWriteDto dto) {
+        EquipRealtime equipRealtime = equipRealtimeManager.getById(dto.getEquipId());
+        if (equipRealtime == null) {
+            throw new BusinessException("设备不存在或未加载");
+        }
+        EquipRealtimeConfig rtConfig = equipRealtime.getEquipRealtimeConfig();
+        if (rtConfig == null || rtConfig.getGwId() == null) {
+            throw new BusinessException("设备未绑定网关");
+        }
+        if (rtConfig.getControls() == null || rtConfig.getControls().isEmpty()) {
+            throw new BusinessException("设备未配置控制点");
+        }
+        EquipControlRealtime matchedCtrl = null;
+        for (EquipControlRealtime ctrl : rtConfig.getControls()) {
+            if (dto.getAddress().equals(ctrl.getMap())) {
+                matchedCtrl = ctrl;
+                break;
+            }
+        }
+        if (matchedCtrl == null) {
+            throw new BusinessException("控制地址不在配置范围内: " + dto.getAddress());
+        }
+        if (matchedCtrl.getType() != null && matchedCtrl.getType() == 1) {
+            try {
+                double val = Double.parseDouble(dto.getValue().toString());
+                if (StringUtils.hasText(matchedCtrl.getMin()) && val < Double.parseDouble(matchedCtrl.getMin())) {
+                    throw new BusinessException("写入值低于最小值 " + matchedCtrl.getMin());
+                }
+                if (StringUtils.hasText(matchedCtrl.getMax()) && val > Double.parseDouble(matchedCtrl.getMax())) {
+                    throw new BusinessException("写入值超过最大值 " + matchedCtrl.getMax());
+                }
+            } catch (NumberFormatException e) {
+                throw new BusinessException("模拟量值格式错误");
+            }
+        }
+        GatewayDto gw;
+        try {
+            gw = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectById(rtConfig.getGwId()));
+        } catch (EraCommonException e) {
+            log.error("查询网关失败, gwId={}", rtConfig.getGwId(), e);
+            throw new BusinessException("查询网关失败");
+        }
+        if (gw == null) {
+            throw new BusinessException("网关不存在");
+        }
+        ProtocolManager protocolManager = protocolManagerRunner.getProtocolManager(gw.getProtocol());
+        if (protocolManager == null) {
+            throw new BusinessException("不支持的协议: " + gw.getProtocol());
+        }
+        boolean result = protocolManager.write(rtConfig.getGwId(), dto.getAddress(), dto.getValue());
+        if (!result) {
+            throw new BusinessException("写入失败");
+        }
+        String writeValStr = String.valueOf(dto.getValue());
+        matchedCtrl.setValue(writeValStr);
+        if (equipRealtime.getEquipControlRealtimes() != null) {
+            for (EquipControlRealtime ec : equipRealtime.getEquipControlRealtimes()) {
+                if (dto.getAddress().equals(ec.getMap())) {
+                    ec.setValue(writeValStr);
+                    break;
+                }
+            }
+        }
+        return JsonResponseEntity.success(true);
     }
 }

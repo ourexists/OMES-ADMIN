@@ -186,6 +186,7 @@ let router = {
     "equip_config": "/equip/queryEquipConfig",
     "equip_config_sn": "/equip/queryEquipConfigBySn",
     "equip_setConfig": "/equip/setEquipConfig",
+    "equip_writeControl": "/equip/writeControl",
     "workshop_assign_query": "/workshop/selectAssign",
     "workshop_assign": "/workshop/assign",
     "equip_collect_page": "/equip/collect/selectByPage",

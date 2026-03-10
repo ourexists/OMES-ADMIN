@@ -259,6 +259,170 @@
         color: var(--text-sub, #8c8c8c);
         margin-left: 4px;
     }
+
+    /* 控制属性卡片 */
+    .ctrl-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+    }
+    .ctrl-card {
+        background: var(--bg-panel, #fff);
+        border: 1px solid var(--border-base, #e1e6ef);
+        border-radius: 10px;
+        padding: 18px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .ctrl-card .ctrl-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .ctrl-card .ctrl-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #2f3b4a;
+    }
+    .ctrl-card .ctrl-type-tag {
+        font-size: 11px;
+        padding: 1px 8px;
+        border-radius: 4px;
+    }
+    .ctrl-card .ctrl-type-tag.digital {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+    .ctrl-card .ctrl-type-tag.analog {
+        background: #fff7e6;
+        color: #fa8c16;
+        border: 1px solid #ffd591;
+    }
+    .ctrl-card .ctrl-addr {
+        font-size: 12px;
+        color: #8c8c8c;
+        font-family: Consolas, Monaco, monospace;
+    }
+    .ctrl-card .ctrl-current {
+        font-size: 13px;
+        color: #595959;
+    }
+    .ctrl-card .ctrl-current-val {
+        font-weight: 600;
+        font-size: 15px;
+    }
+    .ctrl-card .ctrl-current-val.v-on { color: #52c41a; }
+    .ctrl-card .ctrl-current-val.v-off { color: #8c8c8c; }
+    .ctrl-card .ctrl-current-val.v-num { color: #1890ff; }
+    .ctrl-card .ctrl-body {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .ctrl-card .ctrl-range {
+        font-size: 11px;
+        color: #8c8c8c;
+    }
+    .ctrl-switch-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .ctrl-switch-btn {
+        min-width: 70px;
+        height: 36px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all .2s;
+    }
+    .ctrl-switch-btn.on {
+        background: #f0f0f0;
+        color: #8c8c8c;
+        border: 1px solid #d9d9d9;
+    }
+    .ctrl-switch-btn.on:hover {
+        background: #e8e8e8;
+    }
+    .ctrl-switch-btn.on.active {
+        background: #52c41a;
+        color: #fff;
+        border: none;
+        box-shadow: 0 2px 6px rgba(82, 196, 26, .4);
+    }
+    .ctrl-switch-btn.on.active:hover {
+        background: #389e0d;
+    }
+    .ctrl-switch-btn.off {
+        background: #f0f0f0;
+        color: #8c8c8c;
+        border: 1px solid #d9d9d9;
+    }
+    .ctrl-switch-btn.off:hover {
+        background: #e8e8e8;
+    }
+    .ctrl-switch-btn.off.active {
+        background: #ff4d4f;
+        color: #fff;
+        border: none;
+        box-shadow: 0 2px 6px rgba(255, 77, 79, .4);
+    }
+    .ctrl-switch-btn.off.active:hover {
+        background: #d9363e;
+    }
+    .ctrl-switch-status {
+        font-size: 13px;
+        font-weight: 600;
+        min-width: 30px;
+    }
+    .ctrl-switch-status.s-on { color: #52c41a; }
+    .ctrl-switch-status.s-off { color: #8c8c8c; }
+    .ctrl-analog-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+    .ctrl-analog-wrap input {
+        width: 100px;
+        height: 32px;
+        padding: 0 8px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-size: 14px;
+        outline: none;
+    }
+    .ctrl-analog-wrap input:focus {
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24,144,255,.12);
+    }
+    .ctrl-analog-wrap .ctrl-unit {
+        font-size: 13px;
+        color: #8c8c8c;
+    }
+    .ctrl-analog-wrap .ctrl-send-btn {
+        height: 32px;
+        padding: 0 14px;
+        border-radius: 4px;
+        background: #1890ff;
+        color: #fff;
+        border: none;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .ctrl-analog-wrap .ctrl-send-btn:hover {
+        background: #096dd9;
+    }
+    .ctrl-analog-wrap .ctrl-send-btn:disabled {
+        background: #d9d9d9;
+        cursor: not-allowed;
+    }
 </style>
 <body>
 <div class="oemes-container" style="padding: 15px">
@@ -353,6 +517,10 @@
                     <div class="info-section-title" lang-i18n="equipattr.name"></div>
                     <div id="attrsContainer"></div>
                 </div>
+                <div class="info-section" id="controlSection" style="display:none">
+                    <div class="info-section-title">控制属性</div>
+                    <div id="controlContainer" class="ctrl-cards"></div>
+                </div>
             </div>
 
             <!-- Tab2: 实时状态（equip_collect_echarts 内容） -->
@@ -438,6 +606,10 @@
 
         setTimeout(function () { loadEquipData(); }, 100);
 
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible' && equipId) loadEquipData(true);
+        });
+
         document.getElementById('btnSyncStatus').onclick = function () {
             loadEquipData(true);
         };
@@ -482,16 +654,16 @@
 
     function loadEquipData(realtime) {
         let url = router.equip_selectRealtimeById;
-        let loadIndex = layer.load(1, {shade: [0.2, '#000']});
+        var loadIndex = realtime ? null : layer.load(1, {shade: [0.2, '#000']});
         get(url, {id: equipId}, function (data) {
-            layer.close(loadIndex);
+            if (loadIndex != null) layer.close(loadIndex);
             if (!data) return;
             equipData = data;
             sn = data.selfCode || '';
             renderEquipInfo(data);
-            if (realtime) layer.msg(i18np.prop('common.reload') + ' OK');
+            if (realtime) layer.msg(i18np.prop('common.reload') + ' OK', {time: 800});
         }, function () {
-            layer.close(loadIndex);
+            if (loadIndex != null) layer.close(loadIndex);
         });
     }
 
@@ -542,6 +714,161 @@
             html += '</div>';
             $('#attrsContainer').html(html);
         }
+        loadControlConfig();
+    }
+
+    function loadControlConfig() {
+        if (!equipId) return;
+        get(router.equip_config, {equipId: equipId}, function (d) {
+            var cfgAttrs = (d && d.config && d.config.attrs) ? d.config.attrs : [];
+            if (cfgAttrs.length > 0) {
+                if (equipData && equipData.attrs) {
+                    var attrValMap = {};
+                    equipData.attrs.forEach(function (a) {
+                        if (a.name) attrValMap[a.name] = a;
+                    });
+                    cfgAttrs.forEach(function (a) {
+                        var rt = attrValMap[a.name];
+                        if (rt) {
+                            if (rt.value !== undefined) a.value = rt.value;
+                        }
+                    });
+                }
+                $('#attrsSection').show();
+                var html = '<div class="attrs-cards">';
+                cfgAttrs.forEach(function (a) {
+                    var val = a.value != null ? (typeof a.value === 'object' ? JSON.stringify(a.value) : String(a.value)) : '-';
+                    var unitHtml = (a.unit && a.unit.trim()) ? ('<span class="attr-unit">' + a.unit.trim() + '</span>') : '';
+                    html += '<div class="attr-card"><i class="layui-icon layui-icon-flag attr-pin"></i><div class="attr-label">' + (a.name || '-') + '</div><div class="attr-value-wrap"><span class="attr-value">' + val + '</span>' + unitHtml + '</div></div>';
+                });
+                html += '</div>';
+                $('#attrsContainer').html(html);
+            } else {
+                $('#attrsSection').hide();
+            }
+
+            var controls = (d && d.config && d.config.controls) ? d.config.controls : [];
+            if (controls.length > 0) {
+                if (equipData && equipData.controls) {
+                    var valMap = {};
+                    equipData.controls.forEach(function (c) {
+                        if (c.map) valMap[c.map] = c.value;
+                    });
+                    controls.forEach(function (c) {
+                        if (c.map && valMap[c.map] !== undefined) c.value = valMap[c.map];
+                    });
+                }
+                $('#controlSection').show();
+                renderControls(controls);
+            } else {
+                $('#controlSection').hide();
+            }
+        });
+    }
+
+    function renderControls(controls) {
+        var html = '';
+        controls.forEach(function (ctrl, idx) {
+            var isDigital = (ctrl.type === 0 || ctrl.type == null);
+            var typeTag = isDigital
+                ? '<span class="ctrl-type-tag digital">开关量</span>'
+                : '<span class="ctrl-type-tag analog">模拟量</span>';
+            var curVal = ctrl.value;
+            var valHtml;
+            if (isDigital) {
+                var isOn = curVal == 1 || curVal === '1';
+                var cls = curVal != null ? (isOn ? 'v-on' : 'v-off') : '';
+                var txt = curVal != null ? (isOn ? 'ON' : 'OFF') : '-';
+                valHtml = '<span class="ctrl-current-val ' + cls + '" id="ctrl-val-' + idx + '">' + txt + '</span>';
+            } else {
+                var display = curVal != null ? curVal : '-';
+                var unitStr = ctrl.unit ? ' ' + ctrl.unit : '';
+                valHtml = '<span class="ctrl-current-val v-num" id="ctrl-val-' + idx + '">' + display + '</span>' + unitStr;
+            }
+            html += '<div class="ctrl-card">';
+            html += '<div class="ctrl-head"><span class="ctrl-name">' + (ctrl.name || '-') + '</span>' + typeTag + '</div>';
+            html += '<div class="ctrl-addr">地址: ' + (ctrl.map || '-') + '</div>';
+            html += '<div class="ctrl-current">当前值: ' + valHtml + '</div>';
+            html += '<div class="ctrl-body">';
+            if (isDigital) {
+                var isOn = curVal == 1 || curVal === '1';
+                var onActive = (curVal != null && isOn) ? ' active' : '';
+                var offActive = (curVal != null && !isOn) ? ' active' : '';
+                html += '<div class="ctrl-switch-wrap" id="ctrl-sw-' + idx + '">' +
+                    '<button class="ctrl-switch-btn on' + onActive + '" onclick="doWriteControl(\'' + ctrl.map + '\', 1, this, ' + idx + ')">ON</button>' +
+                    '<button class="ctrl-switch-btn off' + offActive + '" onclick="doWriteControl(\'' + ctrl.map + '\', 0, this, ' + idx + ')">OFF</button>' +
+                    '</div>';
+            } else {
+                var rangeHtml = '';
+                if (ctrl.min != null || ctrl.max != null) {
+                    rangeHtml = '<div class="ctrl-range">范围: ' +
+                        (ctrl.min != null ? ctrl.min : '-∞') + ' ~ ' +
+                        (ctrl.max != null ? ctrl.max : '+∞') +
+                        (ctrl.unit ? ' ' + ctrl.unit : '') + '</div>';
+                }
+                html += '<div class="ctrl-analog-wrap">' +
+                    '<input type="number" class="ctrl-analog-input" id="ctrl-input-' + idx + '"' +
+                    (ctrl.min != null ? ' min="' + ctrl.min + '"' : '') +
+                    (ctrl.max != null ? ' max="' + ctrl.max + '"' : '') +
+                    ' placeholder="输入值">' +
+                    (ctrl.unit ? '<span class="ctrl-unit">' + ctrl.unit + '</span>' : '') +
+                    '<button class="ctrl-send-btn" onclick="doWriteAnalog(\'' + ctrl.map + '\', ' + idx + ', this)">写入</button>' +
+                    '</div>' + rangeHtml;
+            }
+            html += '</div></div>';
+        });
+        $('#controlContainer').html(html);
+    }
+
+    function doWriteControl(address, value, btnEl, idx) {
+        if (!equipId) return;
+        var $btn = $(btnEl);
+        if ($btn.hasClass('active')) return;
+        $btn.prop('disabled', true);
+        post(router.equip_writeControl, {
+            equipId: equipId,
+            address: address,
+            value: value
+        }, function () {
+            layer.msg('写入成功', {icon: 1, time: 1500});
+            $btn.prop('disabled', false);
+            var isOn = value == 1;
+            $('#ctrl-val-' + idx).text(isOn ? 'ON' : 'OFF')
+                .removeClass('v-on v-off').addClass(isOn ? 'v-on' : 'v-off');
+            var $wrap = $('#ctrl-sw-' + idx);
+            $wrap.find('.ctrl-switch-btn.on').toggleClass('active', isOn);
+            $wrap.find('.ctrl-switch-btn.off').toggleClass('active', !isOn);
+            setTimeout(function () { loadEquipData(true); }, 1500);
+        }, function (code, msg) {
+            layer.msg(msg || '写入失败', {icon: 2, time: 2000});
+            $btn.prop('disabled', false);
+        });
+    }
+
+    function doWriteAnalog(address, idx, btnEl) {
+        if (!equipId) return;
+        var $input = $('#ctrl-input-' + idx);
+        var val = $input.val();
+        if (val === '' || val == null) {
+            layer.msg('请输入控制值', {icon: 0, time: 1500});
+            $input.focus();
+            return;
+        }
+        var $btn = $(btnEl);
+        $btn.prop('disabled', true).text('写入中...');
+        post(router.equip_writeControl, {
+            equipId: equipId,
+            address: address,
+            value: parseFloat(val)
+        }, function () {
+            layer.msg('写入成功', {icon: 1, time: 1500});
+            $btn.prop('disabled', false).text('写入');
+            $('#ctrl-val-' + idx).text(val);
+            setTimeout(function () { loadEquipData(true); }, 1500);
+        }, function (code, msg) {
+            layer.msg(msg || '写入失败', {icon: 2, time: 2000});
+            $btn.prop('disabled', false).text('写入');
+        });
     }
 
     function initRealtimeCollect() {
