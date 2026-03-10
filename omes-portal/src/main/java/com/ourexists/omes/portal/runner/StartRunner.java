@@ -13,6 +13,10 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 
+/**
+ * 应用启动完成后打印访问地址并打开浏览器。
+ * 单实例检测（已有实例则只打开浏览器不重复启动）在 {@link com.ourexists.omes.App#main} 中完成。
+ */
 @Slf4j
 @Component
 public class StartRunner implements CommandLineRunner {
