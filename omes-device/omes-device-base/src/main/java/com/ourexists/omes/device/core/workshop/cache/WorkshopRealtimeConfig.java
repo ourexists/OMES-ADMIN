@@ -11,7 +11,5 @@ import java.util.List;
 @Accessors(chain = true)
 public class WorkshopRealtimeConfig {
 
-    private String collectType;
-
     private List<WorkshopRealtimeCollect> attrs;
 }

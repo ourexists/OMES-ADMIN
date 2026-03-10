@@ -12,8 +12,12 @@ import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.EquipFeign;
+import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.device.model.*;
-import com.ourexists.omes.portal.device.collect.S7EquipDataParser;
+import com.ourexists.omes.portal.device.collect.EquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
+import com.ourexists.omes.portal.device.collect.WorkshopDataParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -25,16 +29,8 @@ import org.springframework.util.StringUtils;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -103,11 +99,18 @@ public class S7PollingProtocolManager implements ProtocolManager {
     private static final long WRITE_READ_DELAY_MS = 500L;
 
     private final EquipFeign equipFeign;
-    private final S7EquipDataParser equipDataParser;
+    private final WorkshopFeign workshopFeign;
+    private final EquipDataParser equipDataParser;
+    private final WorkshopDataParser workshopDataParser;
 
-    public S7PollingProtocolManager(EquipFeign equipFeign, S7EquipDataParser equipDataParser) {
+    public S7PollingProtocolManager(EquipFeign equipFeign,
+                                    WorkshopFeign workshopFeign,
+                                    PlcEquipDataParser equipDataParser,
+                                    PlcWorkshopDataParser workshopDataParser) {
         this.equipFeign = equipFeign;
+        this.workshopFeign = workshopFeign;
         this.equipDataParser = equipDataParser;
+        this.workshopDataParser = workshopDataParser;
     }
 
     @Override
@@ -186,6 +189,7 @@ public class S7PollingProtocolManager implements ProtocolManager {
                     String payload = doRead(connectId, config, tags);
                     if (StringUtils.hasText(payload)) {
                         equipDataParser.parse(connectId, payload);
+                        workshopDataParser.parse(connectId, payload);
                     }
                 } catch (Exception e) {
                     log.error("S7 polling error, connectId={}, host={}", connectId, config.host, e);
@@ -276,6 +280,7 @@ public class S7PollingProtocolManager implements ProtocolManager {
                     String payload = doRead(connectId, config, tags);
                     if (StringUtils.hasText(payload)) {
                         equipDataParser.parse(connectId, payload);
+                        workshopDataParser.parse(connectId, payload);
                     }
                 } catch (Exception e) {
                     log.debug("S7 read-after-write failed, connectId={}: {}", connectId, e.getMessage());
@@ -608,6 +613,22 @@ public class S7PollingProtocolManager implements ProtocolManager {
             }
         } catch (Exception e) {
             log.debug("Load S7 tags failed, gwId={}: {}", gwId, e.getMessage());
+        }
+        try {
+            List<WorkshopConfigCollectDto> allCollect = RemoteHandleUtils.getDataFormResponse(workshopFeign.queryConfigCollectByGwId(gwId));
+            if (allCollect != null) {
+                for (WorkshopConfigCollectDto dto : allCollect) {
+                    if (dto == null || dto.getConfig() == null || dto.getConfig().getAttrs() == null) continue;
+                    for (WorkshopConfigCollectAttr attr : dto.getConfig().getAttrs()) {
+                        if (gwId.equals(attr.getGwId()) && StringUtils.hasText(attr.getMap())) {
+                            String map = attr.getMap().trim();
+                            tagNames.put(map, map);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Load S7 tags from workshop config collect failed, gwId={}: {}", gwId, e.getMessage());
         }
         return tagNames;
     }

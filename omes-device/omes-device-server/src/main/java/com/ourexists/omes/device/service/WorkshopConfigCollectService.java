@@ -5,6 +5,7 @@
 package com.ourexists.omes.device.service;
 
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
+import com.ourexists.omes.device.model.WorkshopConfigCollectAttr;
 import com.ourexists.omes.device.model.WorkshopConfigCollectDto;
 import com.ourexists.omes.device.pojo.WorkshopConfigCollect;
 
@@ -26,4 +27,9 @@ public interface WorkshopConfigCollectService extends IMyBatisPlusService<Worksh
     WorkshopConfigCollect queryByWorkshop(String workshopId);
 
     List<WorkshopConfigCollect> queryAllConfigCollect();
+
+    /**
+     * 按关联网关ID查询（使用 gateway_ids 快速过滤）
+     */
+    List<WorkshopConfigCollect> queryByGwId(String gwId);
 }

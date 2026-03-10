@@ -6,7 +6,9 @@ package com.ourexists.omes.portal.device.protocol;
 import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.feign.EquipFeign;
-import com.ourexists.omes.portal.device.collect.S7EquipDataParser;
+import com.ourexists.omes.device.feign.WorkshopFeign;
+import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -41,8 +43,11 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
     private static final int READ_TIMEOUT_MS = 10_000;
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
 
-    public ModbusTcpPollingProtocolManager(EquipFeign equipFeign, S7EquipDataParser equipDataParser) {
-        super(equipFeign, equipDataParser, READ_TIMEOUT_MS, "modbus-polling-");
+    public ModbusTcpPollingProtocolManager(EquipFeign equipFeign,
+                                           WorkshopFeign workshopFeign,
+                                           PlcEquipDataParser equipDataParser,
+                                           PlcWorkshopDataParser workshopDataParser) {
+        super(equipFeign, workshopFeign, equipDataParser, workshopDataParser, READ_TIMEOUT_MS, "modbus-polling-");
     }
 
     @Override

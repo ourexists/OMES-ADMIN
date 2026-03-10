@@ -7,7 +7,7 @@ package com.ourexists.omes.device.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.omes.device.mapper.WorkshopConfigCollectMapper;
-import com.ourexists.omes.device.model.WorkshopConfigCollectDto;
+import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.WorkshopConfigCollect;
 import com.ourexists.omes.device.service.WorkshopConfigCollectService;
 import org.springframework.stereotype.Service;
@@ -18,7 +18,6 @@ import java.util.List;
 @Service
 public class WorkshopConfigCollectServiceImpl extends AbstractMyBatisPlusService<WorkshopConfigCollectMapper, WorkshopConfigCollect>
         implements WorkshopConfigCollectService {
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -49,5 +48,15 @@ public class WorkshopConfigCollectServiceImpl extends AbstractMyBatisPlusService
     @Override
     public List<WorkshopConfigCollect> queryAllConfigCollect() {
         return this.list(new LambdaQueryWrapper<WorkshopConfigCollect>().orderByDesc(WorkshopConfigCollect::getWorkshopId));
+    }
+
+    @Override
+    public List<WorkshopConfigCollect> queryByGwId(String gwId) {
+        if (!org.springframework.util.StringUtils.hasText(gwId)) {
+            return java.util.Collections.emptyList();
+        }
+        return this.list(new LambdaQueryWrapper<WorkshopConfigCollect>()
+                .apply("JSON_CONTAINS(gateway_ids, CONCAT('\"', {0}, '\"'), '$')", gwId)
+                .orderByDesc(WorkshopConfigCollect::getWorkshopId));
     }
 }

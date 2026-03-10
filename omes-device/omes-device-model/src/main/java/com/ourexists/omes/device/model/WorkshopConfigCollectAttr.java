@@ -14,6 +14,9 @@ public class WorkshopConfigCollectAttr {
 
     private String map;
 
+    /** 关联的网关ID（来自设备绑定） */
+    private String gwId;
+
     private String value;
 
     private String unit;

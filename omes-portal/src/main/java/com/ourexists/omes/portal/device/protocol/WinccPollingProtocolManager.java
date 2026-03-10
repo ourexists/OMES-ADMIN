@@ -4,13 +4,18 @@
 package com.ourexists.omes.portal.device.protocol;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.feign.EquipFeign;
+import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.device.model.*;
-import com.ourexists.omes.portal.device.collect.WinccEquipDataParser;
+import com.ourexists.omes.portal.device.collect.EquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
+import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
+import com.ourexists.omes.portal.device.collect.WorkshopDataParser;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -29,11 +34,24 @@ import java.util.*;
 @Component
 public class WinccPollingProtocolManager extends AbstractRestPollingProtocolManager {
 
-    @Autowired
     private EquipFeign equipFeign;
 
-    @Autowired
-    private WinccEquipDataParser equipDataParser;
+    private WorkshopFeign workshopFeign;
+
+    private WorkshopDataParser workshopDataParser;
+
+    private EquipDataParser equipDataParser;
+
+    public WinccPollingProtocolManager(EquipFeign equipFeign,
+                                       WorkshopFeign workshopFeign,
+                                       PlcEquipDataParser equipDataParser,
+                                       PlcWorkshopDataParser workshopDataParser
+    ) {
+        this.equipFeign = equipFeign;
+        this.workshopFeign = workshopFeign;
+        this.workshopDataParser = workshopDataParser;
+        this.equipDataParser = equipDataParser;
+    }
 
     @Override
     public String protocol() {
@@ -54,7 +72,10 @@ public class WinccPollingProtocolManager extends AbstractRestPollingProtocolMana
 
     @Override
     protected void respHandle(ProtocolConnect connect, String payload) {
-        equipDataParser.parse(connect.getId(), payload);
+        Map<String, Object> m = parseWinccResponse(payload);
+        String r = JSON.toJSONString(m);
+        equipDataParser.parse(connect.getId(), r);
+        workshopDataParser.parse(connect.getId(), r);
     }
 
     @Override
@@ -62,6 +83,30 @@ public class WinccPollingProtocolManager extends AbstractRestPollingProtocolMana
         return "/tagManagement/Values";
     }
 
+
+    private Map<String, Object> parseWinccResponse(String msg) {
+        JSONArray arr = JSON.parseArray(msg);
+        if (arr == null || arr.isEmpty()) return null;
+        Map<String, Object> result = new HashMap<>();
+        for (int i = 0; i < arr.size(); i++) {
+            JSONObject jo = arr.getJSONObject(i);
+            if (StringUtils.hasText(jo.getString("error"))) continue;
+            String field = jo.getString("variableName");
+            Integer dataType = jo.getInteger("dataType");
+            if (dataType == null) continue;
+            Object value = parseWinccValue(jo);
+            if (value != null) result.put(field, value);
+        }
+        return result.isEmpty() ? null : result;
+    }
+
+    private static Object parseWinccValue(JSONObject jo) {
+        Integer dataType = jo.getInteger("dataType");
+        if (dataType == null) return null;
+        if (dataType == 1) return jo.getBooleanValue("value") ? 1 : 0;
+        if (dataType == 4) return jo.getFloatValue("value");
+        return null;
+    }
 
     /**
      * 通过网关 id 查询该网关下设备的采集配置，汇总需要采集的 WinCC 变量名（runMap、attrs[].map、alarms[].map）。
@@ -93,6 +138,21 @@ public class WinccPollingProtocolManager extends AbstractRestPollingProtocolMana
             }
         } catch (Exception e) {
             log.debug("Load WinCC variable names from gateway device config failed, gwId={}: {}", gwId, e.getMessage());
+        }
+        try {
+            List<WorkshopConfigCollectDto> allCollect = RemoteHandleUtils.getDataFormResponse(workshopFeign.queryConfigCollectByGwId(gwId));
+            if (allCollect != null) {
+                for (WorkshopConfigCollectDto dto : allCollect) {
+                    if (dto == null || dto.getConfig() == null || dto.getConfig().getAttrs() == null) continue;
+                    for (WorkshopConfigCollectAttr attr : dto.getConfig().getAttrs()) {
+                        if (gwId.equals(attr.getGwId()) && StringUtils.hasText(attr.getMap())) {
+                            names.add(attr.getMap().trim());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Load WinCC variable names from workshop config collect failed, gwId={}: {}", gwId, e.getMessage());
         }
         return new ArrayList<>(names);
     }

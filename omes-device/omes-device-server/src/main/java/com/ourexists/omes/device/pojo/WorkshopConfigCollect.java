@@ -11,9 +11,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Getter
@@ -24,6 +26,10 @@ public class WorkshopConfigCollect {
 
     @TableId
     private String workshopId;
+
+    /** 关联的网关ID列表（从 config.attrs 解析，用于按网关快速查询） */
+    @TableField(value = "gateway_ids", typeHandler = JacksonTypeHandler.class)
+    private List<String> gatewayIds;
 
     @TableField(value = "config", typeHandler = JacksonTypeHandler.class)
     private WorkshopConfigCollectDetail config;
@@ -51,6 +57,16 @@ public class WorkshopConfigCollect {
     public static <T extends WorkshopConfigCollectDto> WorkshopConfigCollect wrap(T source) {
         WorkshopConfigCollect target = new WorkshopConfigCollect();
         BeanUtils.copyProperties(source, target);
+        if (source.getConfig() != null && CollectionUtil.isNotBlank(source.getConfig().getAttrs())) {
+            List<String> gwIds = source.getConfig().getAttrs().stream()
+                    .map(attr -> attr != null ? attr.getGwId() : null)
+                    .filter(StringUtils::hasText)
+                    .distinct()
+                    .collect(Collectors.toList());
+            target.setGatewayIds(gwIds);
+        } else {
+            target.setGatewayIds(new ArrayList<>());
+        }
         return target;
     }
 

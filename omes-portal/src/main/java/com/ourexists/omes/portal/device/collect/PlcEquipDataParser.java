@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class S7EquipDataParser implements EquipDataParser {
+public class PlcEquipDataParser implements EquipDataParser {
 
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
