@@ -49,15 +49,15 @@
                        placeholder="/mqtt 或 topic 等">
             </div>
         </div>
-        <div id="s7-form-item" style="display: none;">
-            <div class="layui-form-item">
+        <div id="polling-form-item" style="display: none;">
+            <div class="layui-form-item s7-only-item" style="display: none;">
                 <label class="layui-form-label">Rack</label>
                 <div class="layui-input-block" style="margin-left:110px;">
                     <input type="number" id="s7-remote-rack" min="0" value="0" class="layui-input" placeholder="0">
                     <div class="layui-form-mid layui-word-aux" style="padding:0 0 0 2px;font-size:12px;">机架号，通常为 0</div>
                 </div>
             </div>
-            <div class="layui-form-item">
+            <div class="layui-form-item s7-only-item" style="display: none;">
                 <label class="layui-form-label">Slot</label>
                 <div class="layui-input-block" style="margin-left:110px;">
                     <input type="number" id="s7-remote-slot" min="0" value="1" class="layui-input"
@@ -68,7 +68,7 @@
             <div class="layui-form-item">
                 <label class="layui-form-label">超时(ms)</label>
                 <div class="layui-input-block" style="margin-left:110px;">
-                    <input type="number" id="s7-timeout" min="1000" value="5000" class="layui-input" placeholder="5000">
+                    <input type="number" id="polling-timeout" min="1000" value="5000" class="layui-input" placeholder="5000">
                 </div>
             </div>
             <div class="layui-form-item" id="collect-cron-form-item">
@@ -92,12 +92,18 @@
         var form = layui.form;
         var layer = layui.layer;
 
+        function isPollingProtocol(p) {
+            return p === 's7' || p === 'modbus tcp' || p === 'opc ua';
+        }
+
         function toggleByProtocol(protocol) {
             var p = protocol ? String(protocol).toLowerCase() : '';
             var isMqtt = p === 'mqtt';
+            var isPolling = isPollingProtocol(p);
             var isS7 = p === 's7';
             $('#suffix-form-item').toggle(isMqtt);
-            $('#s7-form-item').toggle(isS7);
+            $('#polling-form-item').toggle(isPolling);
+            $('.s7-only-item').toggle(isS7);
             $('#collect-enabled-form-item, #collect-interval-form-item, #collect-cron-form-item').toggle(!isMqtt);
             if (isMqtt) {
                 $('#topic-required-star').show();
@@ -113,24 +119,29 @@
             form.render();
         }
 
-        function buildS7Params() {
-            return {
-                remoteRack: parseInt($('#s7-remote-rack').val(), 10) || 0,
-                remoteSlot: parseInt($('#s7-remote-slot').val(), 10) || 1,
-                timeout: parseInt($('#s7-timeout').val(), 10) || 5000
+        function buildPollingParams(proto) {
+            var params = {
+                timeout: parseInt($('#polling-timeout').val(), 10) || 5000
             };
+            if (proto === 's7') {
+                params.remoteRack = parseInt($('#s7-remote-rack').val(), 10) || 0;
+                params.remoteSlot = parseInt($('#s7-remote-slot').val(), 10) || 1;
+            }
+            return params;
         }
 
-        function setS7Params(params) {
+        function setPollingParams(params, proto) {
             if (!params) {
                 $('#s7-remote-rack').val(0);
                 $('#s7-remote-slot').val(1);
-                $('#s7-timeout').val(5000);
+                $('#polling-timeout').val(5000);
                 return;
             }
-            $('#s7-remote-rack').val(params.remoteRack != null ? params.remoteRack : 0);
-            $('#s7-remote-slot').val(params.remoteSlot != null ? params.remoteSlot : 1);
-            $('#s7-timeout').val(params.timeout != null ? params.timeout : 5000);
+            $('#polling-timeout').val(params.timeout != null ? params.timeout : 5000);
+            if (proto === 's7') {
+                $('#s7-remote-rack').val(params.remoteRack != null ? params.remoteRack : 0);
+                $('#s7-remote-slot').val(params.remoteSlot != null ? params.remoteSlot : 1);
+            }
         }
 
         get(router.gw_protocols, null, function (result) {
@@ -156,10 +167,10 @@
                 form.val("common-edit-form", Object.assign({}, current_row_data));
                 toggleByProtocol(result.protocol);
                 var proto = result.protocol ? String(result.protocol).toLowerCase() : '';
-                if (proto === 's7' && result.params) {
+                if (isPollingProtocol(proto) && result.params) {
                     try {
                         var p = typeof result.params === 'string' ? JSON.parse(result.params) : result.params;
-                        setS7Params(p);
+                        setPollingParams(p, proto);
                     } catch (e) {
                     }
                 }
@@ -175,8 +186,8 @@
                 current_row_data[key] = field[key];
             }
             var protocol = (current_row_data.protocol || '').toLowerCase();
-            if (protocol === 's7') {
-                current_row_data.params = JSON.stringify(buildS7Params());
+            if (isPollingProtocol(protocol)) {
+                current_row_data.params = JSON.stringify(buildPollingParams(protocol));
             }
             post(router.gw_edit, current_row_data, function () {
                 var index = parent.layer.getFrameIndex(window.name);

@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
-import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.mapper.EquipRecordOnlineMapper;
 import com.ourexists.omes.device.model.EquipRecordCountQuery;
 import com.ourexists.omes.device.model.EquipRecordOnlineDto;
@@ -17,8 +16,6 @@ import com.ourexists.omes.device.model.EquipRecordOnlinePageQuery;
 import com.ourexists.omes.device.model.EquipRecordOnlineVo;
 import com.ourexists.omes.device.pojo.EquipRecordOnline;
 import com.ourexists.omes.device.service.EquipRecordOnlineService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -60,7 +57,6 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
         EquipRecordOnline last = this.getOne(new LambdaQueryWrapper<EquipRecordOnline>()
                 .eq(EquipRecordOnline::getSn, dto.getSn())
                 .orderByDesc(EquipRecordOnline::getStartTime, EquipRecordOnline::getId)
-                .last("limit 1")
         );
         if (last != null) {
             //处理中间服务中断

@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,8 +22,10 @@ import java.util.Map;
  * params JSON 示例：
  * {
  *   "port": 502,
- *   "unitId": 1
+ *   "unitId": 1,
+ *   "timeout": 10000
  * }
+ * timeout: 连接/请求超时(ms)，默认 10000，用于缓解 ConnectTimeoutException
  *
  * 设备 map 地址格式（PLC4X Modbus）：
  * - holding-register:1 或 holding-register:1:INT
@@ -35,6 +39,7 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
 
     private static final int DEFAULT_PORT = 502;
     private static final int READ_TIMEOUT_MS = 10_000;
+    private static final int DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
 
     public ModbusTcpPollingProtocolManager(EquipFeign equipFeign, S7EquipDataParser equipDataParser) {
         super(equipFeign, equipDataParser, READ_TIMEOUT_MS, "modbus-polling-");
@@ -54,12 +59,14 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
         int port = hostPort.length > 1 ? parsePort(hostPort[1], DEFAULT_PORT) : DEFAULT_PORT;
         int unitId = 1;
 
+        int timeout = DEFAULT_CONNECT_TIMEOUT_MS;
         if (StringUtils.hasText(connect.getParams())) {
             try {
                 JSONObject jo = JSONObject.parseObject(connect.getParams());
                 if (jo != null) {
                     port = jo.getIntValue("port", port);
                     unitId = jo.getIntValue("unitId", 1);
+                    timeout = jo.getIntValue("timeout", timeout);
                 }
             } catch (Exception e) {
                 log.debug("Parse Modbus params failed: {}", e.getMessage());
@@ -67,8 +74,13 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
         }
 
         StringBuilder url = new StringBuilder("modbus-tcp://").append(host).append(":").append(port);
+        List<String> params = new ArrayList<>();
         if (unitId != 1) {
-            url.append("?unit-identifier=").append(unitId);
+            params.add("unit-identifier=" + unitId);
+        }
+        params.add("request-timeout=" + timeout);
+        if (!params.isEmpty()) {
+            url.append("?").append(String.join("&", params));
         }
 
         return new ConnectSpec(url.toString(), new LinkedHashMap<>(tags));
@@ -97,5 +109,28 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
         } catch (NumberFormatException ignored) {
         }
         return s;
+    }
+
+    /**
+     * 线圈（coil）写入时 PLC4X 要求 Boolean，将 0/1 等转为 Boolean。
+     */
+    @Override
+    public boolean write(String connectId, String address, Object value) {
+        if (!StringUtils.hasText(connectId) || !StringUtils.hasText(address) || value == null) {
+            return false;
+        }
+        String convertedAddr = convertAddress(address);
+        Object writeValue = value;
+        if (convertedAddr != null && convertedAddr.startsWith("coil:")) {
+            if (value instanceof Boolean b) {
+                writeValue = b;
+            } else if (value instanceof Number n) {
+                writeValue = n.intValue() != 0;
+            } else {
+                String str = value.toString().trim().toLowerCase();
+                writeValue = "true".equals(str) || "1".equals(str) || "on".equals(str);
+            }
+        }
+        return super.write(connectId, address, writeValue);
     }
 }

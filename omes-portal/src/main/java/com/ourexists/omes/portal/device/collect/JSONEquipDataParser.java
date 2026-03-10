@@ -77,6 +77,14 @@ public class JSONEquipDataParser implements EquipDataParser {
                 attr.setValue(getStringByPath(parsedObj, attr.getMap()));
             }
         }
+        if (!CollectionUtils.isEmpty(target.getEquipControlRealtimes())) {
+            for (EquipControlRealtime ctrl : target.getEquipControlRealtimes()) {
+                String val = getStringByPath(parsedObj, ctrl.getMap());
+                if (val != null) {
+                    ctrl.setValue(val);
+                }
+            }
+        }
         int alarm = 0;
         if (!CollectionUtils.isEmpty(equipRealtime.getEquipRealtimeConfig().getAlarms())) {
             List<String> alarms = new ArrayList<>();

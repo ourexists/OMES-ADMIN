@@ -86,6 +86,15 @@ public class TcMqttEquipDataParser implements EquipDataParser {
             }
         }
 
+        if (!CollectionUtils.isEmpty(target.getEquipControlRealtimes())) {
+            for (EquipControlRealtime ctrl : target.getEquipControlRealtimes()) {
+                String val = parsedObj.getString(ctrl.getMap());
+                if (val != null) {
+                    ctrl.setValue(val);
+                }
+            }
+        }
+
         int alarm = 0;
         if (!CollectionUtils.isEmpty(equipRealtime.getEquipRealtimeConfig().getAlarms())) {
             List<String> alarms = new ArrayList<>();

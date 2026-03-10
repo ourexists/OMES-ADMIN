@@ -60,6 +60,8 @@ public class EquipDto extends BaseDto {
 
     private List<EquipAttr> attrs;
 
+    private List<EquipControl> controls;
+
     private List<String> alarmTexts;
 
     public String getTypeDesc() {

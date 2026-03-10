@@ -160,6 +160,7 @@
             position: relative;
             z-index: 1;
         }
+
         .dynamic-form-box .layui-form-select.layui-form-selected + dl,
         .dynamic-form-box .layui-form-select dl {
             z-index: 99999;
@@ -243,6 +244,7 @@
             font-size: 12px;
             line-height: 1.6;
         }
+
         .map-examples-box .map-examples-title {
             font-weight: 600;
             color: #333;
@@ -251,13 +253,16 @@
             align-items: center;
             cursor: pointer;
         }
+
         .map-examples-box .map-examples-title i {
             margin-right: 6px;
             color: #1e9fff;
         }
+
         .map-examples-box .map-examples-content {
             color: #555;
         }
+
         .map-examples-box .map-protocol-item {
             margin-bottom: 10px;
             padding: 8px;
@@ -265,14 +270,17 @@
             border-radius: 4px;
             border-left: 3px solid #1e9fff;
         }
+
         .map-examples-box .map-protocol-item:last-child {
             margin-bottom: 0;
         }
+
         .map-examples-box .map-protocol-name {
             font-weight: 600;
             color: #1e9fff;
             margin-bottom: 4px;
         }
+
         .map-examples-box .map-example-line {
             font-family: Consolas, Monaco, monospace;
             font-size: 11px;
@@ -305,10 +313,11 @@
             </div>
             <div class="map-examples-content" id="map-examples-content"></div>
         </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="equip.deviceIdMap">设备识别标号映射</label>
+        <div class="layui-form-item" id="deviceIdMap-wrap" style="display: none;">
+            <label class="layui-form-label" lang-i18n="equip.deviceIdMap">SN号映射</label>
             <div class="layui-input-block">
-                <input type="text" name="deviceIdMap" id="input-deviceIdMap" placeholder="如：deviceId" autocomplete="off"
+                <input type="text" name="deviceIdMap" id="input-deviceIdMap" placeholder="如：deviceId"
+                       autocomplete="off"
                        class="layui-input">
             </div>
         </div>
@@ -345,7 +354,7 @@
             </table>
         </div>
 
-        <div class="dynamic-form-box">
+        <div class="dynamic-form-box" style="margin-bottom: 12px;">
             <div class="title"><i class="layui-icon layui-icon-edit"></i><span
                     lang-i18n="equipattr.alarmConfig">报警配置</span></div>
             <div class="toolbar">
@@ -372,9 +381,35 @@
             </table>
         </div>
 
+        <div class="dynamic-form-box" id="control-config-box" style="margin-bottom: 12px;">
+            <div class="title"><i class="layui-icon layui-icon-set"></i><span>控制配置</span></div>
+            <div class="toolbar">
+                <button type="button" class="layui-btn layui-btn-sm" id="btn-add-ctrl-row">新增一行</button>
+                <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-ctrl-json-paste">
+                    JSON配置模式
+                </button>
+            </div>
+            <table class="form-table layui-table" id="ctrl-table">
+                <thead>
+                <tr>
+                    <th>控制名称</th>
+                    <th>映射地址</th>
+                    <th>类型</th>
+                    <th>单位</th>
+                    <th>最小值</th>
+                    <th>最大值</th>
+                    <th>当前值</th>
+                    <th class="col-op">操作</th>
+                </tr>
+                </thead>
+                <tbody id="ctrl-tbody"></tbody>
+            </table>
+        </div>
+
         <!-- 隐藏的 JSON 存储，用于从剪贴板填入时同步 -->
         <textarea name="config" id="json-input" style="display:none;"></textarea>
         <textarea name="alarmConfig" id="json-alarm-input" style="display:none;"></textarea>
+        <textarea name="controlConfig" id="json-control-input" style="display:none;"></textarea>
 
         <div class="layui-form-item" style="text-align: right;margin-top: 10px">
             <button type="button" class="layui-btn layui-btn-primary" id="btn-onekey-copy"
@@ -396,17 +431,20 @@
         'Modbus TCP': '<div class="map-protocol-item"><div class="map-protocol-name">Modbus TCP</div>' +
             '<div class="map-example-line">属性映射：holding-register:1、input-register:1、coil:1、discrete-input:1</div>' +
             '<div class="map-example-line">或数字：40001(保持)、30001(输入)、10001(线圈)</div>' +
-            '<div class="map-example-line">运行映射示例：holding-register:0</div></div>',
+            '<div class="map-example-line">运行映射示例：holding-register:0</div>' +
+            '<div class="map-example-line">控制映射：coil:0（开关量）、holding-register:10（模拟量）</div></div>',
         'OPC UA': '<div class="map-protocol-item"><div class="map-protocol-name">OPC UA</div>' +
             '<div class="map-example-line">属性映射：ns=2;s=Machine/Temperature、ns=1;i=1337</div>' +
-            '<div class="map-example-line">运行映射示例：ns=2;s=Machine/Run</div></div>',
+            '<div class="map-example-line">运行映射示例：ns=2;s=Machine/Run</div>' +
+            '<div class="map-example-line">控制映射：ns=2;s=Machine/Valve（开关量）、ns=2;s=Machine/SetTemp（模拟量）</div></div>',
         'S7': '<div class="map-protocol-item"><div class="map-protocol-name">S7（支持 S7-200 Smart / 300 / 400 / 1200 / 1500）</div>' +
             '<div class="map-example-line">V 区（200 Smart）：VB100（字节）、VW100（字）、VD100（双字）、V100.0（位）</div>' +
             '<div class="map-example-line">I 区：IB0（字节）、IW0（字）、I0.0（位）</div>' +
             '<div class="map-example-line">Q 区：QB0（字节）、QW0（字）、Q0.0（位）</div>' +
             '<div class="map-example-line">M 区：MB0（字节）、MW0（字）、MD0（双字）、M0.0（位）</div>' +
             '<div class="map-example-line">DB 区：DB1.DBB0、DB1.DBW0、DB1.DBD0</div>' +
-            '<div class="map-example-line">运行映射示例：VW0、M0.0、I0.0</div></div>',
+            '<div class="map-example-line">运行映射示例：VW0、M0.0、I0.0</div>' +
+            '<div class="map-example-line">控制映射：Q0.0（开关量）、VW200（模拟量）、DB1.DBW10（模拟量）</div></div>',
         'WINCC': '<div class="map-protocol-item"><div class="map-protocol-name">WINCC</div>' +
             '<div class="map-example-line">属性映射：WinCC 变量名，如 Machine1.Temperature、Tag_001</div>' +
             '<div class="map-example-line">运行映射示例：Process.RunStatus</div></div>',
@@ -442,6 +480,8 @@
         if (!selectedGateway) {
             $('#gateway-placeholder').show().text(i18np.prop('gateway.pleaseSelect') || '请选择网关');
             $('#selected-gateway-card').hide().empty();
+            $('#control-config-box').hide();
+            $('#deviceIdMap-wrap').hide();
             renderMapExamples(null);
             return;
         }
@@ -454,6 +494,15 @@
             '<div class="card-row"><span>' + hostLabel + '</span><span>' + (d.uri || '-') + '</span></div>' +
             '<div class="card-row"><span>' + protocolLabel + '</span><span>' + (d.protocol || '-') + '</span></div>'
         );
+        var p = (d.protocol || '').toLowerCase();
+        var supportsControl = (p.indexOf('s7') >= 0 || p.indexOf('modbus') >= 0 || p.indexOf('opc') >= 0);
+        if (supportsControl) {
+            $('#control-config-box').show();
+        } else {
+            $('#control-config-box').hide();
+        }
+        var showDeviceIdMap = (p === 'mqtt' || p === 'tcmqtt');
+        $('#deviceIdMap-wrap').toggle(showDeviceIdMap);
         renderMapExamples(d.protocol);
     }
 
@@ -586,6 +635,7 @@
 
         $('#btn-add-attr-row').on('click', function () {
             addAttrRow();
+            layui.form.render('checkbox');
         });
         $(document).on('click', '.btn-remove-attr', function () {
             $(this).closest('tr').remove();
@@ -687,11 +737,12 @@
 
         function toggleAlarmTypeCells($tr, isRange) {
             if (!$tr || !$tr.length) return;
-            var hideStyle = { visibility: 'hidden', height: 0, padding: 0, border: 0, minHeight: 0 };
-            var showStyle = { visibility: 'visible', height: '', padding: '', border: '', minHeight: '' };
+            var hideStyle = {visibility: 'hidden', height: 0, padding: 0, border: 0, minHeight: 0};
+            var showStyle = {visibility: 'visible', height: '', padding: '', border: '', minHeight: ''};
             $tr.find('.alarm-val').css(isRange ? hideStyle : showStyle);
             $tr.find('.alarm-min, .alarm-max').css(isRange ? showStyle : hideStyle);
         }
+
         form.on('select(alarm-type-select)', function (data) {
             var t = parseInt(data.value, 10);
             var $tr = $(data.elem).closest('tr');
@@ -752,6 +803,153 @@
             });
         });
 
+        // ---------- 控制配置动态表单（扁平结构：name/map/type/unit/min/max） ----------
+        var controlTypeOptions = [
+            {v: 0, t: '开关量'},
+            {v: 1, t: '模拟量'}
+        ];
+        var controlTemplateForComment = [
+            {
+                name: {value: "阀门1", comment: "控制名称"},
+                map: {value: "Q0.0", comment: "映射地址"},
+                type: {value: 0, comment: "0=开关量 1=模拟量"},
+                unit: {value: "", comment: "单位（模拟量可填）"}
+            },
+            {
+                name: {value: "温度设定", comment: "控制名称"},
+                map: {value: "VW200", comment: "映射地址"},
+                type: {value: 1, comment: "0=开关量 1=模拟量"},
+                unit: {value: "℃", comment: "单位"},
+                min: {value: 0, comment: "最小值"},
+                max: {value: 100, comment: "最大值"}
+            }
+        ];
+        var controlTemplateRendered = renderJsonWithComment(controlTemplateForComment);
+
+        function getControlRowData(tr) {
+            var $tr = $(tr);
+            var type = parseInt($tr.find('.ctrl-type').val(), 10) || 0;
+            var row = {
+                name: $tr.find('.ctrl-name').val() || '',
+                map: $tr.find('.ctrl-map').val() || '',
+                type: type
+            };
+            if (type === 1) {
+                row.unit = $tr.find('.ctrl-unit').val() || '';
+                row.min = $tr.find('.ctrl-min').val() || '';
+                row.max = $tr.find('.ctrl-max').val() || '';
+            }
+            return row;
+        }
+
+        function getControlsFromForm() {
+            var list = [];
+            $('#ctrl-tbody tr').each(function () {
+                list.push(getControlRowData(this));
+            });
+            return list;
+        }
+
+        function flatCtrl(item, key) {
+            if (item[key] != null && typeof item[key] === 'object' && 'value' in item[key]) return item[key].value;
+            return item[key];
+        }
+
+        function addControlRow(data) {
+            data = data || {};
+            var type = (data.type != null && data.type !== undefined) ? (typeof data.type === 'object' ? parseInt(data.type.value, 10) : parseInt(data.type, 10)) : 0;
+            if (isNaN(type)) type = 0;
+            var opts = controlTypeOptions.map(function (o) {
+                return '<option value="' + o.v + '"' + (o.v === type ? ' selected' : '') + '>' + o.t + '</option>';
+            }).join('');
+            var isAnalog = (type === 1);
+            var nameStr = (flatCtrl(data, 'name') || '').toString().replace(/"/g, '&quot;');
+            var mapStr = (flatCtrl(data, 'map') || '').toString().replace(/"/g, '&quot;');
+            var unitStr = (flatCtrl(data, 'unit') || '').toString().replace(/"/g, '&quot;');
+            var minStr = (flatCtrl(data, 'min') || '').toString().replace(/"/g, '&quot;');
+            var maxStr = (flatCtrl(data, 'max') || '').toString().replace(/"/g, '&quot;');
+            var curVal = (data._currentValue != null) ? ('' + data._currentValue).replace(/</g, '&lt;') : '-';
+            var hideStyle = ' style="visibility:hidden;height:0;padding:0;border:0;"';
+            var row = '<tr data-ctrl-type="' + type + '" data-ctrl-map="' + mapStr + '">' +
+                '<td><input type="text" class="layui-input ctrl-name" value="' + nameStr + '"></td>' +
+                '<td><input type="text" class="layui-input ctrl-map" value="' + mapStr + '"></td>' +
+                '<td><select class="ctrl-type" lay-filter="ctrl-type-select">' + opts + '</select></td>' +
+                '<td><input type="text" class="layui-input ctrl-unit" value="' + unitStr + '"' + (!isAnalog ? hideStyle : '') + '></td>' +
+                '<td><input type="text" class="layui-input ctrl-min" value="' + minStr + '" placeholder="最小值"' + (!isAnalog ? hideStyle : '') + '></td>' +
+                '<td><input type="text" class="layui-input ctrl-max" value="' + maxStr + '" placeholder="最大值"' + (!isAnalog ? hideStyle : '') + '></td>' +
+                '<td><span class="ctrl-cur-value" style="font-weight:600;color:#1e9fff;">' + curVal + '</span></td>' +
+                '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-ctrl">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
+            $('#ctrl-tbody').append(row);
+            form.render('select');
+        }
+
+        function toggleCtrlTypeCells($tr, isAnalog) {
+            if (!$tr || !$tr.length) return;
+            var hideStyle = {visibility: 'hidden', height: 0, padding: 0, border: 0, minHeight: 0};
+            var showStyle = {visibility: 'visible', height: '', padding: '', border: '', minHeight: ''};
+            $tr.find('.ctrl-unit, .ctrl-min, .ctrl-max').css(isAnalog ? showStyle : hideStyle);
+        }
+
+        form.on('select(ctrl-type-select)', function (data) {
+            var t = parseInt(data.value, 10);
+            var $tr = $(data.elem).closest('tr');
+            toggleCtrlTypeCells($tr, t === 1);
+        });
+
+        function setControlsFromArray(controls) {
+            $('#ctrl-tbody').empty();
+            if (!Array.isArray(controls)) controls = [];
+            for (var i = 0; i < controls.length; i++) {
+                var item = controls[i];
+                addControlRow({
+                    name: flatCtrl(item, 'name'),
+                    map: flatCtrl(item, 'map'),
+                    type: item.type != null && typeof item.type === 'object' ? parseInt(item.type.value, 10) : parseInt(item.type, 10) || 0,
+                    unit: flatCtrl(item, 'unit'),
+                    min: flatCtrl(item, 'min'),
+                    max: flatCtrl(item, 'max')
+                });
+            }
+            form.render('select');
+        }
+
+        $('#btn-add-ctrl-row').on('click', function () {
+            addControlRow();
+        });
+        $(document).on('click', '.btn-remove-ctrl', function () {
+            $(this).closest('tr').remove();
+        });
+        $('#btn-ctrl-json-paste').on('click', function () {
+            var currentJson = JSON.stringify(getControlsFromForm(), null, 4);
+            var content = '<div class="json-paste-layer">' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-edit"></i> 输入/粘贴 JSON</label><textarea id="ctrl-json-paste-ta" placeholder="粘贴控制配置 JSON 数组"></textarea></div>' +
+                '<div class="json-paste-section"><label class="json-paste-label"><i class="layui-icon layui-icon-template-1"></i> 模板示例</label><textarea id="ctrl-json-template-ta" readonly class="json-paste-template-ta"></textarea></div>' +
+                '</div>';
+            var idx = layer.open({
+                type: 1,
+                title: 'JSON配置模式 - 控制配置',
+                area: ['920px', '560px'],
+                content: content,
+                success: function (layero) {
+                    $(layero).find('#ctrl-json-paste-ta').val(currentJson).focus();
+                    $(layero).find('#ctrl-json-template-ta').val(controlTemplateRendered);
+                },
+                btn: [(i18np.prop('common.msg.confirm') || '确定'), (i18np.prop('common.msg.cancel') || '取消')],
+                yes: function () {
+                    var raw = ($('#ctrl-json-paste-ta').val() || '').trim();
+                    try {
+                        var parsed = raw ? JSON.parse(raw) : [];
+                        var arr = Array.isArray(parsed) ? parsed : (parsed && parsed.controls) ? parsed.controls : [];
+                        setControlsFromArray(arr);
+                        layer.msg(i18np.prop('equipattr.pasteFromClipboard.success') || '已填入');
+                        layer.close(idx);
+                    } catch (e) {
+                        layer.msg((i18np.prop('equipattr.pasteFromClipboard.invalid') || 'JSON 格式错误') + ': ' + (e.message || ''));
+                    }
+                }
+            });
+        });
+
         let id = layui.url().search.id;
         if (!id) {
             layer.msg(i18np.prop('common.placeholder') || '缺少设备ID');
@@ -768,14 +966,17 @@
             var deviceIdMap = loadedConfig.deviceIdMap;
             var rm = loadedConfig.runMap;
             var attrs = loadedConfig.attrs;
+            var controls = loadedConfig.controls;
             var gwId = loadedConfig.gwId;
 
             $('#input-deviceIdMap').val(typeof deviceIdMap === 'object' && deviceIdMap && deviceIdMap.value != null ? deviceIdMap.value : (deviceIdMap || ''));
             $('#input-runMap').val(typeof rm === 'object' && rm && rm.value != null ? rm.value : (rm || ''));
             $('#json-input').val(JSON.stringify(attrs != null ? attrs : [], null, 4));
             $('#json-alarm-input').val(JSON.stringify(alarms != null ? alarms : [], null, 4));
+            $('#json-control-input').val(JSON.stringify(controls != null ? controls : [], null, 4));
             setAttrsFromArray(attrs || []);
             setAlarmsFromArray(alarms || []);
+            setControlsFromArray(controls || []);
             if (gwId != null && gwId !== '') {
                 selectedGwId = gwId;
                 get(router.gw_id, {id: gwId}, function (gw) {
@@ -808,6 +1009,7 @@
                 runMap: ($('#input-runMap').val() || '').trim(),
                 attrs: getAttrsFromForm(),
                 alarms: getAlarmsFromForm(),
+                controls: getControlsFromForm(),
                 gwId: selectedGwId || null
             };
             return JSON.stringify(config, null, 4);
@@ -881,6 +1083,25 @@
         $('#btn-onekey-copy').on('click', copyConfigToClipboard);
         $('#btn-paste-fill').on('click', pasteConfigFromClipboard);
 
+        function loadControlRealtimeValues() {
+            get(router.equip_selectRealtimeById, {id: id}, function (rt) {
+                if (!rt || !rt.equipControlRealtimes) return;
+                var ctrls = rt.equipControlRealtimes;
+                $('#ctrl-tbody tr').each(function () {
+                    var $tr = $(this);
+                    var mapAddr = ($tr.find('.ctrl-map').val() || '').trim();
+                    if (!mapAddr) return;
+                    for (var i = 0; i < ctrls.length; i++) {
+                        if ((ctrls[i].map || '').trim() === mapAddr) {
+                            var v = ctrls[i].value;
+                            $tr.find('.ctrl-cur-value').text(v != null ? v : '-');
+                            break;
+                        }
+                    }
+                });
+            });
+        }
+
         get(router.equip_config, {"equipId": id}, function (r) {
             if (r == null) {
                 form.val("common-edit-form", {});
@@ -900,6 +1121,7 @@
             if (Object.keys(loadedConfig).length) {
                 fillFormFromConfig(loadedConfig);
             }
+            loadControlRealtimeValues();
         });
         // 提交事件：从动态表单构建 config
         form.on('submit(common-edit-button)', function (data) {
@@ -910,6 +1132,7 @@
             var configJSON = {};
             configJSON.attrs = getAttrsFromForm();
             configJSON.alarms = getAlarmsFromForm();
+            configJSON.controls = getControlsFromForm();
             configJSON.deviceIdMap = ($("#input-deviceIdMap").val() || "").trim();
             configJSON.runMap = ($("#input-runMap").val() || "").trim();
             post(router.equip_setConfig, {

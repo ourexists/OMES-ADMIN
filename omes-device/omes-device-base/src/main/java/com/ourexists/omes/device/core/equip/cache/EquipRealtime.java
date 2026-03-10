@@ -28,6 +28,8 @@ public class EquipRealtime {
 
     private List<EquipAttrRealtime> equipAttrRealtimes;
 
+    private List<EquipControlRealtime> equipControlRealtimes;
+
     private List<String> alarmTexts;
 
     private String tenantId;

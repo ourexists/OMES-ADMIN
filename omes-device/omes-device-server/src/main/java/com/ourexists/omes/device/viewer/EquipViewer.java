@@ -10,6 +10,7 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.omes.device.core.equip.cache.EquipAttrRealtime;
+import com.ourexists.omes.device.core.equip.cache.EquipControlRealtime;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.feign.EquipFeign;
@@ -17,8 +18,8 @@ import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.Equip;
 import com.ourexists.omes.device.pojo.GwBinding;
 import com.ourexists.omes.device.pojo.Workshop;
-import com.ourexists.omes.device.service.GwBindingService;
 import com.ourexists.omes.device.service.EquipService;
+import com.ourexists.omes.device.service.GwBindingService;
 import com.ourexists.omes.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.BeanUtils;
@@ -152,6 +153,15 @@ public class EquipViewer implements EquipFeign {
                 }
             }
             equipDto.setAttrs(attrs);
+            List<EquipControl> controls = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(equipRealtime.getEquipControlRealtimes())) {
+                for (EquipControlRealtime controlRealtime : equipRealtime.getEquipControlRealtimes()) {
+                    EquipControl attrDto = new EquipControl();
+                    BeanUtils.copyProperties(controlRealtime, attrDto);
+                    controls.add(attrDto);
+                }
+            }
+            equipDto.setControls(controls);
         }
         return JsonResponseEntity.success(equipDto);
     }

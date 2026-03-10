@@ -18,6 +18,8 @@ import org.apache.plc4x.java.api.PlcConnection;
 import org.apache.plc4x.java.api.PlcConnectionManager;
 import org.apache.plc4x.java.api.messages.PlcReadRequest;
 import org.apache.plc4x.java.api.messages.PlcReadResponse;
+import org.apache.plc4x.java.api.messages.PlcWriteRequest;
+import org.apache.plc4x.java.api.messages.PlcWriteResponse;
 import org.apache.plc4x.java.api.types.PlcResponseCode;
 import org.apache.plc4x.java.utils.cache.CachedPlcConnectionManager;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -25,13 +27,12 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * PLC4X 轮询协议管理器公共基类。
@@ -48,9 +49,14 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolManager {
 
     private static final int DEFAULT_POOL_SIZE = 4;
+    /** 写入后延迟读的等待时间（ms），给 PLC 扫描周期预留时间 */
+    private static final long WRITE_READ_DELAY_MS = 500L;
 
     private final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
     private final Map<String, ScheduledFuture<?>> taskMap = new ConcurrentHashMap<>();
+    private final Map<String, ConnectSpec> specMap = new ConcurrentHashMap<>();
+    /** 按 connectId 串行执行 doRead，避免同连接并发及保证任务按序完成 */
+    private final Map<String, ExecutorService> readExecutorMap = new ConcurrentHashMap<>();
 
     private final PlcConnectionManager connectionManager;
     private final EquipFeign equipFeign;
@@ -97,6 +103,16 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
     @PreDestroy
     public void destroy() {
         stopAll();
+        readExecutorMap.forEach((id, ex) -> {
+            ex.shutdown();
+            try {
+                if (!ex.awaitTermination(3, TimeUnit.SECONDS)) ex.shutdownNow();
+            } catch (InterruptedException ie) {
+                ex.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        });
+        readExecutorMap.clear();
         try {
             scheduler.shutdown();
         } catch (Exception ignored) {
@@ -132,20 +148,30 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
             return false;
         }
 
-        Runnable job = () -> {
-            UserContext.defaultTenant();
-            try {
-                String payload = doRead(connectId, spec);
-                if (StringUtils.hasText(payload)) {
-                    equipDataParser.parse(connectId, payload);
+        ExecutorService readExecutor = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, threadPrefix + connectId);
+            t.setDaemon(true);
+            return t;
+        });
+        readExecutorMap.put(connectId, readExecutor);
+
+        Runnable trigger = () -> {
+            readExecutor.execute(() -> {
+                UserContext.defaultTenant();
+                try {
+                    String payload = doRead(connectId, spec);
+                    if (StringUtils.hasText(payload)) {
+                        equipDataParser.parse(connectId, payload);
+                    }
+                } catch (Exception e) {
+                    log.error("{} polling error, connectId={}, uri={}", protocol(), connectId, spec.connectionUrl, e);
                 }
-            } catch (Exception e) {
-                log.error("{} polling error, connectId={}, uri={}", protocol(), connectId, spec.connectionUrl, e);
-            }
+            });
         };
 
-        ScheduledFuture<?> future = scheduler.schedule(job, new CronTrigger(connect.getCollectCron()));
+        ScheduledFuture<?> future = scheduler.schedule(trigger, new CronTrigger(connect.getCollectCron()));
         taskMap.put(connectId, future);
+        specMap.put(connectId, spec);
         log.info("{} polling started, connectId={}, cron={}, uri={}",
                 protocol(), connectId, connect.getCollectCron(), connect.getUri());
         return true;
@@ -159,6 +185,19 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
         ScheduledFuture<?> future = taskMap.remove(connectId);
         if (future != null) {
             future.cancel(false);
+            ExecutorService ex = readExecutorMap.remove(connectId);
+            if (ex != null) {
+                ex.shutdown();
+                try {
+                    if (!ex.awaitTermination(3, TimeUnit.SECONDS)) {
+                        ex.shutdownNow();
+                    }
+                } catch (InterruptedException ie) {
+                    ex.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
+            specMap.remove(connectId);
             log.info("{} polling stopped, connectId={}", protocol(), connectId);
             return true;
         }
@@ -171,6 +210,60 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
         for (String key : keys) {
             stop(key);
         }
+    }
+
+    @Override
+    public boolean write(String connectId, String address, Object value) {
+        if (!StringUtils.hasText(connectId) || !StringUtils.hasText(address) || value == null) {
+            return false;
+        }
+        ConnectSpec spec = specMap.get(connectId);
+        if (spec == null) {
+            log.warn("{} write failed: no active connection spec for connectId={}", protocol(), connectId);
+            return false;
+        }
+        try (PlcConnection connection = connectionManager.getConnection(spec.connectionUrl)) {
+            if (!connection.getMetadata().isWriteSupported()) {
+                log.warn("{} connection does not support write: {}", protocol(), spec.connectionUrl);
+                return false;
+            }
+            PlcWriteRequest.Builder builder = connection.writeRequestBuilder();
+            builder.addTagAddress("ctrl", convertAddress(address), value);
+            PlcWriteResponse response = builder.build().execute().get(readTimeoutMs, TimeUnit.MILLISECONDS);
+            if (PlcResponseCode.OK.equals(response.getResponseCode("ctrl"))) {
+                log.info("{} write success: connectId={}, address={}, value={}", protocol(), connectId, address, value);
+                scheduleReadAfterWrite(connectId);
+                return true;
+            } else {
+                log.warn("{} write response not OK: connectId={}, address={}, code={}",
+                        protocol(), connectId, address, response.getResponseCode("ctrl"));
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("{} write error: connectId={}, address={}, value={}", protocol(), connectId, address, value, e);
+            return false;
+        }
+    }
+
+    /** 写入后延迟触发一次读，刷新 PLC 端实际值（给扫描周期留出时间） */
+    private void scheduleReadAfterWrite(String connectId) {
+        ConnectSpec spec = specMap.get(connectId);
+        ExecutorService executor = readExecutorMap.get(connectId);
+        if (spec == null || executor == null) return;
+        scheduler.schedule(() -> {
+            if (!readExecutorMap.containsKey(connectId)) return;
+            executor.execute(() -> {
+                UserContext.defaultTenant();
+                try {
+                    String payload = doRead(connectId, spec);
+                    if (StringUtils.hasText(payload)) {
+                        equipDataParser.parse(connectId, payload);
+                    }
+                } catch (Exception e) {
+                    log.debug("{} read-after-write failed, connectId={}: {}", protocol(), connectId, e.getMessage());
+                }
+            });
+        }, Instant.now().plusMillis(WRITE_READ_DELAY_MS));
     }
 
     // ---- private ----
@@ -192,21 +285,27 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
                     continue;
                 }
                 EquipConfigDetail config = binding.getConfig();
-                String selfCode = equip.getSelfCode() != null ? equip.getSelfCode() : equip.getId();
                 if (StringUtils.hasText(config.getRunMap())) {
-                    tagNames.put(selfCode + "_run", config.getRunMap().trim());
+                    tagNames.put(config.getRunMap().trim(), config.getRunMap().trim());
                 }
                 if (config.getAttrs() != null) {
                     for (EquipAttr attr : config.getAttrs()) {
                         if (StringUtils.hasText(attr.getMap())) {
-                            tagNames.put(selfCode + "_" + attr.getMap(), attr.getMap().trim());
+                            tagNames.put(attr.getMap().trim(), attr.getMap().trim());
                         }
                     }
                 }
                 if (config.getAlarms() != null) {
                     for (EquipAlarm alarm : config.getAlarms()) {
                         if (StringUtils.hasText(alarm.getMap())) {
-                            tagNames.put(selfCode + "_" + alarm.getMap(), alarm.getMap().trim());
+                            tagNames.put(alarm.getMap().trim(), alarm.getMap().trim());
+                        }
+                    }
+                }
+                if (config.getControls() != null) {
+                    for (EquipControl ctrl : config.getControls()) {
+                        if (StringUtils.hasText(ctrl.getMap())) {
+                            tagNames.put(ctrl.getMap().trim(), ctrl.getMap().trim());
                         }
                     }
                 }

@@ -189,8 +189,18 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                         });
                         equipRealtimeConfig.setAlarms(alarms);
                     }
+                    if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getControls())) {
+                        List<EquipControlRealtime> controls = new ArrayList<>();
+                        equipDto.getConfig().getConfig().getControls().forEach(ctrl -> {
+                            EquipControlRealtime equipControlRealtime = new EquipControlRealtime();
+                            BeanUtils.copyProperties(ctrl, equipControlRealtime);
+                            controls.add(equipControlRealtime);
+                        });
+                        equipRealtimeConfig.setControls(controls);
+                    }
                     equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
                     equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
+                    equipRealtime.setEquipControlRealtimes(equipRealtimeConfig.getControls());
                     Date currentDate = new Date();
                     equipRealtime.setAlarmChangeTime(currentDate);
                     equipRealtime.setRunChangeTime(currentDate);
