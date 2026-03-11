@@ -4,6 +4,7 @@
 
 package com.ourexists.omes.portal.device.protocol;
 
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.portal.device.collect.TcMqttEquipDataParser;
 import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
@@ -34,6 +35,7 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
     @Override
     protected IMqttMessageListener getListener(ProtocolConnect gw) {
         return (topic, message) -> {
+            UserContext.defaultTenant();
             String payload = decodePayload(message.getPayload());
             if (payload == null) {
                 return;
