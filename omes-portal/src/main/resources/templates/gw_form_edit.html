@@ -98,7 +98,7 @@
 
         function toggleByProtocol(protocol) {
             var p = protocol ? String(protocol).toLowerCase() : '';
-            var isMqtt = p === 'mqtt';
+            var isMqtt = p === 'mqtt' || p === 'tc_mqtt';
             var isPolling = isPollingProtocol(p);
             var isS7 = p === 's7';
             $('#suffix-form-item').toggle(isMqtt);

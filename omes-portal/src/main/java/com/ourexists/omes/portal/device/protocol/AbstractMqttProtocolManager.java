@@ -8,10 +8,7 @@ import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -90,6 +87,45 @@ public abstract class AbstractMqttProtocolManager implements ProtocolManager {
 
         MqttClient client = new MqttClient(gw.getUri(), clientId, null);
 
+        String topic = gw.getTopic();
+        if (!StringUtils.hasText(topic)) {
+            client.close();
+            throw new MqttException(new IllegalArgumentException("MQTT gateway topic is required, gateway: " + gw.getServerName()));
+        }
+        topic = topic.trim();
+        IMqttMessageListener listener = getListener(gw);
+
+        // 重连后 Paho 不会自动重新订阅，必须在 connectComplete(reconnect=true) 里手动 re-subscribe
+        String finalTopic = topic;
+        client.setCallback(new MqttCallbackExtended() {
+            @Override
+            public void connectComplete(boolean reconnect, String serverURI) {
+                if (!reconnect) {
+                    return;
+                }
+                try {
+                    client.subscribe(finalTopic, 1, listener);
+                    log.info("MQTT re-subscribed after reconnect clientId: [{}] topic: [{}]", client.getClientId(), finalTopic);
+                } catch (MqttException e) {
+                    log.error("MQTT re-subscribe failed clientId: [{}] topic: [{}]: {}", client.getClientId(), finalTopic, e.getMessage(), e);
+                }
+            }
+
+            @Override
+            public void connectionLost(Throwable cause) {
+                log.warn("MQTT connection lost clientId: [{}]: {}", client.getClientId(), cause != null ? cause.getMessage() : "unknown");
+            }
+
+            @Override
+            public void messageArrived(String topicFilter, org.eclipse.paho.client.mqttv3.MqttMessage message) {
+                // 由 subscribe 时注册的 IMqttMessageListener 处理
+            }
+
+            @Override
+            public void deliveryComplete(org.eclipse.paho.client.mqttv3.IMqttDeliveryToken token) {
+            }
+        });
+
         MqttConnectOptions options = new MqttConnectOptions();
         if (StringUtils.hasText(gw.getUsername()) && StringUtils.hasText(gw.getPassword())) {
             options.setUserName(gw.getUsername());
@@ -101,7 +137,23 @@ public abstract class AbstractMqttProtocolManager implements ProtocolManager {
         options.setMaxReconnectDelay(10_000);
         options.setCleanSession(true);
         client.connect(options);
-        client.subscribe(gw.getTopic(), 1, getListener(gw));
+
+        try {
+            log.info("MQTT subscribing gateway: {} topic: [{}]", gw.getServerName(), topic);
+            client.subscribe(topic, 1, listener);
+            log.info("MQTT subscribed successfully clientId: [{}] topic: [{}]", clientId, topic);
+        } catch (Exception e) {
+            try {
+                if (client.isConnected()) {
+                    client.disconnect();
+                }
+                client.close();
+            } catch (MqttException ex) {
+                log.warn("Error closing client after subscribe failure: {}", ex.getMessage());
+            }
+            log.error("MQTT subscribe failed for gateway: {} topic: [{}], error: {}", gw.getServerName(), topic, e.getMessage(), e);
+            throw e instanceof MqttException ? (MqttException) e : new MqttException(e);
+        }
         return client;
     }
 
