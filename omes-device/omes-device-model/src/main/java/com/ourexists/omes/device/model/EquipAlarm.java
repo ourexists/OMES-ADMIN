@@ -1,5 +1,6 @@
 package com.ourexists.omes.device.model;
 
+import com.ourexists.omes.device.enums.AlarmLevelEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,4 +22,6 @@ public class EquipAlarm {
     private String max;
     /** 报警描述 */
     private String text;
+    /** 报警等级: 0=轻微, 1=一般, 2=严重, 3=故障，见 {@link AlarmLevelEnum} */
+    private Integer level;
 }

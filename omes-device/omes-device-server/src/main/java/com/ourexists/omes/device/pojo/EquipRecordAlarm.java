@@ -30,6 +30,9 @@ public class EquipRecordAlarm extends EraEntity {
 
     private String reason;
 
+    /** 报警等级: 0=轻微, 1=一般, 2=严重, 3=故障 */
+    private Integer level;
+
     public static <T extends EquipRecordAlarmDto> T covert(EquipRecordAlarm source, Class<T> clazz) {
         if (source == null) {
             return null;

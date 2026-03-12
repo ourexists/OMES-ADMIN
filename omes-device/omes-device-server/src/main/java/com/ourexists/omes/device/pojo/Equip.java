@@ -11,6 +11,7 @@ import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -32,6 +33,12 @@ public class Equip extends EraEntity {
     private BigDecimal lat;
 
     private String address;
+
+    /** 启用日期，用于健康分使用年限计算，为空时用创建时间 */
+    private Date enableDate;
+
+    /** 关联的健康规则模板ID，为空时计算使用默认模板 */
+    private String healthTemplateId;
 
     public static EquipDto covert(Equip source) {
         if (source == null) {

@@ -135,4 +135,18 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
         }
         return r;
     }
+
+    @Override
+    public Long sumRunMinutesBySn(String sn) {
+        if (sn == null || sn.isEmpty()) return 0L;
+        Long v = baseMapper.sumRunMinutesBySn(sn);
+        return v != null ? v : 0L;
+    }
+
+    @Override
+    public Long countRunSegmentsBySn(String sn) {
+        if (sn == null || sn.isEmpty()) return 0L;
+        Long v = baseMapper.countRunSegmentsBySn(sn);
+        return v != null ? v : 0L;
+    }
 }

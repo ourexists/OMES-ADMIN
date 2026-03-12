@@ -1,0 +1,483 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 设备健康规则模板配置（按类别分组）
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <style>
+        .health-edit-page {
+            overflow-y: auto;
+            min-height: 100%;
+            padding: 16px 20px 24px;
+            box-sizing: border-box;
+        }
+        .health-section {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .health-section-title {
+            padding: 10px 16px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: #333;
+        }
+        .health-section-body {
+            padding: 18px 20px;
+        }
+        .health-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .health-row:last-child { margin-bottom: 0; }
+        .health-label {
+            width: 160px;
+            flex-shrink: 0;
+            color: #333;
+            font-size: 14px;
+        }
+        .health-field {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 14px;
+        }
+        .health-field input[type="text"],
+        .health-field input[type="number"] {
+            width: 96px;
+            padding: 8px 10px;
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .health-field input.input-num-sm { width: 72px; }
+        .health-field .unit {
+            color: #999;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+        .health-param-desc {
+            box-sizing: border-box;
+            width: 100%;
+            padding-left: 160px;
+            margin-left: 0;
+            margin-top: 6px;
+            margin-bottom: 10px;
+            padding-right: 0;
+            font-size: 12px;
+            color: #999;
+            line-height: 1.5;
+        }
+        .health-level-grid {
+            display: grid;
+            grid-template-columns: 88px 1fr 1fr;
+            gap: 10px 16px;
+            align-items: center;
+            max-width: 380px;
+        }
+        .health-level-grid .col-label { color: #666; font-size: 13px; }
+        .health-level-grid input { width: 72px; padding: 8px; border: 1px solid #e6e6e6; border-radius: 4px; font-size: 14px; }
+        .health-level-grid .unit { font-size: 12px; color: #999; margin-left: 6px; }
+        .health-level-grid .cell-with-unit { display: flex; align-items: center; }
+        .health-actions {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .health-actions .layui-btn { margin-right: 10px; }
+    </style>
+</head>
+<body>
+<div class="health-edit-page">
+    <form id="health-template-form" lay-filter="health-template-form">
+        <input type="hidden" name="id">
+
+        <!-- 基础设置 -->
+        <div class="health-section">
+            <div class="health-section-title" lang-i18n="equipHealth.sectionBasic">基础设置</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.templateName"></span></span>
+                    <div class="health-field">
+                        <input type="text" name="name" autocomplete="off" placeholder="">
+                    </div>
+                </div>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.periodHours"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="periodHours" min="1" placeholder="24">
+                        <span class="unit">小时</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.periodHours"></p>
+        <div class="health-section">
+            <div class="health-section-title" lang-i18n="equipHealth.sectionAlarm">报警维度</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.alarmCountPenalty"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="alarmCountPenalty" min="0" placeholder="5">
+                        <span class="unit">分/次</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.alarmCountPenalty"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.alarmDurationPenaltyPerMin"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="alarmDurationPenaltyPerMin" min="0" step="0.1" placeholder="0.5">
+                        <span class="unit">分/分钟</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.alarmDurationPenaltyPerMin"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.alarmMaxDeduction"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="alarmMaxDeduction" min="0" placeholder="40">
+                        <span class="unit">分（上限）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.alarmMaxDeduction"></p>
+                <div class="health-row" style="margin-top:14px">
+                    <span class="health-label"><span lang-i18n="equipHealth.alarmLevelPenaltySection"></span></span>
+                    <div class="health-level-grid" id="alarm-level-penalties-grid">
+                        <span class="col-label"></span>
+                        <span class="col-label" lang-i18n="equipHealth.unit.perCount">分/次</span>
+                        <span class="col-label" lang-i18n="equipHealth.unit.perMin">分/分钟</span>
+                        <!-- 行动态填充 -->
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.alarmLevelPenaltySection"></p>
+            </div>
+        </div>
+
+        <!-- 运行维度 -->
+        <div class="health-section">
+            <div class="health-section-title" lang-i18n="equipHealth.sectionRun">运行维度</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.runRatioWeight"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="runRatioWeight" min="0" max="100" placeholder="30">
+                        <span class="unit">分（权重）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.runRatioWeight"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.expectedRunRatio"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="expectedRunRatio" min="0" max="100" placeholder="70">
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.expectedRunRatio"></p>
+            </div>
+        </div>
+
+        <!-- 在线维度 -->
+        <div class="health-section">
+            <div class="health-section-title" lang-i18n="equipHealth.sectionOnline">在线维度</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.onlineRatioWeight"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="onlineRatioWeight" min="0" max="100" placeholder="20">
+                        <span class="unit">分（权重）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.onlineRatioWeight"></p>
+            </div>
+        </div>
+
+        <!-- 生命周期维度（设备老化） -->
+        <div class="health-section">
+            <div class="health-section-title" lang-i18n="equipHealth.sectionLifecycle">生命周期</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.lifecycleMaxDeduction"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="lifecycleMaxDeduction" min="0" placeholder="15">
+                        <span class="unit">分（上限）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.lifecycleMaxDeduction"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.lifeYearThreshold"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="lifeYearThreshold" min="0" placeholder="5">
+                        <span class="unit">年</span>
+                        <input type="number" name="lifeYearPenaltyPerYear" min="0" step="0.1" placeholder="1" class="input-num-sm">
+                        <span class="unit">分/年</span>
+                        <input type="number" name="lifeYearMaxDeduction" min="0" placeholder="5" class="input-num-sm">
+                        <span class="unit">分（单项上限）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.lifeYear"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.totalRunHoursThreshold"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="totalRunHoursThreshold" min="0" placeholder="10000">
+                        <span class="unit">小时</span>
+                        <input type="number" name="totalRunHoursPenaltyPer1000" min="0" step="0.1" placeholder="0.5" class="input-num-sm">
+                        <span class="unit">分/千小时</span>
+                        <input type="number" name="totalRunHoursMaxDeduction" min="0" placeholder="5" class="input-num-sm">
+                        <span class="unit">分（单项上限）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.totalRunHours"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.startStopCountThreshold"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="startStopCountThreshold" min="0" placeholder="5000">
+                        <span class="unit">次</span>
+                        <input type="number" name="startStopCountPenaltyPer1000" min="0" step="0.1" placeholder="0.2" class="input-num-sm">
+                        <span class="unit">分/千次</span>
+                        <input type="number" name="startStopCountMaxDeduction" min="0" placeholder="5" class="input-num-sm">
+                        <span class="unit">分（单项上限）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.startStopCount"></p>
+            </div>
+        </div>
+
+        <!-- 等级阈值 -->
+        <div class="health-section">
+            <div class="health-section-title" lang-i18n="equipHealth.sectionThreshold">等级阈值</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.healthyThreshold"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="healthyThreshold" min="0" max="100" placeholder="85">
+                        <span class="unit">分（得分≥）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.healthyThreshold"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.attentionThreshold"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="attentionThreshold" min="0" max="100" placeholder="70">
+                        <span class="unit">分（得分≥）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.attentionThreshold"></p>
+                <div class="health-row">
+                    <span class="health-label"><span lang-i18n="equipHealth.warningThreshold"></span></span>
+                    <div class="health-field">
+                        <input type="number" name="warningThreshold" min="0" max="100" placeholder="50">
+                        <span class="unit">分（得分≥）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc" lang-i18n="equipHealth.desc.warningThreshold"></p>
+            </div>
+        </div>
+
+        <div class="health-actions">
+            <button type="button" class="layui-btn" id="btn-submit" lang-i18n="common.msg.confirm"></button>
+            <button type="button" class="layui-btn layui-btn-primary" id="btn-reset" lang-i18n="common.msg.reset"></button>
+            <button type="button" class="layui-btn layui-btn-primary" id="btn-preset-industrial" lang-i18n="equipHealth.fillIndustrialPreset"></button>
+        </div>
+    </form>
+</div>
+<script>
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.$;
+
+        var alarmLevels = [];
+
+        function ensureAlarmLevels(done) {
+            if (alarmLevels.length > 0) { if (done) done(); return; }
+            get(router.equip_health_getAlarmLevels, null, function (list) {
+                alarmLevels = list || [];
+                renderAlarmLevelPenalties({});
+                if (done) done();
+            }, function () { if (done) done(); });
+        }
+
+        function renderAlarmLevelPenalties(penalties) {
+            var grid = document.getElementById("alarm-level-penalties-grid");
+            if (!grid) return;
+            var frag = document.createDocumentFragment();
+            alarmLevels.forEach(function (lv) {
+                var key = String(lv.code);
+                var p = (penalties && penalties[key]) || {};
+                var count = p.count != null ? p.count : (lv.code === 0 ? 2 : lv.code === 1 ? 5 : lv.code === 2 ? 10 : 15);
+                var perMin = p.perMin != null ? p.perMin : (lv.code === 0 ? 0.2 : lv.code === 1 ? 0.5 : lv.code === 2 ? 1.0 : 1.5);
+                var row1 = document.createElement("span");
+                row1.className = "col-label";
+                row1.textContent = lv.desc || key;
+                var row2 = document.createElement("input");
+                row2.type = "number";
+                row2.min = "0";
+                row2.setAttribute("data-level", key);
+                row2.setAttribute("data-field", "count");
+                row2.placeholder = String(count);
+                row2.value = count;
+                var unit2 = document.createElement("span");
+                unit2.className = "unit";
+                unit2.textContent = "分/次";
+                var wrap2 = document.createElement("span");
+                wrap2.className = "cell-with-unit";
+                wrap2.appendChild(row2);
+                wrap2.appendChild(unit2);
+                var row3 = document.createElement("input");
+                row3.type = "number";
+                row3.min = "0";
+                row3.step = "0.1";
+                row3.setAttribute("data-level", key);
+                row3.setAttribute("data-field", "perMin");
+                row3.placeholder = String(perMin);
+                row3.value = perMin;
+                var unit3 = document.createElement("span");
+                unit3.className = "unit";
+                unit3.textContent = "分/分钟";
+                var wrap3 = document.createElement("span");
+                wrap3.className = "cell-with-unit";
+                wrap3.appendChild(row3);
+                wrap3.appendChild(unit3);
+                frag.appendChild(row1);
+                frag.appendChild(wrap2);
+                frag.appendChild(wrap3);
+            });
+            grid.innerHTML = "";
+            grid.appendChild(frag);
+        }
+
+        function loadTemplate() {
+            var id = layui.url().search.id;
+            ensureAlarmLevels(function () {
+                get(router.equip_health_listTemplates, null, function (list) {
+                    var t = null;
+                    if (id && list && list.length > 0) {
+                        var found = list.filter(function (x) { return x.id === id; })[0];
+                        if (found) t = found;
+                    }
+                    if (!t && list && list.length > 0 && !id) t = list[0];
+                    if (!t) {
+                        get(router.equip_health_getDefaultTemplate, null, function (d) { t = d; fillForm(t); });
+                        return;
+                    }
+                    fillForm(t);
+                });
+            });
+        }
+
+        function fillForm(t) {
+            if (!t) return;
+            document.querySelector("input[name=id]").value = t.id || "";
+            document.querySelector("input[name=name]").value = t.name || "";
+            var c = t.config || {};
+            document.querySelector("input[name=periodHours]").value = c.periodHours != null ? c.periodHours : 24;
+            document.querySelector("input[name=alarmCountPenalty]").value = c.alarmCountPenalty != null ? c.alarmCountPenalty : 5;
+            document.querySelector("input[name=alarmDurationPenaltyPerMin]").value = c.alarmDurationPenaltyPerMin != null ? c.alarmDurationPenaltyPerMin : 0.5;
+            document.querySelector("input[name=alarmMaxDeduction]").value = c.alarmMaxDeduction != null ? c.alarmMaxDeduction : 40;
+            document.querySelector("input[name=runRatioWeight]").value = c.runRatioWeight != null ? c.runRatioWeight : 30;
+            document.querySelector("input[name=expectedRunRatio]").value = c.expectedRunRatio != null ? c.expectedRunRatio : 70;
+            document.querySelector("input[name=onlineRatioWeight]").value = c.onlineRatioWeight != null ? c.onlineRatioWeight : 20;
+            document.querySelector("input[name=lifecycleMaxDeduction]").value = c.lifecycleMaxDeduction != null ? c.lifecycleMaxDeduction : 15;
+            document.querySelector("input[name=lifeYearThreshold]").value = c.lifeYearThreshold != null ? c.lifeYearThreshold : 5;
+            document.querySelector("input[name=lifeYearPenaltyPerYear]").value = c.lifeYearPenaltyPerYear != null ? c.lifeYearPenaltyPerYear : 1;
+            document.querySelector("input[name=lifeYearMaxDeduction]").value = c.lifeYearMaxDeduction != null ? c.lifeYearMaxDeduction : 5;
+            document.querySelector("input[name=totalRunHoursThreshold]").value = c.totalRunHoursThreshold != null ? c.totalRunHoursThreshold : 10000;
+            document.querySelector("input[name=totalRunHoursPenaltyPer1000]").value = c.totalRunHoursPenaltyPer1000 != null ? c.totalRunHoursPenaltyPer1000 : 0.5;
+            document.querySelector("input[name=totalRunHoursMaxDeduction]").value = c.totalRunHoursMaxDeduction != null ? c.totalRunHoursMaxDeduction : 5;
+            document.querySelector("input[name=startStopCountThreshold]").value = c.startStopCountThreshold != null ? c.startStopCountThreshold : 5000;
+            document.querySelector("input[name=startStopCountPenaltyPer1000]").value = c.startStopCountPenaltyPer1000 != null ? c.startStopCountPenaltyPer1000 : 0.2;
+            document.querySelector("input[name=startStopCountMaxDeduction]").value = c.startStopCountMaxDeduction != null ? c.startStopCountMaxDeduction : 5;
+            document.querySelector("input[name=healthyThreshold]").value = c.healthyThreshold != null ? c.healthyThreshold : 85;
+            document.querySelector("input[name=attentionThreshold]").value = c.attentionThreshold != null ? c.attentionThreshold : 70;
+            document.querySelector("input[name=warningThreshold]").value = c.warningThreshold != null ? c.warningThreshold : 50;
+            renderAlarmLevelPenalties(c.alarmLevelPenalties || {});
+        }
+
+        function collectForm() {
+            var formEl = document.getElementById("health-template-form");
+            var c = {
+                periodHours: parseInt(formEl.querySelector("input[name=periodHours]").value, 10) || 24,
+                alarmCountPenalty: parseInt(formEl.querySelector("input[name=alarmCountPenalty]").value, 10) || 5,
+                alarmDurationPenaltyPerMin: parseFloat(formEl.querySelector("input[name=alarmDurationPenaltyPerMin]").value) || 0.5,
+                alarmMaxDeduction: parseInt(formEl.querySelector("input[name=alarmMaxDeduction]").value, 10) || 40,
+                runRatioWeight: parseInt(formEl.querySelector("input[name=runRatioWeight]").value, 10) || 30,
+                expectedRunRatio: parseInt(formEl.querySelector("input[name=expectedRunRatio]").value, 10) || 70,
+                onlineRatioWeight: parseInt(formEl.querySelector("input[name=onlineRatioWeight]").value, 10) || 20,
+                lifecycleMaxDeduction: parseInt(formEl.querySelector("input[name=lifecycleMaxDeduction]").value, 10) || 15,
+                lifeYearThreshold: parseInt(formEl.querySelector("input[name=lifeYearThreshold]").value, 10) || 5,
+                lifeYearPenaltyPerYear: parseFloat(formEl.querySelector("input[name=lifeYearPenaltyPerYear]").value) || 1,
+                lifeYearMaxDeduction: parseInt(formEl.querySelector("input[name=lifeYearMaxDeduction]").value, 10) || 5,
+                totalRunHoursThreshold: parseInt(formEl.querySelector("input[name=totalRunHoursThreshold]").value, 10) || 10000,
+                totalRunHoursPenaltyPer1000: parseFloat(formEl.querySelector("input[name=totalRunHoursPenaltyPer1000]").value) || 0.5,
+                totalRunHoursMaxDeduction: parseInt(formEl.querySelector("input[name=totalRunHoursMaxDeduction]").value, 10) || 5,
+                startStopCountThreshold: parseInt(formEl.querySelector("input[name=startStopCountThreshold]").value, 10) || 5000,
+                startStopCountPenaltyPer1000: parseFloat(formEl.querySelector("input[name=startStopCountPenaltyPer1000]").value) || 0.2,
+                startStopCountMaxDeduction: parseInt(formEl.querySelector("input[name=startStopCountMaxDeduction]").value, 10) || 5,
+                healthyThreshold: parseInt(formEl.querySelector("input[name=healthyThreshold]").value, 10) || 85,
+                attentionThreshold: parseInt(formEl.querySelector("input[name=attentionThreshold]").value, 10) || 70,
+                warningThreshold: parseInt(formEl.querySelector("input[name=warningThreshold]").value, 10) || 50,
+                alarmLevelPenalties: {}
+            };
+            var grid = document.getElementById("alarm-level-penalties-grid");
+            if (grid) {
+                [].forEach.call(grid.querySelectorAll("input[data-level][data-field]"), function (input) {
+                    var key = input.getAttribute("data-level");
+                    var field = input.getAttribute("data-field");
+                    if (!c.alarmLevelPenalties[key]) c.alarmLevelPenalties[key] = {};
+                    var val = field === "count" ? parseInt(input.value, 10) : parseFloat(input.value);
+                    c.alarmLevelPenalties[key][field] = isNaN(val) ? (field === "count" ? 5 : 0.5) : val;
+                });
+            }
+            return {
+                id: formEl.querySelector("input[name=id]").value || null,
+                name: formEl.querySelector("input[name=name]").value || "",
+                enabled: 0,
+                config: c
+            };
+        }
+
+        loadTemplate();
+
+        $(document).on('click', '#btn-submit', function () {
+            var dto = collectForm();
+            post(router.equip_health_saveTemplate, dto, function () {
+                layer.msg(i18np.prop('common.msg.saveSuccess'));
+                loadTemplate();
+                if (parent.reloadTb) parent.reloadTb();
+            }, function (code, msg) {
+                layer.alert(msg || 'Save failed', { title: 'Error' });
+            });
+        });
+
+        $(document).on('click', '#btn-reset', function () {
+            loadTemplate();
+        });
+
+        $(document).on('click', '#btn-preset-industrial', function () {
+            get(router.equip_health_getDefaultTemplate, null, function (d) {
+                var currentId = document.querySelector("input[name=id]").value;
+                var currentName = document.querySelector("input[name=name]").value;
+                if (currentId) d.id = currentId;
+                if (currentName) d.name = currentName;
+                fillForm(d);
+                layer.msg(i18np.prop('equipHealth.msg.industrialPresetApplied') || '已填入工业常用预设');
+            }, function () {
+                layer.msg(i18np.prop('common.msg.operateFailed') || '操作失败');
+            });
+        });
+    });
+</script>
+</body>
+</html>

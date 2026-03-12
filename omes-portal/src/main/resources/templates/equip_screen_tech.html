@@ -88,12 +88,12 @@
 
         /* ========== 顶部：科技风标题栏 ========== */
         .screen-header {
-            height: 72px;
+            height: 56px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 36px;
+            padding: 0 28px;
             background: linear-gradient(180deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%);
             border-bottom: 1px solid var(--tech-border);
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
@@ -106,9 +106,9 @@
         }
 
         .screen-title {
-            font-size: 26px;
+            font-size: 22px;
             font-weight: 700;
-            letter-spacing: 6px;
+            letter-spacing: 4px;
             color: #f0f9ff;
             text-shadow: 0 0 20px var(--tech-glow), 0 0 40px rgba(14, 165, 233, 0.4);
         }
@@ -152,15 +152,16 @@
             flex: 1;
             min-height: 0;
             display: flex;
-            padding: 8px;
-            gap: 8px;
+            padding: 6px;
+            gap: 6px;
         }
 
         .side-panel {
             width: 22%;
+            min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .center-map {
@@ -234,8 +235,8 @@
 
         .panel-title {
             position: relative;
-            padding: 10px 14px 8px 18px;
-            font-size: 14px;
+            padding: 8px 12px 6px 16px;
+            font-size: 13px;
             font-weight: 600;
             color: #e2e8f0;
             letter-spacing: 2px;
@@ -258,24 +259,24 @@
         .kpi {
             display: flex;
             flex-wrap: wrap;
-            padding: 10px 8px;
+            padding: 6px 6px;
             gap: 4px;
         }
 
         .kpi-item {
-            flex: 1 1 calc(33.33% - 8px);
-            min-width: 70px;
+            flex: 1 1 calc(33.33% - 6px);
+            min-width: 64px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 8px 4px;
+            padding: 6px 2px;
             background: rgba(0, 229, 255, 0.04);
             border: 1px solid rgba(0, 229, 255, 0.15);
             border-radius: 2px;
         }
 
         .kpi-num {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--tech-cyan);
             text-shadow: 0 0 12px var(--tech-glow);
@@ -283,20 +284,32 @@
         }
 
         .kpi-title {
-            font-size: 11px;
+            font-size: 10px;
             color: #94a3b8;
-            margin-top: 4px;
+            margin-top: 2px;
             letter-spacing: 1px;
         }
+
+        .kpi-health { padding: 4px 6px; }
+        .kpi-health .kpi-item { padding: 4px 2px; min-width: 48px; }
+        .kpi-health .kpi-num { font-size: 16px; }
+        .kpi-health .kpi-title { font-size: 10px; }
+        .kpi-health .health-ok { color: #22c55e; }
+        .kpi-health .health-attention { color: #eab308; }
+        .kpi-health .health-warning { color: #f97316; }
+        .kpi-health .health-fault { color: #ef4444; }
+
+        .health-charts { display: flex; padding: 2px 4px; flex: 1; min-height: 0; }
+        .health-charts > div { flex: 1; min-width: 0; }
 
         /* ========== 图表容器 ========== */
         .panel-box .chart-wrap {
             flex: 1;
             min-height: 0;
-            padding: 6px;
+            padding: 4px;
         }
 
-        #statusChart, #trendChart, #currentTrendChart {
+        #statusChart, #trendChart, #currentTrendChart, #healthLevelChart, #healthScoreChart {
             width: 100%;
             height: 100%;
         }
@@ -312,8 +325,9 @@
 
         .alarm-list {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            padding: 6px 8px;
+            padding: 4px 6px;
             font-size: 12px;
             scrollbar-width: thin;
             scrollbar-color: var(--scroll-thumb) var(--scroll-track);
@@ -336,7 +350,7 @@
         .alarm-item {
             display: flex;
             align-items: flex-start;
-            padding: 8px 6px;
+            padding: 6px 4px;
             border-bottom: 1px dashed rgba(0, 229, 255, 0.2);
             transition: background 0.2s;
         }
@@ -424,16 +438,16 @@
 
         /* ========== 底部 ========== */
         .screen-footer {
-            height: 48px;
+            height: 40px;
             flex-shrink: 0;
-            padding: 0 24px;
+            padding: 0 20px;
             background: rgba(6, 22, 45, 0.9);
             border-top: 1px solid var(--tech-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             color: #94a3b8;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 1px;
         }
 
@@ -446,6 +460,16 @@
         .center-map .panel-box {
             height: 100%;
         }
+
+        /* 右侧栏：弹性均分，告警区略大 */
+        .side-panel-right .panel-box-trend,
+        .side-panel-right .panel-box-health {
+            flex: 1 1 0;
+            min-height: 0;
+        }
+        .side-panel-right .panel-box-trend { min-height: 90px; }
+        .side-panel-right .panel-box-health { min-height: 100px; }
+        .side-panel-right .alarm-panel { flex: 1.4 1 0; min-height: 100px; }
 
         #map {
             height: 100%;
@@ -519,8 +543,8 @@
             </div>
         </section>
 
-        <aside class="side-panel">
-            <div class="panel-box" style="height: 28%; min-height: 140px;">
+        <aside class="side-panel side-panel-right">
+            <div class="panel-box panel-box-trend" style="min-height: 90px;">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="panel-title" lang-i18n="title.equip_trend_7"></div>
@@ -528,12 +552,43 @@
                     <div id="trendChart" style="height:100%;"></div>
                 </div>
             </div>
-            <div class="panel-box" style="height: 28%; min-height: 140px;">
+            <div class="panel-box panel-box-trend" style="min-height: 90px;">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="panel-title" lang-i18n="title.equip_trend"></div>
                 <div class="chart-wrap">
                     <div id="currentTrendChart" style="height:100%;"></div>
+                </div>
+            </div>
+            <div class="panel-box panel-box-health" style="min-height: 100px;">
+                <span class="corner-br"></span>
+                <span class="corner-bl"></span>
+                <div class="panel-title">场景设备健康</div>
+                <div class="kpi kpi-health">
+                    <div class="kpi-item">
+                        <div class="kpi-num" id="healthAvgScore">--</div>
+                        <div class="kpi-title">平均分</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num health-ok" id="healthCountHealthy">0</div>
+                        <div class="kpi-title">健康</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num health-attention" id="healthCountAttention">0</div>
+                        <div class="kpi-title">关注</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num health-warning" id="healthCountWarning">0</div>
+                        <div class="kpi-title">预警</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="kpi-num health-fault" id="healthCountFault">0</div>
+                        <div class="kpi-title">故障</div>
+                    </div>
+                </div>
+                <div class="chart-wrap health-charts">
+                    <div id="healthLevelChart" style="flex:1;min-width:0;"></div>
+                    <div id="healthScoreChart" style="flex:1;min-width:0;"></div>
                 </div>
             </div>
             <div class="panel-box alarm-panel">
@@ -561,6 +616,9 @@
     let chartLock = false;
     let messageLock = false;
     let reloading = false;
+    let healthLevelChart;
+    let healthScoreChart;
+    let healthLock = false;
 
     layui.use(function () {
         var $ = layui.$;
@@ -583,6 +641,7 @@
                     selected_tree_node = obj;
                     reloadCount();
                     reloadTrendChart();
+                    reloadHealth();
                     reloadMap(true);
                     if (obj.selfCode == null) {
                         $('#workshopName').text('');
@@ -603,6 +662,7 @@
             initCountEChart();
             initTrendChart();
             initCurrentTrendChart();
+            initHealthCharts();
         }, 400);
 
         setInterval(() => {
@@ -612,6 +672,7 @@
         setInterval(async () => {
             reloadCount();
             reloadCurrentTrendChart();
+            reloadHealth();
             reloadMessage();
             reloadMap(false);
         }, 30000);
@@ -773,6 +834,154 @@
             }]
         });
         reloadTrendChart();
+    }
+
+    const HEALTH_LEVEL_COLORS = { 0: '#22c55e', 1: '#eab308', 2: '#f97316', 3: '#ef4444' };
+    const HEALTH_LEVEL_NAMES = { 0: '健康', 1: '关注', 2: '预警', 3: '故障' };
+
+    function initHealthCharts() {
+        healthLevelChart = echarts.init(document.getElementById('healthLevelChart'));
+        healthLevelChart.setOption({
+            backgroundColor: 'transparent',
+            tooltip: { trigger: 'item' },
+            legend: {
+                orient: 'horizontal',
+                bottom: 2,
+                left: 'center',
+                textStyle: { color: '#94a3b8', fontSize: 10 }
+            },
+            series: [{
+                name: '健康等级',
+                type: 'pie',
+                radius: ['40%', '65%'],
+                center: ['50%', '45%'],
+                avoidLabelOverlap: true,
+                label: { show: true, color: '#e2e8f0', fontSize: 10, formatter: '{b}\n{d}%' },
+                data: [
+                    { value: 0, name: '健康', itemStyle: { color: HEALTH_LEVEL_COLORS[0] } },
+                    { value: 0, name: '关注', itemStyle: { color: HEALTH_LEVEL_COLORS[1] } },
+                    { value: 0, name: '预警', itemStyle: { color: HEALTH_LEVEL_COLORS[2] } },
+                    { value: 0, name: '故障', itemStyle: { color: HEALTH_LEVEL_COLORS[3] } }
+                ]
+            }]
+        });
+
+        healthScoreChart = echarts.init(document.getElementById('healthScoreChart'));
+        healthScoreChart.setOption({
+            backgroundColor: 'transparent',
+            series: [{
+                type: 'gauge',
+                startAngle: 200,
+                endAngle: -20,
+                min: 0,
+                max: 100,
+                splitNumber: 5,
+                center: ['50%', '58%'],
+                radius: '75%',
+                axisLine: {
+                    lineStyle: {
+                        width: 8,
+                        color: [
+                            [0.5, '#ef4444'],
+                            [0.75, '#f97316'],
+                            [0.9, '#eab308'],
+                            [1, '#22c55e']
+                        ]
+                    }
+                },
+                pointer: { itemStyle: { color: 'auto' }, width: 4, length: '60%' },
+                axisTick: { show: false },
+                splitLine: { show: false },
+                axisLabel: { color: '#94a3b8', fontSize: 10, distance: -18 },
+                title: { offsetCenter: [0, '20%'], color: '#94a3b8', fontSize: 11 },
+                detail: {
+                    offsetCenter: [0, '-5%'],
+                    valueAnimation: true,
+                    color: '#00e5ff',
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    formatter: '{value}',
+                    borderColor: 'transparent'
+                },
+                data: [{ value: 0, name: '平均健康分' }]
+            }]
+        });
+        reloadHealth();
+    }
+
+    function reloadHealth() {
+        if (healthLock) return;
+        healthLock = true;
+        const workshopCode = selected_tree_node == null ? null : selected_tree_node.selfCode;
+        const statDate = new Date();
+        statDate.setHours(0, 0, 0, 0);
+
+        function finish(list) {
+            const healthy = list.filter(d => (d.healthLevel || 0) === 0).length;
+            const attention = list.filter(d => (d.healthLevel || 0) === 1).length;
+            const warning = list.filter(d => (d.healthLevel || 0) === 2).length;
+            const fault = list.filter(d => (d.healthLevel || 0) === 3).length;
+            const total = list.length;
+            const avgScore = total > 0
+                ? Math.round(list.reduce((s, d) => s + (d.score != null ? d.score : 0), 0) / total)
+                : null;
+
+            $('#healthCountHealthy').text(healthy);
+            $('#healthCountAttention').text(attention);
+            $('#healthCountWarning').text(warning);
+            $('#healthCountFault').text(fault);
+            $('#healthAvgScore').text(avgScore != null ? avgScore : '--');
+
+            healthLevelChart.setOption({
+                series: [{
+                    data: [
+                        { value: healthy, name: '健康', itemStyle: { color: HEALTH_LEVEL_COLORS[0] } },
+                        { value: attention, name: '关注', itemStyle: { color: HEALTH_LEVEL_COLORS[1] } },
+                        { value: warning, name: '预警', itemStyle: { color: HEALTH_LEVEL_COLORS[2] } },
+                        { value: fault, name: '故障', itemStyle: { color: HEALTH_LEVEL_COLORS[3] } }
+                    ]
+                }]
+            }, false);
+            healthScoreChart.setOption({
+                series: [{ data: [{ value: avgScore != null ? avgScore : 0, name: '平均健康分' }] }]
+            }, false);
+            healthLock = false;
+        }
+
+        function loadHealthIndicators(snSet) {
+            post(router.equip_health_listByStatTime, {
+                statTime: formatDate(statDate),
+                pageNum: 1,
+                pageSize: 9999
+            }, function (res) {
+                let list = Array.isArray(res) ? res : [];
+                if (snSet && snSet.size > 0) {
+                    list = list.filter(d => d.sn && snSet.has(d.sn));
+                }
+                finish(list);
+            }, function () {
+                finish([]);
+            });
+        }
+
+        if (workshopCode == null) {
+            loadHealthIndicators(null);
+            return;
+        }
+        post(router.equip_page, {
+            workshopCode: workshopCode,
+            needWorkshopCascade: true,
+            requirePage: false,
+            pageNum: 1,
+            pageSize: 9999
+        }, function (e) {
+            if (e == null) e = [];
+            if (!Array.isArray(e)) e = (e.list != null) ? e.list : [];
+            const snSet = new Set(e.map(item => item.selfCode).filter(Boolean));
+            loadHealthIndicators(snSet);
+        }, function () {
+            loadHealthIndicators(null);
+        });
     }
 
     function reloadMessage() {
@@ -995,6 +1204,8 @@
         statusChart && statusChart.resize();
         trendChart && trendChart.resize();
         currentTrendChart && currentTrendChart.resize();
+        healthLevelChart && healthLevelChart.resize();
+        healthScoreChart && healthScoreChart.resize();
     };
 </script>
 </body>
