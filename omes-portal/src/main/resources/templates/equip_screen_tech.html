@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OMES - 设备监控大屏</title>
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
@@ -76,6 +77,13 @@
             --panel-bg: rgba(6, 22, 45, 0.75);
             --scroll-track: rgba(6, 22, 45, 0.6);
             --scroll-thumb: rgba(0, 229, 255, 0.5);
+            /* 大屏适配：基于 1920 参考，用 vh/vw 缩放 */
+            --header-h: clamp(48px, 5.2vh, 72px);
+            --footer-h: clamp(36px, 4vh, 52px);
+            --body-gap: clamp(4px, 0.4vw, 10px);
+            --side-width: min(22%, 420px);
+            --title-fs: clamp(18px, 1.4vw, 26px);
+            --panel-title-fs: clamp(11px, 0.9vw, 14px);
         }
 
         .container {
@@ -88,12 +96,12 @@
 
         /* ========== 顶部：科技风标题栏 ========== */
         .screen-header {
-            height: 56px;
+            height: var(--header-h);
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 28px;
+            padding: 0 clamp(20px, 1.5vw, 36px);
             background: linear-gradient(180deg, rgba(0, 229, 255, 0.08) 0%, transparent 100%);
             border-bottom: 1px solid var(--tech-border);
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
@@ -102,13 +110,13 @@
         .screen-title-wrap {
             display: flex;
             align-items: baseline;
-            gap: 12px;
+            gap: clamp(8px, 0.6vw, 14px);
         }
 
         .screen-title {
-            font-size: 22px;
+            font-size: var(--title-fs);
             font-weight: 700;
-            letter-spacing: 4px;
+            letter-spacing: clamp(2px, 0.2vw, 6px);
             color: #f0f9ff;
             text-shadow: 0 0 20px var(--tech-glow), 0 0 40px rgba(14, 165, 233, 0.4);
         }
@@ -134,40 +142,89 @@
         }
 
         #workshopName {
-            font-size: 14px;
+            font-size: clamp(12px, 0.9vw, 15px);
             color: var(--tech-cyan);
             letter-spacing: 2px;
             margin-left: 8px;
         }
 
         .header-time {
-            font-size: 15px;
+            font-size: clamp(12px, 0.9vw, 16px);
             color: var(--tech-cyan);
             letter-spacing: 2px;
             text-shadow: 0 0 10px var(--tech-glow);
         }
 
-        /* ========== 主体 ========== */
+        /* ========== 主体：左 | 中间(地图在上方) | 右 ========== */
         .screen-body {
             flex: 1;
             min-height: 0;
             display: flex;
-            padding: 6px;
-            gap: 6px;
+            flex-direction: row;
+            padding: var(--body-gap);
+            gap: var(--body-gap);
         }
 
         .side-panel {
-            width: 22%;
+            width: var(--side-width);
             min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: var(--body-gap);
+            min-height: 0;
         }
 
+        /* 中间列：地图在上方，下方健康区 */
         .center-map {
             flex: 1;
             min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--body-gap);
             color: #1f1f1f;
+        }
+
+        /* 中间列：地图 65%，下方健康区 35% */
+        .center-map .map-wrap {
+            flex: 1 1 65%;
+            min-height: clamp(120px, 14vh, 200px);
+            max-height: 75vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .center-map .map-wrap .panel-box {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* 地图下方：场景设备健康 */
+        .center-map .health-below-map {
+            flex: 1 1 35%;
+            min-height: clamp(90px, 10vh, 140px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .center-map .health-below-map .panel-box-health {
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .center-map .health-below-map .panel-box-health .panel-title {
+            padding: 4px 10px 4px 12px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .center-map .health-below-map .panel-box-health .chart-wrap.health-charts {
+            flex: 1;
+            min-height: clamp(88px, 10vh, 130px);
+            min-width: 0;
         }
 
         /* ========== 科技风面板：棱角边框 + 四角装饰 ========== */
@@ -235,8 +292,8 @@
 
         .panel-title {
             position: relative;
-            padding: 8px 12px 6px 16px;
-            font-size: 13px;
+            padding: clamp(6px, 0.5vw, 10px) 12px clamp(4px, 0.4vw, 8px) 16px;
+            font-size: var(--panel-title-fs);
             font-weight: 600;
             color: #e2e8f0;
             letter-spacing: 2px;
@@ -259,24 +316,24 @@
         .kpi {
             display: flex;
             flex-wrap: wrap;
-            padding: 6px 6px;
-            gap: 4px;
+            padding: clamp(4px, 0.4vw, 8px);
+            gap: clamp(3px, 0.3vw, 6px);
         }
 
         .kpi-item {
-            flex: 1 1 calc(33.33% - 6px);
-            min-width: 64px;
+            flex: 1 1 calc(33.33% - 8px);
+            min-width: 56px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 6px 2px;
+            margin: clamp(4px, 0.4vw, 6px) 2px;
             background: rgba(0, 229, 255, 0.04);
             border: 1px solid rgba(0, 229, 255, 0.15);
             border-radius: 2px;
         }
 
         .kpi-num {
-            font-size: 22px;
+            font-size: clamp(18px, 1.4vw, 24px);
             font-weight: 700;
             color: var(--tech-cyan);
             text-shadow: 0 0 12px var(--tech-glow);
@@ -284,23 +341,116 @@
         }
 
         .kpi-title {
-            font-size: 10px;
+            font-size: clamp(9px, 0.7vw, 11px);
             color: #94a3b8;
             margin-top: 2px;
             letter-spacing: 1px;
         }
 
-        .kpi-health { padding: 4px 6px; }
-        .kpi-health .kpi-item { padding: 4px 2px; min-width: 48px; }
-        .kpi-health .kpi-num { font-size: 16px; }
-        .kpi-health .kpi-title { font-size: 10px; }
-        .kpi-health .health-ok { color: #22c55e; }
-        .kpi-health .health-attention { color: #eab308; }
-        .kpi-health .health-warning { color: #f97316; }
-        .kpi-health .health-fault { color: #ef4444; }
+        .kpi-health {
+            flex-shrink: 0;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: stretch;
+            min-width: 0;
+        }
 
-        .health-charts { display: flex; padding: 2px 4px; flex: 1; min-height: 0; }
-        .health-charts > div { flex: 1; min-width: 0; }
+        .health-kpi-col {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            justify-content: flex-start;
+        }
+
+        .kpi-health .kpi-item {
+            flex: 0 0 auto;
+            width: 100%;
+            min-height: 26px;
+            padding: 3px 6px;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(0, 229, 255, 0.04);
+            border-radius: 2px;
+        }
+
+        .kpi-health .kpi-item .kpi-title {
+            flex-shrink: 0;
+        }
+
+        .kpi-health .kpi-num {
+            font-size: 15px;
+            line-height: 1.2;
+            min-width: 0;
+            text-align: right;
+        }
+
+        .kpi-health .kpi-title {
+            font-size: 11px;
+            margin-top: 0;
+        }
+
+        .kpi-health .health-ok {
+            color: #22c55e;
+        }
+
+        .kpi-health .health-attention {
+            color: #eab308;
+        }
+
+        .kpi-health .health-warning {
+            color: #f97316;
+        }
+
+        .kpi-health .health-fault {
+            color: #ef4444;
+        }
+
+        /* 健康区：左 KPI，右指针，无留白 */
+        .health-panel-row {
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            overflow: hidden;
+        }
+        .health-panel-row .health-kpi-left {
+            flex: 0 0 60%;
+            min-width: 0;
+            border-right: 1px solid rgba(0, 229, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow: hidden;
+            padding: 8px 10px;
+        }
+        .health-panel-row .health-charts {
+            flex: 0 0 40%;
+            min-width: 0;
+            min-height: clamp(88px, 10vh, 130px);
+            padding: clamp(10px, 1.2vw, 20px);
+            overflow: hidden;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .health-panel-row .health-charts > div {
+            min-height: clamp(70px, 8vh, 100px);
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
 
         /* ========== 图表容器 ========== */
         .panel-box .chart-wrap {
@@ -309,9 +459,10 @@
             padding: 4px;
         }
 
-        #statusChart, #trendChart, #currentTrendChart, #healthLevelChart, #healthScoreChart {
+        #statusChart, #trendChart, #currentTrendChart, #healthScoreChart {
             width: 100%;
             height: 100%;
+            overflow: hidden;
         }
 
         /* ========== 告警列表 ========== */
@@ -438,16 +589,16 @@
 
         /* ========== 底部 ========== */
         .screen-footer {
-            height: 40px;
+            height: var(--footer-h);
             flex-shrink: 0;
-            padding: 0 20px;
+            padding: 0 clamp(16px, 1.2vw, 24px);
             background: rgba(6, 22, 45, 0.9);
             border-top: 1px solid var(--tech-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             color: #94a3b8;
-            font-size: 11px;
+            font-size: clamp(10px, 0.75vw, 12px);
             letter-spacing: 1px;
         }
 
@@ -456,20 +607,25 @@
             font-weight: 500;
         }
 
-        /* 地图面板全高 */
-        .center-map .panel-box {
+        /* 地图面板全高（仅地图区） */
+        .center-map .map-wrap .panel-box {
             height: 100%;
         }
 
-        /* 右侧栏：弹性均分，告警区略大 */
-        .side-panel-right .panel-box-trend,
-        .side-panel-right .panel-box-health {
+        /* 右侧栏：弹性均分，可收缩 */
+        .side-panel-right .panel-box-trend {
             flex: 1 1 0;
             min-height: 0;
         }
-        .side-panel-right .panel-box-trend { min-height: 90px; }
-        .side-panel-right .panel-box-health { min-height: 100px; }
-        .side-panel-right .alarm-panel { flex: 1.4 1 0; min-height: 100px; }
+
+        .side-panel-right .panel-box-trend {
+            min-height: clamp(56px, 6vh, 80px);
+        }
+
+        .side-panel-right .alarm-panel {
+            flex: 1.2 1 0;
+            min-height: clamp(64px, 7vh, 96px);
+        }
 
         #map {
             height: 100%;
@@ -525,7 +681,7 @@
                 </div>
             </div>
 
-            <div class="panel-box" style="flex: 1; min-height: 180px;">
+            <div class="panel-box panel-box-status" style="flex: 1; min-height: clamp(100px, 12vh, 180px);">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="panel-title" lang-i18n="title.equip_status"></div>
@@ -536,15 +692,57 @@
         </aside>
 
         <section class="center-map">
-            <div class="panel-box" style="height:100%;">
-                <span class="corner-br"></span>
-                <span class="corner-bl"></span>
-                <div id="map" style="height:100%;"></div>
+            <div class="map-wrap">
+                <div class="panel-box">
+                    <span class="corner-br"></span>
+                    <span class="corner-bl"></span>
+                    <div id="map" style="height:100%;"></div>
+                </div>
+            </div>
+            <div class="health-below-map">
+                <div class="panel-box panel-box-health">
+                    <span class="corner-br"></span>
+                    <span class="corner-bl"></span>
+                    <div class="panel-title">场景设备健康</div>
+                    <div class="health-panel-row">
+                        <div class="health-kpi-left">
+                            <div class="kpi kpi-health">
+                                <div class="health-kpi-col">
+                                    <div class="kpi-item">
+                                        <span class="kpi-title">平均分</span>
+                                        <div class="kpi-num" id="healthAvgScore">--</div>
+                                    </div>
+                                    <div class="kpi-item">
+                                        <span class="kpi-title">健康</span>
+                                        <div class="kpi-num health-ok" id="healthCountHealthy">0</div>
+                                    </div>
+                                    <div class="kpi-item">
+                                        <span class="kpi-title">关注</span>
+                                        <div class="kpi-num health-attention" id="healthCountAttention">0</div>
+                                    </div>
+                                </div>
+                                <div class="health-kpi-col">
+                                    <div class="kpi-item">
+                                        <span class="kpi-title">预警</span>
+                                        <div class="kpi-num health-warning" id="healthCountWarning">0</div>
+                                    </div>
+                                    <div class="kpi-item">
+                                        <span class="kpi-title">故障</span>
+                                        <div class="kpi-num health-fault" id="healthCountFault">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-wrap health-charts">
+                            <div id="healthScoreChart" style="width:100%;height:100%;min-height:64px;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
         <aside class="side-panel side-panel-right">
-            <div class="panel-box panel-box-trend" style="min-height: 90px;">
+            <div class="panel-box panel-box-trend">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="panel-title" lang-i18n="title.equip_trend_7"></div>
@@ -552,43 +750,12 @@
                     <div id="trendChart" style="height:100%;"></div>
                 </div>
             </div>
-            <div class="panel-box panel-box-trend" style="min-height: 90px;">
+            <div class="panel-box panel-box-trend">
                 <span class="corner-br"></span>
                 <span class="corner-bl"></span>
                 <div class="panel-title" lang-i18n="title.equip_trend"></div>
                 <div class="chart-wrap">
                     <div id="currentTrendChart" style="height:100%;"></div>
-                </div>
-            </div>
-            <div class="panel-box panel-box-health" style="min-height: 100px;">
-                <span class="corner-br"></span>
-                <span class="corner-bl"></span>
-                <div class="panel-title">场景设备健康</div>
-                <div class="kpi kpi-health">
-                    <div class="kpi-item">
-                        <div class="kpi-num" id="healthAvgScore">--</div>
-                        <div class="kpi-title">平均分</div>
-                    </div>
-                    <div class="kpi-item">
-                        <div class="kpi-num health-ok" id="healthCountHealthy">0</div>
-                        <div class="kpi-title">健康</div>
-                    </div>
-                    <div class="kpi-item">
-                        <div class="kpi-num health-attention" id="healthCountAttention">0</div>
-                        <div class="kpi-title">关注</div>
-                    </div>
-                    <div class="kpi-item">
-                        <div class="kpi-num health-warning" id="healthCountWarning">0</div>
-                        <div class="kpi-title">预警</div>
-                    </div>
-                    <div class="kpi-item">
-                        <div class="kpi-num health-fault" id="healthCountFault">0</div>
-                        <div class="kpi-title">故障</div>
-                    </div>
-                </div>
-                <div class="chart-wrap health-charts">
-                    <div id="healthLevelChart" style="flex:1;min-width:0;"></div>
-                    <div id="healthScoreChart" style="flex:1;min-width:0;"></div>
                 </div>
             </div>
             <div class="panel-box alarm-panel">
@@ -616,7 +783,6 @@
     let chartLock = false;
     let messageLock = false;
     let reloading = false;
-    let healthLevelChart;
     let healthScoreChart;
     let healthLock = false;
 
@@ -694,6 +860,9 @@
         });
         gisMap.init();
         reloadMap(true);
+        setTimeout(function () {
+            if (gisMap && gisMap.getMap) gisMap.getMap().invalidateSize();
+        }, 400);
     }
 
     function initCountEChart() {
@@ -836,36 +1005,7 @@
         reloadTrendChart();
     }
 
-    const HEALTH_LEVEL_COLORS = { 0: '#22c55e', 1: '#eab308', 2: '#f97316', 3: '#ef4444' };
-    const HEALTH_LEVEL_NAMES = { 0: '健康', 1: '关注', 2: '预警', 3: '故障' };
-
     function initHealthCharts() {
-        healthLevelChart = echarts.init(document.getElementById('healthLevelChart'));
-        healthLevelChart.setOption({
-            backgroundColor: 'transparent',
-            tooltip: { trigger: 'item' },
-            legend: {
-                orient: 'horizontal',
-                bottom: 2,
-                left: 'center',
-                textStyle: { color: '#94a3b8', fontSize: 10 }
-            },
-            series: [{
-                name: '健康等级',
-                type: 'pie',
-                radius: ['40%', '65%'],
-                center: ['50%', '45%'],
-                avoidLabelOverlap: true,
-                label: { show: true, color: '#e2e8f0', fontSize: 10, formatter: '{b}\n{d}%' },
-                data: [
-                    { value: 0, name: '健康', itemStyle: { color: HEALTH_LEVEL_COLORS[0] } },
-                    { value: 0, name: '关注', itemStyle: { color: HEALTH_LEVEL_COLORS[1] } },
-                    { value: 0, name: '预警', itemStyle: { color: HEALTH_LEVEL_COLORS[2] } },
-                    { value: 0, name: '故障', itemStyle: { color: HEALTH_LEVEL_COLORS[3] } }
-                ]
-            }]
-        });
-
         healthScoreChart = echarts.init(document.getElementById('healthScoreChart'));
         healthScoreChart.setOption({
             backgroundColor: 'transparent',
@@ -876,29 +1016,29 @@
                 min: 0,
                 max: 100,
                 splitNumber: 5,
-                center: ['50%', '58%'],
-                radius: '75%',
+                center: ['50%', '50%'],
+                radius: '58%',
                 axisLine: {
                     lineStyle: {
-                        width: 8,
+                        width: 4,
                         color: [
-                            [0.5, '#ef4444'],
-                            [0.75, '#f97316'],
-                            [0.9, '#eab308'],
-                            [1, '#22c55e']
+                            [0.5, '#7f1d1d'],
+                            [0.75, '#b45309'],
+                            [0.9, '#64748b'],
+                            [1, '#0e7490']
                         ]
                     }
                 },
-                pointer: { itemStyle: { color: 'auto' }, width: 4, length: '60%' },
+                pointer: { itemStyle: { color: '#475569' }, width: 3, length: '50%' },
                 axisTick: { show: false },
                 splitLine: { show: false },
-                axisLabel: { color: '#94a3b8', fontSize: 10, distance: -18 },
-                title: { offsetCenter: [0, '20%'], color: '#94a3b8', fontSize: 11 },
+                axisLabel: { color: '#64748b', fontSize: 9, distance: -12 },
+                title: { offsetCenter: [0, '26%'], color: '#64748b', fontSize: 10 },
                 detail: {
-                    offsetCenter: [0, '-5%'],
+                    offsetCenter: [0, '0%'],
                     valueAnimation: true,
-                    color: '#00e5ff',
-                    fontSize: 18,
+                    color: '#475569',
+                    fontSize: 14,
                     fontWeight: 'bold',
                     formatter: '{value}',
                     borderColor: 'transparent'
@@ -907,6 +1047,16 @@
             }]
         });
         reloadHealth();
+        setTimeout(function () {
+            healthScoreChart && healthScoreChart.resize();
+        }, 150);
+        var healthChartEl = document.getElementById('healthScoreChart');
+        if (healthChartEl && typeof ResizeObserver !== 'undefined') {
+            var ro = new ResizeObserver(function () {
+                healthScoreChart && healthScoreChart.resize();
+            });
+            ro.observe(healthChartEl);
+        }
     }
 
     function reloadHealth() {
@@ -932,19 +1082,10 @@
             $('#healthCountFault').text(fault);
             $('#healthAvgScore').text(avgScore != null ? avgScore : '--');
 
-            healthLevelChart.setOption({
-                series: [{
-                    data: [
-                        { value: healthy, name: '健康', itemStyle: { color: HEALTH_LEVEL_COLORS[0] } },
-                        { value: attention, name: '关注', itemStyle: { color: HEALTH_LEVEL_COLORS[1] } },
-                        { value: warning, name: '预警', itemStyle: { color: HEALTH_LEVEL_COLORS[2] } },
-                        { value: fault, name: '故障', itemStyle: { color: HEALTH_LEVEL_COLORS[3] } }
-                    ]
-                }]
-            }, false);
             healthScoreChart.setOption({
-                series: [{ data: [{ value: avgScore != null ? avgScore : 0, name: '平均健康分' }] }]
+                series: [{data: [{value: avgScore != null ? avgScore : 0, name: '平均健康分'}]}]
             }, false);
+            healthScoreChart && healthScoreChart.resize();
             healthLock = false;
         }
 
@@ -1204,8 +1345,8 @@
         statusChart && statusChart.resize();
         trendChart && trendChart.resize();
         currentTrendChart && currentTrendChart.resize();
-        healthLevelChart && healthLevelChart.resize();
         healthScoreChart && healthScoreChart.resize();
+        if (gisMap && gisMap.getMap) gisMap.getMap().invalidateSize();
     };
 </script>
 </body>
