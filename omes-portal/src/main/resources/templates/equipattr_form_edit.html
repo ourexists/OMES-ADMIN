@@ -374,6 +374,7 @@
                     <th lang-i18n="equipattr.alarmMin">下限</th>
                     <th lang-i18n="equipattr.alarmMax">上限</th>
                     <th lang-i18n="equipattr.alarmText">报警描述</th>
+                    <th lang-i18n="equipattr.alarmLevel">报警等级</th>
                     <th class="col-op" lang-i18n="common.operate">操作</th>
                 </tr>
                 </thead>
@@ -563,14 +564,16 @@
                 map: {value: "temperature", comment: "映射字段"},
                 type: {value: 2, comment: "0相等 1大于 2大于等于 3小于 4小于等于 5范围"},
                 val: {value: "100", comment: "阈值"},
-                text: {value: "温度过高", comment: "报警描述"}
+                text: {value: "温度过高", comment: "报警描述"},
+                level: {value: 1, comment: "报警等级: 0轻微 1一般 2严重 3故障"}
             },
             {
                 map: {value: "pressure", comment: "映射字段"},
                 type: {value: 5, comment: "5范围：超出[min,max]报警"},
                 min: {value: "0.1", comment: "下限"},
                 max: {value: "0.9", comment: "上限"},
-                text: {value: "压力异常", comment: "报警描述"}
+                text: {value: "压力异常", comment: "报警描述"},
+                level: {value: 2, comment: "报警等级: 0轻微 1一般 2严重 3故障"}
             }
         ];
         var attrTemplateRendered = renderJsonWithComment(attrTemplateForComment);
@@ -671,21 +674,31 @@
             });
         });
 
-        // ---------- 报警配置动态表单（扁平结构：map/type/val|min,max/text） ----------
+        // ---------- 报警配置动态表单（扁平结构：map/type/val|min,max/text/level） ----------
         var alarmTypeOptions = [
             {v: 0, t: '0 相等'}, {v: 1, t: '1 大于'}, {v: 2, t: '2 大于等于'}, {v: 3, t: '3 小于'}, {
                 v: 4,
                 t: '4 小于等于'
             }, {v: 5, t: '5 范围'}
         ];
+        /** 报警等级选项，从接口 equip_alarmLevels 加载，格式 [{id, name}]；未加载前用默认列表兜底 */
+        var alarmLevelOptions = [
+            {id: 0, name: '轻微'},
+            {id: 1, name: '一般'},
+            {id: 2, name: '严重'},
+            {id: 3, name: '故障'}
+        ];
 
         function getAlarmRowData(tr) {
             var $tr = $(tr);
             var type = parseInt($tr.find('.alarm-type').val(), 10) || 0;
+            var level = parseInt($tr.find('.alarm-level').val(), 10);
+            if (isNaN(level) || level < 0 || level > 3) level = 1;
             var row = {
                 map: $tr.find('.alarm-map').val() || '',
                 type: type,
-                text: $tr.find('.alarm-text').val() || ''
+                text: $tr.find('.alarm-text').val() || '',
+                level: level
             };
             if (type === 5) {
                 row.min = $tr.find('.alarm-min').val() || '';
@@ -713,8 +726,16 @@
             data = data || {};
             var type = (data.type != null && data.type !== undefined) ? (typeof data.type === 'object' ? parseInt(data.type.value, 10) : parseInt(data.type, 10)) : 0;
             if (type !== 5) type = isNaN(type) ? 0 : type;
+            var level = (data.level != null && data.level !== undefined) ? (typeof data.level === 'object' ? parseInt(data.level.value, 10) : parseInt(data.level, 10)) : 1;
+            if (isNaN(level) || level < 0 || level > 3) level = 1;
             var opts = alarmTypeOptions.map(function (o) {
                 return '<option value="' + o.v + '"' + (o.v === type ? ' selected' : '') + '>' + o.t + '</option>';
+            }).join('');
+            var levelOpts = alarmLevelOptions.map(function (o) {
+                var v = (typeof o.id !== 'undefined' ? o.id : o.value);
+                var n = (o.name != null ? o.name : (o.desc != null ? o.desc : o.text));
+                if (n == null) n = v;
+                return '<option value="' + (v + '').replace(/"/g, '&quot;') + '"' + (parseInt(v, 10) === level ? ' selected' : '') + '>' + (n + '').replace(/</g, '&lt;') + '</option>';
             }).join('');
             var isRange = (type === 5);
             var valStr = (flatAlarm(data, 'val') || '').replace(/"/g, '&quot;');
@@ -730,6 +751,7 @@
                 '<td><select class="alarm-type" lay-filter="alarm-type-select">' + opts + '</select></td>' +
                 valCell + minCell + maxCell +
                 '<td><input type="text" class="layui-input alarm-text" value="' + textStr + '"></td>' +
+                '<td><select class="alarm-level" lay-filter="alarm-level-select">' + levelOpts + '</select></td>' +
                 '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-alarm">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
             $('#alarm-tbody').append(row);
             form.render('select');
@@ -754,13 +776,16 @@
             if (!Array.isArray(alarms)) alarms = [];
             for (var i = 0; i < alarms.length; i++) {
                 var item = alarms[i];
+                var level = item.level != null && typeof item.level === 'object' ? parseInt(item.level.value, 10) : (item.level != null ? parseInt(item.level, 10) : 1);
+                if (isNaN(level) || level < 0 || level > 3) level = 1;
                 addAlarmRow({
                     map: flatAlarm(item, 'map'),
                     type: item.type != null && typeof item.type === 'object' ? parseInt(item.type.value, 10) : parseInt(item.type, 10) || 0,
                     val: flatAlarm(item, 'val'),
                     min: flatAlarm(item, 'min'),
                     max: flatAlarm(item, 'max'),
-                    text: flatAlarm(item, 'text')
+                    text: flatAlarm(item, 'text'),
+                    level: level
                 });
             }
             form.render('select');
@@ -955,6 +980,13 @@
             layer.msg(i18np.prop('common.placeholder') || '缺少设备ID');
             return;
         }
+
+        // 从后端枚举接口加载报警等级，供报警配置下拉使用
+        get(router.equip_alarmLevels, {}, function (data) {
+            if (data && Array.isArray(data) && data.length > 0) {
+                alarmLevelOptions = data;
+            }
+        });
 
         $('#btn-select-gateway').on('click', function () {
             openGatewayPicker();

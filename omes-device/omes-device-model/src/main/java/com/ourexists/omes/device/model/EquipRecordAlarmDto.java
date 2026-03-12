@@ -28,4 +28,7 @@ public class EquipRecordAlarmDto {
     protected String tenantId;
 
     protected String reason;
+
+    /** 报警等级: 0=轻微, 1=一般, 2=严重, 3=故障，见 AlarmLevelEnum，为空时按一般处理 */
+    protected Integer level;
 }

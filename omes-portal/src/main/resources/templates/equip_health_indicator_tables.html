@@ -1,0 +1,130 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 设备健康指标检测查询
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content form-table-layout">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md3">
+            <div class="layui-input-wrap">
+                <div class="layui-input-prefix">
+                    <i class="layui-icon layui-icon-auz"></i>
+                </div>
+                <input type="text" name="statTime" id="statTime"
+                       lay-affix="clear" class="layui-input" lang-i18n="equipHealth.statTime">
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="tb-health-search"
+                    lang-i18n="common.search"></button>
+            <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-clear"
+                    lang-i18n="common.clear"></button>
+        </div>
+    </form>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-health"></table>
+    </div>
+</div>
+
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+    </div>
+</script>
+
+<script th:inline="none">
+    var table;
+    layui.use(function () {
+        var form = layui.form;
+        var laydate = layui.laydate;
+        var healthLevelMap = {
+            0: (typeof i18np !== 'undefined' && i18np.prop('equipHealth.level.healthy')) || '健康',
+            1: (typeof i18np !== 'undefined' && i18np.prop('equipHealth.level.attention')) || '关注',
+            2: (typeof i18np !== 'undefined' && i18np.prop('equipHealth.level.warning')) || '预警',
+            3: (typeof i18np !== 'undefined' && i18np.prop('equipHealth.level.fault')) || '故障'
+        };
+        table = layui.table;
+
+        laydate.render({
+            elem: '#statTime',
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
+
+        table.render({
+            elem: '#tb-health',
+            id: 'tb-health',
+            data: [],
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'numbers', title: 'NO'},
+                {field: 'sn', title: i18np.prop('common.sn'), width: 120},
+                {field: 'score', title: i18np.prop('equipHealth.score'), width: 90, sort: true},
+                {
+                    field: 'healthLevel',
+                    title: i18np.prop('equipHealth.healthLevel'),
+                    width: 90,
+                    templet: function (d) {
+                        var desc = d.healthLevelDesc || healthLevelMap[d.healthLevel];
+                        return desc || '-';
+                    }
+                },
+                {field: 'alarmCount', title: i18np.prop('equipHealth.alarmCount'), width: 90},
+                {field: 'alarmDurationMinutes', title: i18np.prop('equipHealth.alarmDurationMin'), width: 110},
+                {field: 'runDurationMinutes', title: i18np.prop('equipHealth.runDurationMin'), width: 110},
+                {field: 'onlineDurationMinutes', title: i18np.prop('equipHealth.onlineDurationMin'), width: 120},
+                {field: 'periodStart', title: i18np.prop('equipHealth.periodStart'), width: 155},
+                {field: 'periodEnd', title: i18np.prop('equipHealth.periodEnd'), width: 155}
+            ]],
+            text: {
+                none: i18np.prop('equipHealth.msg.selectStatTime')
+            },
+            response: {
+                statusName: 'code',
+                statusCode: 200
+            },
+            parseData: function (res) {
+                return {
+                    code: res.code,
+                    msg: res.msg,
+                    data: res.data || []
+                };
+            },
+            page: false,
+            height: '500px'
+        });
+
+        form.on('submit(tb-health-search)', function (data) {
+            var statTimeVal = $('#statTime').val();
+            if (!statTimeVal) {
+                layer.msg(i18np.prop('equipHealth.msg.selectStatTime'));
+                return false;
+            }
+            post(router.equip_health_listByStatTime, {statTime: statTimeVal}, function (list) {
+                table.reloadData('tb-health', {
+                    data: list || [],
+                });
+            });
+            return false;
+        });
+
+        $('#btn-clear').on('click', function () {
+            $('#statTime').val('');
+            table.reloadData('tb-health', {data: []});
+        });
+    });
+</script>
+</body>
+</html>

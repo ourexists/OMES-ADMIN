@@ -7,6 +7,7 @@ package com.ourexists.omes.portal.device.controller;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
+import com.ourexists.era.framework.core.model.dto.MapDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
@@ -16,6 +17,7 @@ import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtimeConfig;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
+import com.ourexists.omes.device.enums.AlarmLevelEnum;
 import com.ourexists.omes.device.enums.EquipTypeEnum;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.feign.GatewayFeign;
@@ -33,6 +35,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -115,6 +118,16 @@ public class EquipController {
         Map<Integer, String> r = new HashMap<>();
         for (EquipTypeEnum value : EquipTypeEnum.values()) {
             r.put(value.getCode(), value.getDesc());
+        }
+        return JsonResponseEntity.success(r);
+    }
+
+    @Operation(summary = "报警等级枚举", description = "报警等级：轻微、一般、严重、故障")
+    @GetMapping("alarmLevels")
+    public JsonResponseEntity<List<MapDto>> alarmLevels() {
+        List<MapDto> r = new ArrayList<>();
+        for (AlarmLevelEnum value : AlarmLevelEnum.values()) {
+            r.add(new MapDto().setId(value.getCode().toString()).setName(value.getDesc()));
         }
         return JsonResponseEntity.success(r);
     }

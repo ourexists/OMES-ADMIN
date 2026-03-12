@@ -56,4 +56,16 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
                 .orderByDesc(Equip::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
+
+    @Override
+    public Equip getBySelfCode(String selfCode) {
+        if (selfCode == null || selfCode.isEmpty()) return null;
+        return getOne(new LambdaQueryWrapper<Equip>().eq(Equip::getSelfCode, selfCode).last("limit 1"));
+    }
+
+    @Override
+    public List<Equip> listByHealthTemplateId(String healthTemplateId) {
+        if (healthTemplateId == null || healthTemplateId.isEmpty()) return new ArrayList<>();
+        return list(new LambdaQueryWrapper<Equip>().eq(Equip::getHealthTemplateId, healthTemplateId));
+    }
 }

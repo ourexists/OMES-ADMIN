@@ -18,4 +18,6 @@ public class EquipAlarmRealtime {
     /** 范围比较时的上限 (类型5时使用) */
     private String max;
     private String text;
+    /** 报警等级: 0=轻微, 1=一般, 2=严重, 3=故障 */
+    private Integer level;
 }

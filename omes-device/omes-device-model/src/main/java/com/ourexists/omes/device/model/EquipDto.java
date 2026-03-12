@@ -40,6 +40,12 @@ public class EquipDto extends BaseDto {
 
     private String address;
 
+    /** 启用日期，用于健康分使用年限计算 */
+    private Date enableDate;
+
+    /** 关联的健康规则模板ID，为空时使用默认模板 */
+    private String healthTemplateId;
+
     private Integer runState = 0;
 
     private Integer alarmState = 0;

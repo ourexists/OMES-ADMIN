@@ -53,6 +53,12 @@
             </div>
         </div>
         <div class="layui-form-item">
+            <label class="layui-form-label" lang-i18n="equip.enableDate" style="font-weight: bold "></label>
+            <div class="layui-input-block">
+                <input type="date" name="enableDate" autocomplete="off" class="layui-input" placeholder="">
+            </div>
+        </div>
+        <div class="layui-form-item">
             <label class="layui-form-label" lang-i18n="common.lng"></label>
             <div class="layui-input-inline">
                 <input type="text" name="lng" disabled class="layui-input">
@@ -114,6 +120,14 @@
         if (id != null) {
             get(router.equip_id, {id: id}, function (result) {
                 current_row_data = result;
+                if (result.enableDate) {
+                    var d = result.enableDate;
+                    if (typeof d === 'string') result.enableDate = d.substring(0, 10);
+                    else if (typeof d === 'number') {
+                        var dt = new Date(d);
+                        result.enableDate = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+                    }
+                }
                 form.val("common-edit-form", Object.assign({}, current_row_data));
                 if (current_row_data.selfCode !== "") {
                     $(".lay-unable-edit").attr("disabled", "block");
@@ -136,6 +150,10 @@
             var field = data.field; // 获取表单字段值
             for (let key in field) {
                 current_row_data[key] = field[key];
+            }
+            // 启用日期以 YYYY-MM-dd 00:00:00 格式传到后台
+            if (current_row_data.enableDate && current_row_data.enableDate.length === 10) {
+                current_row_data.enableDate = current_row_data.enableDate + ' 00:00:00';
             }
             if (selected_tree_node != null && current_row_data.workshopCode == null) {
                 current_row_data.workshopCode = selected_tree_node.selfCode;

@@ -83,6 +83,9 @@
         <a class="layui-btn layui-btn-xs layui-btn-blue" lay-event="equipAttr">
             <i class="layui-icon layui-icon-util"></i>
         </a>
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="bindHealthTemplate" title="">
+            <i class="layui-icon layui-icon-template-1"></i> <span lang-i18n="equip.bindHealthTemplate"></span>
+        </a>
     </div>
 </script>
 <script type="text/html" id="tb-select-tool">
@@ -111,6 +114,10 @@
     var table;
     var tree;
     let reloading = false;
+    window.healthTemplates = [];
+    get(router.equip_health_listTemplates, null, function (list) {
+        window.healthTemplates = list || [];
+    });
 
     layui.use(['form', 'table', 'dropdown', 'layer', 'tree', 'util'], function () {
         table = layui.table;
@@ -136,9 +143,19 @@
                         }
                     },
                     {
+                        field: 'healthTemplateId',
+                        title: i18np.prop('equip.healthTemplate'),
+                        width: 130,
+                        templet: function (e) {
+                            if (!e.healthTemplateId) return '<span class="layui-badge layui-bg-gray">' + (i18np.prop('equip.healthTemplateUnbound') || '未关联') + '</span>';
+                            var t = (window.healthTemplates || []).find(function (x) { return x.id === e.healthTemplateId; });
+                            return t ? '<span class="layui-badge layui-bg-green">' + (t.name || e.healthTemplateId) + '</span>' : e.healthTemplateId;
+                        }
+                    },
+                    {
                         fixed: 'right',
                         title: i18np.prop('common.operate'),
-                        width: 200,
+                        width: 240,
                         minWidth: 125,
                         templet: '#tb-tool'
                     }
@@ -321,6 +338,31 @@
                 delWindow(router.equip_del, [data.id], reloadTb);
             } else if (obj.event === 'equipAttr') {
                 openAreaWindow('equipattr.name', '/view/equipattr_form_edit?id=' + data.id, ['70%', '100%']);
+            } else if (obj.event === 'bindHealthTemplate') {
+                get(router.equip_id, {id: data.id}, function (equip) {
+                    var templates = window.healthTemplates || [];
+                    var opts = templates.map(function (t) { return { value: t.id, text: t.name || t.id }; });
+                    var html = '<div style="padding:12px;"><label class="layui-form-label">' + (i18np.prop('equip.healthTemplate') || '健康模板') + '</label><div class="layui-input-block"><select id="health-template-select" class="layui-input"><option value="">' + (i18np.prop('equip.healthTemplateUnbound') || '未关联') + '</option>';
+                    opts.forEach(function (o) { html += '<option value="' + o.value + '"' + (equip.healthTemplateId === o.value ? ' selected' : '') + '>' + o.text + '</option>'; });
+                    html += '</select></div></div>';
+                    layer.open({
+                        type: 1,
+                        title: i18np.prop('equip.bindHealthTemplate') || '关联健康模板',
+                        content: html,
+                        area: ['480px', '200px'],
+                        btn: [i18np.prop('common.msg.confirm'), i18np.prop('common.msg.cancel')],
+                        yes: function (idx) {
+                            var sel = document.getElementById('health-template-select');
+                            var tid = sel ? sel.value : '';
+                            equip.healthTemplateId = tid || null;
+                            post(router.equip_edit, equip, function () {
+                                layer.msg(i18np.prop('common.msg.saveSuccess'));
+                                layer.close(idx);
+                                reloadTb();
+                            }, function (c, m) { layer.alert(m || 'Failed'); });
+                        }
+                    });
+                });
             } else if (obj.event === 'select') {
                 parent.selectEquip(obj.data);
                 closeWindow();

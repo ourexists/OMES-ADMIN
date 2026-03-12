@@ -304,6 +304,21 @@ public class ViewController {
         return "equip_record_online_tables";
     }
 
+    @RequestMapping("/view/equip_health_template_edit")
+    public String equip_health_template_edit() {
+        return "equip_health_template_edit";
+    }
+
+    @RequestMapping("/view/equip_health_template_tables")
+    public String equip_health_template_tables() {
+        return "equip_health_template_tables";
+    }
+
+    @RequestMapping("/view/equip_health_indicator_tables")
+    public String equip_health_indicator_tables() {
+        return "equip_health_indicator_tables";
+    }
+
     @RequestMapping("/view/equip_tables")
     public String equip_tables() {
         return "equip_tables";
