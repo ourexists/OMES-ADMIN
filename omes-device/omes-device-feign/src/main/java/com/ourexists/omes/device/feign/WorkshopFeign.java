@@ -24,6 +24,8 @@ public interface WorkshopFeign {
 
     JsonResponseEntity<WorkshopTreeNode> selectByCode(@RequestParam String code);
 
+    JsonResponseEntity<List<WorkshopTreeNode>> selectByCodes(@RequestBody List<String> codes);
+
     //    @Operation(summary = "删除", description = "")
 //    @PostMapping("delete")
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);

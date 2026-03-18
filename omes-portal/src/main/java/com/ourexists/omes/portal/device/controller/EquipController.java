@@ -18,9 +18,9 @@ import com.ourexists.omes.device.core.equip.cache.EquipRealtimeConfig;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.enums.AlarmLevelEnum;
-import com.ourexists.omes.device.enums.EquipTypeEnum;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.feign.GatewayFeign;
+import com.ourexists.omes.device.feign.ProductFeign;
 import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.portal.device.model.EquipCountDto;
@@ -35,11 +35,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Tag(name = "设备")
 @RestController
@@ -58,6 +54,9 @@ public class EquipController {
 
     @Autowired
     private GatewayFeign gatewayFeign;
+
+    @Autowired
+    private ProductFeign productFeign;
 
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
@@ -112,12 +111,20 @@ public class EquipController {
         return feign.selectById(id, true);
     }
 
-    @Operation(summary = "设备类型", description = "设备类型")
+    @Operation(summary = "设备所属产品（编号->名称，供下拉筛选）", description = "产品编号为 type，关联 t_product.code")
     @GetMapping("equipType")
-    public JsonResponseEntity<Map<Integer, String>> equipType() {
-        Map<Integer, String> r = new HashMap<>();
-        for (EquipTypeEnum value : EquipTypeEnum.values()) {
-            r.put(value.getCode(), value.getDesc());
+    public JsonResponseEntity<Map<String, String>> equipType() {
+        Map<String, String> r = new HashMap<>();
+        List<ProductDto> list;
+        try {
+            list = RemoteHandleUtils.getDataFormResponse(productFeign.listAll());
+            if (list != null) {
+                for (ProductDto p : list) {
+                    if (p.getCode() != null) r.put(p.getCode(), p.getName() != null ? p.getName() : p.getCode());
+                }
+            }
+        } catch (EraCommonException e) {
+            throw new BusinessException(e.getMessage());
         }
         return JsonResponseEntity.success(r);
     }

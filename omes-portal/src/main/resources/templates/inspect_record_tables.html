@@ -1,0 +1,129 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 巡检记录列表
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>巡检记录</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content form-table-layout">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md2">
+            <input type="text" name="equipName" placeholder="设备名称" class="layui-input" id="qEquipName">
+        </div>
+        <div class="layui-col-md2">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="inspect-record-search">查询</button>
+            <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-clear">清空</button>
+        </div>
+    </form>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-inspect-record"></table>
+    </div>
+</div>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm layui-btn-primary" lay-event="refresh">刷新</a>
+        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">批量删除</a>
+    </div>
+</script>
+<script type="text/html" id="tb-tool-tpl">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs" lay-event="detail">明细</a>
+        <a class="layui-btn layui-btn-xs layui-bg-red" lay-event="del">删除</a>
+    </div>
+</script>
+<script th:inline="none">
+    var table;
+    var urlTaskId = layui.url().search.taskId || '';
+    layui.use(['form', 'table'], function () {
+        var form = layui.form;
+        table = layui.table;
+        table.render({
+            elem: '#tb-inspect-record',
+            id: 'tb-inspect-record',
+            url: initRequestUrl(router.inspect_record_page),
+            headers: getCommonHeader(),
+            method: 'POST',
+            contentType: 'application/json',
+            where: {taskId: urlTaskId},
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', fixed: true},
+                {type: 'numbers', title: 'NO'},
+                {field: 'equipName', title: '设备'},
+                {field: 'score', title: '巡检分值'},
+                {field: 'itemCount', title: '巡检项数'},
+                {field: 'recordTime', title: '记录时间'},
+                {field: 'createTime', title: '创建时间'},
+                {fixed: 'right', title: '操作', templet: '#tb-tool-tpl'}
+            ]],
+            request: {pageName: 'page', limitName: 'pageSize'},
+            response: {statusName: 'code', statusCode: 200},
+            parseData: function (res) {
+                var list = (res.data || []).map(function (t) {
+                    var row = t ? Object.assign({}, t) : {};
+                    row.id = row.id == null ? '' : String(row.id);
+                    row.itemCount = (row.items && row.items.length) ? row.items.length : 0;
+                    return row;
+                });
+                return {code: res.code, msg: res.msg, count: (res.pagination && res.pagination.total) || 0, data: list};
+            },
+            limit: 10, limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full'
+        });
+        form.on('submit(inspect-record-search)', function () {
+            table.reloadData('tb-inspect-record', {
+                where: {taskId: urlTaskId, equipName: $('#qEquipName').val()},
+                page: {curr: 1}
+            });
+            return false;
+        });
+        $('#btn-clear').on('click', function () {
+            $('#qEquipName').val('');
+            form.render();
+            table.reloadData('tb-inspect-record', {where: {taskId: urlTaskId}, page: {curr: 1}});
+        });
+        table.on('toolbar(tb-inspect-record)', function (obj) {
+            var checkStatus = table.checkStatus('tb-inspect-record');
+            var data = checkStatus.data;
+            if (obj.event === 'refresh') {
+                reloadTb();
+            } else if (obj.event === 'deleteBatch') {
+                if (!data || data.length === 0) {
+                    layer.msg('请至少选择一条');
+                    return;
+                }
+                var ids = data.map(function (r) {
+                    return r.id;
+                });
+                delWindow(router.inspect_record_del, ids, reloadTb);
+            }
+        });
+        table.on('tool(tb-inspect-record)', function (obj) {
+            var d = obj.data;
+            if (obj.event === 'detail') {
+                openWindow('明细', '/view/inspect_record_form_edit?id=' + d.id);
+            } else if (obj.event === 'del') {
+                delWindow(router.inspect_record_del, [d.id], reloadTb);
+            }
+        });
+    });
+
+    function reloadTb() {
+        table.reload('tb-inspect-record');
+    }
+</script>
+</body>
+</html>

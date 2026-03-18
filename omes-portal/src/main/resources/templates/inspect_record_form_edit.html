@@ -1,0 +1,210 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 巡检记录明细：仅查看，不可编辑
+  -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>巡检记录明细</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <style>
+        .inspect-record-edit-page {
+            overflow-y: auto;
+            min-height: 100%;
+            padding: 20px 24px 32px;
+            box-sizing: border-box;
+            background: #f5f6fa;
+        }
+        .inspect-record-card {
+            background: #fff;
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: visible;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+        .inspect-record-card-title {
+            padding: 14px 20px;
+            background: linear-gradient(180deg, #fafbfc 0%, #f2f4f7 100%);
+            border-bottom: 1px solid #e8eaef;
+            font-weight: 600;
+            color: #1a2332;
+            font-size: 15px;
+            border-radius: 8px 8px 0 0;
+        }
+        .inspect-record-card-title small {
+            font-weight: 400;
+            color: #8b92a0;
+            margin-left: 6px;
+            font-size: 12px;
+        }
+        .inspect-record-card-body {
+            padding: 20px 24px;
+        }
+        .inspect-record-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .inspect-record-row:last-child {
+            margin-bottom: 0;
+        }
+        .inspect-record-label {
+            width: 90px;
+            flex-shrink: 0;
+            color: #5a6376;
+            font-size: 14px;
+        }
+        .inspect-record-field {
+            flex: 1;
+            min-width: 200px;
+        }
+        .inspect-record-field .layui-input {
+            width: 100%;
+            max-width: 360px;
+            border-radius: 4px;
+            border-color: #e0e3e8;
+        }
+        .inspect-record-field .layui-input:focus {
+            border-color: #1890ff;
+        }
+        .inspect-record-field .layui-input.layui-disabled {
+            background: #f5f6fa;
+            color: #5a6376;
+        }
+        .inspect-record-table-wrap {
+            margin: 0;
+            border: none;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e4e6eb;
+        }
+        .inspect-record-table-wrap .layui-table {
+            margin: 0;
+            border: none;
+        }
+        .inspect-record-table-wrap .layui-table thead tr {
+            background: #f6f7fa !important;
+        }
+        .inspect-record-table-wrap .layui-table th {
+            color: #5a6376;
+            font-weight: 600;
+            font-size: 13px;
+            border-color: #e8eaef !important;
+            padding: 10px 12px !important;
+        }
+        .inspect-record-table-wrap .layui-table td {
+            border-color: #f0f1f5 !important;
+            padding: 10px 12px !important;
+            font-size: 13px;
+        }
+        .inspect-record-table-wrap .layui-table tbody tr:hover {
+            background: #fafbfd !important;
+        }
+        .inspect-record-field .layui-input.readonly-field {
+            background: #f5f6fa;
+            color: #5a6376;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+<div class="inspect-record-edit-page">
+    <form class="layui-form" id="inspect-record-form" lay-filter="inspect-record-form">
+        <input type="hidden" name="id">
+        <input type="hidden" name="taskId">
+
+        <!-- 记录信息（只读） -->
+        <div class="inspect-record-card">
+            <div class="inspect-record-card-title">记录信息</div>
+            <div class="inspect-record-card-body">
+                <div class="inspect-record-row">
+                    <span class="inspect-record-label">巡检任务</span>
+                    <div class="inspect-record-field">
+                        <input type="text" name="taskIdDisplay" id="taskIdDisplay" readonly class="layui-input layui-disabled readonly-field">
+                    </div>
+                </div>
+                <div class="inspect-record-row">
+                    <span class="inspect-record-label">设备编号</span>
+                    <div class="inspect-record-field">
+                        <input type="text" name="equipSelfCode" readonly class="layui-input layui-disabled readonly-field">
+                    </div>
+                </div>
+                <div class="inspect-record-row">
+                    <span class="inspect-record-label">设备名称</span>
+                    <div class="inspect-record-field">
+                        <input type="text" name="equipName" readonly class="layui-input layui-disabled readonly-field">
+                    </div>
+                </div>
+                <div class="inspect-record-row">
+                    <span class="inspect-record-label">巡检分值</span>
+                    <div class="inspect-record-field">
+                        <input type="text" name="score" readonly class="layui-input layui-disabled readonly-field">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 巡检明细（只读） -->
+        <div class="inspect-record-card">
+            <div class="inspect-record-card-title">巡检明细 <small>由任务模板与现场填写生成</small></div>
+            <div class="inspect-record-card-body">
+                <div class="inspect-record-table-wrap">
+                    <table class="layui-table">
+                        <thead>
+                            <tr>
+                                <th>巡检项</th>
+                                <th>内容</th>
+                                <th>结果</th>
+                                <th style="width:80px;">规则分值</th>
+                                <th style="width:80px;">分值</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inspect-record-items"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form, layer = layui.layer;
+        var id = layui.url().search.id;
+        if (id) {
+            get(router.inspect_record_id, { id: id }, function (data) {
+                form.val('inspect-record-form', {
+                    id: data.id,
+                    taskId: data.taskId,
+                    equipSelfCode: data.equipSelfCode || '',
+                    equipName: data.equipName || '',
+                    score: data.score != null ? String(data.score) : ''
+                });
+                $('#taskIdDisplay').val(data.taskId ? '任务ID: ' + data.taskId : '');
+                var items = data.items || [];
+                var tbody = $('#inspect-record-items').empty();
+                items.forEach(function (it) {
+                    var ruleScoreText = (it.ruleScore != null && it.ruleScore !== '') ? it.ruleScore : '-';
+                    var scoreText = (it.score != null && it.score !== '') ? it.score : '-';
+                    tbody.append('<tr><td>' + (it.itemName || '-') + '</td><td>' + (it.content || '-') + '</td><td>' + (it.resultDesc || '-') + '</td><td>' + ruleScoreText + '</td><td>' + scoreText + '</td><td>' + (it.remark || '-') + '</td></tr>');
+                });
+                if (items.length === 0) {
+                    tbody.append('<tr><td colspan="6" style="text-align:center;color:#8b92a0;">无明细</td></tr>');
+                }
+                form.render();
+            });
+        } else {
+            layer.msg('请从列表选择记录查看明细');
+        }
+    });
+</script>
+</body>
+</html>

@@ -41,7 +41,7 @@ public class EquipHealthViewer implements EquipHealthFeign {
     @Operation(summary = "计算并保存设备健康指标")
     @PostMapping("computeAndSave")
     public JsonResponseEntity<EquipHealthIndicatorDto> computeAndSave(@Validated @RequestBody EquipHealthComputeQuery query) {
-        EquipHealthIndicatorDto dto = equipHealthComputeService.computeAndSave(query, null);
+        EquipHealthIndicatorDto dto = equipHealthComputeService.computeAndSave(query);
         return JsonResponseEntity.success(dto);
     }
 
@@ -73,7 +73,7 @@ public class EquipHealthViewer implements EquipHealthFeign {
     @Operation(summary = "查询所有健康规则模板")
     @PostMapping("listTemplates")
     public JsonResponseEntity<List<EquipHealthRuleTemplateDto>> listTemplates() {
-        return JsonResponseEntity.success(ruleTemplateService.list());
+        return JsonResponseEntity.success(ruleTemplateService.getAll());
     }
 
     @Override
@@ -107,21 +107,32 @@ public class EquipHealthViewer implements EquipHealthFeign {
         cal.add(Calendar.HOUR_OF_DAY, -periodHours);
         Date periodStart = cal.getTime();
 
-        int count = 0;
-        for (Equip equip : equips) {
-            String sn = equip.getSelfCode();
-            if (sn == null || sn.isEmpty()) continue;
-            EquipHealthComputeQuery query = new EquipHealthComputeQuery();
-            query.setSn(sn);
-            query.setPeriodStart(periodStart);
-            query.setPeriodEnd(periodEnd);
-            query.setTemplateId(templateId);
-            equipHealthComputeService.computeAndSave(query, equip.getId());
-            count++;
+        List<String> snList = equips.stream()
+                .map(Equip::getSelfCode)
+                .filter(sn -> sn != null && !sn.isEmpty())
+                .collect(Collectors.toList());
+        if (snList.isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("count", 0);
+            result.put("message", "已对 0 台关联设备完成评分");
+            return JsonResponseEntity.success(result);
         }
+        equipHealthComputeService.computeBatchAndSave(periodStart, periodEnd, snList);
         Map<String, Object> result = new HashMap<>();
-        result.put("count", count);
-        result.put("message", "已对 " + count + " 台关联设备完成评分");
+        result.put("count", snList.size());
+        result.put("message", "已对 " + snList.size() + " 台关联设备完成评分");
+        return JsonResponseEntity.success(result);
+    }
+
+    @Override
+    @Operation(summary = "批量计算并保存设备健康指标（ForkJoin 并行计算后一次性写入数据库）")
+    @PostMapping("computeBatchAndSave")
+    public JsonResponseEntity<Map<String, Object>> computeBatchAndSave(@Validated @RequestBody EquipHealthBatchComputeQuery query) {
+        equipHealthComputeService.computeBatchAndSave(
+                query.getPeriodStart(), query.getPeriodEnd(), query.getSnList());
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", query.getSnList() != null ? query.getSnList().size() : 0);
+        result.put("message", "批量评分完成");
         return JsonResponseEntity.success(result);
     }
 }

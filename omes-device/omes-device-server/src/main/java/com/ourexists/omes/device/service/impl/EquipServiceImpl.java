@@ -49,9 +49,10 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
         LambdaQueryWrapper<Equip> qw = new LambdaQueryWrapper<Equip>()
                 .eq(StringUtils.hasText(dto.getWorkshopCode()), Equip::getWorkshopCode, dto.getWorkshopCode())
                 .eq(StringUtils.hasText(dto.getSelfCode()), Equip::getSelfCode, dto.getSelfCode())
-                .eq(dto.getType() != null, Equip::getType, dto.getType())
+                .eq(StringUtils.hasText(dto.getType()), Equip::getType, dto.getType())
                 .in(!CollectionUtils.isEmpty(dto.getWorkshopCodes()), Equip::getWorkshopCode, dto.getWorkshopCodes())
                 .like(StringUtils.hasText(dto.getName()), Equip::getName, dto.getName())
+                .isNotNull(dto.getExistHealth() != null && dto.getExistHealth(), Equip::getHealthTemplateId)
                 .inSql(StringUtils.hasText(dto.getGwId()), Equip::getId, "select equip_id from r_gw_binding where gw_id=" + dto.getGwId())
                 .orderByDesc(Equip::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);

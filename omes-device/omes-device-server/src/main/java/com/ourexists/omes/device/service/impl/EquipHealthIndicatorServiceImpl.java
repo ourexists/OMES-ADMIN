@@ -6,12 +6,12 @@ package com.ourexists.omes.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ourexists.era.framework.core.utils.DateUtil;
+import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.omes.device.mapper.EquipHealthIndicatorMapper;
 import com.ourexists.omes.device.model.EquipHealthIndicatorDto;
 import com.ourexists.omes.device.model.EquipHealthIndicatorPageQuery;
 import com.ourexists.omes.device.pojo.EquipHealthIndicator;
 import com.ourexists.omes.device.service.EquipHealthIndicatorService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,44 +20,29 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class EquipHealthIndicatorServiceImpl implements EquipHealthIndicatorService {
-
-    @Autowired
-    private EquipHealthIndicatorMapper mapper;
+public class EquipHealthIndicatorServiceImpl extends AbstractMyBatisPlusService<EquipHealthIndicatorMapper, EquipHealthIndicator>
+        implements EquipHealthIndicatorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdate(EquipHealthIndicatorDto dto) {
-        LambdaQueryWrapper<EquipHealthIndicator> qw = new LambdaQueryWrapper<EquipHealthIndicator>()
-                .eq(EquipHealthIndicator::getSn, dto.getSn())
-                .eq(EquipHealthIndicator::getStatTime, dto.getStatTime());
-        EquipHealthIndicator existing = mapper.selectOne(qw);
-        EquipHealthIndicator entity = EquipHealthIndicator.fromDto(dto);
-        if (existing != null) {
-            entity.setId(existing.getId());
-            mapper.updateById(entity);
-        } else {
-            mapper.insert(entity);
-        }
+        this.saveOrUpdate(EquipHealthIndicator.fromDto(dto));
     }
 
     @Override
     public EquipHealthIndicatorDto getLatestBySn(String sn, Date statTime) {
-        LambdaQueryWrapper<EquipHealthIndicator> qw = new LambdaQueryWrapper<EquipHealthIndicator>()
-                .eq(EquipHealthIndicator::getSn, sn)
-                .eq(EquipHealthIndicator::getStatTime, statTime)
-                .last("limit 1");
-        EquipHealthIndicator one = mapper.selectOne(qw);
+        EquipHealthIndicator one = this.getOne(
+                new LambdaQueryWrapper<EquipHealthIndicator>()
+                        .eq(EquipHealthIndicator::getSn, sn)
+                        .eq(EquipHealthIndicator::getStatTime, statTime));
         return one != null ? EquipHealthIndicator.toDto(one) : null;
     }
 
     @Override
     public EquipHealthIndicatorDto getLatestBySn(String sn) {
-        LambdaQueryWrapper<EquipHealthIndicator> qw = new LambdaQueryWrapper<EquipHealthIndicator>()
+        EquipHealthIndicator one = this.getOne(new LambdaQueryWrapper<EquipHealthIndicator>()
                 .eq(EquipHealthIndicator::getSn, sn)
-                .orderByDesc(EquipHealthIndicator::getStatTime)
-                .last("limit 1");
-        EquipHealthIndicator one = mapper.selectOne(qw);
+                .orderByDesc(EquipHealthIndicator::getStatTime));
         return one != null ? EquipHealthIndicator.toDto(one) : null;
     }
 
@@ -68,8 +53,16 @@ public class EquipHealthIndicatorServiceImpl implements EquipHealthIndicatorServ
                         EquipHealthIndicator::getStatTime,
                         DateUtil.getDayStart(pageQuery.getStatTime()),
                         DateUtil.getDayEnd(pageQuery.getStatTime()));
-        return mapper.selectList(qw).stream()
+        return this.list(qw).stream()
                 .map(EquipHealthIndicator::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveBatch(List<EquipHealthIndicatorDto> list) {
+        for (EquipHealthIndicatorDto dto : list) {
+            saveOrUpdate(dto);
+        }
     }
 }

@@ -27,4 +27,7 @@ public interface EquipFeign {
     JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody GwBindingDto gwBindingDto);
 
     JsonResponseEntity<GwBindingDto> queryEquipConfigBySn(@RequestParam String equipSn);
+
+    /** 根据ID批量查询设备（用于关联展示设备名称，仅返回 id、name 等基础字段） */
+    JsonResponseEntity<List<EquipDto>> listByIds(@Validated @RequestBody List<String> ids);
 }

@@ -16,7 +16,6 @@ import com.ourexists.omes.message.enums.MessageTypeEnum;
 import com.ourexists.omes.message.feign.NotifyFeign;
 import com.ourexists.omes.message.model.NotifyDto;
 import com.ourexists.omes.ucenter.feign.TenantFeign;
-import com.ourexists.omes.ucenter.tenant.TenantVo;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -64,17 +63,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @PostConstruct
     public void init() {
-        try {
-            UserContext.defaultTenant();
-            UserContext.getTenant().setSkipMain(false);
-            List<TenantVo> tenantVos = RemoteHandleUtils.getDataFormResponse(tenantFeign.all());
-            for (TenantVo tenantVo : tenantVos) {
-                UserContext.getTenant().setTenantId(tenantVo.getTenantCode());
-                reload();
-            }
-        } catch (EraCommonException e) {
-            throw new RuntimeException(e);
-        }
+        reload();
     }
 
     @Override
@@ -154,6 +143,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @Override
     public void reload() {
+        UserContext.defaultTenant();
         EquipPageQuery query = new EquipPageQuery();
         query.setRequirePage(false);
         query.setQueryConfig(true);
@@ -225,11 +215,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             for (EquipRealtime target : targets) {
                 if (source.getId().equals(target.getId())) {
                     if (!source.getAlarmState().equals(target.getAlarmState())) {
-                        EquipRecordAlarmDto dto = new EquipRecordAlarmDto()
-                                .setSn(source.getSelfCode())
-                                .setState(target.getAlarmState())
-                                .setStartTime(new Date())
-                                .setTenantId(source.getTenantId());
+                        EquipRecordAlarmDto dto = new EquipRecordAlarmDto().setSn(source.getSelfCode()).setState(target.getAlarmState()).setStartTime(new Date()).setTenantId(source.getTenantId());
                         r.add(dto);
 
                         if (target.getAlarmState() == 1) {
@@ -244,33 +230,18 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                             } else {
                                 context.append("设备报警");
                             }
-                            NotifyDto notifyDto = new NotifyDto()
-                                    .setStep(0)
-                                    .setContext(context.toString())
-                                    .setTitle("【" + target.getName() + "】异常报警")
-                                    .setSource(MessageSourceEnum.Equip.name())
-                                    .setSourceId(source.getId())
-                                    .setPlatforms(platforms)
-                                    .setType(MessageTypeEnum.ALARM.getCode());
+                            NotifyDto notifyDto = new NotifyDto().setStep(0).setContext(context.toString()).setTitle("【" + target.getName() + "】异常报警").setSource(MessageSourceEnum.Equip.name()).setSourceId(source.getId()).setPlatforms(platforms).setType(MessageTypeEnum.ALARM.getCode());
                             notifyFeign.createAndStart(notifyDto);
 
                         }
                     }
                     if (!source.getRunState().equals(target.getRunState())) {
-                        EquipRecordRunDto dto = new EquipRecordRunDto()
-                                .setSn(source.getSelfCode())
-                                .setState(target.getRunState())
-                                .setStartTime(new Date())
-                                .setTenantId(source.getTenantId());
+                        EquipRecordRunDto dto = new EquipRecordRunDto().setSn(source.getSelfCode()).setState(target.getRunState()).setStartTime(new Date()).setTenantId(source.getTenantId());
                         r1.add(dto);
                     }
 
                     if (!source.getOnlineState().equals(target.getOnlineState())) {
-                        EquipRecordOnlineDto dto = new EquipRecordOnlineDto()
-                                .setSn(source.getSelfCode())
-                                .setState(target.getOnlineState())
-                                .setStartTime(new Date())
-                                .setTenantId(source.getTenantId());
+                        EquipRecordOnlineDto dto = new EquipRecordOnlineDto().setSn(source.getSelfCode()).setState(target.getOnlineState()).setStartTime(new Date()).setTenantId(source.getTenantId());
                         r2.add(dto);
                     }
                 }

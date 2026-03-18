@@ -28,14 +28,17 @@ public class EquipPageQuery extends PageQuery {
     @Schema(description = "设备编号")
     private String selfCode;
 
-    @Schema(description = "设备类型")
-    private Integer type;
+    @Schema(description = "所属产品编号")
+    private String type;
 
     @Schema(description = "场景编号")
     private List<String> workshopCodes;
 
     @Schema(description = "关联的网关id")
     private String gwId;
+
+    @Schema(description = "存在健康检测模板")
+    private Boolean existHealth = false;
 
     @Schema(description = "是否同时获取设备实时信息")
     private Boolean needRealtime = false;

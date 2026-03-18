@@ -1,0 +1,204 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 巡检计划列表
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>巡检计划</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content form-table-layout">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md2">
+            <input type="text" name="name" placeholder="计划名称" class="layui-input" id="qName">
+        </div>
+        <div class="layui-col-md2">
+            <select name="templateId" id="qTemplateId">
+                <option value="">巡检模板</option>
+            </select>
+        </div>
+        <div class="layui-col-md2">
+            <select name="cycleType" id="qCycleType">
+                <option value="">周期类型</option>
+                <option value="1">每日</option>
+                <option value="2">每周</option>
+                <option value="3">每月</option>
+            </select>
+        </div>
+        <div class="layui-col-md2">
+            <select name="status" id="qStatus">
+                <option value="">状态</option>
+                <option value="0">禁用</option>
+                <option value="1">启用</option>
+            </select>
+        </div>
+        <div class="layui-col-md2">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="inspect-plan-search">查询</button>
+            <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-clear">清空</button>
+        </div>
+    </form>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-inspect-plan"></table>
+    </div>
+</div>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm" lay-event="add">新增</a>
+        <a class="layui-btn layui-btn-sm layui-btn-primary" lay-event="refresh">刷新</a>
+        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">批量删除</a>
+    </div>
+</script>
+<script type="text/html" id="tb-tool-tpl">
+    <div class="layui-clear-space">
+        {{# if (d.status === 0) { }}
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        {{# } else { }}
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="disable">禁用</a>
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="view">查看</a>
+        {{# } }}
+        <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="generateTasks">生成任务</a>
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="tasks">任务</a>
+        <a class="layui-btn layui-btn-xs layui-bg-red" lay-event="del">删除</a>
+    </div>
+</script>
+<script th:inline="none">
+    var table;
+    layui.use(['form', 'table'], function () {
+        var form = layui.form;
+        table = layui.table;
+        var urlSearch = layui.url().search;
+        var defaultTemplateId = (urlSearch && urlSearch.templateId) ? urlSearch.templateId : '';
+        table.render({
+            elem: '#tb-inspect-plan',
+            id: 'tb-inspect-plan',
+            url: initRequestUrl(router.inspect_plan_page),
+            headers: getCommonHeader(),
+            method: 'POST',
+            contentType: 'application/json',
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', fixed: true},
+                {type: 'numbers', title: 'NO'},
+                {field: 'name', title: '计划名称', width: 160},
+                {field: 'templateName', title: '关联模板', width: 140},
+                {field: 'cycleTypeDesc', title: '周期类型', width: 90},
+                {field: 'cycleConfig', title: '周期配置', width: 120},
+                {
+                    field: 'status', title: '状态', width: 80, templet: function (d) {
+                        return d.status === 1 ? '启用' : '禁用';
+                    }
+                },
+                {field: 'remark', title: '备注', minWidth: 120},
+                {field: 'createdTime', title: '创建时间', width: 165},
+                {fixed: 'right', title: '操作', width: 280, templet: '#tb-tool-tpl'}
+            ]],
+            request: {pageName: 'page', limitName: 'pageSize'},
+            response: {statusName: 'code', statusCode: 200},
+            parseData: function (res) {
+                var list = (res.data || []).map(function (t) {
+                    var row = t ? Object.assign({}, t) : {};
+                    row.id = row.id == null ? '' : String(row.id);
+                    return row;
+                });
+                return { code: res.code, msg: res.msg, count: (res.pagination && res.pagination.total) || 0, data: list };
+            },
+            limit: 10, limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full',
+            where: { templateId: defaultTemplateId }
+        });
+        get(router.inspect_template_list, null, function (list) {
+            var arr = Array.isArray(list) ? list : (list && list.data) ? list.data : [];
+            var $sel = $('#qTemplateId');
+            $sel.find('option:not(:first)').remove();
+            arr.forEach(function (t) {
+                $sel.append('<option value="' + (t.id || '') + '">' + (t.name || t.id) + '</option>');
+            });
+            if (defaultTemplateId) $sel.val(defaultTemplateId);
+            form.render('select');
+        });
+        form.on('submit(inspect-plan-search)', function () {
+            table.reloadData('tb-inspect-plan', {
+                where: {name: $('#qName').val(), templateId: $('#qTemplateId').val(), cycleType: $('#qCycleType').val(), status: $('#qStatus').val()},
+                page: {curr: 1}
+            });
+            return false;
+        });
+        $('#btn-clear').on('click', function () {
+            $('#qName').val('');
+            $('#qTemplateId').val('');
+            $('#qCycleType').val('');
+            $('#qStatus').val('');
+            form.render();
+            table.reloadData('tb-inspect-plan', {where: {}, page: {curr: 1}});
+        });
+        table.on('toolbar(tb-inspect-plan)', function (obj) {
+            var checkStatus = table.checkStatus('tb-inspect-plan');
+            var data = checkStatus.data;
+            if (obj.event === 'add') {
+                var templateId = $('#qTemplateId').val();
+                openWindow('common.add', '/view/inspect_plan_form_edit' + (templateId ? '?templateId=' + templateId : ''));
+            } else if (obj.event === 'refresh') {
+                table.reloadData('tb-inspect-plan');
+            } else if (obj.event === 'deleteBatch') {
+                if (!data || data.length === 0) {
+                    layer.msg('请至少选择一条');
+                    return;
+                }
+                var ids = data.map(function (r) {
+                    return r.id;
+                });
+                delWindow(router.inspect_plan_del, ids, reloadTb);
+            }
+        });
+        table.on('tool(tb-inspect-plan)', function (obj) {
+            var d = obj.data;
+            if (obj.event === 'edit') {
+                openWindow('common.edit', '/view/inspect_plan_form_edit?id=' + d.id);
+            } else if (obj.event === 'view') {
+                openWindow('查看计划', '/view/inspect_plan_form_edit?id=' + d.id + '&view=1');
+            } else if (obj.event === 'generateTasks') {
+                get(router.inspect_plan_generateTasks, {planId: d.id}, function () {
+                    layer.msg('已生成巡检任务');
+                }, function (c, msg) {
+                    layer.msg(msg || '生成失败');
+                });
+            } else if (obj.event === 'tasks') {
+                openWindow('巡检任务', '/view/inspect_task_tables?planId=' + d.id);
+            } else if (obj.event === 'del') {
+                delWindow(router.inspect_plan_del, [d.id], reloadTb);
+            } else if (obj.event === 'enable') {
+                get(router.inspect_plan_enable, {planId: d.id}, function () {
+                    layer.msg('已启用');
+                    reloadTb();
+                }, function (c, msg) {
+                    layer.msg(msg || '操作失败');
+                });
+            } else if (obj.event === 'disable') {
+                get(router.inspect_plan_disable, {planId: d.id}, function () {
+                    layer.msg('已停用');
+                    reloadTb();
+                }, function (c, msg) {
+                    layer.msg(msg || '操作失败');
+                });
+            }
+        });
+    });
+
+    function reloadTb() {
+        if (typeof table !== 'undefined') table.reloadData('tb-inspect-plan');
+    }
+</script>
+</body>
+</html>

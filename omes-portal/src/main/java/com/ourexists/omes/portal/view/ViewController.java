@@ -383,4 +383,74 @@ public class ViewController {
     public String equip_screen_tech() {
         return "equip_screen_tech";
     }
+
+    @RequestMapping("/view/inspect_template_tables")
+    public String inspect_template_tables() {
+        return "inspect_template_tables";
+    }
+
+    @RequestMapping("/view/inspect_template_form_edit")
+    public String inspect_template_form_edit() {
+        return "inspect_template_form_edit";
+    }
+
+    @RequestMapping("/view/inspect_item_tables")
+    public String inspect_item_tables() {
+        return "inspect_item_tables";
+    }
+
+    @RequestMapping("/view/inspect_item_form_edit")
+    public String inspect_item_form_edit() {
+        return "inspect_item_form_edit";
+    }
+
+    @RequestMapping("/view/inspect_plan_tables")
+    public String inspect_plan_tables() {
+        return "inspect_plan_tables";
+    }
+
+    @RequestMapping("/view/inspect_plan_form_edit")
+    public String inspect_plan_form_edit() {
+        return "inspect_plan_form_edit";
+    }
+
+    @RequestMapping("/view/inspect_task_tables")
+    public String inspect_task_tables() {
+        return "inspect_task_tables";
+    }
+
+    @RequestMapping("/view/inspect_task_form_edit")
+    public String inspect_task_form_edit() {
+        return "inspect_task_form_edit";
+    }
+
+    @RequestMapping("/view/inspect_record_tables")
+    public String inspect_record_tables() {
+        return "inspect_record_tables";
+    }
+
+    @RequestMapping("/view/inspect_record_form_edit")
+    public String inspect_record_form_edit() {
+        return "inspect_record_form_edit";
+    }
+
+    @RequestMapping("/view/inspect_person_tables")
+    public String inspect_person_tables() {
+        return "inspect_person_tables";
+    }
+
+    @RequestMapping("/view/inspect_person_form_edit")
+    public String inspect_person_form_edit() {
+        return "inspect_person_form_edit";
+    }
+
+    @RequestMapping("/view/product_tables")
+    public String product_tables() {
+        return "product_tables";
+    }
+
+    @RequestMapping("/view/product_form_edit")
+    public String product_form_edit() {
+        return "product_form_edit";
+    }
 }

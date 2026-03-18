@@ -1,0 +1,162 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 产品列表 - 布局样式参考巡检计划列表
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>产品管理</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content form-table-layout">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md2">
+            <input type="text" name="name" placeholder="" class="layui-input" id="qName" lang-i18n="product.name">
+        </div>
+        <div class="layui-col-md2">
+            <input type="text" name="code" placeholder="" class="layui-input" id="qCode" lang-i18n="product.code">
+        </div>
+        <div class="layui-col-md2">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="product-search" lang-i18n="common.search">查询</button>
+            <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-clear" lang-i18n="common.clear">清空</button>
+        </div>
+    </form>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-product"></table>
+    </div>
+</div>
+
+<script type="text/html" id="product-image-tpl">
+    {{# if(d.imageUrl){ }}
+    <img src="{{ d.imageUrl }}" onerror="this.parentElement.innerHTML='-'" style="max-width:50px;max-height:50px;object-fit:contain;vertical-align:middle;">
+    {{# } else { }}
+    <span>-</span>
+    {{# } }}
+</script>
+<script type="text/html" id="product-tool">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="edit">
+            <i class="layui-icon layui-icon-edit"></i>
+        </a>
+        <a class="layui-btn layui-btn-xs layui-btn-primary layui-bg-red" lay-event="del">
+            <i class="layui-icon layui-icon-delete"></i>
+        </a>
+    </div>
+</script>
+
+<script type="text/html" id="product-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm" lay-event="add" lang-i18n="common.add">新增</a>
+        <a class="layui-btn layui-btn-sm layui-btn-primary" lay-event="refresh" lang-i18n="common.refresh">刷新</a>
+        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch" lang-i18n="common.delete.batch">批量删除</a>
+    </div>
+</script>
+
+<script th:inline="none">
+    var productTable;
+    var current_row_data;
+    layui.use(['form', 'table', 'layer'], function () {
+        var table = layui.table;
+        var form = layui.form;
+
+        productTable = table;
+
+        // 表格
+        table.render({
+            elem: '#tb-product',
+            id: 'tb-product',
+            url: initRequestUrl(router.product_page),
+            method: 'POST',
+            contentType: 'application/json',
+            headers: getCommonHeader(),
+            toolbar: '#product-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', title: '', fixed: true},
+                {field: 'imageUrl', title: i18np.prop('product.imageUrl'), width: 90, templet: '#product-image-tpl'},
+                {field: 'name', title: i18np.prop('product.name')},
+                {field: 'code', title: i18np.prop('product.code')},
+                {
+                    fixed: 'right',
+                    title: i18np.prop('common.operate'),
+                    width: 160,
+                    minWidth: 120,
+                    templet: '#product-tool'
+                }
+            ]],
+            request: { pageName: 'page', limitName: 'pageSize' },
+            response: { statusName: 'code', statusCode: 200 },
+            parseData: function (res) {
+                return {
+                    code: res.code,
+                    msg: res.msg,
+                    count: (res.pagination && res.pagination.total) || 0,
+                    data: res.data || []
+                };
+            },
+            limit: 10,
+            limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full',
+            lineStyle: 'height: 95px;'
+        });
+
+        // 查询
+        form.on('submit(product-search)', function () {
+            table.reloadData('tb-product', {
+                where: { name: $('#qName').val(), code: $('#qCode').val() },
+                page: { curr: 1 }
+            });
+            return false;
+        });
+        $('#btn-clear').on('click', function () {
+            $('#qName').val('');
+            $('#qCode').val('');
+            form.render();
+            table.reloadData('tb-product', { where: {}, page: { curr: 1 } });
+        });
+
+        // 工具栏事件
+        table.on('toolbar(tb-product)', function (obj) {
+            var checkStatus = table.checkStatus('tb-product');
+            var data = checkStatus.data;
+            if (obj.event === 'add') {
+                current_row_data = null;
+                openWindow('common.add', '/view/product_form_edit', ['40%', '40%']);
+            } else if (obj.event === 'refresh') {
+                table.reloadData('tb-product');
+            } else if (obj.event === 'deleteBatch') {
+                if (!data || data.length === 0) {
+                    return layer.msg(i18np.prop('common.msg.least.one'));
+                }
+                delWindow(router.product_del, data.map(function (d) { return d.id; }), reloadProductTb);
+            }
+        });
+
+        // 行内事件
+        table.on('tool(tb-product)', function (obj) {
+            var data = obj.data;
+            current_row_data = data;
+            if (obj.event === 'edit') {
+                openWindow('common.edit', '/view/product_form_edit?id=' + data.id, ['40%', '40%']);
+            } else if (obj.event === 'del') {
+                delWindow(router.product_del, [data.id], reloadProductTb);
+            }
+        });
+    });
+
+    function reloadProductTb() {
+        if (typeof productTable !== 'undefined') productTable.reloadData('tb-product');
+    }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,416 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 巡检计划编辑（卡片模式）
+  -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <style>
+        .inspect-plan-edit-page {
+            overflow-y: auto;
+            min-height: 100%;
+            padding: 16px 20px 24px;
+            box-sizing: border-box;
+        }
+
+        .inspect-plan-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: visible;
+        }
+
+        .inspect-plan-card-title {
+            padding: 10px 16px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .inspect-plan-card-body {
+            padding: 18px 20px;
+        }
+
+        .inspect-plan-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .inspect-plan-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .inspect-plan-label {
+            width: 100px;
+            flex-shrink: 0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .inspect-plan-field {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .inspect-plan-field .layui-input,
+        .inspect-plan-field .layui-textarea,
+        .inspect-plan-field .layui-input-wrap {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .inspect-plan-field .layui-input-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        /* 包的是 select 时由 select 自带边框，不再给 wrap 加框避免双层 */
+        .inspect-plan-field .layui-input-wrap:has(.layui-form-select) {
+            border: none;
+            padding: 0;
+        }
+
+        .inspect-plan-field .layui-input-wrap:has(.layui-form-select):hover,
+        .inspect-plan-field .layui-input-wrap:has(.layui-form-select):focus-within {
+            border: none;
+            box-shadow: none;
+        }
+
+        .inspect-plan-field .layui-input-wrap:hover {
+            border-color: #7dd3fc;
+        }
+
+        .inspect-plan-field .layui-input-wrap:not(:has(.layui-form-select)):focus-within {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25);
+        }
+
+        .inspect-plan-field .layui-input-wrap .layui-form-select {
+            width: 100%;
+            max-width: none;
+        }
+
+        .inspect-plan-workshop-display {
+            min-height: 36px;
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fafafa;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .inspect-plan-workshop-display:empty::before {
+            content: '未选择场景（表示全部）';
+            color: #999;
+        }
+
+        .inspect-plan-field .layui-textarea {
+            min-height: 80px;
+        }
+
+        .inspect-plan-tip {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+            padding-left: 0;
+        }
+
+        .inspect-plan-actions {
+            margin-top: 8px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .inspect-plan-actions .layui-btn {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="inspect-plan-edit-page">
+    <form id="inspect-plan-form" class="layui-form" lay-filter="inspect-plan-form">
+        <input type="hidden" name="id">
+
+        <!-- 基础信息 -->
+        <div class="inspect-plan-card">
+            <div class="inspect-plan-card-title">基础信息</div>
+            <div class="inspect-plan-card-body">
+                <div class="inspect-plan-row">
+                    <span class="inspect-plan-label">巡检模板</span>
+                    <div class="inspect-plan-field">
+                        <div class="layui-input-wrap">
+                            <select name="templateId" id="templateId" lay-verify="required">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="inspect-plan-row">
+                    <span class="inspect-plan-label">计划名称</span>
+                    <div class="inspect-plan-field">
+                        <input type="text" name="name" required lay-verify="required" placeholder="请输入计划名称"
+                               class="layui-input" autocomplete="off">
+                    </div>
+                </div>
+                <div class="inspect-plan-row">
+                    <span class="inspect-plan-label">周期类型</span>
+                    <div class="inspect-plan-field">
+                        <div class="layui-input-wrap">
+                            <select name="cycleType" lay-verify="required">
+                                <option value="">请选择</option>
+                                <option value="1">每日</option>
+                                <option value="2">每周</option>
+                                <option value="3">每月</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="inspect-plan-row">
+                    <span class="inspect-plan-label">周期配置</span>
+                    <div class="inspect-plan-field">
+                        <input type="text" name="cycleConfig" placeholder="如：09:00 或 1,09:00 或 1,09:00"
+                               class="layui-input" autocomplete="off">
+                        <p class="inspect-plan-tip">每日填时间如 09:00；每周填星期+时间如 1,09:00（1=周一）；每月填日期+时间如
+                            1,09:00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 范围与状态 -->
+        <div class="inspect-plan-card">
+            <div class="inspect-plan-card-title">范围与状态</div>
+            <div class="inspect-plan-card-body">
+                <div class="inspect-plan-row">
+                    <span class="inspect-plan-label">选择场景</span>
+                    <div class="inspect-plan-field">
+                        <input type="hidden" name="workshopCode">
+                        <div id="workshop-display" class="inspect-plan-workshop-display"></div>
+                        <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-select-workshop"
+                                style="margin-top: 8px;">选择场景
+                        </button>
+                        <p class="inspect-plan-tip">不选表示全部场景；点击按钮在场景表格中勾选后确定回写</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 备注 -->
+        <div class="inspect-plan-card">
+            <div class="inspect-plan-card-title">备注</div>
+            <div class="inspect-plan-card-body">
+                <div class="inspect-plan-row">
+                    <span class="inspect-plan-label">备注</span>
+                    <div class="inspect-plan-field">
+                        <textarea name="remark" placeholder="请输入备注说明" class="layui-textarea"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inspect-plan-actions">
+            <button type="submit" class="layui-btn" lay-submit lay-filter="inspect-plan-submit" id="btn-save">保存
+            </button>
+            <button type="button" class="layui-btn layui-btn-primary" id="btn-cancel">取消</button>
+        </div>
+    </form>
+</div>
+<script>
+    var current = {};
+
+    function buildCodeToNameMap(nodes) {
+        var map = {};
+        if (!nodes || !nodes.length) return map;
+
+        function walk(n) {
+            if (n.selfCode) map[n.selfCode] = n.name || n.selfCode;
+            if (n.children && n.children.length) n.children.forEach(walk);
+        }
+
+        nodes.forEach(walk);
+        return map;
+    }
+
+    function updateWorkshopDisplay(codesStr, names) {
+        $('input[name="workshopCode"]').val(codesStr || '');
+        var text = (names && names.length) ? names.join('、') : '';
+        $('#workshop-display').text(text);
+    }
+
+    function showWorkshopNamesByCodes(codesStr) {
+        if (!codesStr || !String(codesStr).trim()) {
+            $('#workshop-display').text('');
+            return;
+        }
+        var codes = String(codesStr).split(',').map(function (s) {
+            return s.trim();
+        }).filter(Boolean);
+        get(router.workshop_tree, null, function (tree) {
+            var map = buildCodeToNameMap(tree);
+            var names = codes.map(function (c) {
+                return map[c] || c;
+            });
+            $('#workshop-display').text(names.join('、'));
+        });
+    }
+
+    window.workshopPickerCallbackReceiver = function (rows) {
+        if (!rows || !rows.length) {
+            updateWorkshopDisplay('', []);
+            if (parent.inspectPlanEditPickerReceiver === window) parent.inspectPlanEditPickerReceiver = null;
+            return;
+        }
+        var codes = [], names = [];
+        rows.forEach(function (r) {
+            if (r.selfCode) {
+                codes.push(r.selfCode);
+                names.push(r.name || r.selfCode);
+            }
+        });
+        updateWorkshopDisplay(codes.join(','), names);
+        if (parent.inspectPlanEditPickerReceiver === window) parent.inspectPlanEditPickerReceiver = null;
+    };
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form, layer = layui.layer;
+        var urlSearch = layui.url().search;
+        var id = urlSearch.id;
+        var isView = (urlSearch.view === '1' || urlSearch.view === 'true');
+        form.render();
+
+        function setReadOnly() {
+            isView = true;
+            $('#inspect-plan-form').find('input:not([type="hidden"]), select, textarea').prop('disabled', true);
+            form.render();
+            $('#btn-save').hide();
+            $('#btn-select-workshop').hide();
+            $('#btn-cancel').text('返回');
+        }
+
+        function loadTemplateOptions(selectedId, cb) {
+            get(router.inspect_template_list, null, function (list) {
+                var arr = Array.isArray(list) ? list : (list && list.data) ? list.data : [];
+                var $sel = $('#templateId');
+                $sel.find('option:not(:first)').remove();
+                arr.forEach(function (t) {
+                    $sel.append('<option value="' + (t.id || '') + '">' + (t.name || t.id) + '</option>');
+                });
+                if (selectedId) $sel.val(selectedId);
+                form.render('select');
+                if (typeof cb === 'function') cb();
+            });
+        }
+
+        if (id) {
+            get(router.inspect_plan_id, {id: id}, function (data) {
+                current = data;
+                form.val('inspect-plan-form', {
+                    id: data.id, name: data.name, cycleType: String(data.cycleType || 1),
+                    cycleConfig: data.cycleConfig, remark: data.remark
+                });
+                if (data.templateId) $('#templateId').val(data.templateId);
+                var codesStr = (data.workshopCode && String(data.workshopCode).trim()) ? String(data.workshopCode).trim() : '';
+                $('input[name="workshopCode"]').val(codesStr);
+                showWorkshopNamesByCodes(codesStr);
+                loadTemplateOptions(data.templateId);
+                form.render();
+                if (isView || (data.status !== undefined && data.status === 1)) {
+                    setReadOnly();
+                }
+            });
+        } else {
+            var urlSearch = layui.url().search;
+            var presetTemplateId = (urlSearch && urlSearch.templateId) ? urlSearch.templateId : '';
+            loadTemplateOptions(presetTemplateId);
+        }
+        $('#btn-select-workshop').on('click', function () {
+            if (isView) return;
+            var selected = $('input[name="workshopCode"]').val() || '';
+            var editWin = window;
+            parent.inspectPlanEditPickerReceiver = editWin;
+            parent.layer.open({
+                type: 2,
+                title: '选择场景',
+                content: '/view/workshop_tables?mode=picker&selected=' + encodeURIComponent(selected),
+                area: ['80%', '80%'],
+                success: function (layero, index) {
+                    var $layero = layero && layero.jquery ? layero : $(layero);
+                    var $iframe = $layero.find('iframe');
+
+                    function injectCallback() {
+                        var iframeDom = $iframe[0];
+                        if (!iframeDom || !iframeDom.contentWindow) return false;
+                        var iframeWin = iframeDom.contentWindow;
+                        try {
+                            if (typeof iframeWin.setPickerCallback === 'function') {
+                                iframeWin.setPickerCallback(function (rows) {
+                                    if (editWin.workshopPickerCallbackReceiver) {
+                                        editWin.workshopPickerCallbackReceiver(rows);
+                                    }
+                                    parent.layer.close(index);
+                                });
+                                return true;
+                            }
+                        } catch (e) {
+                        }
+                        return false;
+                    }
+
+                    $iframe.on('load', function () {
+                        if (!injectCallback()) {
+                            var retries = 0;
+                            var t = setInterval(function () {
+                                if (injectCallback() || retries++ > 50) clearInterval(t);
+                            }, 100);
+                        }
+                    });
+                    if ($iframe[0] && $iframe[0].contentWindow && $iframe[0].contentWindow.document && $iframe[0].contentWindow.document.readyState === 'complete') {
+                        injectCallback();
+                    }
+                }
+            });
+        });
+        form.on('submit(inspect-plan-submit)', function (data) {
+            if (isView) return false;
+            var field = data.field;
+            var workshopCode = (field.workshopCode && String(field.workshopCode).trim()) ? String(field.workshopCode).trim() : null;
+            var templateId = (field.templateId && String(field.templateId).trim()) ? field.templateId.trim() : null;
+            var dto = {
+                id: field.id,
+                name: field.name,
+                templateId: templateId,
+                cycleType: parseInt(field.cycleType, 10),
+                cycleConfig: field.cycleConfig,
+                workshopCode: workshopCode,
+                remark: field.remark
+            };
+            post(router.inspect_plan_edit, dto, function () {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+                if (parent.reloadTb) parent.reloadTb();
+            }, function (code, msg) {
+                layer.msg(msg || '保存失败');
+            });
+            return false;
+        });
+        $('#btn-cancel').on('click', function () {
+            var index = parent.layer.getFrameIndex(window.name);
+            parent.layer.close(index);
+        });
+    });
+</script>
+</body>
+</html>

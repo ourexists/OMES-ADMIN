@@ -223,7 +223,7 @@
 
         .center-map .health-below-map .panel-box-health .chart-wrap.health-charts {
             flex: 1;
-            min-height: clamp(88px, 10vh, 130px);
+            min-height: clamp(100px, 12vh, 160px);
             min-width: 0;
         }
 
@@ -371,7 +371,7 @@
             flex: 0 0 auto;
             width: 100%;
             min-height: 26px;
-            padding: 3px 6px;
+            margin: 3px 6px;
             min-width: 0;
             display: flex;
             align-items: center;
@@ -423,6 +423,7 @@
             align-items: stretch;
             overflow: hidden;
         }
+
         .health-panel-row .health-kpi-left {
             flex: 0 0 60%;
             min-width: 0;
@@ -433,10 +434,11 @@
             overflow: hidden;
             padding: 8px 10px;
         }
+
         .health-panel-row .health-charts {
             flex: 0 0 40%;
             min-width: 0;
-            min-height: clamp(88px, 10vh, 130px);
+            min-height: clamp(100px, 12vh, 160px);
             padding: clamp(10px, 1.2vw, 20px);
             overflow: hidden;
             box-sizing: border-box;
@@ -446,7 +448,7 @@
         }
 
         .health-panel-row .health-charts > div {
-            min-height: clamp(70px, 8vh, 100px);
+            min-height: clamp(90px, 11vh, 140px);
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -615,10 +617,6 @@
         /* 右侧栏：弹性均分，可收缩 */
         .side-panel-right .panel-box-trend {
             flex: 1 1 0;
-            min-height: 0;
-        }
-
-        .side-panel-right .panel-box-trend {
             min-height: clamp(56px, 6vh, 80px);
         }
 
@@ -734,7 +732,7 @@
                             </div>
                         </div>
                         <div class="chart-wrap health-charts">
-                            <div id="healthScoreChart" style="width:100%;height:100%;min-height:64px;"></div>
+                            <div id="healthScoreChart" style="width:100%;height:100%;min-height:90px;"></div>
                         </div>
                     </div>
                 </div>
@@ -789,12 +787,12 @@
     layui.use(function () {
         var $ = layui.$;
 
-        const fullscreen = new FullScreen({
+        new FullScreen({
             elem: $('.container').get(0),
         });
 
         get(router.workshop_tree, null, function (result) {
-            const sceneTree = new TreeSelect({
+            new TreeSelect({
                 container: '.container',
                 data: result,
                 needVirtualRoot: true,
@@ -1017,33 +1015,33 @@
                 max: 100,
                 splitNumber: 5,
                 center: ['50%', '50%'],
-                radius: '58%',
+                radius: '78%',
                 axisLine: {
                     lineStyle: {
-                        width: 4,
+                        width: 6,
                         color: [
-                            [0.5, '#7f1d1d'],
-                            [0.75, '#b45309'],
-                            [0.9, '#64748b'],
-                            [1, '#0e7490']
+                            [0.5, '#dc2626'],
+                            [0.75, '#ea580c'],
+                            [0.9, '#eab308'],
+                            [1, '#00e5ff']
                         ]
                     }
                 },
-                pointer: { itemStyle: { color: '#475569' }, width: 3, length: '50%' },
-                axisTick: { show: false },
-                splitLine: { show: false },
-                axisLabel: { color: '#64748b', fontSize: 9, distance: -12 },
-                title: { offsetCenter: [0, '26%'], color: '#64748b', fontSize: 10 },
+                pointer: {itemStyle: {color: '#00e5ff'}, width: 4, length: '55%'},
+                axisTick: {show: false},
+                splitLine: {show: false},
+                axisLabel: {color: '#94a3b8', fontSize: 11, distance: -8},
+                title: {offsetCenter: [0, '22%'], color: '#cbd5e1', fontSize: 12},
                 detail: {
                     offsetCenter: [0, '0%'],
                     valueAnimation: true,
-                    color: '#475569',
-                    fontSize: 14,
+                    color: '#00e5ff',
+                    fontSize: 18,
                     fontWeight: 'bold',
                     formatter: '{value}',
                     borderColor: 'transparent'
                 },
-                data: [{ value: 0, name: '平均健康分' }]
+                data: [{value: 0, name: '平均健康分'}]
             }]
         });
         reloadHealth();
@@ -1278,7 +1276,7 @@
         });
     }
 
-    async function reloadMap(needViewReset, data) {
+    async function reloadMap(needViewReset) {
         if (reloading) return;
         reloading = true;
         try {
@@ -1290,9 +1288,6 @@
                 queryWorkshop: true,
                 queryAttrs: true,
             };
-            if (data != null) {
-                for (let key in data) params[key] = data[key];
-            }
             post(router.equip_page, params, function (e) {
                 if (e == null) return;
                 let r = e.filter(item => item.lng != null && item.lat != null);

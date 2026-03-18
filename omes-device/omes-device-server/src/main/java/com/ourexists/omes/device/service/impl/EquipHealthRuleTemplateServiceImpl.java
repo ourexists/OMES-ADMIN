@@ -5,13 +5,13 @@
 package com.ourexists.omes.device.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.omes.device.mapper.EquipHealthRuleTemplateMapper;
 import com.ourexists.omes.device.model.AlarmLevelPenaltyDto;
 import com.ourexists.omes.device.model.EquipHealthRuleTemplateConfig;
 import com.ourexists.omes.device.model.EquipHealthRuleTemplateDto;
 import com.ourexists.omes.device.pojo.EquipHealthRuleTemplate;
 import com.ourexists.omes.device.service.EquipHealthRuleTemplateService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,10 +21,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class EquipHealthRuleTemplateServiceImpl implements EquipHealthRuleTemplateService {
-
-    @Autowired
-    private EquipHealthRuleTemplateMapper mapper;
+public class EquipHealthRuleTemplateServiceImpl
+        extends AbstractMyBatisPlusService<EquipHealthRuleTemplateMapper, EquipHealthRuleTemplate>
+        implements EquipHealthRuleTemplateService {
 
     @Override
     public EquipHealthRuleTemplateDto getDefaultTemplate() {
@@ -71,7 +70,7 @@ public class EquipHealthRuleTemplateServiceImpl implements EquipHealthRuleTempla
         if (templateId == null || templateId.isEmpty()) {
             return getDefaultTemplate();
         }
-        EquipHealthRuleTemplate entity = mapper.selectById(templateId);
+        EquipHealthRuleTemplate entity = this.getById(templateId);
         if (entity == null) {
             return getDefaultTemplate();
         }
@@ -88,17 +87,13 @@ public class EquipHealthRuleTemplateServiceImpl implements EquipHealthRuleTempla
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdate(EquipHealthRuleTemplateDto dto) {
         EquipHealthRuleTemplate entity = EquipHealthRuleTemplate.fromDto(dto);
-        if (entity.getId() != null && mapper.selectById(entity.getId()) != null) {
-            mapper.updateById(entity);
-        } else {
-            if (entity.getId() != null) entity.setId(null);
-            mapper.insert(entity);
-        }
+        this.saveOrUpdate(entity);
     }
 
     @Override
-    public List<EquipHealthRuleTemplateDto> list() {
-        return mapper.selectList(new LambdaQueryWrapper<>()).stream()
+    public List<EquipHealthRuleTemplateDto> getAll() {
+        List<EquipHealthRuleTemplate> r = this.list(new LambdaQueryWrapper<>());
+        return r.stream()
                 .map(EquipHealthRuleTemplate::toDto)
                 .collect(Collectors.toList());
     }

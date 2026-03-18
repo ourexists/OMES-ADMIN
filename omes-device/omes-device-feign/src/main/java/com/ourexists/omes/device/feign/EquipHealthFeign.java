@@ -62,4 +62,10 @@ public interface EquipHealthFeign {
      */
     @PostMapping("computeByTemplate")
     JsonResponseEntity<Map<String, Object>> computeByTemplate(@RequestParam String templateId);
+
+    /**
+     * 批量计算并保存设备健康指标（ForkJoin 并行计算后一次性写入数据库，供定时任务调用）
+     */
+    @PostMapping("computeBatchAndSave")
+    JsonResponseEntity<Map<String, Object>> computeBatchAndSave(@Validated @RequestBody EquipHealthBatchComputeQuery query);
 }
