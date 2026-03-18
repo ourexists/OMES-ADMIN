@@ -116,4 +116,14 @@ public class EquipHealthRuleTemplateDto {
     public Integer getStartStopCountMaxDeduction() {
         return config != null && config.getStartStopCountMaxDeduction() != null ? config.getStartStopCountMaxDeduction() : 5;
     }
+
+    /** 巡检维度权重，0 表示不参与 */
+    public Integer getInspectionWeight() {
+        return config != null && config.getInspectionWeight() != null ? config.getInspectionWeight() : 10;
+    }
+
+    /** 周期内无巡检记录时的扣分 */
+    public Integer getInspectionNoRecordPenalty() {
+        return config != null && config.getInspectionNoRecordPenalty() != null ? config.getInspectionNoRecordPenalty() : 5;
+    }
 }
