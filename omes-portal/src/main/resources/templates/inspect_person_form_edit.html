@@ -1,0 +1,258 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 巡检人员编辑：支持关联已有账户或同步添加账户（卡片样式）
+  -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>巡检人员</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <style>
+        .inspect-person-edit-page {
+            overflow-y: auto;
+            min-height: 100%;
+            padding: 16px 20px 24px;
+            box-sizing: border-box;
+        }
+        .inspect-person-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            overflow: visible;
+        }
+        .inspect-person-card-title {
+            padding: 10px 16px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        .inspect-person-card-body {
+            padding: 18px 20px;
+        }
+        .inspect-person-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .inspect-person-row:last-child {
+            margin-bottom: 0;
+        }
+        .inspect-person-label {
+            width: 100px;
+            flex-shrink: 0;
+            color: #333;
+            font-size: 14px;
+        }
+        .inspect-person-field {
+            flex: 1;
+            min-width: 200px;
+        }
+        .inspect-person-field .layui-input,
+        .inspect-person-field .layui-textarea {
+            width: 100%;
+            max-width: 360px;
+        }
+        .inspect-person-field .layui-textarea {
+            min-height: 80px;
+        }
+        .inspect-person-field .layui-form-radio {
+            margin-right: 16px;
+        }
+        .inspect-person-actions {
+            margin-top: 8px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .inspect-person-actions .layui-btn {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="inspect-person-edit-page">
+    <form class="layui-form" id="inspect-person-form" lay-filter="inspect-person-form">
+        <input type="hidden" name="id">
+
+        <!-- 基本信息 -->
+        <div class="inspect-person-card">
+            <div class="inspect-person-card-title">基本信息</div>
+            <div class="inspect-person-card-body">
+                <div class="inspect-person-row">
+                    <span class="inspect-person-label">姓名</span>
+                    <div class="inspect-person-field">
+                        <input type="text" name="name" placeholder="请输入姓名" class="layui-input" lay-verify="required">
+                    </div>
+                </div>
+                <div class="inspect-person-row">
+                    <span class="inspect-person-label">工号</span>
+                    <div class="inspect-person-field">
+                        <input type="text" name="jobNumber" placeholder="工号" class="layui-input">
+                    </div>
+                </div>
+                <div class="inspect-person-row">
+                    <span class="inspect-person-label">手机号</span>
+                    <div class="inspect-person-field">
+                        <input type="text" name="mobile" placeholder="手机号" class="layui-input">
+                    </div>
+                </div>
+                <div class="inspect-person-row">
+                    <span class="inspect-person-label">备注</span>
+                    <div class="inspect-person-field">
+                        <textarea name="remark" placeholder="备注" class="layui-textarea"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 账户关联 -->
+        <div class="inspect-person-card">
+            <div class="inspect-person-card-title">账户关联</div>
+            <div class="inspect-person-card-body">
+                <div class="inspect-person-row">
+                    <span class="inspect-person-label">关联方式</span>
+                    <div class="inspect-person-field">
+                        <input type="radio" name="linkType" value="existing" title="关联已有账户" lay-filter="linkType">
+                        <input type="radio" name="linkType" value="sync" title="同步添加账户" lay-filter="linkType">
+                    </div>
+                </div>
+                <div id="wrap-existing" class="link-wrap" style="display:none;">
+                    <div class="inspect-person-row">
+                        <span class="inspect-person-label">选择账户</span>
+                        <div class="inspect-person-field">
+                            <select name="accountId" id="accountId" lay-search="">
+                                <option value="">请选择指派人员</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="wrap-sync" class="link-wrap" style="display:none;">
+                    <div class="inspect-person-row">
+                        <span class="inspect-person-label">账户名</span>
+                        <div class="inspect-person-field">
+                            <input type="text" name="accName" id="accName" placeholder="登录账号" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="inspect-person-row">
+                        <span class="inspect-person-label">密码</span>
+                        <div class="inspect-person-field">
+                            <input type="password" name="password" id="accPassword" placeholder="8-16位，含大小写字母、数字、特殊字符" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="inspect-person-row">
+                        <span class="inspect-person-label">昵称</span>
+                        <div class="inspect-person-field">
+                            <input type="text" name="nickName" id="nickName" placeholder="显示名称，可同姓名" class="layui-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作 -->
+        <div class="inspect-person-card">
+            <div class="inspect-person-card-body inspect-person-actions">
+                <button type="button" class="layui-btn" lay-submit lay-filter="inspect-person-submit">保存</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form, layer = layui.layer;
+        var id = layui.url().search.id;
+        form.on('radio(linkType)', function (data) {
+            var v = data.value;
+            $('#wrap-existing').toggle(v === 'existing');
+            $('#wrap-sync').toggle(v === 'sync');
+            if (v === 'existing') loadAccountList();
+            form.render();
+        });
+        if (id) {
+            get(router.inspect_person_id, { id: id }, function (data) {
+                if (data) {
+                    $('input[name="id"]').val(data.id);
+                    $('input[name="name"]').val(data.name);
+                    $('input[name="jobNumber"]').val(data.jobNumber);
+                    $('input[name="mobile"]').val(data.mobile);
+                    $('textarea[name="remark"]').val(data.remark || '');
+                    if (data.accountId) {
+                        $('input[name="linkType"][value="existing"]').prop('checked', true);
+                        $('#wrap-existing').show();
+                        loadAccountList(function () {
+                            $('#accountId').val(data.accountId);
+                            form.render('select');
+                        });
+                    } else {
+                        $('input[name="linkType"][value="existing"]').prop('checked', true);
+                        $('#wrap-existing').show();
+                        loadAccountList();
+                    }
+                    form.render();
+                }
+            });
+        } else {
+            $('input[name="linkType"][value="existing"]').prop('checked', true);
+            $('#wrap-existing').show();
+            loadAccountList();
+            form.render();
+        }
+        function loadAccountList(cb) {
+            post(router.account_page, { page: 1, pageSize: 500, platform: 'mes-app' }, function (list) {
+                var arr = Array.isArray(list) ? list : [];
+                var $sel = $('#accountId');
+                $sel.find('option:not(:first)').remove();
+                for (var i = 0; i < arr.length; i++) {
+                    var u = arr[i];
+                    $sel.append('<option value="' + (u.id || '') + '">' + (u.nickName || u.accName || u.id) + '</option>');
+                }
+                form.render('select');
+                if (typeof cb === 'function') cb();
+            });
+        }
+        form.on('submit(inspect-person-submit)', function () {
+            var person = {
+                id: $('input[name="id"]').val() || null,
+                name: $('input[name="name"]').val(),
+                jobNumber: $('input[name="jobNumber"]').val(),
+                mobile: $('input[name="mobile"]').val(),
+                remark: $('textarea[name="remark"]').val()
+            };
+            var linkType = $('input[name="linkType"]:checked').val();
+            var payload = { person: person };
+            if (linkType === 'existing') {
+                payload.syncAccount = false;
+                payload.accountId = $('#accountId').val() || null;
+            } else {
+                payload.syncAccount = true;
+                payload.accountInfo = {
+                    accName: $('#accName').val(),
+                    password: $('#accPassword').val(),
+                    nickName: $('#nickName').val() || person.name
+                };
+                if (!payload.accountInfo.accName || !payload.accountInfo.password) {
+                    layer.msg('同步添加账户时请填写账户名和密码');
+                    return false;
+                }
+            }
+            post(router.inspect_person_edit, payload, function () {
+                layer.msg('保存成功');
+                var idx = parent.layer.getFrameIndex(window.name);
+                if (idx >= 0) parent.layer.close(idx);
+                if (parent.reloadTb) parent.reloadTb();
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

@@ -17,9 +17,11 @@ import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.Equip;
 import com.ourexists.omes.device.pojo.GwBinding;
+import com.ourexists.omes.device.pojo.Product;
 import com.ourexists.omes.device.pojo.Workshop;
 import com.ourexists.omes.device.service.EquipService;
 import com.ourexists.omes.device.service.GwBindingService;
+import com.ourexists.omes.device.service.ProductService;
 import com.ourexists.omes.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.BeanUtils;
@@ -33,7 +35,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class EquipViewer implements EquipFeign {
@@ -50,6 +54,9 @@ public class EquipViewer implements EquipFeign {
     @Autowired
     private GwBindingService gwBindingService;
 
+    @Autowired
+    private ProductService productService;
+
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -57,6 +64,24 @@ public class EquipViewer implements EquipFeign {
         Page<Equip> page = service.selectByPage(dto);
         List<EquipDto> r = Equip.covert(page.getRecords());
         if (!CollectionUtils.isEmpty(r)) {
+            List<String> productCodes = r.stream().map(EquipDto::getType).filter(code -> code != null && !code.isEmpty()).distinct().toList();
+            Map<String, String> codeToName = new HashMap<>();
+            Map<String, String> codeToImageUrl = new HashMap<>();
+            List<Product> p = productService.getByCode(productCodes);
+            if (!CollectionUtils.isEmpty(p)) {
+                for (Product pp : p) {
+                    codeToName.put(pp.getCode(), pp.getName());
+                    if (pp.getImageUrl() != null && !pp.getImageUrl().isEmpty()) {
+                        codeToImageUrl.put(pp.getCode(), pp.getImageUrl());
+                    }
+                }
+            }
+            for (EquipDto equipDto : r) {
+                if (equipDto.getType() != null) {
+                    equipDto.setTypeDesc(codeToName.get(equipDto.getType()));
+                    equipDto.setProductImage(codeToImageUrl.get(equipDto.getType()));
+                }
+            }
             List<WorkshopTreeNode> workshopDtos = null;
             List<GwBindingDto> equipConfigs = null;
             if (dto.getQueryWorkshop()) {
@@ -137,6 +162,15 @@ public class EquipViewer implements EquipFeign {
         if (equipDto == null) {
             return null;
         }
+        if (equipDto.getType() != null && !equipDto.getType().isEmpty()) {
+            Product p = productService.getByCode(equipDto.getType());
+            if (p != null) {
+                equipDto.setTypeDesc(p.getName());
+                if (p.getImageUrl() != null && !p.getImageUrl().isEmpty()) {
+                    equipDto.setProductImage(p.getImageUrl());
+                }
+            }
+        }
         equipDto.setWorkshop(Workshop.covert(workshopService.queryByCode(equipDto.getWorkshopCode())));
         if (needRealtime == null || !needRealtime) {
             return JsonResponseEntity.success(equipDto);
@@ -188,5 +222,13 @@ public class EquipViewer implements EquipFeign {
             return JsonResponseEntity.success(null);
         }
         return JsonResponseEntity.success(GwBinding.covert(gwBindingService.queryByEquip(equip.getId())));
+    }
+
+    @Override
+    @Operation(summary = "根据ID批量查询设备", description = "用于关联展示设备名称等，仅返回基础字段")
+    @PostMapping("listByIds")
+    public JsonResponseEntity<List<EquipDto>> listByIds(@Validated @RequestBody List<String> ids) {
+        List<Equip> list = service.listByIds(ids);
+        return JsonResponseEntity.success(Equip.covert(list));
     }
 }

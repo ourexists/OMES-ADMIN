@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright (C) 2025  ChengPeng
   ~
@@ -28,6 +28,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <modules>
         <module>omes-device</module>
+        <module>omes-inspection</module>
         <module>omes-line</module>
         <module>omes-mat</module>
         <module>omes-mo</module>

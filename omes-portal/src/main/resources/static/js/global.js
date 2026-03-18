@@ -38,7 +38,33 @@ layui.use(['i18np'], function () {
         i18np.changeLanguage(lan);
     }
     i18np.load(language);
-})
+});
+
+// 统一把接口返回的列表项 id 转为字符串，避免 Layui 表格等对 t.id.includes() 报错
+(function () {
+    function ensureStringId(list) {
+        if (!list || !Array.isArray(list)) return;
+        for (var i = 0; i < list.length; i++) {
+            var t = list[i];
+            if (t && typeof t === 'object' && t.hasOwnProperty('id') && typeof t.id !== 'string') {
+                t.id = t.id == null ? '' : String(t.id);
+            }
+        }
+    }
+    var $ = layui.jquery;
+    var _ajax = $.ajax;
+    $.ajax = function (opts) {
+        var origSuccess = opts.success;
+        opts.success = function (data, textStatus, jqXHR) {
+            if (data && typeof data === 'object') {
+                if (Array.isArray(data.data)) ensureStringId(data.data);
+                else if (Array.isArray(data)) ensureStringId(data);
+            }
+            if (origSuccess) origSuccess.apply(this, arguments);
+        };
+        return _ajax.call($, opts);
+    };
+})();
 
 let client = {
     id: 'mes',
@@ -183,6 +209,11 @@ let router = {
     "equip_id": "/equip/selectById",
     "equip_selectRealtimeById": "/equip/selectRealtimeById",
     "equip_type": "/equip/equipType",
+    "product_page": "/product/selectByPage",
+    "product_edit": "/product/addOrUpdate",
+    "product_del": "/product/delete",
+    "product_id": "/product/selectById",
+    "product_listAll": "/product/listAll",
     "equip_alarmLevels": "/equip/alarmLevels",
     "equip_config": "/equip/queryEquipConfig",
     "equip_config_sn": "/equip/queryEquipConfigBySn",
@@ -223,6 +254,49 @@ let router = {
     gw_del: '/gateway/delete',
     gw_start: '/gateway/start',
     gw_stop: '/gateway/stop',
+    inspect_template_list: "/inspection/template/selectList",
+    inspect_template_page: "/inspection/template/selectByPage",
+    inspect_template_edit: "/inspection/template/addOrUpdate",
+    inspect_template_del: "/inspection/template/delete",
+    inspect_template_id: "/inspection/template/selectById",
+    inspect_template_withItems: "/inspection/template/selectWithItems",
+    inspect_template_itemTypes: "/inspection/template/itemTypes",
+    inspect_item_saveBatch: "/inspection/template/items/saveBatch",
+    inspect_item_page: "/inspection/item/selectByPage",
+    inspect_item_edit: "/inspection/item/addOrUpdate",
+    inspect_item_del: "/inspection/item/delete",
+    inspect_item_id: "/inspection/item/selectById",
+    inspect_item_listByTemplateId: "/inspection/item/listByTemplateId",
+    inspect_item_listByProductCode: "/inspection/item/listByProductCode",
+    inspect_item_listAllPool: "/inspection/item/listAllPool",
+    inspect_item_itemTypes: "/inspection/item/itemTypes",
+    inspect_plan_page: "/inspection/plan/selectByPage",
+    inspect_plan_edit: "/inspection/plan/addOrUpdate",
+    inspect_plan_del: "/inspection/plan/delete",
+    inspect_plan_id: "/inspection/plan/selectById",
+    inspect_plan_enable: "/inspection/plan/enable",
+    inspect_plan_disable: "/inspection/plan/disable",
+    inspect_plan_generateTasks: "/inspection/plan/generateTasks",
+    inspect_plan_cycleTypes: "/inspection/plan/cycleTypes",
+    inspect_task_page: "/inspection/task/selectByPage",
+    inspect_task_edit: "/inspection/task/addOrUpdate",
+    inspect_task_assign: "/inspection/task/assign",
+    inspect_task_del: "/inspection/task/delete",
+    inspect_task_id: "/inspection/task/selectById",
+    inspect_task_listByPlanId: "/inspection/task/listByPlanId",
+    inspect_task_statusTypes: "/inspection/task/statusTypes",
+    inspect_task_restart: "/inspection/task/restartOverdue",
+    inspect_record_page: "/inspection/record/selectByPage",
+    inspect_record_edit: "/inspection/record/addOrUpdate",
+    inspect_record_save: "/inspection/record/save",
+    inspect_record_del: "/inspection/record/delete",
+    inspect_record_id: "/inspection/record/selectById",
+    inspect_record_listByTaskId: "/inspection/record/listByTaskId",
+    inspect_record_resultTypes: "/inspection/record/resultTypes",
+    inspect_person_page: "/inspection/person/selectByPage",
+    inspect_person_edit: "/inspection/person/addOrUpdate",
+    inspect_person_del: "/inspection/person/delete",
+    inspect_person_id: "/inspection/person/selectById",
 }
 
 function getCommonHeader() {

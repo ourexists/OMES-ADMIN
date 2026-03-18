@@ -1,0 +1,323 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 产品编辑 - 常规电商产品表单样式
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <style>
+        .product-form-page {
+            min-height: 100%;
+            padding: 20px 24px 24px;
+            background: #f5f6f8;
+            box-sizing: border-box;
+        }
+        .product-form-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+            overflow: hidden;
+        }
+        .product-form-card-title {
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            border-bottom: 1px solid #e5e7eb;
+            background: #fafbfc;
+        }
+        .product-form-body {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 24px;
+            gap: 32px;
+        }
+        .product-form-image-col {
+            flex: 0 0 auto;
+        }
+        .product-form-image-label {
+            display: block;
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .product-form-image-box {
+            width: 160px;
+            height: 160px;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: #f9fafb;
+            transition: border-color .2s, background .2s;
+        }
+        .product-form-image-box:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .product-form-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+        }
+        .product-form-image-placeholder .layui-icon {
+            font-size: 36px;
+            line-height: 1;
+            color: #d1d5db;
+        }
+        .product-form-image-placeholder span {
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .product-form-image-preview {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #fff;
+        }
+        .product-form-image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .product-form-image-preview .product-form-image-mask {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 6px 0;
+            background: rgba(0,0,0,.5);
+            color: #fff;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+        .product-form-image-box:hover .product-form-image-mask {
+            opacity: 1;
+        }
+        .product-form-fields {
+            flex: 1;
+            min-width: 280px;
+        }
+        .product-form-row {
+            margin-bottom: 20px;
+        }
+        .product-form-row:last-of-type {
+            margin-bottom: 0;
+        }
+        .product-form-label {
+            display: block;
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .product-form-label .required {
+            color: #ef4444;
+            margin-right: 2px;
+        }
+        .product-form-input {
+            width: 100%;
+            max-width: 400px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #1f2937;
+            transition: border-color .2s;
+            box-sizing: border-box;
+        }
+        .product-form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+        }
+        .product-form-input::placeholder {
+            color: #9ca3af;
+        }
+        .product-form-actions {
+            padding: 20px 24px;
+            border-top: 1px solid #e5e7eb;
+            background: #fafbfc;
+            text-align: right;
+        }
+        .product-form-actions .layui-btn {
+            min-width: 88px;
+        }
+        .product-form-actions .layui-btn + .layui-btn {
+            margin-left: 12px;
+        }
+        input#product-image-file {
+            display: none;
+        }
+    </style>
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="product-form-page">
+    <div class="product-form-card">
+        <div class="product-form-card-title" lang-i18n="common.basicInfo">基本信息</div>
+        <form class="layui-form" id="product-edit-form" lay-filter="product-edit-form">
+            <input type="hidden" name="id">
+            <div class="product-form-body">
+                <div class="product-form-image-col">
+                    <label class="product-form-image-label" lang-i18n="product.imageUrl">产品图片</label>
+                    <input type="hidden" name="imageUrl" id="product-imageUrl">
+                    <div class="product-form-image-box" id="product-image-box">
+                        <div class="product-form-image-placeholder" id="product-image-placeholder">
+                            <i class="layui-icon layui-icon-addition"></i>
+                            <span lang-i18n="common.upload">上传</span>
+                        </div>
+                        <div class="product-form-image-preview" id="product-image-preview">
+                            <img src="" alt="">
+                            <div class="product-form-image-mask" lang-i18n="product.changeImage">更换图片</div>
+                        </div>
+                    </div>
+                    <input type="file" id="product-image-file" accept="image/*">
+                </div>
+                <div class="product-form-fields">
+                    <div class="product-form-row">
+                        <label class="product-form-label">
+                            <span class="required">*</span>
+                            <span lang-i18n="product.name">产品名称</span>
+                        </label>
+                        <input type="text" class="product-form-input" name="name" autocomplete="off"
+                               lay-verify="required" placeholder="" lang-i18n="common.placeholder">
+                    </div>
+                    <div class="product-form-row">
+                        <label class="product-form-label">
+                            <span class="required">*</span>
+                            <span lang-i18n="product.code">产品编号</span>
+                        </label>
+                        <input type="text" class="product-form-input" name="code" autocomplete="off"
+                               lay-verify="required" placeholder="" lang-i18n="common.placeholder">
+                    </div>
+                </div>
+            </div>
+            <div class="product-form-actions">
+                <button type="button" class="layui-btn layui-btn-primary" id="product-reset-btn" lang-i18n="common.msg.reset">重置</button>
+                <button class="layui-btn" lay-submit lay-filter="product-edit-button" lang-i18n="common.msg.confirm">确认</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script th:inline="none">
+    var current_row_data;
+
+    layui.use(['form', 'layer'], function () {
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.$;
+
+        var FILE_URL_PREFIX = '/files/';
+        var UPLOAD_URL = '/localFile/upload';
+
+        var id = (layui.url().search || {}).id;
+        if (id) {
+            get(router.product_id, {id: id}, function (res) {
+                current_row_data = res && res.data != null ? res.data : res;
+                if (!current_row_data) current_row_data = {};
+                form.val('product-edit-form', current_row_data);
+                showImagePreview(current_row_data.imageUrl);
+            });
+        } else {
+            current_row_data = {};
+            form.val('product-edit-form', {});
+        }
+
+        function showImagePreview(url) {
+            var $ph = $('#product-image-placeholder');
+            var $pre = $('#product-image-preview');
+            var $img = $pre.find('img');
+            $img.attr('src', '');
+            if (url && (url = url.trim())) {
+                $img.attr('src', url).on('error', function () {
+                    $ph.show();
+                    $pre.hide();
+                });
+                $pre.show();
+                $ph.hide();
+            } else {
+                $ph.show();
+                $pre.hide();
+            }
+        }
+
+        $('#product-image-box').on('click', function () {
+            $('#product-image-file').click();
+        });
+        $('#product-image-file').on('change', function () {
+            var file = this.files && this.files[0];
+            if (!file) return;
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('dir', 'product');
+            $.ajax({
+                url: UPLOAD_URL,
+                type: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                headers: getCommonHeader(),
+                success: function (res) {
+                    if (res && res.code === 200 && res.data) {
+                        var path = (res.data.charAt(0) === '/') ? res.data : (FILE_URL_PREFIX + res.data.replace(/^\/+/, ''));
+                        $('#product-imageUrl').val(path);
+                        showImagePreview(path);
+                        layer.msg('上传成功');
+                    } else {
+                        layer.msg((res && res.msg) ? res.msg : '上传失败');
+                    }
+                },
+                error: function () {
+                    layer.msg('上传失败');
+                }
+            });
+            this.value = '';
+        });
+
+        $('#product-reset-btn').on('click', function () {
+            form.val('product-edit-form', current_row_data || {});
+            showImagePreview(current_row_data ? current_row_data.imageUrl : '');
+        });
+
+        form.on('submit(product-edit-button)', function (data) {
+            var field = data.field;
+            for (var k in field) {
+                current_row_data[k] = field[k];
+            }
+            post(router.product_edit, current_row_data, function () {
+                try {
+                    if (parent.reloadProductTb) parent.reloadProductTb();
+                    else if (parent.reloadTb) parent.reloadTb();
+                } catch (e) {}
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }, function (code, msg) {
+                layer.alert(msg, {title: 'error'});
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@
 
 package com.ourexists.omes.device.service.impl;
 
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.enums.AlarmLevelEnum;
@@ -11,15 +12,21 @@ import com.ourexists.omes.device.enums.EquipHealthLevelEnum;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.Equip;
 import com.ourexists.omes.device.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
+import java.util.stream.Collectors;
 
 /**
  * 基于报警记录、运行记录、在线记录及规则模板，计算设备健康得分并保存
  */
+@Slf4j
 @Service
 public class EquipHealthComputeServiceImpl implements EquipHealthComputeService {
 
@@ -39,7 +46,17 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
     private EquipService equipService;
 
     @Override
-    public EquipHealthIndicatorDto computeAndSave(EquipHealthComputeQuery query, String equipId) {
+    public EquipHealthIndicatorDto computeAndSave(EquipHealthComputeQuery query) {
+        EquipHealthIndicatorDto dto = computeOnly(query);
+        if (dto != null) {
+            healthIndicatorService.saveOrUpdate(dto);
+        }
+        return dto;
+    }
+
+    @Override
+    public EquipHealthIndicatorDto computeOnly(EquipHealthComputeQuery query) {
+        UserContext.defaultTenant();
         String templateId = query.getTemplateId();
         if (templateId == null || templateId.isEmpty()) {
             Equip equip = equipService.getBySelfCode(query.getSn());
@@ -89,6 +106,9 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
 
         // 在线：合并段，统计 state=1 的时长
         EquipRealtime realtime = realtimeManager.get(sn);
+        if (realtime == null) {
+            return null;
+        }
         List<EquipRecordOnlineVo> onlineList = equipRecordOnlineService.countMerging(realtime, countQuery);
         long onlineDurationMinutes = 0L;
         for (EquipRecordOnlineVo vo : onlineList) {
@@ -103,11 +123,6 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
         // 生命周期维度扣分（使用年限、累计运行小时、启停总次数，考虑设备老化）
         double lifecycleDeduction = computeLifecycleDeduction(template, sn);
 
-        // 从实时缓存补全 equipId、tenantId
-        if (realtime != null) {
-            if (equipId == null) equipId = realtime.getId();
-        }
-
         // 计算得分
         int score = computeScore(template, alarmDeduction, lifecycleDeduction,
                 runDurationMinutes, onlineDurationMinutes, periodMinutes);
@@ -119,9 +134,9 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
                 template.getWarningThreshold() != null ? template.getWarningThreshold() : 50);
 
         EquipHealthIndicatorDto dto = new EquipHealthIndicatorDto();
-        dto.setEquipId(equipId);
+        dto.setEquipId(realtime.getId());
         dto.setSn(sn);
-        dto.setTenantId(realtime != null ? realtime.getTenantId() : null);
+        dto.setTenantId(realtime.getTenantId());
         dto.setStatTime(periodEnd);
         dto.setPeriodStart(periodStart);
         dto.setPeriodEnd(periodEnd);
@@ -134,8 +149,65 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
         dto.setPeriodMinutes(periodMinutes);
         dto.setTemplateId(template.getId());
 
-        healthIndicatorService.saveOrUpdate(dto);
         return dto;
+    }
+
+    @Override
+    public void computeBatchAndSave(Date periodStart, Date periodEnd, List<String> snList) {
+        if (snList == null || snList.isEmpty()) {
+            return;
+        }
+        List<EquipHealthComputeQuery> queries = snList.stream()
+                .map(sn -> new EquipHealthComputeQuery()
+                        .setSn(sn)
+                        .setPeriodStart(periodStart)
+                        .setPeriodEnd(periodEnd))
+                .collect(Collectors.toList());
+        HealthComputeRecursiveTask task = new HealthComputeRecursiveTask(queries, this);
+        List<EquipHealthIndicatorDto> results = ForkJoinPool.commonPool().invoke(task);
+        if (results != null && !results.isEmpty()) {
+            healthIndicatorService.saveBatch(results);
+        }
+    }
+
+    /**
+     * ForkJoin 任务：将设备列表分片并行计算健康得分，仅计算不落库
+     */
+    private static final class HealthComputeRecursiveTask extends RecursiveTask<List<EquipHealthIndicatorDto>> {
+        private static final int THRESHOLD = 16;
+        private final List<EquipHealthComputeQuery> queries;
+        private final EquipHealthComputeServiceImpl service;
+
+        HealthComputeRecursiveTask(List<EquipHealthComputeQuery> queries, EquipHealthComputeServiceImpl service) {
+            this.queries = queries;
+            this.service = service;
+        }
+
+        @Override
+        protected List<EquipHealthIndicatorDto> compute() {
+            if (queries.size() <= THRESHOLD) {
+                List<EquipHealthIndicatorDto> result = new ArrayList<>();
+                for (EquipHealthComputeQuery q : queries) {
+                    try {
+                        EquipHealthIndicatorDto dto = service.computeOnly(q);
+                        if (dto != null) {
+                            result.add(dto);
+                        }
+                    } catch (Exception e) {
+                        log.warn("equip health compute failed, sn={}", q.getSn(), e);
+                    }
+                }
+                return result;
+            }
+            int mid = queries.size() / 2;
+            HealthComputeRecursiveTask left = new HealthComputeRecursiveTask(queries.subList(0, mid), service);
+            HealthComputeRecursiveTask right = new HealthComputeRecursiveTask(queries.subList(mid, queries.size()), service);
+            left.fork();
+            List<EquipHealthIndicatorDto> rightResult = right.compute();
+            List<EquipHealthIndicatorDto> leftResult = left.join();
+            leftResult.addAll(rightResult);
+            return leftResult;
+        }
     }
 
     /**

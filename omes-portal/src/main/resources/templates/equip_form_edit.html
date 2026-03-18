@@ -21,67 +21,131 @@
     <script src="../static/map/leafletMap.js"></script>
 </head>
 <style>
+    .equip-form-page {
+        overflow-y: auto;
+        min-height: 100%;
+        padding: 16px 20px 24px;
+        box-sizing: border-box;
+    }
+
+    .equip-form-card {
+        background: var(--bg-card, #fff);
+        border: 1px solid var(--border-base, #e6e6e6);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        overflow: visible;
+        box-shadow: var(--shadow-card-layui, 0 1px 4px rgba(0, 0, 0, .08));
+    }
+
+    .equip-form-card-title {
+        padding: 12px 18px;
+        background: var(--bg-card-header, #f8f9fa);
+        border-bottom: 1px solid var(--border-base, #e6e6e6);
+        font-weight: 600;
+        color: var(--text-main, #333);
+        font-size: 14px;
+    }
+
+    .equip-form-card-body {
+        padding: 18px 20px;
+    }
+
+    .equip-form-card-body .layui-form-item {
+        margin-bottom: 16px;
+    }
+
+    .equip-form-card-body .layui-form-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .equip-form-actions {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-base, #e6e6e6);
+        background: var(--bg-card-header, #f8f9fa);
+        text-align: right;
+    }
+
+    .equip-form-actions .layui-btn {
+        margin-left: 10px;
+    }
+
     #map {
         width: 100%;
         height: 400px;
         margin-top: 10px;
+        border-radius: 4px;
+        overflow: hidden;
     }
 </style>
 <body>
-<div style="padding: 16px;">
+<div class="equip-form-page">
     <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
-        <div class="layui-form-item">
-
-            <label class="layui-form-label" lang-i18n="equip.name" style="font-weight: bold "></label>
-            <div class="layui-input-block">
-                <input type="text" name="name" autocomplete="off" lay-verify="required"
-                       class="layui-input" lang-i18n="common.placeholder">
+        <!-- 基本信息 -->
+        <div class="equip-form-card">
+            <div class="equip-form-card-title" lang-i18n="common.basicInfo">基本信息</div>
+            <div class="equip-form-card-body">
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="equip.name" style="font-weight: bold;"></label>
+                    <div class="layui-input-block">
+                        <input type="text" name="name" autocomplete="off" lay-verify="required"
+                               class="layui-input" lang-i18n="common.placeholder">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="equip.code" style="font-weight: bold;"></label>
+                    <div class="layui-input-block">
+                        <input type="text" name="selfCode" autocomplete="off" lay-verify="required"
+                               class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="equip.type" style="font-weight: bold;"></label>
+                    <div class="layui-input-block">
+                        <select name="type" id="type">
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="equip.enableDate" style="font-weight: bold;"></label>
+                    <div class="layui-input-block">
+                        <input type="date" name="enableDate" autocomplete="off" class="layui-input" placeholder="">
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="equip.code" style="font-weight: bold "></label>
-            <div class="layui-input-block">
-                <input type="text" name="selfCode" autocomplete="off" lay-verify="required"
-                       class="layui-input lay-unable-edit" lang-i18n="common.placeholder">
+        <!-- 位置信息 -->
+        <div class="equip-form-card">
+            <div class="equip-form-card-title" lang-i18n="common.locationInfo">位置信息</div>
+            <div class="equip-form-card-body">
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="common.lng"></label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="lng" disabled class="layui-input">
+                    </div>
+                    <label class="layui-form-label" lang-i18n="common.lat"></label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="lat" disabled class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="common.address"></label>
+                    <div class="layui-input-block">
+                        <input type="text" name="address" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div id="map"></div>
+                </div>
             </div>
         </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="equip.type" style="font-weight: bold "></label>
-            <div class="layui-input-block">
-                <select name="type" id="type">
-                </select>
+        <!-- 操作区 -->
+        <div class="equip-form-card">
+            <div class="equip-form-actions">
+                <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">
+                    确认
+                </button>
+                <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
             </div>
-        </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="equip.enableDate" style="font-weight: bold "></label>
-            <div class="layui-input-block">
-                <input type="date" name="enableDate" autocomplete="off" class="layui-input" placeholder="">
-            </div>
-        </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="common.lng"></label>
-            <div class="layui-input-inline">
-                <input type="text" name="lng" disabled class="layui-input">
-            </div>
-
-            <label class="layui-form-label" lang-i18n="common.lat"></label>
-            <div class="layui-input-inline">
-                <input type="text" name="lat" disabled class="layui-input">
-            </div>
-        </div>
-        <div class="layui-form-item">
-            <label class="layui-form-label" lang-i18n="common.address"></label>
-            <div class="layui-input-block">
-                <input type="text" name="address" class="layui-input">
-            </div>
-        </div>
-        <div class="layui-form-item">
-            <div id="map"></div>
-        </div>
-        <div class="layui-form-item" style="text-align: right;">
-            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
-            </button>
-            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
         </div>
     </form>
 </div>
@@ -94,14 +158,40 @@
     layui.use(function () {
         let form = layui.form,
             layer = layui.layer;
-        get(router.equip_type, null, function (result) {
-            $.each(result, function (index, item) {
-                $('#type').append(new Option(item, index));
-            })
-            form.render();
-        })
-
         let id = layui.url().search.id;
+        get(router.product_listAll, null, function (result) {
+            var list = result && result.data != null ? result.data : (result || []);
+            if (!Array.isArray(list)) list = [];
+            $('#type').append(new Option('', ''));
+            $.each(list, function (i, item) {
+                var code = item.code != null ? item.code : (item.id || '');
+                $('#type').append(new Option(item.name || code, code));
+            });
+            if (id != null) {
+                get(router.equip_id, {id: id}, function (res) {
+                    current_row_data = res && res.data != null ? res.data : res;
+                    if (!current_row_data) current_row_data = {};
+                    if (current_row_data.enableDate) {
+                        var d = current_row_data.enableDate;
+                        if (typeof d === 'string') current_row_data.enableDate = d.substring(0, 10);
+                        else if (typeof d === 'number') {
+                            var dt = new Date(d);
+                            current_row_data.enableDate = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+                        }
+                    }
+                    form.val("common-edit-form", Object.assign({}, current_row_data));
+                    if (current_row_data.selfCode && current_row_data.selfCode !== "") {
+                        $(".lay-unable-edit").attr("disabled", "block");
+                    }
+                    if (current_row_data.lat != null && current_row_data.lng != null) {
+                        selectMap.init();
+                        selectMap.setPoint(current_row_data.lat, current_row_data.lng);
+                    } else {
+                        selectMap.init();
+                    }
+                });
+            }
+        });
 
         const selectMap = SelectMap({
             onSetPointComplete: function (lat, lng) {
@@ -117,30 +207,7 @@
             }
         });
 
-        if (id != null) {
-            get(router.equip_id, {id: id}, function (result) {
-                current_row_data = result;
-                if (result.enableDate) {
-                    var d = result.enableDate;
-                    if (typeof d === 'string') result.enableDate = d.substring(0, 10);
-                    else if (typeof d === 'number') {
-                        var dt = new Date(d);
-                        result.enableDate = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
-                    }
-                }
-                form.val("common-edit-form", Object.assign({}, current_row_data));
-                if (current_row_data.selfCode !== "") {
-                    $(".lay-unable-edit").attr("disabled", "block");
-                }
-
-                if (current_row_data.lat != null && current_row_data.lng != null) {
-                    selectMap.init();
-                    selectMap.setPoint(current_row_data.lat, current_row_data.lng);
-                } else {
-                    selectMap.init();
-                }
-            });
-        } else {
+        if (id == null) {
             form.val("common-edit-form", {});
             current_row_data = {};
             selectMap.init();

@@ -1,0 +1,249 @@
+<!--
+  ~ Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+  ~ 巡检任务列表
+  -->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>巡检任务</title>
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+</head>
+<body>
+<div class="layui-tab-content form-table-layout">
+    <form class="layui-form layui-row layui-col-space16">
+        <div class="layui-col-md2">
+            <input type="text" name="planName" placeholder="计划名称" class="layui-input" id="qPlanName">
+        </div>
+        <div class="layui-col-md2">
+            <select name="status" id="qStatus">
+                <option value="">状态</option>
+            </select>
+        </div>
+        <div class="layui-col-md2">
+            <select name="unassigned" id="qUnassigned">
+                <option value="">指派状态</option>
+                <option value="1">未指派</option>
+            </select>
+        </div>
+        <div class="layui-col-md2">
+            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="inspect-task-search">查询</button>
+            <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-clear">清空</button>
+        </div>
+    </form>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-inspect-task"></table>
+    </div>
+</div>
+<script type="text/html" id="tb-toolbar">
+    <div class="layui-btn-container">
+        <a class="layui-btn layui-btn-sm" lay-event="assign">任务指派</a>
+        <a class="layui-btn layui-btn-sm" lay-event="restart">重新开始</a>
+        <a class="layui-btn layui-btn-sm layui-btn-primary" lay-event="refresh">刷新</a>
+        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">批量删除</a>
+    </div>
+</script>
+<script type="text/html" id="tb-tool-tpl">
+    <div class="layui-clear-space">
+        {{# if(d.status === 0){ }}
+        <a class="layui-btn layui-btn-xs" lay-event="assign">指派</a>
+        {{# } }}
+        {{# if(d.status === 3){ }}
+        <a class="layui-btn layui-btn-xs" lay-event="restart">重新开始</a>
+        {{# } }}
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="records">记录</a>
+        <a class="layui-btn layui-btn-xs layui-bg-red" lay-event="del">删除</a>
+    </div>
+</script>
+<script th:inline="none">
+    var table;
+    var urlPlanId = layui.url().search.planId || '';
+    layui.use(['form', 'table'], function () {
+        var form = layui.form;
+        table = layui.table;
+        get(router.inspect_task_statusTypes, {}, function (statusMap) {
+            var $sel = $('#qStatus');
+            $sel.find('option:not(:first)').remove();
+            if (statusMap && typeof statusMap === 'object') {
+                var keys = Object.keys(statusMap).filter(function (k) {
+                    return statusMap.hasOwnProperty(k);
+                }).sort(function (a, b) {
+                    return Number(a) - Number(b);
+                });
+                keys.forEach(function (k) {
+                    $sel.append('<option value="' + k + '">' + statusMap[k] + '</option>');
+                });
+            }
+            form.render('select');
+        });
+        table.render({
+            elem: '#tb-inspect-task',
+            id: 'tb-inspect-task',
+            url: initRequestUrl(router.inspect_task_page),
+            headers: getCommonHeader(),
+            method: 'POST',
+            contentType: 'application/json',
+            where: {planId: urlPlanId},
+            toolbar: '#tb-toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            cols: [[
+                {type: 'checkbox', fixed: true},
+                {type: 'numbers', title: 'NO'},
+                {field: 'planName', title: '计划名称', width: 140},
+                {field: 'templateName', title: '关联模板', width: 130},
+                {field: 'scheduledTime', title: '计划执行时间', width: 165},
+                {
+                    field: 'workshopName', title: '关联场景', width: 120, templet: function (d) {
+                        return (d.workshopName != null && d.workshopName !== '') ? d.workshopName : (d.workshopCode || '-');
+                    }
+                },
+                {field: 'statusDesc', title: '状态', width: 90},
+                {field: 'executorName', title: '执行人', width: 100},
+                {field: 'actualStartTime', title: '实际开始', width: 165},
+                {field: 'actualEndTime', title: '实际完成', width: 165},
+                {field: 'remark', title: '备注', minWidth: 120},
+                {fixed: 'right', title: '操作', width: 160, templet: '#tb-tool-tpl'}
+            ]],
+            request: {pageName: 'page', limitName: 'pageSize'},
+            response: {statusName: 'code', statusCode: 200},
+            parseData: function (res) {
+                var list = (res.data || []).map(function (t) {
+                    var row = t ? Object.assign({}, t) : {};
+                    row.id = row.id == null ? '' : String(row.id);
+                    return row;
+                });
+                return { code: res.code, msg: res.msg, count: (res.pagination && res.pagination.total) || 0, data: list };
+            },
+            limit: 10, limits: [10, 20, 50, 100],
+            page: true,
+            height: 'full'
+        });
+        form.on('submit(inspect-task-search)', function () {
+            var unassigned = $('#qUnassigned').val();
+            table.reloadData('tb-inspect-task', {
+                where: {
+                    planId: urlPlanId,
+                    planName: $('#qPlanName').val(),
+                    status: $('#qStatus').val(),
+                    unassigned: unassigned === '1'
+                },
+                page: {curr: 1}
+            });
+            return false;
+        });
+        $('#btn-clear').on('click', function () {
+            $('#qPlanName').val('');
+            $('#qStatus').val('');
+            $('#qUnassigned').val('');
+            form.render();
+            table.reloadData('tb-inspect-task', {where: {planId: urlPlanId}, page: {curr: 1}});
+        });
+        table.on('toolbar(tb-inspect-task)', function (obj) {
+            var checkStatus = table.checkStatus('tb-inspect-task');
+            var data = checkStatus.data;
+            if (obj.event === 'assign') {
+                if (!data || data.length === 0) {
+                    layer.msg('请至少选择一条任务');
+                    return;
+                }
+                var pending = data.filter(function (r) { return r.status === 0; });
+                if (pending.length === 0) {
+                    layer.msg('只有待执行的任务才能指派，请勾选待执行任务');
+                    return;
+                }
+                openAssignDialog(pending.map(function (r) { return r.id; }));
+            } else if (obj.event === 'restart') {
+                if (!data || data.length === 0) {
+                    layer.msg('请至少选择一条任务');
+                    return;
+                }
+                var overdue = data.filter(function (r) { return r.status === 3; });
+                if (overdue.length === 0) {
+                    layer.msg('只有已逾期的任务才能重新开始，请勾选已逾期任务');
+                    return;
+                }
+                doRestartOverdue(overdue.map(function (r) { return r.id; }));
+            } else if (obj.event === 'refresh') {
+                table.reloadData('tb-inspect-task');
+            } else if (obj.event === 'deleteBatch') {
+                if (!data || data.length === 0) {
+                    layer.msg('请至少选择一条');
+                    return;
+                }
+                var ids = data.map(function (r) {
+                    return r.id;
+                });
+                delWindow(router.inspect_task_del, ids, reloadTb);
+            }
+        });
+        table.on('tool(tb-inspect-task)', function (obj) {
+            var d = obj.data;
+            if (obj.event === 'assign') {
+                if (d.status !== 0) {
+                    layer.msg('只有待执行的任务才能指派');
+                    return;
+                }
+                openAssignDialog([d.id]);
+            } else if (obj.event === 'restart') {
+                if (d.status !== 3) {
+                    layer.msg('只有已逾期的任务才能重新开始');
+                    return;
+                }
+                doRestartOverdue([d.id]);
+            } else if (obj.event === 'records') {
+                openWindow('巡检记录', '/view/inspect_record_tables?taskId=' + d.id);
+            } else if (obj.event === 'del') {
+                delWindow(router.inspect_task_del, [d.id], reloadTb);
+            }
+        });
+
+        function doRestartOverdue(ids) {
+            post(router.inspect_task_restart, { ids: ids }, function () {
+                layer.msg('已重置为待执行');
+                table.reloadData('tb-inspect-task');
+            }, function (code, msg) {
+                layer.msg(msg || '操作失败');
+            });
+        }
+
+        function openAssignDialog(taskIds) {
+            layer.open({
+                type: 2,
+                title: '选择巡检人员',
+                area: ['800px', '520px'],
+                content: '/view/inspect_person_tables',
+                btn: ['确定'],
+                yes: function (idx, layero) {
+                    var iframeWin = layero.find('iframe')[0].contentWindow;
+                    var checkStatus = iframeWin.table ? iframeWin.table.checkStatus('tb-inspect-person') : null;
+                    if (!checkStatus || !checkStatus.data || checkStatus.data.length === 0) {
+                        layer.msg('请选择一名巡检人员');
+                        return;
+                    }
+                    if (checkStatus.data.length > 1) {
+                        layer.msg('请只选择一名巡检人员');
+                        return;
+                    }
+                    var person = checkStatus.data[0];
+                    layer.close(idx);
+                    post(router.inspect_task_assign, {taskIds: taskIds, personId: person.id}, function () {
+                        layer.msg('指派成功');
+                        table.reloadData('tb-inspect-task');
+                    });
+                }
+            });
+        }
+    });
+
+    function reloadTb() {
+        if (typeof table !== 'undefined') table.reloadData('tb-inspect-task');
+    }
+</script>
+</body>
+</html>

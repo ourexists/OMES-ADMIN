@@ -324,3 +324,91 @@ html, body {
     min-height: 400px;
     overflow: hidden;
 }
+
+/* ========== 下拉框样式优化（与输入框统一、主题色） ========== */
+.layui-form-select {
+    width: 100%;
+    max-width: 360px;
+    color: var(--text-main, #1e293b);
+}
+.layui-form-select .layui-input {
+    height: 38px;
+    line-height: 38px;
+    padding: 0 36px 0 12px;
+    cursor: pointer;
+    border: 1px solid var(--border-base, #e2e8f0);
+    border-radius: 6px;
+    background-color: #fff;
+    transition: border-color .2s, box-shadow .2s;
+}
+.layui-form-select .layui-input:hover {
+    border-color: var(--border-hover, #7dd3fc);
+}
+.layui-form-select .layui-input:focus,
+.layui-form-selected .layui-input {
+    border-color: var(--border-focus, #38bdf8);
+    box-shadow: var(--shadow-input, 0 0 0 2px rgba(14, 165, 233, 0.25));
+    outline: none;
+}
+.layui-form-select .layui-edge {
+    right: 12px;
+    top: 50%;
+    margin-top: -4px;
+    border-width: 5px 5px 0;
+    border-style: solid;
+    border-color: var(--text-sub, #64748b) transparent transparent;
+    transition: transform .2s, border-color .2s;
+}
+.layui-form-select:hover .layui-edge {
+    border-top-color: var(--color-primary, #0ea5e9);
+}
+.layui-form-selected .layui-edge {
+    margin-top: -9px;
+    transform: rotate(180deg);
+    border-top-color: var(--color-primary, #0ea5e9);
+}
+.layui-form-select dl {
+    top: 42px;
+    padding: 6px 0;
+    border: 1px solid var(--border-base, #e2e8f0);
+    border-radius: 8px;
+    box-shadow: var(--shadow-card, 0 2px 12px rgba(14, 165, 233, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04));
+    max-height: 280px;
+}
+.layui-form-select dl dt,
+.layui-form-select dl dd {
+    padding: 0 14px;
+    line-height: 36px;
+    font-size: 14px;
+}
+.layui-form-select dl dt {
+    color: var(--text-placeholder, #94a3b8);
+    font-size: 12px;
+}
+.layui-form-select dl dd {
+    cursor: pointer;
+    transition: background-color .15s;
+}
+.layui-form-select dl dd:hover {
+    background-color: var(--bg-hover-soft, rgba(14, 165, 233, 0.08));
+}
+.layui-form-select dl dd.layui-this {
+    background-color: var(--color-primary-soft, rgba(14, 165, 233, 0.12));
+    color: var(--color-primary, #0ea5e9);
+    font-weight: 600;
+}
+.layui-form-select .layui-select-group dd {
+    padding-left: 24px;
+}
+.layui-form-select .layui-select-none {
+    color: var(--text-placeholder, #94a3b8);
+    font-size: 13px;
+}
+.layui-select-disabled .layui-input {
+    background-color: var(--bg-disabled, #e6ebf3);
+    border-color: var(--border-disabled, #cbd5e1);
+    cursor: not-allowed;
+}
+.layui-select-disabled .layui-edge {
+    border-top-color: var(--text-disabled, #94a3b8);
+}

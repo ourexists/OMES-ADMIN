@@ -5,7 +5,6 @@
 package com.ourexists.omes.device.model;
 
 import com.ourexists.era.framework.core.model.dto.BaseDto;
-import com.ourexists.omes.device.enums.EquipTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -28,9 +27,14 @@ public class EquipDto extends BaseDto {
 
     private String selfCode;
 
-    private Integer type;
+    /** 所属产品编号（关联产品 code） */
+    private String type;
 
+    /** 所属产品名称（由后端按 type 查产品回填） */
     private String typeDesc;
+
+    /** 所属产品图片地址（由后端按 type 查产品回填，用于设备列表/详情展示） */
+    private String productImage;
 
     private String workshopCode;
 
@@ -70,7 +74,4 @@ public class EquipDto extends BaseDto {
 
     private List<String> alarmTexts;
 
-    public String getTypeDesc() {
-        return EquipTypeEnum.valueof(this.type).getDesc();
-    }
 }

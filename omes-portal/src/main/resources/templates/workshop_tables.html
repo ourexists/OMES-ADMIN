@@ -44,7 +44,7 @@
 </head>
 <body>
 <div class="layui-tab-content workshop-tables-page">
-    <div class="workshop-page-header">
+    <div class="workshop-page-header" id="workshop-page-header">
         <span class="header-icon"><i class="layui-icon layui-icon-tree"></i></span>
         <h1 class="header-title" lang-i18n="workshop.tables.title">场景管理</h1>
         <p class="header-desc" lang-i18n="workshop.tables.desc">按树形管理产线/车间场景，支持配置采集与工艺组态</p>
@@ -81,30 +81,50 @@
         </button>
     </div>
 </script>
+<script type="text/html" id="picker-toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="picker-confirm">确定</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="picker-cancel">取消</button>
+    </div>
+</script>
 
 <script th:inline="none">
     var current_row_data;
-    var table
+    var table;
+    var isPickerMode = (function () {
+        var s = (typeof layui !== 'undefined' && layui.url && layui.url()) ? layui.url().search : {};
+        return (s.mode || '') === 'picker';
+    })();
+    var pickerConfirmCallback = null;
+
+    window.setPickerCallback = function (cb) {
+        pickerConfirmCallback = cb;
+    };
+
     layui.use(function () {
         table = layui.treeTable;
         var dropdown = layui.dropdown;
 
-        var page = {
-            cols: [[
-                {type: 'checkbox', title: '', fixed: true},
-                {field: 'name', title: i18np.prop('workshop.name')},
-                {field: 'selfCode', title: i18np.prop('workshop.code')},
-                {
-                    fixed: 'right',
-                    title: i18np.prop('common.operate'),
-                    width: 200,
-                    minWidth: 125,
-                    templet: '#common-tool'
-                }
-            ]],
-            toolbar: '#common-toolbar',
-            defaultToolbar: ['filter', 'exports', 'print'],
+        var baseCols = [
+            {type: 'checkbox', title: '', fixed: true},
+            {field: 'name', title: i18np.prop('workshop.name')},
+            {field: 'selfCode', title: i18np.prop('workshop.code')}
+        ];
+        if (!isPickerMode) {
+            baseCols.push({
+                fixed: 'right',
+                title: i18np.prop('common.operate'),
+                width: 200,
+                minWidth: 125,
+                templet: '#common-tool'
+            });
         }
+
+        var page = {
+            cols: [baseCols],
+            toolbar: isPickerMode ? '#picker-toolbar' : '#common-toolbar',
+            defaultToolbar: isPickerMode ? [] : ['filter', 'exports', 'print'],
+        };
 
         // 创建表格实例
         table.render({
@@ -116,6 +136,28 @@
             defaultToolbar: page.defaultToolbar,
             cols: page.cols,
             done: function () {
+                if (isPickerMode) {
+                    $('.header-title').text('选择场景');
+                    $('.header-desc').hide();
+                    $('#picker-confirm').on('click', function () {
+                        var checkStatus = table.checkStatus('tb-common');
+                        var data = (checkStatus && checkStatus.data) ? checkStatus.data : [];
+                        if (typeof pickerConfirmCallback === 'function') {
+                            pickerConfirmCallback(data);
+                        } else {
+                            try {
+                                if (parent.inspectPlanEditPickerReceiver && parent.inspectPlanEditPickerReceiver.workshopPickerCallbackReceiver) {
+                                    parent.inspectPlanEditPickerReceiver.workshopPickerCallbackReceiver(data);
+                                }
+                            } catch (e) {}
+                            parent.layer.close(parent.layer.getFrameIndex(window.name));
+                        }
+                    });
+                    $('#picker-cancel').on('click', function () {
+                        parent.layer.close(parent.layer.getFrameIndex(window.name));
+                    });
+                    return;
+                }
                 // 行模式
                 dropdown.render({
                     elem: '#rowMode',
@@ -126,86 +168,75 @@
                         id: 'multi-row',
                         title: i18np.prop('common.mode.multi')
                     }],
-                    // 菜单被点击的事件
                     click: function (obj) {
                         switch (obj.id) {
                             case 'default-row':
-                                table.reload('tb-common', {
-                                    lineStyle: null // 恢复单行
-                                });
+                                table.reload('tb-common', { lineStyle: null });
                                 break;
                             case 'multi-row':
-                                table.reload('tb-common', {
-                                    // 设置行样式，此处以设置多行高度为例。若为单行，则没必要设置改参数 - 注：v2.7.0 新增
-                                    lineStyle: 'height: 95px;'
-                                });
+                                table.reload('tb-common', { lineStyle: 'height: 95px;' });
                                 break;
                         }
                     }
                 });
             },
             response: {
-                statusName: 'code', //规定返回的状态码字段为code
-                statusCode: 200, //规定成功的状态码味200
+                statusName: 'code',
+                statusCode: 200,
             },
             parseData: function (res) {
-                return {
-                    "code": res.code,
-                    "msg": res.msg,
-                    "data": res.data,
-                };
+                return { "code": res.code, "msg": res.msg, "data": res.data };
             },
             page: false,
-            maxHeight: '501px',
+            maxHeight: isPickerMode ? '70vh' : '501px',
         });
-        // 工具栏事件
-        table.on('toolbar(tb-common)', function (obj) {
-            var id = obj.config.id;
-            var checkStatus = table.checkStatus(id);
-            switch (obj.event) {
-                case 'getCheckData':
-                    var data = checkStatus.data;
-                    if (data.length === 0) {
-                        return layer.msg(i18np.prop('common.msg.least.one'));
-                    }
-                    layer.alert(layui.util.escape(JSON.stringify(data)));
-                    break;
-                case 'getData':
-                    var getData = table.getData(id);
-                    layer.alert(layui.util.escape(JSON.stringify(getData)));
-                    break;
-                case 'add':
+
+        if (!isPickerMode) {
+            // 工具栏事件
+            table.on('toolbar(tb-common)', function (obj) {
+                var id = obj.config.id;
+                var checkStatus = table.checkStatus(id);
+                switch (obj.event) {
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        if (data.length === 0) return layer.msg(i18np.prop('common.msg.least.one'));
+                        layer.alert(layui.util.escape(JSON.stringify(data)));
+                        break;
+                    case 'getData':
+                        layer.alert(layui.util.escape(JSON.stringify(table.getData(id))));
+                        break;
+                    case 'add':
+                        current_row_data = null;
+                        openWindow('common.add', '/view/workshop_form_edit', ['60%', '35%']);
+                        break;
+                }
+            });
+
+            table.on('tool(tb-common)', function (obj) {
+                var data = obj.data;
+                current_row_data = data;
+                if (obj.event === 'edit') {
+                    openWindow('common.edit', '/view/workshop_form_edit', ['60%', '35%']);
+                } else if (obj.event === 'del') {
+                    delWindow(router.workshop_del, [data.id], reloadTb);
+                } else if (obj.event === 'add') {
                     current_row_data = null;
-                    openWindow('common.add', '/view/workshop_form_edit', ['60%', '35%']);
-                    break;
-            }
-        });
+                    openWindow('common.add', '/view/workshop_form_edit?pcode=' + data.code, ['60%', '35%']);
+                } else if (obj.event === 'collect') {
+                    openAreaWindow('workshop.collect', '/view/workshop_config_collect?id=' + data.id, ['80%', '100%']);
+                } else if (obj.event === 'scada') {
+                    openWindow('workshop.scada', '/view/workshop_config_scada?id=' + data.id, ['60%', '70%']);
+                }
+            });
 
-        // 触发单元格工具事件
-        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
-            var data = obj.data; // 获得当前行数据
-            current_row_data = data;
-            if (obj.event === 'edit') {
-                openWindow('common.edit', '/view/workshop_form_edit', ['60%', '35%']);
-            } else if (obj.event === 'del') {
-                delWindow(router.workshop_del, [data.id], reloadTb);
-            } else if (obj.event === 'add') {
-                current_row_data = null;
-                openWindow('common.add', '/view/workshop_form_edit?pcode=' + data.code, ['60%', '35%']);
-            } else if (obj.event === 'collect') {
-                openAreaWindow('workshop.collect', '/view/workshop_config_collect?id=' + data.id, ['80%', '100%']);
-            } else if (obj.event === 'scada') {
-                openWindow('workshop.scada', '/view/workshop_config_scada?id=' + data.id, ['60%', '70%']);
+            var tableInst = table.getOptions('tb-common');
+            if (tableInst && tableInst.elem && tableInst.elem.next) {
+                tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
+                    dropdown.close('dropdown-table-tool');
+                });
             }
-        });
-
-        // table 滚动时移除内部弹出的元素
-        var tableInst = table.getOptions('tb-common');
-        tableInst.elem.next().find('.layui-table-main').on('scroll', function () {
-            dropdown.close('dropdown-table-tool');
-        });
-    })
-    ;
+        }
+    });
 
     function reloadTb() {
         table.reloadData('tb-common');

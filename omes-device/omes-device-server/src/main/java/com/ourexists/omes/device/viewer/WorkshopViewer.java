@@ -20,7 +20,6 @@ import com.ourexists.omes.device.service.WorkshopConfigCollectService;
 import com.ourexists.omes.device.service.WorkshopConfigScadaService;
 import com.ourexists.omes.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -120,6 +119,11 @@ public class WorkshopViewer implements WorkshopFeign {
     @Override
     public JsonResponseEntity<WorkshopTreeNode> selectByCode(String code) {
         return JsonResponseEntity.success(Workshop.covert(service.selectByCode(code)));
+    }
+
+    @Override
+    public JsonResponseEntity<List<WorkshopTreeNode>> selectByCodes(List<String> codes) {
+        return JsonResponseEntity.success(Workshop.covert(service.selectByCodes(codes)));
     }
 
     @Operation(summary = "删除", description = "删除")

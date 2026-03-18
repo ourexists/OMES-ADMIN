@@ -24,7 +24,8 @@ public class Equip extends EraEntity {
 
     private String selfCode;
 
-    private Integer type;
+    /** 所属产品编号（关联 t_product.code），type 存产品 code */
+    private String type;
 
     private String workshopCode;
 

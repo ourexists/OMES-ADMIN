@@ -32,4 +32,6 @@ public interface WorkshopService extends IMyBatisPlusService<Workshop> {
     List<Workshop> queryChildBySelfCode(String workshopCode);
 
     Workshop selectByCode(String code);
+
+    List<Workshop> selectByCodes(List<String> codes);
 }

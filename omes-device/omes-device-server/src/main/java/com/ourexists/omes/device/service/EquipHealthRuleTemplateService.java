@@ -4,6 +4,7 @@
 
 package com.ourexists.omes.device.service;
 
+import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
 import com.ourexists.omes.device.model.EquipHealthRuleTemplateDto;
 import com.ourexists.omes.device.pojo.EquipHealthRuleTemplate;
 
@@ -12,7 +13,7 @@ import java.util.List;
 /**
  * 设备健康规则模板服务
  */
-public interface EquipHealthRuleTemplateService {
+public interface EquipHealthRuleTemplateService extends IMyBatisPlusService<EquipHealthRuleTemplate> {
 
     /**
      * 获取默认模板（内置默认规则，不查库）
@@ -32,5 +33,5 @@ public interface EquipHealthRuleTemplateService {
     /**
      * 查询所有模板列表
      */
-    List<EquipHealthRuleTemplateDto> list();
+    List<EquipHealthRuleTemplateDto> getAll();
 }
