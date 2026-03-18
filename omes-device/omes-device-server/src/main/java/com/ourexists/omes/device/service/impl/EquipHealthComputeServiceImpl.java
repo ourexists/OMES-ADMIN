@@ -123,7 +123,7 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
         // 生命周期维度扣分（使用年限、累计运行小时、启停总次数，考虑设备老化）
         double lifecycleDeduction = computeLifecycleDeduction(template, sn);
 
-        // 计算得分
+        // 计算得分（巡检维度在 portal 层聚合）
         int score = computeScore(template, alarmDeduction, lifecycleDeduction,
                 runDurationMinutes, onlineDurationMinutes, periodMinutes);
 
@@ -281,7 +281,7 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
     }
 
     /**
-     * 得分 = 100 - 报警扣分 - 生命周期扣分 - 运行率扣分 - 在线率扣分，再限制在 [0,100]
+     * 得分 = 100 - 报警扣分 - 生命周期扣分 - 运行率扣分 - 在线率扣分，再限制在 [0,100]（巡检维度在 portal 聚合）
      */
     private int computeScore(EquipHealthRuleTemplateDto t,
                              double alarmDeduction,

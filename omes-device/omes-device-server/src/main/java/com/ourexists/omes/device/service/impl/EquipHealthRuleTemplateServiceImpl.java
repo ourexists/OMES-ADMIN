@@ -59,6 +59,8 @@ public class EquipHealthRuleTemplateServiceImpl
         c.setStartStopCountThreshold(8000L);
         c.setStartStopCountPenaltyPer1000(0.2);
         c.setStartStopCountMaxDeduction(5);
+        c.setInspectionWeight(10);
+        c.setInspectionNoRecordPenalty(5);
         c.setHealthyThreshold(85);
         c.setAttentionThreshold(70);
         c.setWarningThreshold(50);

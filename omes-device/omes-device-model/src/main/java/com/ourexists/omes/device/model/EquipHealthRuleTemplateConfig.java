@@ -68,6 +68,12 @@ public class EquipHealthRuleTemplateConfig {
     @Schema(description = "启停总次数-单项扣分上限")
     private Integer startStopCountMaxDeduction = 5;
 
+    /** ========== 巡检维度 ========== */
+    @Schema(description = "巡检维度权重（满分100中占比，0表示不参与评分）")
+    private Integer inspectionWeight = 10;
+    @Schema(description = "周期内无巡检记录时的扣分（扣分上限不超过 inspectionWeight）")
+    private Integer inspectionNoRecordPenalty = 5;
+
     @Schema(description = "健康线")
     private Integer healthyThreshold = 85;
 

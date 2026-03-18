@@ -4,6 +4,7 @@
 
 package com.ourexists.omes.inspection.viewer;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
@@ -11,9 +12,9 @@ import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.omes.inspection.feign.InspectRecordFeign;
 import com.ourexists.omes.inspection.model.InspectRecordDto;
 import com.ourexists.omes.inspection.model.InspectRecordItemDto;
+import com.ourexists.omes.inspection.model.InspectRecordListByEquipPeriodQuery;
 import com.ourexists.omes.inspection.model.InspectRecordPageQuery;
 import com.ourexists.omes.inspection.model.InspectRecordSaveRequest;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ourexists.omes.inspection.pojo.InspectRecord;
 import com.ourexists.omes.inspection.pojo.InspectRecordItem;
 import com.ourexists.omes.inspection.service.InspectRecordItemService;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,6 +105,19 @@ public class InspectRecordViewer implements InspectRecordFeign {
         List<InspectRecord> records = service.listByTaskId(taskId);
         List<InspectRecordDto> list = InspectRecord.covert(records);
         fillItems(list);
+        return JsonResponseEntity.success(list);
+    }
+
+    @Override
+    @Operation(summary = "按设备ID与统计周期查询巡检记录（设备健康分巡检维度）")
+    @PostMapping("listByEquipIdAndPeriod")
+    public JsonResponseEntity<List<InspectRecordDto>> listByEquipIdAndPeriod(@RequestBody InspectRecordListByEquipPeriodQuery query) {
+        if (query == null || query.getEquipId() == null || query.getEquipId().isEmpty()) {
+            return JsonResponseEntity.success(Collections.emptyList());
+        }
+        List<InspectRecord> records = service.listByEquipIdAndRecordTimeBetween(
+                query.getEquipId(), query.getPeriodStart(), query.getPeriodEnd());
+        List<InspectRecordDto> list = InspectRecord.covert(records);
         return JsonResponseEntity.success(list);
     }
 

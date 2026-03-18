@@ -227,4 +227,15 @@ public class InspectRecordServiceImpl extends AbstractMyBatisPlusService<Inspect
         if (taskId == null || taskId.isEmpty()) return new ArrayList<>();
         return list(new LambdaQueryWrapper<InspectRecord>().eq(InspectRecord::getTaskId, taskId).orderByAsc(InspectRecord::getRecordTime));
     }
+
+    @Override
+    public List<InspectRecord> listByEquipIdAndRecordTimeBetween(String equipId, Date recordTimeStart, Date recordTimeEnd) {
+        if (equipId == null || equipId.isEmpty()) return new ArrayList<>();
+        LambdaQueryWrapper<InspectRecord> qw = new LambdaQueryWrapper<InspectRecord>()
+                .eq(InspectRecord::getEquipId, equipId)
+                .ge(recordTimeStart != null, InspectRecord::getRecordTime, recordTimeStart)
+                .le(recordTimeEnd != null, InspectRecord::getRecordTime, recordTimeEnd)
+                .orderByAsc(InspectRecord::getRecordTime);
+        return list(qw);
+    }
 }

@@ -203,6 +203,28 @@
             </div>
         </div>
 
+        <!-- 巡检维度 -->
+        <div class="health-section">
+            <div class="health-section-title">巡检维度</div>
+            <div class="health-section-body">
+                <div class="health-row">
+                    <span class="health-label">巡检权重</span>
+                    <div class="health-field">
+                        <input type="number" name="inspectionWeight" min="0" max="100" placeholder="10">
+                        <span class="unit">分（满分100中占比，0表示不参与）</span>
+                    </div>
+                </div>
+                <p class="health-param-desc">周期内无巡检记录时的扣分上限不超过本权重；有记录时按周期内巡检记录平均分折算扣分。</p>
+                <div class="health-row">
+                    <span class="health-label">无巡检记录扣分</span>
+                    <div class="health-field">
+                        <input type="number" name="inspectionNoRecordPenalty" min="0" placeholder="5">
+                        <span class="unit">分（周期内无记录时扣分，不超过巡检权重）</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 生命周期维度（设备老化） -->
         <div class="health-section">
             <div class="health-section-title" lang-i18n="equipHealth.sectionLifecycle">生命周期</div>
@@ -389,6 +411,8 @@
             document.querySelector("input[name=runRatioWeight]").value = c.runRatioWeight != null ? c.runRatioWeight : 30;
             document.querySelector("input[name=expectedRunRatio]").value = c.expectedRunRatio != null ? c.expectedRunRatio : 70;
             document.querySelector("input[name=onlineRatioWeight]").value = c.onlineRatioWeight != null ? c.onlineRatioWeight : 20;
+            document.querySelector("input[name=inspectionWeight]").value = c.inspectionWeight != null ? c.inspectionWeight : 10;
+            document.querySelector("input[name=inspectionNoRecordPenalty]").value = c.inspectionNoRecordPenalty != null ? c.inspectionNoRecordPenalty : 5;
             document.querySelector("input[name=lifecycleMaxDeduction]").value = c.lifecycleMaxDeduction != null ? c.lifecycleMaxDeduction : 15;
             document.querySelector("input[name=lifeYearThreshold]").value = c.lifeYearThreshold != null ? c.lifeYearThreshold : 5;
             document.querySelector("input[name=lifeYearPenaltyPerYear]").value = c.lifeYearPenaltyPerYear != null ? c.lifeYearPenaltyPerYear : 1;
@@ -415,6 +439,8 @@
                 runRatioWeight: parseInt(formEl.querySelector("input[name=runRatioWeight]").value, 10) || 30,
                 expectedRunRatio: parseInt(formEl.querySelector("input[name=expectedRunRatio]").value, 10) || 70,
                 onlineRatioWeight: parseInt(formEl.querySelector("input[name=onlineRatioWeight]").value, 10) || 20,
+                inspectionWeight: parseInt(formEl.querySelector("input[name=inspectionWeight]").value, 10) || 10,
+                inspectionNoRecordPenalty: parseInt(formEl.querySelector("input[name=inspectionNoRecordPenalty]").value, 10) || 5,
                 lifecycleMaxDeduction: parseInt(formEl.querySelector("input[name=lifecycleMaxDeduction]").value, 10) || 15,
                 lifeYearThreshold: parseInt(formEl.querySelector("input[name=lifeYearThreshold]").value, 10) || 5,
                 lifeYearPenaltyPerYear: parseFloat(formEl.querySelector("input[name=lifeYearPenaltyPerYear]").value) || 1,
