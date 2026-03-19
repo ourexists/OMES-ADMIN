@@ -44,6 +44,10 @@ public interface WorkshopFeign {
 
     JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto);
 
+    JsonResponseEntity<WorkshopConfigMeta2dDto> queryMeta2dConfig(@RequestParam String workshopId);
+
+    JsonResponseEntity<Boolean> setMeta2dConfig(@Validated @RequestBody WorkshopConfigMeta2dDto dto);
+
     JsonResponseEntity<WorkshopConfigCollectDto> queryConfigCollect(String workshopId);
 
     JsonResponseEntity<Boolean> setConfigCollect(@Validated @RequestBody WorkshopConfigCollectDto dto);

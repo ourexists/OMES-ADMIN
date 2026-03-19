@@ -14,9 +14,11 @@ import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.Workshop;
 import com.ourexists.omes.device.pojo.WorkshopAssign;
 import com.ourexists.omes.device.pojo.WorkshopConfigCollect;
+import com.ourexists.omes.device.pojo.WorkshopConfigMeta2d;
 import com.ourexists.omes.device.pojo.WorkshopConfigScada;
 import com.ourexists.omes.device.service.WorkshopAssignService;
 import com.ourexists.omes.device.service.WorkshopConfigCollectService;
+import com.ourexists.omes.device.service.WorkshopConfigMeta2dService;
 import com.ourexists.omes.device.service.WorkshopConfigScadaService;
 import com.ourexists.omes.device.service.WorkshopService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,6 +50,9 @@ public class WorkshopViewer implements WorkshopFeign {
 
     @Autowired
     private WorkshopConfigCollectService workshopConfigCollectService;
+
+    @Autowired
+    private WorkshopConfigMeta2dService configMeta2dService;
 
     @Operation(summary = "查询所有树", description = "查询所有树")
     @GetMapping("selectTree")
@@ -154,6 +159,19 @@ public class WorkshopViewer implements WorkshopFeign {
     @PostMapping("setScadaConfig")
     public JsonResponseEntity<Boolean> setScadaConfig(@Validated @RequestBody WorkshopConfigScadaDto dto) {
         configScadaService.addOrUpdate(dto);
+        return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "场景Meta2d组态配置", description = "场景Meta2d组态配置")
+    @GetMapping("queryMeta2dConfig")
+    public JsonResponseEntity<WorkshopConfigMeta2dDto> queryMeta2dConfig(@RequestParam String workshopId) {
+        return JsonResponseEntity.success(WorkshopConfigMeta2d.covert(configMeta2dService.queryByWorkshop(workshopId)));
+    }
+
+    @Operation(summary = "设置场景Meta2d组态配置", description = "设置场景Meta2d组态配置")
+    @PostMapping("setMeta2dConfig")
+    public JsonResponseEntity<Boolean> setMeta2dConfig(@Validated @RequestBody WorkshopConfigMeta2dDto dto) {
+        configMeta2dService.addOrUpdate(dto);
         return JsonResponseEntity.success(true);
     }
 

@@ -167,6 +167,7 @@
                 var code = item.code != null ? item.code : (item.id || '');
                 $('#type').append(new Option(item.name || code, code));
             });
+            form.render('select');
             if (id != null) {
                 get(router.equip_id, {id: id}, function (res) {
                     current_row_data = res && res.data != null ? res.data : res;

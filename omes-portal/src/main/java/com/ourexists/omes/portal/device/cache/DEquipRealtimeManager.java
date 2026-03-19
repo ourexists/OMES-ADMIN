@@ -42,9 +42,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     private NotifyFeign notifyFeign;
 
     @Autowired
-    private TenantFeign tenantFeign;
-
-    @Autowired
     private EquipRecordRunFeign equipRecordRunFeign;
 
     @Autowired
