@@ -17,6 +17,12 @@
     <script src="../static/fullscreen/fullscreen.js"></script>
 </head>
 <style>
+    html, body{
+        height: 100%;
+        margin: 0;
+        overflow: hidden; /* iframe 内避免双滚动 */
+    }
+
     .kpi-card {
         text-align: center;
         padding: 20px 0;
@@ -48,6 +54,12 @@
 
     .oemes-container {
         background: var(--bg-page, #f3f5f8);
+        height: 100%;
+        overflow: hidden;
+    }
+
+    #statusChart, #trendChart{
+        width: 100%;
     }
 </style>
 <body>
@@ -258,6 +270,20 @@
             initCountChart();
         }, 200)
 
+        const resizeCharts = () => {
+            try {
+                statusChart?.resize?.()
+            } catch (e) {}
+            try {
+                trendChart?.resize?.()
+            } catch (e) {}
+        }
+
+        // iframe 尺寸变化时重绘图表
+        window.addEventListener('resize', resizeCharts)
+        // 首次初始化完成后再做一次，避免初始高度测不准
+        setTimeout(resizeCharts, 300)
+
         setInterval(() => {
             reloadCount();
             reloadTrendChart();
@@ -439,6 +465,16 @@
             chartLock = false;
         }
     }
+
+    // 释放图表资源，避免重复打开 iframe 后内存持续增长
+    window.addEventListener('unload', () => {
+        try {
+            statusChart?.dispose?.()
+        } catch (e) {}
+        try {
+            trendChart?.dispose?.()
+        } catch (e) {}
+    })
 </script>
 
 </body>

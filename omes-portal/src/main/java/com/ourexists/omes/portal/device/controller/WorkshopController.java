@@ -152,6 +152,18 @@ public class WorkshopController {
         return workshopFeign.setScadaConfig(dto);
     }
 
+    @Operation(summary = "场景Meta2d组态配置")
+    @GetMapping("queryMeta2dConfig")
+    public JsonResponseEntity<WorkshopConfigMeta2dDto> queryMeta2dConfig(@RequestParam String workshopId) {
+        return workshopFeign.queryMeta2dConfig(workshopId);
+    }
+
+    @Operation(summary = "设置场景Meta2d组态配置")
+    @PostMapping("setMeta2dConfig")
+    public JsonResponseEntity<Boolean> setMeta2dConfig(@Validated @RequestBody WorkshopConfigMeta2dDto dto) {
+        return workshopFeign.setMeta2dConfig(dto);
+    }
+
     @Operation(summary = "设置设备配置")
     @GetMapping("getScadaUrl")
     public JsonResponseEntity<ScadaUrlDto> getScadaUrl(@RequestParam String workshopId) {

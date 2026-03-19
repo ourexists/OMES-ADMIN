@@ -374,6 +374,16 @@ public class ViewController {
         return "workshop_scada";
     }
 
+    @RequestMapping("/view/workshop_meta2d_edit")
+    public String workshop_meta2d_edit() {
+        return "workshop_meta2d_edit";
+    }
+
+    @RequestMapping("/view/workshop_meta2d_view")
+    public String workshop_meta2d_view() {
+        return "workshop_meta2d_view";
+    }
+
     @RequestMapping("/view/equip_screen")
     public String equip_screen() {
         return "equip_screen";
