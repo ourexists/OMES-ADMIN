@@ -17,8 +17,7 @@ public class CacheConfig {
     public Caffeine<Object, Object> caffeineConfig() {
         return Caffeine.newBuilder()
                 .initialCapacity(100)
-                .maximumSize(5000)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(50000)
                 .recordStats();
     }
 
