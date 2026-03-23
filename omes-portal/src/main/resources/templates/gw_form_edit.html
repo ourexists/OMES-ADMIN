@@ -41,6 +41,20 @@
                        lang-i18n="common.placeholder">
             </div>
         </div>
+        <div class="layui-form-item" id="username-form-item" style="display: none;">
+            <label class="layui-form-label">账户名</label>
+            <div class="layui-input-block">
+                <input type="text" name="username" id="username-input" autocomplete="off" class="layui-input"
+                       lang-i18n="common.placeholder">
+            </div>
+        </div>
+        <div class="layui-form-item" id="password-form-item" style="display: none;">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-block">
+                <input type="password" name="password" id="password-input" autocomplete="off" class="layui-input"
+                       lang-i18n="common.placeholder">
+            </div>
+        </div>
         <div class="layui-form-item" id="suffix-form-item" style="display: none;">
             <label class="layui-form-label"><span id="topic-required-star" style="color:red;display:none">*</span> <span
                     lang-i18n="mqtt.topic">订阅主题</span></label>
@@ -99,9 +113,11 @@
         function toggleByProtocol(protocol) {
             var p = protocol ? String(protocol).toLowerCase() : '';
             var isMqtt = p === 'mqtt' || p === 'tc_mqtt';
+            var needAuth = p === 'mqtt' || p === 'tc_mqtt' || p === 'rest' || p === 'wincc';
             var isPolling = isPollingProtocol(p);
             var isS7 = p === 's7';
             $('#suffix-form-item').toggle(isMqtt);
+            $('#username-form-item, #password-form-item').toggle(needAuth);
             $('#polling-form-item').toggle(isPolling);
             $('.s7-only-item').toggle(isS7);
             $('#collect-enabled-form-item, #collect-interval-form-item, #collect-cron-form-item').toggle(!isMqtt);
