@@ -74,7 +74,7 @@ public class TcMqttEquipDataParser implements EquipDataParser {
         target.run();
 
         Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
-        if (runVal != null && runVal == 1) {
+        if (runVal == null || runVal == 1) {
             target.run();
         } else {
             target.stop();
