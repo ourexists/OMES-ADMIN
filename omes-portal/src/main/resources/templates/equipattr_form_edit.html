@@ -496,13 +496,14 @@
             '<div class="card-row"><span>' + protocolLabel + '</span><span>' + (d.protocol || '-') + '</span></div>'
         );
         var p = (d.protocol || '').toLowerCase();
+        var protocolNormalized = p.replace(/[\s_-]/g, '');
         var supportsControl = (p.indexOf('s7') >= 0 || p.indexOf('modbus') >= 0 || p.indexOf('opc') >= 0);
         if (supportsControl) {
             $('#control-config-box').show();
         } else {
             $('#control-config-box').hide();
         }
-        var showDeviceIdMap = (p === 'mqtt' || p === 'tcmqtt');
+        var showDeviceIdMap = (protocolNormalized === 'mqtt' || protocolNormalized === 'tcmqtt');
         $('#deviceIdMap-wrap').toggle(showDeviceIdMap);
         renderMapExamples(d.protocol);
     }

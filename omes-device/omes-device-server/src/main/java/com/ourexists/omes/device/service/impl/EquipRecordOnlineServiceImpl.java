@@ -57,6 +57,7 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
         EquipRecordOnline last = this.getOne(new LambdaQueryWrapper<EquipRecordOnline>()
                 .eq(EquipRecordOnline::getSn, dto.getSn())
                 .orderByDesc(EquipRecordOnline::getStartTime, EquipRecordOnline::getId)
+                .last("limit 1")
         );
         if (last != null) {
             //处理中间服务中断
