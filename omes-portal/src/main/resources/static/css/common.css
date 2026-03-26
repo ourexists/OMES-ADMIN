@@ -65,12 +65,15 @@ html, body {
 .layui-input[disabled],
 .layui-textarea[disabled],
 .layui-select[disabled] {
-    background-color: var(--bg-disabled);
-    border: 1px solid var(--border-disabled);
+    /* 禁用态改得更“清爽”一些：贴近卡片底色，减少灰块感 */
+    background-color: var(--bg-panel-alt);
+    border: 1px solid var(--border-base);
     color: var(--text-disabled);
     cursor: not-allowed;
 
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .06);
+    box-shadow: none;
+    background-image: none;
+    background-size: 0 0;
 }
 
 .layui-input[disabled]::placeholder {
@@ -81,8 +84,8 @@ html, body {
 .layui-input[disabled]:focus,
 .layui-textarea[disabled]:hover,
 .layui-textarea[disabled]:focus {
-    border-color: var(--border-disabled);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .04);
+    border-color: var(--border-base);
+    box-shadow: none;
     background-size: 0;
 }
 
