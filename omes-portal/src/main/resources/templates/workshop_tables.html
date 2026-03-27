@@ -98,6 +98,10 @@
         var s = (typeof layui !== 'undefined' && layui.url && layui.url()) ? layui.url().search : {};
         return (s.mode || '') === 'picker';
     })();
+    var isSinglePicker = (function () {
+        var s = (typeof layui !== 'undefined' && layui.url && layui.url()) ? layui.url().search : {};
+        return String(s.single || s.singlePicker || '') === '1' || String(s.single || '').toLowerCase() === 'true';
+    })();
     var pickerConfirmCallback = null;
 
     window.setPickerCallback = function (cb) {
@@ -159,6 +163,29 @@
                     $('#picker-cancel').on('click', function () {
                         parent.layer.close(parent.layer.getFrameIndex(window.name));
                     });
+
+                    // 单选 picker：任意勾选一个后，自动取消其他勾选
+                    if (isSinglePicker) {
+                        // 由于 treeTable 的 DOM 渲染是异步的，延迟一帧绑定
+                        setTimeout(function () {
+                            var $container = $('#tb-common');
+                            // 避免重复绑定
+                            $container.off('change.moSinglePicker');
+                            $container.on('change.moSinglePicker', 'input[type="checkbox"]', function () {
+                                if (!this.checked) return;
+                                var $all = $container.find('.layui-table-body input[type="checkbox"]');
+                                $all.not(this).prop('checked', false);
+                                try {
+                                    // layui 的 checkbox 样式同步（如果可用）
+                                    if (layui && layui.form && typeof layui.form.render === 'function') {
+                                        layui.form.render('checkbox');
+                                    }
+                                } catch (e) {
+                                    // ignore
+                                }
+                            });
+                        }, 0);
+                    }
                     return;
                 }
                 // 行模式

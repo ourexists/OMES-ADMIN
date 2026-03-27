@@ -78,50 +78,67 @@ public class MPSTFServiceImpl extends AbstractMyBatisPlusService<MPSTFMapper, MP
         List<MPSTF> tfs = this.selectByMPSId(mpstf.getMpsId());
         MPSStatusEnum mpsStatusEnum = null;
 
-        //判断当前流程位置
-        int index = -1;
-        for (int i = 0; i < tfs.size(); i++) {
-            if (tfs.get(i).getId().equals(mpstf.getId())) {
-                index = i;
-                break;
+        java.util.Map<String, MPSTF> selfCodeToMpstf = new java.util.HashMap<>();
+        for (MPSTF tf : tfs) {
+            if (tf != null && tf.getSelfCode() != null) {
+                selfCodeToMpstf.put(tf.getSelfCode(), tf);
             }
         }
 
-
-        if (mpstfStatus.equals(MPSTFStatusEnum.EXEC)) {
-            //如果是第一条.判断计划状态
-            if (index == 0) {
-                MPS mps = mpsService.getById(mpstf.getMpsId());
-                if (mps == null) {
-                    throw new BusinessException("${common.msg.data.error}");
-                }
-                if (!mps.getStatus().equals(MPSStatusEnum.WAIT_EXEC.getCode())
-                        && !mps.getStatus().equals(MPSStatusEnum.EXECING.getCode())) {
-                    throw new BusinessException("${mps.msg.status.nomatch}");
-                }
-                if (mps.getStatus().equals(MPSStatusEnum.WAIT_EXEC.getCode())) {
-                    mpsStatusEnum = MPSStatusEnum.EXECING;
-                }
-            } else {
-                MPSTF pre = tfs.get(index - 1);
-                if (!MPSTFStatusEnum.COMPLETE.getCode().equals(pre.getStatus())) {
-                    throw new BusinessException("${mpstf.msg.pre.nocomplete}");
+        // pre 存储格式：逗号分隔的前置工序 selfCode 列表
+        java.util.List<String> preCodes = new java.util.ArrayList<>();
+        if (mpstf.getPre() != null && !mpstf.getPre().trim().isEmpty()) {
+            String[] parts = mpstf.getPre().split(",");
+            for (String p : parts) {
+                if (p == null) continue;
+                String s = p.trim();
+                if (!s.isEmpty()) {
+                    preCodes.add(s);
                 }
             }
-//            if (TFTypeEnum.QA.getCode().equals(mpstf.getType())) {
-//                QA qa = new QA()
-//                        .setMpsId(mpstf.getMpsId())
-//                        .setMpsTfId(mpstf.getId())
-//                        .setResult(QAResultEnum.NOT.getCode());
-//                //目前单流程只支持一条
-//                qaService.remove(new LambdaUpdateWrapper<QA>().eq(QA::getMpsTfId, mpstf.getId()));
-//                if (!qaService.save(qa)) {
-//                    throw new BusinessException("${common.msg.error}");
-//                }
-//            }
-        } else if (mpstfStatus.equals(MPSTFStatusEnum.COMPLETE)) {
-            //最后一条
-            if (tfs.size() == index + 1) {
+        }
+
+        Integer completeCode = MPSTFStatusEnum.COMPLETE.getCode();
+
+        // 并行语义：当前工序必须等待“所有前置”完成(AND)
+        if (mpstfStatus.equals(MPSTFStatusEnum.EXEC) || mpstfStatus.equals(MPSTFStatusEnum.COMPLETE)) {
+            if (preCodes.isEmpty()) {
+                // 起点工序：只在 EXEC 时校验计划状态
+                if (mpstfStatus.equals(MPSTFStatusEnum.EXEC)) {
+                    MPS mps = mpsService.getById(mpstf.getMpsId());
+                    if (mps == null) {
+                        throw new BusinessException("${common.msg.data.error}");
+                    }
+                    if (!mps.getStatus().equals(MPSStatusEnum.WAIT_EXEC.getCode())
+                            && !mps.getStatus().equals(MPSStatusEnum.EXECING.getCode())) {
+                        throw new BusinessException("${mps.msg.status.nomatch}");
+                    }
+                    if (mps.getStatus().equals(MPSStatusEnum.WAIT_EXEC.getCode())) {
+                        mpsStatusEnum = MPSStatusEnum.EXECING;
+                    }
+                }
+            } else {
+                for (String preCode : preCodes) {
+                    MPSTF pre = selfCodeToMpstf.get(preCode);
+                    if (pre == null || !completeCode.equals(pre.getStatus())) {
+                        throw new BusinessException("${mpstf.msg.pre.nocomplete}");
+                    }
+                }
+            }
+        }
+
+        if (mpstfStatus.equals(MPSTFStatusEnum.COMPLETE)) {
+            // 如果其它工序都已经完成，则当前工序完成后，整条工艺完成
+            boolean othersComplete = true;
+            for (MPSTF tf : tfs) {
+                if (tf == null) continue;
+                if (mpstfId.equals(tf.getId())) continue;
+                if (!completeCode.equals(tf.getStatus())) {
+                    othersComplete = false;
+                    break;
+                }
+            }
+            if (othersComplete) {
                 mpsStatusEnum = MPSStatusEnum.COMPLETE;
             }
         }

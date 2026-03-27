@@ -1,0 +1,1 @@
+import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`bom_tree`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/bom_tree`}))}});export{i as default};

@@ -1,0 +1,181 @@
+<!--
+  ~ Copyright (c) 2026.
+  -->
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
+
+    <!-- Meta2d 本地资源（请将 Meta2d dist 放到 static/vendor/meta2d/ 下） -->
+    <link rel="stylesheet" href="../static/vendor/meta2d/meta2d.css">
+
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/layui/layui.js"></script>
+    <script src="../static/js/i18n.js"></script>
+    <script src="../static/js/global.js"></script>
+    <script src="../static/fullscreen/fullscreen.js"></script>
+    <script src="../static/vendor/meta2d/meta2d.min.js"></script>
+</head>
+<style>
+    .view-page {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        box-sizing: border-box;
+        gap: 10px;
+    }
+    .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border: 1px solid #e4e6eb;
+        border-radius: 6px;
+        background: var(--bg-card, #fff);
+    }
+    .canvas-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        border: 1px solid #e4e6eb;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f7f8fa;
+    }
+    #meta2dView {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+<body>
+<div class="view-page">
+    <div class="topbar">
+        <div>
+            <span class="layui-badge layui-bg-green">Meta2d 预览</span>
+            <span class="layui-badge-rim" id="statusText">Loading...</span>
+        </div>
+        <div>
+            <button class="layui-btn layui-btn-sm layui-btn-primary" id="btnFullscreen">全屏</button>
+            <button class="layui-btn layui-btn-sm layui-btn-primary" id="btnReload">重载</button>
+        </div>
+    </div>
+    <div class="canvas-wrap" id="canvasWrap">
+        <div id="meta2dView"></div>
+    </div>
+</div>
+
+<script th:inline="none">
+    var meta2d = null;
+    var cfg = null;
+    var timer = null;
+
+    function queryParam(name) {
+        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return decodeURIComponent(r[2]);
+        return null;
+    }
+
+    function ensureMeta2d() {
+        if (meta2d) return true;
+        if (typeof Meta2d === 'undefined') {
+            $('#statusText').text('Meta2d 资源缺失');
+            layer.alert('未找到 Meta2d 资源：请将 meta2d.min.js/meta2d.css 放到 static/vendor/meta2d/ 下');
+            return false;
+        }
+        meta2d = new Meta2d('meta2dView');
+        return true;
+    }
+
+    function buildCollectDict(rows) {
+        var dict = {};
+        if (!rows || !rows.length) return dict;
+        rows.forEach(function (r) {
+            if (!r) return;
+            var k = r.map || r.name;
+            if (!k) return;
+            dict[k] = r.value;
+        });
+        return dict;
+    }
+
+    function applyBindings(dict) {
+        if (!cfg || !cfg.bindings || !cfg.bindings.length) return;
+        cfg.bindings.forEach(function (b) {
+            if (!b || !b.penId || !b.prop) return;
+            if (b.sourceType !== 'WORKSHOP_ATTR') return;
+            var v = dict[b.sourceKey];
+            if (v == null) v = '';
+            try {
+                // 常见 Meta2d API：setValue({id, ...props})
+                var patch = { id: b.penId };
+                patch[b.prop] = v;
+                if (meta2d && typeof meta2d.setValue === 'function') {
+                    meta2d.setValue(patch);
+                }
+            } catch (e) {
+            }
+        });
+    }
+
+    function stopTimer() {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+    }
+
+    function startTimer(workshopCode) {
+        stopTimer();
+        var interval = (cfg && cfg.refreshIntervalSec) ? cfg.refreshIntervalSec : 2;
+        interval = Math.max(1, parseInt(interval, 10) || 2);
+        timer = setInterval(function () {
+            get(router.workshop_realtime_collect, { workshopCode: workshopCode }, function (rows) {
+                var dict = buildCollectDict(rows);
+                applyBindings(dict);
+                $('#statusText').text('Running (' + interval + 's)');
+            });
+        }, interval * 1000);
+    }
+
+    function loadAll() {
+        var workshopId = queryParam('workshopId');
+        var workshopCode = queryParam('workshopCode'); // 允许直接用 code
+        if (!workshopId && !workshopCode) {
+            $('#statusText').text('缺少参数');
+            return;
+        }
+        if (!ensureMeta2d()) return;
+
+        // 如果没有 workshopCode，但我们只有 workshopId，MVP 先用一个接口返回 collect 需要 workshopCode。
+        // 因此建议预览时优先传 workshopCode；编辑页默认传 workshopId，后续可在后端补一个 byId -> code 的桥接接口。
+        if (!workshopCode) {
+            $('#statusText').text('请使用 workshopCode 预览');
+        }
+
+        if (workshopId) {
+            get(router.workshop_config_meta2d, { workshopId: workshopId }, function (dto) {
+                cfg = (dto && dto.meta2dConfig) ? dto.meta2dConfig : null;
+                if (!cfg || !cfg.canvas) {
+                    $('#statusText').text('未配置画布');
+                    return;
+                }
+                try { meta2d.open(cfg.canvas); } catch (e) { }
+                if (workshopCode) startTimer(workshopCode);
+            });
+        }
+    }
+
+    layui.use(function () {
+        var fullscreen = new FullScreen({ elem: $('#canvasWrap').get(0) });
+        $('#btnFullscreen').on('click', function () { fullscreen.toggle(); });
+        $('#btnReload').on('click', function () { loadAll(); });
+        loadAll();
+    });
+</script>
+</body>
+</html>
+

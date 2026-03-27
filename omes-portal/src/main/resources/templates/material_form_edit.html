@@ -6,15 +6,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
+    <style>
+        .material-form-edit {
+            box-sizing: border-box;
+            min-height: 100%;
+            padding: 20px 24px 24px;
+        }
+
+        .material-form-edit .layui-form-pane .layui-form-item {
+            margin-bottom: 14px;
+        }
+
+        .material-form-edit__actions {
+            margin-top: 4px;
+            margin-bottom: 0 !important;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-base);
+        }
+
+        .material-form-edit__actions .layui-input-block {
+            text-align: right;
+        }
+
+        .material-form-edit__actions .layui-btn + .layui-btn {
+            margin-left: 10px;
+        }
+    </style>
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
 </head>
 <body>
-<div style="padding: 16px;">
+<div class="material-form-edit">
     <form class="layui-form layui-form-pane" action="" id="common-edit-form" lay-filter="common-edit-form">
         <div class="layui-form-item">
             <label class="layui-form-label" lang-i18n="material.name"></label>
@@ -38,10 +65,12 @@
                 </select>
             </div>
         </div>
-        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
-            <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
-            </button>
-            <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+        <div class="layui-form-item material-form-edit__actions">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="common-edit-button" lang-i18n="common.msg.confirm">确认
+                </button>
+                <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.msg.reset">重置</button>
+            </div>
         </div>
     </form>
 </div>
@@ -55,15 +84,17 @@
         if (mc == null) {
             var param = {
                 "requirePage": false
-            }
+            };
             post(router.mc_page, param, function (result) {
                 mc = result;
             });
         }
-        $.each(mc, function (index, item) {
-            //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
-            $('#classifyCode').append(new Option(item.name, item.selfCode));//往下拉菜单里添加元素
-        })
+        if (mc != null) {
+            $.each(mc, function (index, item) {
+                //option  第一个参数是页面显示的值，第二个参数是传递到后台的值
+                $('#classifyCode').append(new Option(item.name, item.selfCode));//往下拉菜单里添加元素
+            });
+        }
         form.render();
 
         if (current_row_data != null) {
@@ -72,16 +103,17 @@
                 "selfCode": current_row_data.selfCode,
                 "classifyCode": current_row_data.classifyCode,
             });
-            if (current_row_data.selfCode !== "") {
-                $(".lay-unable-edit").attr("disabled", "block");
+            if (current_row_data.selfCode != null && current_row_data.selfCode !== "") {
+                $(".lay-unable-edit").prop("disabled", true);
+                form.render();
             }
         } else {
             form.val("common-edit-form", {
                 "name": "",
-                "code": "",
+                "selfCode": "",
                 "classifyCode": ""
             });
-            current_row_data = {}
+            current_row_data = {};
         }
         // 提交事件
         form.on('submit(common-edit-button)', function (data) {

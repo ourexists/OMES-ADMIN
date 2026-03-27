@@ -13,6 +13,10 @@
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
     <style>
+        html, body {
+            overflow-x: hidden; /* 防止横向溢出导致滚动条出现 */
+        }
+
         table {
             table-layout: fixed;
             word-break: break-all;
@@ -21,185 +25,373 @@
         td {
             overflow: auto;
         }
+
+        /* MO 表单页 - 电商风格（卡片化/统一间距/强调信息层级） */
+        .mo-add-page {
+            padding: 16px;
+            /* 更干净的浅色底（比纯 bg-page 更柔和） */
+            background: linear-gradient(180deg, var(--bg-panel-alt) 0%, var(--bg-page) 100%);
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-sizing: border-box;
+        }
+
+        .mo-add-formCard {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .mo-add-formCard .layui-form-label {
+            font-weight: 700;
+            color: var(--text-sub);
+        }
+
+        .mo-add-required {
+            color: var(--status-alarm, #f43f5e);
+            font-weight: 800;
+            margin-left: 4px;
+        }
+
+        /* 表单区域更“舒适”的布局：留白更大、输入框更圆润 */
+        .mo-add-formCard .layui-form-item {
+            margin-bottom: 18px;
+        }
+
+        .mo-add-formCard .layui-form-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* desktop 下两列之间留一点空隙 */
+        .mo-add-formCard .layui-inline {
+            margin-right: 18px;
+        }
+
+        .mo-add-formCard .layui-input,
+        .mo-add-formCard .layui-textarea {
+            border-radius: 10px;
+            height: 40px;
+        }
+
+        .mo-add-formCard .layui-input-wrap {
+            border-radius: 10px;
+        }
+
+        /* 窄屏：每行只放一个字段，避免挤压导致视觉不舒服或超出屏幕 */
+        @media (max-width: 768px) {
+            .mo-add-formCard .layui-inline {
+                float: none;
+                display: block;
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+
+            .mo-add-formCard .layui-input-block,
+            .mo-add-formCard .layui-input-inline {
+                width: 100%;
+            }
+        }
+
+        .mo-add-sectionCard {
+            margin: 14px 0;
+        }
+
+        .mo-add-sectionCard .layui-table-view {
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            box-shadow: var(--shadow-card-layui);
+            overflow: hidden;
+            background: var(--bg-panel);
+        }
+
+        .mo-add-sectionCard .layui-table-cell {
+            height: 50px;
+            line-height: 40px;
+        }
+
+        .mo-add-step-actions {
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .mo-add-next-btn,
+        .mo-add-prev-btn {
+            border-radius: 999px;
+            padding: 0 22px;
+            min-width: 120px;
+        }
+
+        .mo-add-prev-btn {
+            min-width: 110px;
+        }
+
+        .mo-add-successCard {
+            position: relative;
+        }
+
+        .mo-add-success-content {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .mo-add-success-title {
+            font-size: 24px;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-top: 30px;
+        }
+
+        .mo-add-success-icon {
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            background: var(--status-running-legacy);
+            padding: 20px;
+            line-height: 80px;
+            box-shadow: 0 10px 26px rgba(16, 185, 129, 0.35);
+        }
+
+        .mo-add-success-close {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        /* Layui carousel 会把每个 step pane 以 absolute + height:100% 方式叠放，
+           导致内部内容（例如 tb-line-detail）无法撑开父容器高度。
+           这里只对当前激活的 pane 覆盖，让其随内容自适应高度。 */
+        #stepForm > *[carousel-item] {
+            overflow: visible !important;
+            background: var(--bg-panel); /* carousel 背景改白色 */
+        }
+
+        #stepForm {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            max-width: 100%;
+        }
+
+        /* steps/carousel 在一些布局下容易把内部元素撑宽，这里强制限制在屏幕宽度内 */
+        .mo-add-page,
+        .mo-add-page * {
+            box-sizing: border-box;
+        }
+
+        .mo-add-page .layui-carousel,
+        .mo-add-page .layui-carousel-inner,
+        .mo-add-page .layui-carousel > div[carousel-item] {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .mo-add-sectionCard .layui-table-view {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* 允许表格在自身容器内滚动，但不允许把横向滚动“抛”到页面 */
+        .mo-add-sectionCard .layui-table-body {
+            overflow-x: auto;
+        }
+
+        #stepForm > *[carousel-item] > .layui-this {
+            position: relative !important;
+            height: auto !important;
+            background: var(--bg-panel);
+        }
     </style>
 </head>
 <body>
-<div class="layui-fluid">
-    <div class="layui-card">
-        <div class="layui-card-body" style="padding: 16px;">
-            <div class="layui-carousel" id="stepForm" lay-filter="stepForm">
-                <div carousel-item>
-                    <div style="padding: 16px;">
-                        <form class="layui-form layui-form-pane" action="" id="line-edit-form"
-                              lay-filter="line-edit-form">
-                            <div class="layui-form-item">
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="common.order.code"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="selfCode" autocomplete="off"
-                                               class="layui-input lay-unable-edit era-detail-disabled"
-                                               lang-i18n="common.placeholder">
-                                    </div>
-                                </div>
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="common.tenantId"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="tenantId" autocomplete="off"
-                                               class="layui-input era-detail-disabled" lang-i18n="common.placeholder">
-                                    </div>
-                                </div>
+<div class="mo-add-page">
+    <div class="layui-carousel" id="stepForm" lay-filter="stepForm">
+        <div carousel-item>
+            <form class="layui-form layui-form-pane mo-add-formCard" action="" id="line-edit-form"
+                  lay-filter="line-edit-form">
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="common.order.code"></label>
+                    <div class="layui-input-block">
+                        <input type="text" name="selfCode" autocomplete="off"
+                               class="layui-input lay-unable-edit era-detail-disabled"
+                               lang-i18n="mo.order.code.autoGenerate">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">所属场景</label>
+                        <div class="layui-input-block">
+                            <!-- 旧字段名 tenantId：后端仍按“编号”传，但 UI 含义改为“场景编号” -->
+                            <input type="hidden" name="tenantId" id="sceneCode" autocomplete="off">
+                            <input type="text" id="sceneName" autocomplete="off"
+                                   class="layui-input era-detail-disabled" disabled>
+                        </div>
+                    </div>
+                    <div class="layui-inline era-detail-hidden">
+                        <button type="button" id="form-select-scene-btn"
+                                class="layui-btn layui-btn-primary layui-border-blue "
+                                style="height: 34px; line-height: 34px;"
+                        >选择场景
+                        </button>
+                    </div>
+                </div>
 
-                            </div>
-                            <div class="layui-form-item">
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="bom.name"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="productName" autocomplete="off" lay-verify="required"
-                                               class="layui-input" lang-i18n="common.placeholder" disabled>
-                                    </div>
-                                </div>
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="bom.code"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="productCode" autocomplete="off" lay-verify="required"
-                                               class="layui-input" lang-i18n="common.placeholder" disabled>
-                                    </div>
-                                </div>
-                                <div class="layui-inline era-detail-hidden">
-                                    <button type="button" id="form-select-bom-btn"
-                                            class="layui-btn layui-btn-primary layui-border-blue "
-                                            lang-i18n="select.bom"></button>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="mo.num"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="num" id="num" autocomplete="off" lay-verify="required"
-                                               class="layui-input era-detail-disabled" lang-i18n="common.placeholder"
-                                               onKeyUp="this.value = input_limit_int(this.value)">
-                                    </div>
-                                </div>
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="mo.execTime"></label>
-                                    <div class="layui-input-inline layui-input-wrap">
-                                        <div class="layui-input-prefix">
-                                            <i class="layui-icon layui-icon-date"></i>
-                                        </div>
-                                        <input type="text" class="layui-input" id="execTime" name="execTime"
-                                               lay-verify="required">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <div class="layui-inline" id="weight-input">
-                                    <label class="layui-form-label" lang-i18n="mo.weight"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="weight" id="weight" autocomplete="off"
-                                               lay-verify="required"
-                                               class="layui-input era-detail-disabled" lang-i18n="common.placeholder"
-                                               onKeyUp="this.value = input_limit_float(this.value)">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <table class="layui-hide" id="tb-line-detail"></table>
-                            </div>
-                            <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 10%">
-                                <div class="layui-input-block">
-                                    <button class="layui-btn" id="formStep" lay-submit lay-filter="formStep"
-                                            lang-i18n="common.step.next">
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div style="padding: 16px;">
-                        <form class="layui-form layui-form-pane" action="" id="devg-form"
-                              lay-filter="devg-form">
-                            <div class="layui-form-item">
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="devg.name"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="devgName" autocomplete="off" placeholder=""
-                                               disabled class="layui-input">
-                                    </div>
-                                </div>
-                                <div class="layui-inline" style="display:none">
-                                    <div class="layui-input-block">
-                                        <input type="text" name="devgId" autocomplete="off" placeholder="" disabled
-                                               class="layui-input">
-                                    </div>
-                                </div>
-                                <div class="layui-inline era-detail-hidden">
-                                    <button type="button" id="form-select-devg-btn"
-                                            class="layui-btn layui-btn-primary layui-border-blue "
-                                            lang-i18n="select.devg"></button>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <table class="layui-hide" id="tb-devg-detail"></table>
-                            </div>
-                            <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 10%">
-                                <div class="layui-input-block">
-                                    <button type="button" class="layui-btn pre"
-                                            lang-i18n="common.step.last"></button>
-                                    <button class="layui-btn" lay-submit lay-filter="formStep2"
-                                            lang-i18n="common.step.next">
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div style="padding: 16px;">
-                        <form class="layui-form layui-form-pane" action="" id="tf-form"
-                              lay-filter="tf-form">
-                            <div class="layui-form-item">
-                                <div class="layui-inline">
-                                    <label class="layui-form-label" lang-i18n="line.name"></label>
-                                    <div class="layui-input-block">
-                                        <input type="text" name="line" autocomplete="off" placeholder="" disabled
-                                               class="layui-input">
-                                    </div>
-                                </div>
-                                <div class="layui-inline" style="display:none">
-                                    <div class="layui-input-block">
-                                        <input type="text" name="lineCode" autocomplete="off" placeholder="" disabled
-                                               class="layui-input">
-                                    </div>
-                                </div>
-                                <div class="layui-inline era-detail-hidden">
-                                    <button type="button" id="form-select-line-btn"
-                                            class="layui-btn layui-btn-primary layui-border-blue "
-                                            lang-i18n="select.line"></button>
-                                </div>
-                            </div>
-                            <div class="layui-form-item">
-                                <table class="layui-hide" id="tb-tf-detail"></table>
-                            </div>
-                            <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 10%">
-                                <div class="layui-input-block">
-                                    <button type="button" class="layui-btn pre"
-                                            lang-i18n="common.step.last"></button>
-                                    <button class="layui-btn" lay-submit lay-filter="formStep3"
-                                            lang-i18n="common.complete">
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div style="padding: 16px;">
-                        <div style="text-align: center;margin-top: 90px;">
-                            <i class="layui-icon layui-circle"
-                               style="color: white;font-size:30px;font-weight:bold;background: #52C41A;padding: 20px;line-height: 80px;">&#xe605;</i>
-                            <div style="font-size: 24px;color: #333;font-weight: 500;margin-top: 30px;"
-                                 lang-i18n="mo.create.success">
-                            </div>
-                        </div>
-                        <div style="text-align: center;margin-top: 50px;">
-                            <button class="layui-btn layui-btn-primary" onclick="closeWindow()">close</button>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label" lang-i18n="bom.name">
+                            <span class="mo-add-required">*</span>
+                        </label>
+                        <div class="layui-input-block">
+                            <input type="text" name="productName" autocomplete="off" lay-verify="required"
+                                   class="layui-input" lang-i18n="common.placeholder" disabled>
                         </div>
                     </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label" lang-i18n="bom.code">
+                            <span class="mo-add-required">*</span>
+                        </label>
+                        <div class="layui-input-block">
+                            <input type="text" name="productCode" autocomplete="off" lay-verify="required"
+                                   class="layui-input" lang-i18n="common.placeholder" disabled>
+                        </div>
+                    </div>
+                    <div class="layui-inline era-detail-hidden">
+                        <button type="button" id="form-select-bom-btn"
+                                class="layui-btn layui-btn-primary layui-border-blue "
+                                lang-i18n="select.bom"></button>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label" lang-i18n="mo.num">
+                            <span class="mo-add-required">*</span>
+                        </label>
+                        <div class="layui-input-block">
+                            <input type="text" name="num" id="num" autocomplete="off" lay-verify="required"
+                                   class="layui-input era-detail-disabled" lang-i18n="common.placeholder"
+                                   onKeyUp="this.value = input_limit_int(this.value)">
+                        </div>
+                    </div>
+                    <div class="layui-inline" id="weight-input">
+                        <label class="layui-form-label" lang-i18n="mo.weight">
+                            <span class="mo-add-required">*</span>
+                        </label>
+                        <div class="layui-input-block">
+                            <input type="text" name="weight" id="weight" autocomplete="off"
+                                   lay-verify="required"
+                                   class="layui-input era-detail-disabled" lang-i18n="common.placeholder"
+                                   onKeyUp="this.value = input_limit_float(this.value)">
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" lang-i18n="mo.execTime">
+                        <span class="mo-add-required">*</span>
+                    </label>
+                    <div class="layui-input-inline layui-input-wrap">
+                        <div class="layui-input-prefix">
+                            <i class="layui-icon layui-icon-date"></i>
+                        </div>
+                        <input type="text" class="layui-input" id="execTime" name="execTime"
+                               lay-verify="required">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="mo-add-sectionCard">
+                        <table class="layui-hide" id="tb-line-detail"></table>
+                    </div>
+                </div>
+                <div class="layui-form-item mo-add-step-actions">
+                    <div class="layui-input-block">
+                        <button class="layui-btn mo-add-next-btn" id="formStep" lay-submit lay-filter="formStep"
+                                lang-i18n="common.step.next">
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="layui-form layui-form-pane mo-add-formCard" action="" id="devg-form"
+                  lay-filter="devg-form">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label" lang-i18n="devg.name"></label>
+                        <div class="layui-input-block">
+                            <input type="text" name="devgName" autocomplete="off" placeholder=""
+                                   disabled class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline" style="display:none">
+                        <div class="layui-input-block">
+                            <input type="text" name="devgId" autocomplete="off" placeholder="" disabled
+                                   class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline era-detail-hidden">
+                        <button type="button" id="form-select-devg-btn"
+                                class="layui-btn layui-btn-primary layui-border-blue "
+                                lang-i18n="select.devg"></button>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="mo-add-sectionCard">
+                        <table class="layui-hide" id="tb-devg-detail"></table>
+                    </div>
+                </div>
+                <div class="layui-form-item mo-add-step-actions">
+                    <div class="layui-input-block">
+                        <button type="button" class="layui-btn pre mo-add-prev-btn"
+                                lang-i18n="common.step.last"></button>
+                        <button class="layui-btn mo-add-next-btn" lay-submit lay-filter="formStep2"
+                                lang-i18n="common.step.next">
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <form class="layui-form layui-form-pane mo-add-formCard" action="" id="tf-form"
+                  lay-filter="tf-form">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label" lang-i18n="line.name"></label>
+                        <div class="layui-input-block">
+                            <input type="text" name="line" autocomplete="off" placeholder="" disabled
+                                   class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline" style="display:none">
+                        <div class="layui-input-block">
+                            <input type="text" name="lineCode" autocomplete="off" placeholder="" disabled
+                                   class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline era-detail-hidden">
+                        <button type="button" id="form-select-line-btn"
+                                class="layui-btn layui-btn-primary layui-border-blue "
+                                lang-i18n="select.line"></button>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="mo-add-sectionCard">
+                        <table class="layui-hide" id="tb-tf-detail"></table>
+                    </div>
+                </div>
+                <div class="layui-form-item mo-add-step-actions">
+                    <div class="layui-input-block">
+                        <button type="button" class="layui-btn pre mo-add-prev-btn"
+                                lang-i18n="common.step.last"></button>
+                        <button class="layui-btn mo-add-next-btn" lay-submit lay-filter="formStep3"
+                                lang-i18n="common.complete">
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div class="mo-add-formCard mo-add-successCard">
+                <div class="mo-add-success-content">
+                    <i class="layui-icon layui-circle mo-add-success-icon">&#xe605;</i>
+                    <div class="mo-add-success-title" lang-i18n="mo.create.success"></div>
+                </div>
+                <div class="mo-add-success-close">
+                    <button class="layui-btn layui-btn-primary" onclick="onCloseAndRefreshMps()">close</button>
                 </div>
             </div>
         </div>
@@ -226,6 +418,110 @@
         let page_type = layui.url().search.page_type;
         let id = layui.url().search.id;
 
+        function findWorkshopNodeBySelfCode(nodes, selfCode) {
+            if (!nodes || !nodes.length) return null;
+            let found = null;
+
+            const code = selfCode == null ? '' : String(selfCode).trim();
+            if (!code) return null;
+
+            const walk = function (arr) {
+                if (!arr || !arr.length) return;
+                for (let i = 0; i < arr.length; i++) {
+                    const n = arr[i];
+                    if (n && String(n.selfCode || '').trim() === code) {
+                        found = n;
+                        return;
+                    }
+                    if (n && n.children && n.children.length) {
+                        walk(n.children);
+                        if (found) return;
+                    }
+                }
+            };
+
+            walk(nodes);
+            return found;
+        }
+
+        function showSceneNameByCode(sceneCode) {
+            const code = sceneCode == null ? '' : String(sceneCode).trim();
+            if (!code || code === '0') {
+                $('#sceneName').val('');
+                return;
+            }
+            get(router.workshop_tree, null, function (tree) {
+                const node = findWorkshopNodeBySelfCode(tree, code);
+                $('#sceneName').val((node && (node.name || node.selfCode)) ? (node.name || node.selfCode) : code);
+            });
+        }
+
+        // 场景选择回填回调（由 workshop_tables 的 iframe 注入调用）
+        window.workshopPickerCallbackReceiver = function (rows) {
+            if (!rows || !rows.length) {
+                $('#sceneCode').val('');
+                $('#sceneName').val('');
+                return;
+            }
+            const r = rows[0];
+            const code = r && r.selfCode ? String(r.selfCode) : '';
+            const name = r && r.name ? String(r.name) : '';
+            $('#sceneCode').val(code);
+            $('#sceneName').val(name || code);
+        };
+
+        $('#form-select-scene-btn').on('click', function () {
+            // 已经进入“详情/只读”模式时会隐藏按钮，这里再兜底一次
+            if ($(this).prop('disabled')) return;
+
+            const selected = $('#sceneCode').val() || '';
+            const editWin = window;
+
+            parent.layer.open({
+                type: 2,
+                title: '选择场景',
+                content: '/view/workshop_tables?mode=picker&single=1&selected=' + encodeURIComponent(selected),
+                area: ['95%', '80%'],
+                success: function (layero, index) {
+                    const $layero = layero && layero.jquery ? layero : $(layero);
+                    const $iframe = $layero.find('iframe');
+
+                    function injectCallback() {
+                        const iframeDom = $iframe[0];
+                        if (!iframeDom || !iframeDom.contentWindow) return false;
+                        const iframeWin = iframeDom.contentWindow;
+                        try {
+                            if (typeof iframeWin.setPickerCallback === 'function') {
+                                iframeWin.setPickerCallback(function (rows) {
+                                    if (editWin.workshopPickerCallbackReceiver) {
+                                        editWin.workshopPickerCallbackReceiver(rows);
+                                    }
+                                    parent.layer.close(index);
+                                });
+                                return true;
+                            }
+                        } catch (e) {
+                        }
+                        return false;
+                    }
+
+                    $iframe.on('load', function () {
+                        if (!injectCallback()) {
+                            let retries = 0;
+                            const t = setInterval(function () {
+                                if (injectCallback() || retries++ > 50) clearInterval(t);
+                            }, 100);
+                        }
+                    });
+
+                    if ($iframe[0] && $iframe[0].contentWindow && $iframe[0].contentWindow.document
+                        && $iframe[0].contentWindow.document.readyState === 'complete') {
+                        injectCallback();
+                    }
+                }
+            });
+        });
+
         $('#weight-input').hide();
         if (id != null) {
             current_row_data.id = id;
@@ -244,6 +540,10 @@
                     "tenantId": result.tenantId,
                     // "execTime": result.execTime
                 });
+
+                // 根据场景编号回填场景名
+                showSceneNameByCode(result.tenantId);
+
                 reloadTb();
             })
             if (current_row_data.selfCode !== "") {
@@ -258,6 +558,9 @@
                 "weight": 0,
                 "tenantId": "0"
             });
+
+            showSceneNameByCode('0');
+
             current_row_data = {};
             details = [];
         }
@@ -273,8 +576,8 @@
             elem: '#stepForm',
             filter: 'stepForm',
             width: '100%', //设置容器宽度
-            stepWidth: '750px',
-            height: '500px',
+            stepWidth: '100%',
+            height: '100%',
             stepItems: [{
                 title: i18np.prop('mo.base')
             }, {
@@ -396,15 +699,15 @@
         ;
 
         $('#form-select-bom-btn').click(function () {
-            openWindow("select.bom", "/view/bom_tree?page_type=1", ['95%', '80%']);
+            openMidWindow("select.bom", "/view/bom_tree?page_type=1", ['95%', '80%']);
         })
 
         $('#form-select-line-btn').click(function () {
-            openWindow("select.line", "/view/line_tables?page_type=2", ['95%', '80%']);
+            openMidWindow("select.line", "/view/line_tables?page_type=2", ['95%', '80%']);
         })
 
         $('#form-select-devg-btn').click(function () {
-            openWindow("select.devg", "/view/devg_tables?page_type=2", ['95%', '80%']);
+            openMidWindow("select.devg", "/view/devg_tables?page_type=2", ['95%', '80%']);
         })
 
         $("#weight").on('blur', function () {
@@ -433,7 +736,7 @@
         form.on('submit(formStep3)', function (data) {
             current_row_data.lineCode = data.field.lineCode;
             post(router.mo_edit, current_row_data, function () {
-                parent.reloadTb();
+                // parent.reloadTb();
                 step.next('#stepForm');
             });
             return false;
@@ -556,6 +859,12 @@
             });
             reloadDevgTb();
         })
+    }
+
+    // 点击 close：关闭当前页面，切回生产订单列表 mo_tables，并刷新列表数据
+    function onCloseAndRefreshMps() {
+        parent.reloadTb()
+        closeWindow();
     }
 </script>
 </body>

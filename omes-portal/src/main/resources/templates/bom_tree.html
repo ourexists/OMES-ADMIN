@@ -14,29 +14,27 @@
     <script src="../static/js/global.js"></script>
 </head>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
-    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3">
-        <div class="layui-card">
-            <div class="layui-card-body mini-bar" id="ltTree">
-                <div class="layui-btn-container" id="lef_tree_opera">
-                    <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="addroot">
-                        <i class="layui-icon layui-icon-add-1"></i>
-                    </a>
-                    <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="reload">
-                        <i class="layui-icon layui-icon-refresh"></i>
-                    </a>
-                </div>
-                <div class="layui-inline">
-                    <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
-                </div>
-                <a class="layui-btn layui-btn-primary" id="tree_query">
-                    <i class="layui-icon layui-icon-search"></i>
+<div class="layui-tab-content  main-panel">
+    <div class="layui-col-sm12 layui-col-md4 layui-col-lg3 left-panel layui-card">
+        <div class="layui-card-body mini-bar" id="ltTree">
+            <div class="layui-btn-container" id="lef_tree_opera">
+                <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="addroot">
+                    <i class="layui-icon layui-icon-add-1"></i>
                 </a>
-                <div id="left-tree"></div>
+                <a class="layui-btn layui-btn-sm layui-btn-primary" lay-on="reload">
+                    <i class="layui-icon layui-icon-refresh"></i>
+                </a>
             </div>
+            <div class="layui-inline">
+                <input type="text" id="tree_name" class="layui-input" autocomplete="off"/>
+            </div>
+            <a class="layui-btn layui-btn-primary" id="tree_query">
+                <i class="layui-icon layui-icon-search"></i>
+            </a>
+            <div id="left-tree"></div>
         </div>
     </div>
-    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9" style="padding: 15px;">
+    <div class="layui-col-sm12 layui-col-md9 layui-col-lg9 right-panel">
         <form class="layui-form layui-row layui-col-space16">
             <div class="layui-col-md4">
                 <div class="layui-input-wrap">

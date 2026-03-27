@@ -106,14 +106,11 @@
         var layer = layui.layer;
 
         let id = layui.url().search.id;
+        let localMode = layui.url().search.local_mode == 1 || layui.url().search.local_mode == '1';
         if (id != null) {
-            $(".lay-unable-edit").attr("disabled", "block");
             $('.lay-detail-hidden').hide();
-            var param = {
-                "id": id,
-            }
-            get(router.tf_id, param, function (data) {
-                current_row_data = data;
+
+            function fillFormByRow() {
                 if (current_row_data != null) {
                     form.val("common-edit-form", {
                         "name": current_row_data.name,
@@ -128,7 +125,12 @@
                         "temperature": current_row_data.temperature,
                     });
                 }
-            })
+            }
+
+            current_row_data = (parent && typeof parent.getNodeDraftById === 'function')
+                ? (parent.getNodeDraftById(id) || {"id": id})
+                : {"id": id};
+            fillFormByRow();
         } else {
             form.val("common-edit-form", {
                 "name": "",
@@ -167,9 +169,22 @@
             current_row_data.type = field.type;
             current_row_data.temperature = field.temperature;
 
+            if (localMode && parent && typeof parent.applyNodeDraftFromEditor === 'function') {
+                parent.applyNodeDraftFromEditor(current_row_data);
+                closeWindow();
+                return false;
+            }
+
             post(router.tf_edit, current_row_data, function () {
-                closeWindow()
-                parent.reloadTb();
+                closeWindow();
+                // 仅局部刷新数据与图形，不做整页级重新加载
+                if (parent && typeof parent.reloadEdges === 'function') {
+                    parent.reloadEdges();
+                } else if (parent && typeof parent.renderGraph === 'function') {
+                    parent.renderGraph();
+                } else if (parent && typeof parent.reloadTb === 'function') {
+                    parent.reloadTb();
+                }
             }, function (code, msg) {
                 layer.alert(msg, {
                     title: 'error'

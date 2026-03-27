@@ -3,69 +3,356 @@
   -->
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+    <style>
+        .bom-cart-page {
+            min-height: 100vh;
+            box-sizing: border-box;
+            padding: 16px 16px 88px;
+            background: var(--bg-page);
+        }
+
+        .bom-cart-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 16px;
+            overflow: visible;
+        }
+
+        .bom-cart-card-hd {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-base);
+            background: linear-gradient(180deg, var(--bg-panel-alt) 0%, var(--bg-panel) 100%);
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .bom-cart-card-hd .layui-icon {
+            font-size: 18px;
+            color: var(--color-primary);
+        }
+
+        .bom-cart-card-bd {
+            padding: 18px 18px 8px;
+        }
+
+        .bom-cart-list-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-base);
+            background: var(--bg-panel-alt);
+        }
+
+        .bom-cart-list-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .bom-cart-type-hint {
+            margin: 0 18px 12px;
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--text-sub);
+            background: var(--bg-panel-alt);
+            border-left: 3px solid var(--color-primary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .bom-cart-type-hint .layui-icon {
+            margin-right: 6px;
+            color: var(--color-primary);
+            font-size: 16px;
+            vertical-align: -2px;
+        }
+
+        .bom-cart-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-on-tag);
+            background: var(--color-primary);
+            line-height: 1;
+        }
+
+        .bom-cart-toolbar-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+        }
+
+        .bom-cart-toolbar-hint {
+            font-size: 12px;
+            color: var(--text-sub);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bom-cart-toolbar-hint .layui-icon {
+            color: var(--color-primary);
+        }
+
+        .bom-cart-empty {
+            display: none;
+            margin: 16px 18px;
+            padding: 28px 20px;
+            text-align: center;
+            border: 1px dashed var(--border-strong);
+            border-radius: 10px;
+            background: var(--bg-panel-alt);
+            color: var(--text-sub);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .bom-cart-empty .layui-icon {
+            display: block;
+            margin: 0 auto 10px;
+            font-size: 40px;
+            color: var(--border-strong);
+        }
+
+        .bom-cart-table-wrap {
+            padding: 0 0 12px;
+        }
+
+        .bom-cart-table-wrap--empty .layui-table-view {
+            border-top: none;
+        }
+
+        .bom-cart-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 20px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-base);
+            box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+        }
+
+        .bom-cart-footer-summary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 16px;
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .bom-cart-footer-summary strong {
+            color: var(--text-main);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .bom-cart-footer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* 列表：只读列（物料名称、编号） */
+        .bom-cart-page .layui-table-header th[data-field="matName"],
+        .bom-cart-page .layui-table-header th[data-field="matCode"] {
+            background: var(--bg-panel-alt) !important;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .bom-cart-page .layui-table-body td[data-field="matName"] .layui-table-cell,
+        .bom-cart-page .layui-table-body td[data-field="matCode"] .layui-table-cell {
+            background: var(--bg-panel-alt);
+            color: var(--text-sub);
+            font-weight: 500;
+            cursor: default;
+            user-select: text;
+        }
+
+        /* 列表：可编辑列（配比数值） */
+        .bom-cart-page .layui-table-header th[data-field="matScale"] {
+            background: var(--color-primary-soft) !important;
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .bom-cart-page .layui-table-body td[data-field="matScale"] .layui-table-cell {
+            background: rgba(14, 165, 233, 0.07);
+            color: var(--text-value);
+            font-weight: 600;
+            text-align: right;
+            box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.28);
+            border-radius: 6px;
+            cursor: text;
+        }
+
+        .bom-cart-page .layui-table-body td[data-field="matScale"] .layui-table-edit {
+            background: var(--bg-panel) !important;
+            color: var(--text-value) !important;
+            font-weight: 600;
+            border: 1px solid var(--color-primary) !important;
+            border-radius: 4px;
+            box-shadow: var(--shadow-input);
+        }
+
+        .bom-cart-page .layui-table-body tr:hover td[data-field="matName"] .layui-table-cell,
+        .bom-cart-page .layui-table-body tr:hover td[data-field="matCode"] .layui-table-cell {
+            background: var(--bg-hover-soft);
+        }
+
+        .bom-cart-page .layui-table-body tr:hover td[data-field="matScale"] .layui-table-cell {
+            background: rgba(14, 165, 233, 0.12);
+            box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.38);
+        }
+
+        @media (max-width: 768px) {
+            .bom-cart-footer {
+                justify-content: center;
+            }
+
+            .bom-cart-footer-summary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-<div style="padding: 16px;">
+<div class="bom-cart-page">
     <form class="layui-form layui-form-pane" action="" id="common-edit-form"
           lay-filter="common-edit-form">
-        <div class="layui-form-item">
-            <div class="layui-inline layui-fluid">
-                <label class="layui-form-label" lang-i18n="bom.name"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="name" autocomplete="off" placeholder="" lay-verify="required"
-                           class="layui-input" lang-i18n="common.placeholder">
-                </div>
+        <div class="bom-cart-card">
+            <div class="bom-cart-card-hd">
+                <i class="layui-icon layui-icon-form"></i>
+                <span lang-i18n="bom.section.basic"></span>
             </div>
-            <div class="layui-inline layui-fluid">
-                <label class="layui-form-label" lang-i18n="bom.code"></label>
-                <div class="layui-input-block">
-                    <input type="text" id="selfCode" name="selfCode" autocomplete="off" placeholder=""
-                           lay-verify="required"
-                           class="layui-input" lang-i18n="common.placeholder">
-                </div>
-            </div>
-
-            <div class="layui-inline  layui-fluid">
-                <label class="layui-form-label" lang-i18n="bom.type"></label>
-                <div class="layui-input-block">
-                    <select name="type" id="type">
-                    </select>
+            <div class="bom-cart-card-bd">
+                <div class="layui-row layui-col-space16">
+                    <div class="layui-col-md4 layui-col-sm12">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" lang-i18n="bom.name"></label>
+                            <div class="layui-input-block">
+                                <input type="text" name="name" autocomplete="off" placeholder="" lay-verify="required"
+                                       class="layui-input" lang-i18n="common.placeholder">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-col-md4 layui-col-sm12">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" lang-i18n="bom.code"></label>
+                            <div class="layui-input-block">
+                                <input type="text" id="selfCode" name="selfCode" autocomplete="off" placeholder=""
+                                       lay-verify="required"
+                                       class="layui-input" lang-i18n="common.placeholder">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="layui-col-md4 layui-col-sm12">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" lang-i18n="bom.type"></label>
+                            <div class="layui-input-block">
+                                <select name="type" id="type" lay-filter="bom-type">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <table class="layui-hide" id="tb-common-detail" high="80%"></table>
-        <div class="layui-form-item" style="position: fixed; bottom: 5%; right: 5%">
-            <button class="layui-btn" lay-submit lay-filter="common-edit-button"
-                    lang-i18n="common.msg.confirm"></button>
-            <button class="layui-btn layui-btn-primary" onclick="closeWindow()">close</button>
+
+        <div class="bom-cart-card">
+            <div class="bom-cart-list-head">
+                <div class="bom-cart-list-title">
+                    <i class="layui-icon layui-icon-cart" style="font-size: 20px; color: var(--color-primary);"></i>
+                    <span lang-i18n="bom.section.items"></span>
+                    <span id="bom-item-badge" class="bom-cart-badge">0</span>
+                </div>
+            </div>
+            <div class="bom-cart-type-hint" id="bom-type-scale-hint" role="note">
+                <i class="layui-icon layui-icon-about"></i><span id="bom-type-scale-hint-text"></span>
+            </div>
+            <div id="bom-empty-hint" class="bom-cart-empty">
+                <i class="layui-icon layui-icon-cart"></i>
+                <span lang-i18n="bom.cart.empty"></span>
+            </div>
+            <div class="bom-cart-table-wrap" id="bom-cart-table-wrap">
+                <table class="layui-hide" id="tb-common-detail"></table>
+            </div>
+        </div>
+
+        <div class="bom-cart-footer">
+            <div class="bom-cart-footer-summary">
+                <span lang-i18n="bom.section.items"></span>
+                <span id="bom-footer-count-wrap"></span>
+            </div>
+            <div class="bom-cart-footer-actions">
+                <button type="button" class="layui-btn layui-btn-primary" onclick="closeWindow()"
+                        lang-i18n="common.close"></button>
+                <button type="button" class="layui-btn" lay-submit lay-filter="common-edit-button"
+                        lang-i18n="common.msg.confirm"></button>
+            </div>
         </div>
     </form>
 </div>
+
 <script type="text/html" id="tb-tool">
     <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="del">
-            <i class="layui-icon layui-icon-subtraction"></i>
+        <a class="layui-btn layui-btn-xs layui-btn-primary" lay-event="del" title="">
+            <i class="layui-icon layui-icon-delete"></i>
         </a>
     </div>
 </script>
 <script type="text/html" id="tb-toolbar">
-    <div class="layui-btn-container">
-        <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="selectMat">
-            <i class="layui-icon layui-icon-addition"></i>
-        </a>
-        <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="deleteBatch">
-            <i class="layui-icon layui-icon-subtraction"></i>
-        </a>
-        <span style="color:red;font-style: italic">* {{ i18np.prop('mps.select.mat') }}</span>
+    <div class="bom-cart-toolbar-inner">
+        <button type="button" class="layui-btn layui-btn-sm" lay-event="selectMat">
+            <i class="layui-icon layui-icon-add-1"></i>
+            <span lang-i18n="bom.cart.add"></span>
+        </button>
+        <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" lay-event="deleteBatch">
+            <i class="layui-icon layui-icon-delete"></i>
+            <span lang-i18n="common.delete.batch"></span>
+        </button>
+        <span class="bom-cart-toolbar-hint">
+            <i class="layui-icon layui-icon-tips"></i>
+            <span lang-i18n="mps.select.mat"></span>
+        </span>
     </div>
 </script>
 
@@ -74,12 +361,34 @@
     var details = [];
     var table;
     var attributes;
-    var dropdown
+    var bomPageI18n;
 
-    layui.use(['form', 'layer', "table"], function () {
+    function updateBomCartSummary(i18n) {
+        var n = details.length;
+        $('#bom-item-badge').text(n);
+        var countText = i18n.prop('bom.cart.count', [String(n)]);
+        $('#bom-footer-count-wrap').text(countText);
+        var showEmpty = n === 0;
+        $('#bom-empty-hint').toggle(showEmpty);
+        $('#bom-cart-table-wrap').toggleClass('bom-cart-table-wrap--empty', showEmpty);
+    }
+
+    /** 与后端 BOMTypeEnum 一致：0=固定目标(NUM)，1=百分比目标(PER) */
+    function updateBomScaleHint() {
+        if (!bomPageI18n) {
+            return;
+        }
+        var v = $('#type').val();
+        var key = (String(v) === '1') ? 'bom.matscale.hint.per' : 'bom.matscale.hint.num';
+        $('#bom-type-scale-hint-text').text(bomPageI18n.prop(key));
+    }
+
+    layui.use(['form', 'layer', 'table', 'i18n'], function () {
         var form = layui.form;
         var layer = layui.layer;
         table = layui.table;
+        var i18n = layui.i18n;
+        bomPageI18n = i18n;
 
         if (current_row_data != null && current_row_data.id != null) {
             if (current_row_data.selfCode != null && current_row_data.selfCode !== "") {
@@ -99,7 +408,9 @@
                     "selfCode": current_row_data.selfCode,
                     "type": current_row_data.type,
                 });
+                form.render('select');
                 reloadTb();
+                updateBomScaleHint();
             })
         } else {
             form.val("common-edit-form", {
@@ -110,80 +421,84 @@
             if (current_row_data == null) {
                 current_row_data = {}
             }
+            updateBomCartSummary(i18n);
+            updateBomScaleHint();
         }
 
         get(router.bom_type, null, function (result) {
+            $('#type').empty();
             $.each(result, function (index, item) {
-                if (current_row_data != null
-                    && current_row_data.attribute != null
-                    && item.id === current_row_data.attribute.toString()) {
-                    $('#type').append(new Option(item.name, item.id, false, true));
-                } else {
-                    $('#type').append(new Option(item.name, item.id));
-                }
-            })
-            form.render();
+                var selected = current_row_data != null && current_row_data.type != null
+                    && String(item.id) === String(current_row_data.type);
+                $('#type').append(new Option(item.name, item.id, false, selected));
+            });
+            form.render('select');
+            updateBomScaleHint();
         })
         get(router.bomd_attribute, null, function (result) {
             attributes = result;
         })
 
+        form.on('select(bom-type)', function () {
+            updateBomScaleHint();
+        });
+
         table.render({
             elem: '#tb-common-detail',
             defaultToolbar: '',
             toolbar: '#tb-toolbar',
-            css: [ // 设置单元格样式
-                // 取消默认的溢出隐藏，并设置适当高度
-                '.layui-table-cell{height: 50px; line-height: 40px;}',
+            css: [
+                '.layui-table-cell{min-height: 48px; line-height: 24px;}',
                 '.layui-table-cell select{height: 36px; padding: 0 5px;}'
             ].join(''),
             cols: [[
-                {type: 'checkbox', title: '', fixed: true},
-                {field: 'matName', title: i18np.prop("material.name")},
-                {field: 'matCode', title: i18np.prop("material.code")},
+                {type: 'checkbox', title: '', fixed: 'left', width: 48},
+                {type: 'numbers', title: '#', width: 52, fixed: 'left'},
+                {field: 'matName', title: i18np.prop("material.name"), minWidth: 50},
+                {field: 'matCode', title: i18np.prop("material.code"), minWidth: 50},
                 {
                     field: 'matScale',
                     title: i18np.prop("bom.per"),
                     edit: 'text',
-                    style: 'color: red;'
+                    minWidth: 100
                 },
                 {
                     fixed: 'right',
                     title: i18np.prop('common.operate'),
-                    width: 200,
-                    minWidth: 125,
+                    width: 88,
+                    minWidth: 88,
+                    align: 'center',
                     templet: '#tb-tool'
                 }
             ]],
             resize: true,
             loading: false,
-            page: false, // 是否显示分页
-            height: "full",
-            done: function (res, curr, count) {
+            page: false,
+            height: 'full-290',
+            done: function () {
+                updateBomCartSummary(i18n);
+                if (typeof i18np !== 'undefined' && i18np.apply) {
+                    i18np.apply('.layui-table-tool');
+                }
                 var options = this;
-                // 获取当前行数据 - 自定义方法
                 table.getRowData = function (tableId, elem) {
                     var index = $(elem).closest('tr').data('index');
                     return table.cache[tableId][index] || {};
                 };
 
                 form.on('select(tb-select-attribute)', function (obj) {
-                    var value = obj.value; // 获取选中项 value
-                    // 获取当前行数据(如 id 等字段，以作为数据修改的索引)
+                    var value = obj.value;
                     var data = table.getRowData(options.id, obj.elem);
-                    // 更新数据中对应的字段
                     data.attribute = value;
                 });
                 layui.$(document).on('focus', 'td[data-field$="matScale"] .layui-table-edit', function () {
                     layui.$(this).attr("onKeyUp", "this.value=input_limit_float(this.value)")
                 });
-
             }
         });
 
-
         table.on('tool(tb-common-detail)', function (obj) {
-            var data = obj.data; // 获得当前行数据
+            var data = obj.data;
             if (obj.event === 'del') {
                 let r = [];
                 r.push(data);
@@ -204,7 +519,7 @@
                     removeTbData(data);
                     break;
                 case 'selectMat':
-                    openWindow("mps.select.mat", "/view/material_tables?page_type=3", ['95%', '80%']);
+                    openMidWindow("mps.select.mat", "/view/material_tables?page_type=3", ['95%', '80%']);
             }
         });
         form.on('submit(common-edit-button)', function (data) {
@@ -246,7 +561,10 @@
     function reloadTb() {
         table.reload('tb-common-detail', {
             data: details,
-        })
+        });
+        if (bomPageI18n) {
+            updateBomCartSummary(bomPageI18n);
+        }
     }
 
     function removeTbData(data) {
