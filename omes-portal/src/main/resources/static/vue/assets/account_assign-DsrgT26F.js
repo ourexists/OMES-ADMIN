@@ -1,0 +1,1 @@
+import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`account_assign`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/account_assign`}))}});export{i as default};

@@ -7,163 +7,914 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
+    <script src="../static/js/x6/x6.min.js"></script>
+    <script src="../static/js/x6-plugin-keyboard/index.js"></script>
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+
+    <style>
+        .node {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            border: 1px solid #c2c8d5;
+            border-left: 4px solid #5F95FF;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px 1px rgba(0, 0, 0, 0.06);
+        }
+
+        .node img {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        .node .label {
+            display: inline-block;
+            flex-shrink: 0;
+            width: 104px;
+            margin-left: 8px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .node .status {
+            flex-shrink: 0;
+        }
+
+        .node.success {
+            border-left: 4px solid #52c41a;
+        }
+
+        .node.failed {
+            border-left: 4px solid #ff4d4f;
+        }
+
+        .node.running .status img {
+            animation: spin 1s linear infinite;
+        }
+
+        .x6-node-selected .node {
+            border-color: #1890ff;
+            border-radius: 2px;
+            box-shadow: 0 0 0 4px #d4e8fe;
+        }
+
+        .x6-node-selected .node.success {
+            border-color: #52c41a;
+            border-radius: 2px;
+            box-shadow: 0 0 0 4px #ccecc0;
+        }
+
+        .x6-node-selected .node.failed {
+            border-color: #ff4d4f;
+            border-radius: 2px;
+            box-shadow: 0 0 0 4px #fedcdc;
+        }
+
+        .x6-edge:hover path:nth-child(2) {
+            stroke: #1890ff;
+            stroke-width: 1px;
+        }
+
+        .x6-edge-selected path:nth-child(2) {
+            stroke: #1890ff;
+            stroke-width: 1.5px !important;
+        }
+
+        .toolbar-actions {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-actions > * {
+            margin-right: 10px;
+            margin-bottom: 6px;
+        }
+
+        /* 兼容较新浏览器：有 gap 时覆盖 margin 方案 */
+        @supports (gap: 10px) {
+            .toolbar-actions {
+                gap: 10px;
+            }
+
+            .toolbar-actions > * {
+                margin-right: 0;
+                margin-bottom: 0;
+            }
+        }
+
+        .dag-node-status-running {
+            animation: spin 1s linear infinite;
+            transform-origin: center center;
+            transform-box: fill-box;
+        }
+
+        @keyframes running-line {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
-    <table class="layui-hide" id="tb-common"></table>
+<div class="layui-tab-content" style="padding:15px;">
+    <div class="toolbar-actions">
+        <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-add-node">新增节点</button>
+        <button type="button" class="layui-btn layui-btn-sm layui-btn-danger" id="btn-delete-selected">删除选中</button>
+        <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-save-edges">保存关系</button>
+        <button type="button" class="layui-btn layui-btn-sm" id="btn-refresh">刷新</button>
+        <span style="color:#888; font-style: italic;">提示：点击“保存关系”才会写入数据库。</span>
+    </div>
+    <div id="tf-flow-graph" style="width:100%; height:560px; position:relative;"></div>
 </div>
 
-<script type="text/html" id="tb-tool">
-    <div class="layui-clear-space">
-        <a class="layui-btn layui-btn-xs  layui-btn-primary" lay-event="edit">
-            <i class="layui-icon layui-icon-edit"></i>
-        </a>
-        <a class="layui-btn layui-btn-xs  layui-btn-primary layui-bg-red" lay-event="del">
-            <i class="layui-icon layui-icon-delete"></i>
-        </a>
-    </div>
-</script>
-<script type="text/html" id="tb-toolbar">
-    <div class="layui-btn-container">
-        <a class="layui-btn layui-btn-sm  layui-btn-primary" lay-event="refresh">
-            <i class="layui-icon layui-icon-refresh"></i>
-        </a>
-        <a class="layui-btn layui-btn-sm layui-btn-primary" lay-event="add">
-            <i class="layui-icon layui-icon-add-1"></i>
-        </a>
-        <a class="layui-btn layui-btn-sm layui-bg-red" lay-event="deleteBatch">
-            <i class="layui-icon layui-icon-delete"></i>
-        </a>
-        <span style="color:red;font-style: italic">{{ i18np.prop('common.msg.sort') }}</span>
-    </div>
+<script th:inline="none">
+    // 页面数据容器：分别维护当前节点与边
+    var nodeContainer = [];
+    var edgeContainer = [];
+    var line_id;
+    var layuiLayer;
+    var tfGraph = null;
+    var lastActiveCell = null;
+    var graphKeydownHandler = null;
 
-</script>
+    function setNodeContainer(list) {
+        nodeContainer = Array.isArray(list) ? list : [];
+    }
 
-<script th:inline="javascript">
-    var table;
-    var data = [];
-    let line_id;
-    layui.use(['form', 'table', 'dropdown', 'layer', 'util', 'soulTable'], function () {
-        table = layui.table;
-        var layer = layui.layer,
-            soulTable = layui.soulTable;
+    function setEdgeContainer(list) {
+        edgeContainer = Array.isArray(list) ? list : [];
+    }
 
+    var dagImages = {
+        logo: 'https://gw.alipayobjects.com/mdn/rms_43231b/afts/img/A*evDjT5vjkX0AAAAAAAAAAAAAARQnAQ',
+        success: 'https://gw.alipayobjects.com/mdn/rms_43231b/afts/img/A*6l60T6h8TTQAAAAAAAAAAAAAARQnAQ',
+        failed: 'https://gw.alipayobjects.com/mdn/rms_43231b/afts/img/A*SEISQ6My-HoAAAAAAAAAAAAAARQnAQ',
+        running: 'https://gw.alipayobjects.com/mdn/rms_43231b/afts/img/A*t8fURKfgSOgAAAAAAAAAAAAAARQnAQ'
+    };
+
+    layui.use(['layer'], function () {
+        layuiLayer = layui.layer;
         line_id = layui.url().search.line_id;
-
+        $('#btn-add-node').on('click', addNode);
+        $('#btn-delete-selected').on('click', deleteSelectedCells);
+        $('#btn-save-edges').on('click', saveEdges);
+        $('#btn-refresh').on('click', reloadTb);
         reloadTb();
+    });
 
-        // 创建表格实例
-        table.render({
-            elem: '#tb-common',
-            headers: getCommonHeader(),
-            contentType: 'application/json',
-            loading: false,
-            toolbar: '#tb-toolbar',
-            defaultToolbar: ['filter', 'exports', 'print'],
-            cols: [[
-                {type: 'checkbox', title: '', fixed: true}, // 单选框
-                {field: 'LAY_INDEX', title: 'NO'},
-                {field: 'selfCode', title: i18np.prop('mps.tf.code')},
-                {field: 'name', title: i18np.prop('mps.tf.name')},
-                {field: 'property', title: i18np.prop("mps.tf.property")},
-                {field: 'typeDesc', title: i18np.prop("mps.tf.type")},
-                {field: 'mapDb', title: i18np.prop("mps.tf.mapDb")},
-                {field: 'mapOffset', title: i18np.prop("mps.tf.offset")},
-                {field: 'duration', title: i18np.prop("mps.tf.duration")},
-                {field: 'temperature', title: i18np.prop("mps.tf.temperature")},
-                // {field: 'pre', title: i18np.prop('mps.tf.pre')},
-                // {field: 'nex', title: i18np.prop('mps.tf.next')},
-                {
-                    fixed: 'right',
-                    title: i18np.prop('common.operate'),
-                    width: 200,
-                    minWidth: 125,
-                    templet: '#tb-tool'
+    function addNode() {
+        if (line_id == null) return;
+        var now = Date.now();
+        var localNode = {
+            id: 'tmp_' + now,
+            name: '新节点',
+            selfCode: 'TMP' + String(now).slice(-4),
+            status: 'default',
+            __localOnly: true
+        };
+        nodeContainer.push(localNode);
+        setNodeContainer(nodeContainer);
+        renderGraph();
+        layuiLayer.msg('已新增本地节点（未入库）');
+    }
+
+    function openNodeEditor(nodeId) {
+        if (line_id == null || nodeId == null) return;
+        openWindow("common.edit", '/view/line_flow_edit?line_id=' + line_id + '&id=' + nodeId + '&local_mode=1');
+    }
+
+    function getNodeDraftById(nodeId) {
+        var node = buildNodeById()[String(nodeId)];
+        return node ? JSON.parse(JSON.stringify(node)) : null;
+    }
+
+    function applyNodeDraftFromEditor(nodeDraft) {
+        if (!nodeDraft || nodeDraft.id == null) return;
+        var nodes = nodeContainer;
+        var targetId = String(nodeDraft.id);
+        var idx = -1;
+        for (var i = 0; i < nodes.length; i++) {
+            if (String(nodes[i].id) === targetId) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx >= 0) {
+            nodes[idx] = Object.assign({}, nodes[idx], nodeDraft, {__dirtyLocal: true});
+        } else {
+            nodes.push(Object.assign({}, nodeDraft, {__localOnly: true, __dirtyLocal: true}));
+        }
+        setNodeContainer(nodes);
+        renderGraph();
+    }
+
+    function getX6() {
+        return typeof window !== 'undefined' ? window.X6 : null;
+    }
+
+    function getX6KeyboardPlugin() {
+        return typeof window !== 'undefined' ? window.X6PluginKeyboard : null;
+    }
+
+    function ensureDagShapesAndConnector() {
+        var X6Lib = getX6();
+        if (!X6Lib || !X6Lib.Graph || !X6Lib.Path) return;
+        if (window.__omesDagShapesRegistered) return;
+        window.__omesDagShapesRegistered = true;
+
+        var Graph = X6Lib.Graph;
+        var Path = X6Lib.Path;
+
+        Graph.registerEdge('dag-edge', {
+            inherit: 'edge',
+            attrs: {
+                line: {
+                    stroke: '#C2C8D5',
+                    strokeWidth: 1,
+                    targetMarker: null
                 }
-            ]],
-            rowDrag: {
-                done: function (obj) {
-                    var pre = obj.cache[obj.newIndex - 1];
-                    var post = obj.cache[obj.newIndex + 1];
-                    var param = {
-                        'pre': pre == null ? null : pre.id,
-                        'post': post == null ? null : post.id,
-                        'current': obj.row.id
-                    }
-                    window.post(router.tf_changePriority, param, function (result) {
-                        reloadTb();
-                    })
+            }
+        }, true);
+
+        Graph.registerConnector('algo-connector', function (s, e) {
+            var offset = 4;
+            var deltaY = Math.abs(e.y - s.y);
+            var control = Math.floor((deltaY / 3) * 2);
+            var v1 = {x: s.x, y: s.y + offset + control};
+            var v2 = {x: e.x, y: e.y - offset - control};
+            return Path.parse(
+                'M ' + s.x + ' ' + s.y + '\n' +
+                'L ' + s.x + ' ' + (s.y + offset) + '\n' +
+                'C ' + v1.x + ' ' + v1.y + ' ' + v2.x + ' ' + v2.y + ' ' + e.x + ' ' + (e.y - offset) + '\n' +
+                'L ' + e.x + ' ' + e.y
+            ).serialize();
+        }, true);
+
+        Graph.registerNode('dag-node', {
+            inherit: 'rect',
+            width: 180,
+            height: 36,
+            attrs: {
+                body: {
+                    class: 'dag-node-body',
+                    stroke: '#C2C8D5',
+                    fill: '#fff',
+                    strokeWidth: 1,
+                    rx: 4,
+                    ry: 4
+                },
+                stripe: {
+                    class: 'dag-node-stripe dag-node-stripe-default',
+                    fill: '#5F95FF',
+                    x: 0,
+                    y: 0,
+                    width: 4,
+                    height: 36
+                },
+                logo: {
+                    class: 'dag-node-logo',
+                    href: dagImages.logo,
+                    xlinkHref: dagImages.logo,
+                    x: 8,
+                    y: 8,
+                    width: 20,
+                    height: 20
+                },
+                statusIcon: {
+                    class: 'dag-node-status',
+                    href: '',
+                    xlinkHref: '',
+                    opacity: 0,
+                    x: 156,
+                    y: 10,
+                    width: 16,
+                    height: 16
+                },
+                label: {
+                    class: 'dag-node-label',
+                    fill: '#666',
+                    fontSize: 12,
+                    textAnchor: 'start',
+                    dominantBaseline: 'middle',
+                    textVerticalAnchor: 'middle',
+                    x: 34,
+                    y: 18
                 }
             },
-            done: function () {
-                soulTable.render(this);
+            markup: [
+                {tagName: 'rect', selector: 'body'},
+                {tagName: 'rect', selector: 'stripe'},
+                {tagName: 'image', selector: 'logo'},
+                {tagName: 'image', selector: 'statusIcon'},
+                {tagName: 'text', selector: 'label'}
+            ]
+        }, true);
+    }
+
+    function normalizeStatus(tf) {
+        var s = tf && (tf.status || tf.nodeStatus || tf.execStatus || tf.state);
+        if (s == null) return 'default';
+        s = String(s).toLowerCase();
+        if (s === 'success' || s === 'ok' || s === 'done') return 'success';
+        if (s === 'failed' || s === 'error') return 'failed';
+        if (s === 'running' || s === 'doing') return 'running';
+        return 'default';
+    }
+
+    // 混合中英文按“可视长度”截断，避免节点标题溢出
+    function truncateNodeTitle(text, maxUnits) {
+        var s = text == null ? '' : String(text);
+        var units = 0;
+        var out = '';
+        for (var i = 0; i < s.length; i++) {
+            var ch = s.charAt(i);
+            // ASCII 字符约半宽，中文等按全宽处理
+            var u = /[\x00-\x7F]/.test(ch) ? 0.55 : 1;
+            if (units + u > maxUnits) {
+                return out + '...';
+            }
+            out += ch;
+            units += u;
+        }
+        return out;
+    }
+
+    function createNode(layout, tf) {
+        var p = layout.pos[tf.id] || {x: 40, y: 40};
+        var status = normalizeStatus(tf);
+        var fullTitle = (tf.name || '') + (tf.selfCode ? (' [' + tf.selfCode + ']') : '');
+        var displayTitle = truncateNodeTitle(fullTitle, 16);
+
+        var stripeColor = '#5F95FF';
+        var statusIcon = '';
+        var statusOpacity = 0;
+        if (status === 'success') {
+            stripeColor = '#52c41a';
+            statusIcon = dagImages.success;
+            statusOpacity = 1;
+        } else if (status === 'failed') {
+            stripeColor = '#ff4d4f';
+            statusIcon = dagImages.failed;
+            statusOpacity = 1;
+        } else if (status === 'running') {
+            statusIcon = dagImages.running;
+            statusOpacity = 1;
+        }
+
+        return {
+            id: String(tf.id),
+            shape: 'dag-node',
+            x: p.x,
+            y: p.y,
+            width: layout.nodeW,
+            height: layout.nodeH,
+            attrs: {
+                body: {
+                    class: 'dag-node-body dag-node-body-' + status
+                },
+                stripe: {
+                    class: 'dag-node-stripe dag-node-stripe-' + status,
+                    fill: stripeColor
+                },
+                logo: {
+                    href: dagImages.logo,
+                    xlinkHref: dagImages.logo
+                },
+                statusIcon: {
+                    class: status === 'running' ? 'dag-node-status dag-node-status-running' : 'dag-node-status',
+                    href: statusIcon,
+                    xlinkHref: statusIcon,
+                    opacity: statusOpacity
+                },
+                label: {
+                    class: 'dag-node-label',
+                    text: displayTitle,
+                    fill: '#666',
+                    fontSize: 12,
+                    textAnchor: 'start',
+                    dominantBaseline: 'middle',
+                    textVerticalAnchor: 'middle',
+                    x: 34,
+                    y: 18
+                }
             },
-            page: false,
-            height: 'full'
+            ports: {
+                groups: {
+                    top: {
+                        position: 'top',
+                        attrs: {
+                            circle: {
+                                r: 4,
+                                magnet: true,
+                                stroke: '#C2C8D5',
+                                strokeWidth: 1,
+                                fill: '#fff',
+                            },
+                        },
+                    },
+                    bottom: {
+                        position: 'bottom',
+                        attrs: {
+                            circle: {
+                                r: 4,
+                                magnet: true,
+                                stroke: '#C2C8D5',
+                                strokeWidth: 1,
+                                fill: '#fff',
+                            },
+                        },
+                    },
+                },
+            },
+            data: {
+                id: String(tf.id),
+                status: status,
+                label: displayTitle,
+                fullLabel: fullTitle
+            }
+        };
+    }
+
+    function buildNodeById() {
+        let out = {};
+        nodeContainer.forEach(function (n) {
+            if (n && n.id != null) {
+                out[String(n.id)] = n;
+            }
         });
-        // 工具栏事件
-        table.on('toolbar(tb-common)', function (obj) {
-            var id = obj.config.id;
-            var checkStatus = table.checkStatus(id);
-            switch (obj.event) {
-                case 'getCheckData':
-                    var data = checkStatus.data;
-                    if (data.length === 0) {
-                        return layer.msg(i18np.prop('common.msg.least.one'));
-                    }
-                    layer.alert(layui.util.escape(JSON.stringify(data)));
-                    break;
-                case 'getData':
-                    var getData = table.getData(id);
-                    layer.alert(layui.util.escape(JSON.stringify(getData)));
-                    break;
-                case 'add':
-                    openWindow("common.add", '/view/line_flow_edit?line_id=' + line_id);
-                    break;
-                case 'deleteBatch':
-                    var data = checkStatus.data;
-                    if (data.length === 0) {
-                        return layer.msg(i18np.prop('common.msg.least.one'));
-                    }
-                    var ids = [];
-                    $.each(data, function (i, n) {
-                        ids.push(n.id);
+        return out;
+    }
+
+    function isPersistedNodeId(id) {
+        let node = buildNodeById()[String(id)];
+        return !!(node && !node.__localOnly);
+    }
+
+    function computeLayout() {
+        let nodeById = buildNodeById();
+        let nodeIds = nodeContainer.map(function (n) {
+            return String(n.id);
+        });
+        let nodeOrder = {};
+        nodeIds.forEach(function (id, idx) {
+            nodeOrder[id] = idx;
+        });
+
+        let adj = {};
+        let indeg = {};
+        let layerMap = {};
+        nodeIds.forEach(function (id) {
+            adj[id] = [];
+            indeg[id] = 0;
+            layerMap[id] = 0;
+        });
+
+        edgeContainer.forEach(function (e) {
+            let from = String(e.fromTfId);
+            let to = String(e.toTfId);
+            if (!nodeById[from] || !nodeById[to] || from === to) return;
+            adj[from].push(to);
+            indeg[to] = (indeg[to] || 0) + 1;
+        });
+
+        let queue = [];
+        nodeIds.forEach(function (id) {
+            if ((indeg[id] || 0) === 0) queue.push(id);
+        });
+        while (queue.length > 0) {
+            let u = queue.shift();
+            (adj[u] || []).forEach(function (v) {
+                layerMap[v] = Math.max(layerMap[v], (layerMap[u] || 0) + 1);
+                indeg[v] -= 1;
+                if (indeg[v] === 0) queue.push(v);
+            });
+        }
+
+        let maxLayer = 0;
+        nodeIds.forEach(function (id) {
+            if (layerMap[id] > maxLayer) maxLayer = layerMap[id];
+        });
+
+        let layerToNodes = {};
+        nodeIds.forEach(function (id) {
+            var lv = layerMap[id] || 0;
+            if (!layerToNodes[lv]) layerToNodes[lv] = [];
+            layerToNodes[lv].push(id);
+        });
+
+        let nodeW = 180;
+        let nodeH = 36;
+        let padX = 110;
+        let padY = 70;
+        let left = 40;
+        let top = 40;
+        let pos = {};
+        for (let li = 0; li <= maxLayer; li++) {
+            let arr = layerToNodes[li] || [];
+            arr.sort(function (a, b) {
+                return (nodeOrder[a] || 0) - (nodeOrder[b] || 0);
+            });
+            for (let i = 0; i < arr.length; i++) {
+                pos[arr[i]] = {
+                    x: left + li * (nodeW + padX),
+                    y: top + i * (nodeH + padY)
+                };
+            }
+        }
+
+        return {nodeW: nodeW, nodeH: nodeH, pos: pos};
+    }
+
+    function edgeEndpoints(edge) {
+        if (!edge) return {sid: null, tid: null};
+        if (edge.getSourceCellId && edge.getTargetCellId) {
+            return {sid: edge.getSourceCellId(), tid: edge.getTargetCellId()};
+        }
+        var s = edge.getSource ? edge.getSource() : null;
+        var t = edge.getTarget ? edge.getTarget() : null;
+        return {
+            sid: s && (s.cell || s.id) ? String(s.cell || s.id) : null,
+            tid: t && (t.cell || t.id) ? String(t.cell || t.id) : null
+        };
+    }
+
+    function collectEdgesFromGraph() {
+        if (!tfGraph || typeof tfGraph.getEdges !== 'function') return [];
+        var nodeById = buildNodeById();
+        var pairSeen = {};
+        var out = [];
+        tfGraph.getEdges().forEach(function (edge) {
+            var ep = edgeEndpoints(edge);
+            var sid = ep.sid ? String(ep.sid) : null;
+            var tid = ep.tid ? String(ep.tid) : null;
+            if (!sid || !tid || sid === tid) return;
+            if (!nodeById[sid] || !nodeById[tid]) return;
+            if (!isPersistedNodeId(sid) || !isPersistedNodeId(tid)) return;
+            var k = sid < tid ? (sid + '\0' + tid) : (tid + '\0' + sid);
+            if (pairSeen[k]) return;
+            pairSeen[k] = true;
+            out.push({fromTfId: sid, toTfId: tid});
+        });
+        return out;
+    }
+
+    function deleteSelectedCells() {
+        if (!tfGraph) return;
+        var cells = typeof tfGraph.getSelectedCells === 'function' ? tfGraph.getSelectedCells() : [];
+        if (cells && cells.length) {
+            tfGraph.removeCells(cells);
+            return;
+        }
+        if (lastActiveCell) {
+            tfGraph.removeCell(lastActiveCell);
+            lastActiveCell = null;
+            return;
+        }
+        layuiLayer.msg('请先选中要删除的节点/连线');
+    }
+
+    function selectAllCells() {
+        if (!tfGraph || typeof tfGraph.getCells !== 'function' || typeof tfGraph.select !== 'function') return;
+        var all = tfGraph.getCells() || [];
+        if (all.length) tfGraph.select(all);
+    }
+
+    function undoGraph() {
+        if (!tfGraph || typeof tfGraph.undo !== 'function') return;
+        if (typeof tfGraph.canUndo === 'function' && !tfGraph.canUndo()) return;
+        tfGraph.undo();
+    }
+
+    function redoGraph() {
+        if (!tfGraph || typeof tfGraph.redo !== 'function') return;
+        if (typeof tfGraph.canRedo === 'function' && !tfGraph.canRedo()) return;
+        tfGraph.redo();
+    }
+
+    function copySelectedCells() {
+        if (!tfGraph || typeof tfGraph.copy !== 'function' || typeof tfGraph.getSelectedCells !== 'function') return;
+        var cells = tfGraph.getSelectedCells() || [];
+        if (cells.length) tfGraph.copy(cells);
+    }
+
+    function pasteClipboardCells() {
+        if (!tfGraph || typeof tfGraph.paste !== 'function') return;
+        var pasted = tfGraph.paste({offset: 24});
+        if (pasted && pasted.length && typeof tfGraph.select === 'function') tfGraph.select(pasted);
+    }
+
+    function cutSelectedCells() {
+        copySelectedCells();
+        deleteSelectedCells();
+    }
+
+    function bindEditorHotkeys() {
+        if (!tfGraph || typeof tfGraph.bindKey !== 'function') return;
+        tfGraph.bindKey(['del', 'delete', 'backspace'], deleteSelectedCells);
+        tfGraph.bindKey(['ctrl+z', 'meta+z'], undoGraph);
+        tfGraph.bindKey(['ctrl+y', 'ctrl+shift+z', 'meta+shift+z'], redoGraph);
+        tfGraph.bindKey(['ctrl+c', 'meta+c'], copySelectedCells);
+        tfGraph.bindKey(['ctrl+v', 'meta+v'], pasteClipboardCells);
+        tfGraph.bindKey(['ctrl+x', 'meta+x'], cutSelectedCells);
+        tfGraph.bindKey(['ctrl+a', 'meta+a'], function (e) {
+            if (e && e.preventDefault) e.preventDefault();
+            selectAllCells();
+        });
+    }
+
+    function detachDocumentHotkeys() {
+        if (!graphKeydownHandler) return;
+        document.removeEventListener('keydown', graphKeydownHandler, true);
+        graphKeydownHandler = null;
+    }
+
+    function bindDocumentHotkeys(containerEl) {
+        detachDocumentHotkeys();
+        graphKeydownHandler = function (e) {
+            if (!tfGraph) return;
+            var t = e.target;
+            var tag = t && t.tagName ? String(t.tagName).toLowerCase() : '';
+            if (t && (t.isContentEditable || tag === 'input' || tag === 'textarea' || tag === 'select')) return;
+            var focused = document.activeElement === containerEl;
+            var inGraph = !!(containerEl && t && containerEl.contains(t));
+            if (!focused && !inGraph) return;
+
+            var key = String(e.key || '').toLowerCase();
+            var ctrlOrMeta = !!(e.ctrlKey || e.metaKey);
+
+            if ((key === 'delete' || key === 'backspace') && !ctrlOrMeta) {
+                e.preventDefault();
+                deleteSelectedCells();
+                return;
+            }
+            if (!ctrlOrMeta) return;
+
+            if (key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undoGraph();
+                return;
+            }
+            if (key === 'y' || (key === 'z' && e.shiftKey)) {
+                e.preventDefault();
+                redoGraph();
+                return;
+            }
+            if (key === 'c') {
+                e.preventDefault();
+                copySelectedCells();
+                return;
+            }
+            if (key === 'v') {
+                e.preventDefault();
+                pasteClipboardCells();
+                return;
+            }
+            if (key === 'x') {
+                e.preventDefault();
+                cutSelectedCells();
+                return;
+            }
+            if (key === 'a') {
+                e.preventDefault();
+                selectAllCells();
+            }
+        };
+        document.addEventListener('keydown', graphKeydownHandler, true);
+    }
+
+    function updateIncomingEdgesByNode(node) {
+        if (!tfGraph || !node) return;
+        var data = node.getData ? node.getData() : null;
+        var status = data && data.status ? data.status : 'default';
+        var incomingEdges = [];
+        if (typeof tfGraph.getIncomingEdges === 'function') {
+            incomingEdges = tfGraph.getIncomingEdges(node) || [];
+        } else if (typeof tfGraph.getEdges === 'function') {
+            incomingEdges = (tfGraph.getEdges() || []).filter(function (edge) {
+                if (!edge || typeof edge.getTarget !== 'function') return false;
+                var t = edge.getTarget() || {};
+                var tid = t.cell || t.id;
+                return String(tid) === String(node.id);
+            });
+        }
+        incomingEdges.forEach(function (edge) {
+            if (!edge || typeof edge.attr !== 'function') return;
+            if (status === 'running') {
+                edge.attr('line/strokeDasharray', 5);
+                edge.attr('line/style/animation', 'running-line 30s infinite linear');
+            } else {
+                edge.attr('line/strokeDasharray', '');
+                edge.attr('line/style/animation', '');
+            }
+        });
+    }
+
+    function renderGraph() {
+        var el = document.getElementById('tf-flow-graph');
+        if (!el) return;
+        el.innerHTML = '';
+
+        if (nodeContainer.length === 0) {
+            el.innerHTML = '<div style="padding:20px; color:#999;">暂无工序节点</div>';
+            return;
+        }
+
+        var X6Lib = getX6();
+        if (!X6Lib || !X6Lib.Graph) {
+            el.innerHTML = '<div style="padding:20px; color:#c6362b;">流程图组件（@antv/x6）加载失败</div>';
+            return;
+        }
+
+        ensureDagShapesAndConnector();
+        var Graph = X6Lib.Graph;
+        var layout = computeLayout();
+        var nodeById = buildNodeById();
+
+        tfGraph = new Graph({
+            container: el,
+            width: el.clientWidth || 800,
+            height: 560,
+            panning: {enabled: true, eventTypes: ['leftMouseDown', 'mouseWheel']},
+            mousewheel: {
+                enabled: true,
+                modifiers: 'ctrl',
+                factor: 1.1,
+                maxScale: 1.5,
+                minScale: 0.5,
+            },
+            highlighting: {
+                magnetAdsorbed: {
+                    name: 'stroke',
+                    args: {
+                        attrs: {
+                            fill: '#fff',
+                            stroke: '#31d0c6',
+                            strokeWidth: 4,
+                        },
+                    },
+                },
+            },
+            history: {enabled: true},
+            clipboard: {enabled: true},
+            selecting: {
+                multiple: true,
+                rubberEdge: true,
+                rubberNode: true,
+                modifiers: 'shift',
+                rubberband: true,
+                // showNodeSelectionBox: true,
+                // showEdgeSelectionBox: true
+            },
+            connecting: {
+                snap: true,
+                allowBlank: false,
+                allowLoop: false,
+                highlight: true,
+                connector: 'algo-connector',
+                connectionPoint: 'anchor',
+                anchor: 'center',
+                validateMagnet({magnet}) {
+                    return magnet.getAttribute('port-group') !== 'top'
+                },
+                createEdge: function () {
+                    return tfGraph.createEdge({
+                        shape: 'dag-edge',
+                        connector: {name: 'algo-connector'},
+                        attrs: {line: {strokeDasharray: '5 5'}},
+                        zIndex: -1
                     });
-                    delWindow(router.tf_del, ids, reloadTb);
-                    break;
-                case 'refresh':
-                    reloadTb();
-                    break
+                }
             }
         });
 
-        // 触发单元格工具事件
-        table.on('tool(tb-common)', function (obj) { // 双击 toolDouble
-            var data = obj.data; // 获得当前行数据
-            if (obj.event === 'del') {
-                delWindow(router.tf_del, [data.id], reloadTb);
-            } else if (obj.event === 'edit') {
-                openWindow("common.edit", '/view/line_flow_edit?id=' + data.id);
-            }
+        var keyboardPlugin = getX6KeyboardPlugin();
+        if (keyboardPlugin && keyboardPlugin.Keyboard && typeof tfGraph.use === 'function') {
+            tfGraph.use(new keyboardPlugin.Keyboard({enabled: true}));
+        }
+        bindEditorHotkeys();
+        bindDocumentHotkeys(el);
+
+        nodeContainer.forEach(function (tf) {
+            tfGraph.addNode(createNode(layout, tf));
         });
-    })
+        edgeContainer.forEach(function (e) {
+            var from = String(e.fromTfId);
+            var to = String(e.toTfId);
+            if (!nodeById[from] || !nodeById[to]) return;
+            tfGraph.addEdge({
+                shape: 'dag-edge',
+                connector: {name: 'algo-connector'},
+                source: {cell: from, port: 'port-bottom'},
+                target: {cell: to, port: 'port-top'},
+                attrs: {line: {stroke: '#C2C8D5', strokeWidth: 1, targetMarker: null}}
+            });
+        });
+
+        tfGraph.on('edge:connected', function (args) {
+            var edge = args && args.edge ? args.edge : null;
+            if (!edge || !edge.attr) return;
+            edge.attr('line/strokeDasharray', '');
+            edge.attr('line/style/animation', '');
+        });
+        tfGraph.on('node:change:data', function (args) {
+            updateIncomingEdgesByNode(args ? args.node : null);
+        });
+        tfGraph.on('cell:click', function (args) {
+            lastActiveCell = args && args.cell ? args.cell : null;
+        });
+        tfGraph.on('node:dblclick', function (args) {
+            var node = args && args.node ? args.node : null;
+            if (!node || node.id == null) return;
+            openNodeEditor(node.id);
+        });
+        tfGraph.on('blank:click', function () {
+            lastActiveCell = null;
+        });
+
+        nodeContainer.forEach(function (tf) {
+            var node = tfGraph.getCellById(String(tf.id));
+            if (node) updateIncomingEdgesByNode(node);
+        });
+
+        try {
+            tfGraph.zoomToFit({padding: 20, maxScale: 1.2});
+        } catch (e) {
+            try {
+                tfGraph.centerContent();
+            } catch (e2) {
+            }
+        }
+    }
+
+    function reloadEdges() {
+        if (line_id == null) return;
+        get(router.tfEdge_lineId, {lineId: line_id}, function (result) {
+            setEdgeContainer(result || []);
+            var nodeById = buildNodeById();
+            var seen = {};
+            var filteredEdges = edgeContainer.filter(function (e) {
+                if (!e) return false;
+                var from = String(e.fromTfId);
+                var to = String(e.toTfId);
+                if (!nodeById[from] || !nodeById[to] || from === to) return false;
+                var k = from < to ? from + '\0' + to : to + '\0' + from;
+                if (seen[k]) return false;
+                seen[k] = true;
+                return true;
+            });
+            setEdgeContainer(filteredEdges);
+
+            var nodes = nodeContainer;
+            if (edgeContainer.length === 0 && nodes.length > 1) {
+                var fallbackEdges = [];
+                for (var i = 0; i < nodes.length - 1; i++) {
+                    fallbackEdges.push({fromTfId: nodes[i].id, toTfId: nodes[i + 1].id});
+                }
+                setEdgeContainer(fallbackEdges);
+            }
+            renderGraph();
+        });
+    }
 
     function reloadTb() {
-        if (line_id !== null) {
-            var param = {
-                "lineId": line_id
-            }
-            get(router.tf_lineId, param, function (result) {
-                data = result;
-                table.reloadData('tb-common', {
-                    data: data
-                });
-            })
-        }
+        if (line_id == null) return;
+        get(router.tf_lineId, {lineId: line_id}, function (result) {
+            setNodeContainer(result || []);
+            reloadEdges();
+        });
+    }
+
+    window.reloadTb = reloadTb;
+    window.getNodeDraftById = getNodeDraftById;
+    window.applyNodeDraftFromEditor = applyNodeDraftFromEditor;
+
+    function saveEdges() {
+        if (line_id == null) return;
+        var dto = {lineId: line_id, edges: collectEdgesFromGraph()};
+        window.post(router.tfEdge_saveByLineId, dto, function () {
+            layuiLayer.msg('保存成功');
+            reloadEdges();
+        }, function (code, msg) {
+            layuiLayer.alert(msg, {title: 'error'});
+        });
     }
 </script>
 </body>

@@ -1,0 +1,1 @@
+import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`workshop_config_collect`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/workshop_config_collect`}))}});export{i as default};

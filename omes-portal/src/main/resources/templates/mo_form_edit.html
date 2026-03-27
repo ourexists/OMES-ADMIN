@@ -7,100 +7,254 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../static/layui/css/layui.css">
+    <link rel="stylesheet" href="../static/css/mps_form_edit.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
     <script src="../static/js/global.js"></script>
+    <style>
+        /* MO 表单页 - 电商风格（卡片化/统一间距/强调信息层级） */
+        .mo-edit-page {
+            padding: 16px;
+            padding-bottom: 120px; /* 给底部固定操作栏留空间 */
+            background: var(--bg-page);
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .mo-edit-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 16px;
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--bg-panel-alt) 0%, var(--bg-panel) 100%);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 14px;
+        }
+
+        .mo-edit-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-primary-soft);
+            color: var(--color-primary);
+            font-weight: 800;
+            flex: 0 0 auto;
+        }
+
+        .mo-edit-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.3;
+            margin-bottom: 20px;
+        }
+
+        .mo-edit-title-sub {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-sub);
+        }
+
+        .mo-edit-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            margin-top: 6px;
+        }
+
+        .mo-edit-meta-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex: 1 1 260px;
+            min-width: 260px;
+        }
+
+        .mo-edit-meta-label {
+            font-size: 13px;
+            color: var(--text-sub);
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .mo-edit-meta-value {
+            font-size: 15px;
+            color: var(--text-main);
+            font-weight: 700;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .mo-edit-formCard.layui-form-pane {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--shadow-card);
+            margin-bottom: 14px;
+        }
+
+        .mo-edit-sectionCard {
+            margin: 14px 0;
+        }
+
+        /* 让 Layui 表格“看起来像电商卡片容器” */
+        .mo-edit-sectionCard .layui-table-view {
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            box-shadow: var(--shadow-card-layui);
+            overflow: hidden;
+            background: var(--bg-panel);
+        }
+
+        /* 统一表格单元格高度/垂直居中（避免两张表视觉不一致） */
+        .mo-edit-sectionCard .layui-table-cell {
+            height: 50px;
+            line-height: 40px;
+        }
+
+        .mo-edit-sectionCard .layui-table-tool {
+            background: var(--bg-panel-alt);
+        }
+
+        .mo-edit-toolbar-center {
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .mo-edit-actions {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1001;
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-card);
+            background: var(--bg-overlay);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(10px);
+        }
+
+        .mo-edit-actions .layui-btn {
+            min-width: 92px;
+        }
+
+        /* 对行内提示文字更贴近电商的“弱化/统一” */
+        .mo-edit-formCard .layui-form-label {
+            font-weight: 700;
+            color: var(--text-sub);
+        }
+
+        /* 小屏适配：顶部信息改为纵向排版，底部按钮居中 */
+        @media (max-width: 1100px) {
+            .mo-edit-meta-item {
+                min-width: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mo-edit-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .mo-edit-meta-item {
+                flex: 1 1 160px;
+                min-width: 0;
+                align-items: flex-start;
+            }
+
+            .mo-edit-meta-label {
+                text-align: left;
+                white-space: normal;
+            }
+
+            .mo-edit-meta-value {
+                text-align: left;
+            }
+
+            .mo-edit-actions {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                bottom: 16px;
+                padding: 10px;
+                max-width: calc(100vw - 32px);
+            }
+        }
+    </style>
 </head>
 <body>
-<div style="padding: 16px;">
+<div class="mo-edit-page">
 
-    <form class="layui-form layui-form-pane" action="" id="line-edit-form" lay-filter="line-edit-form">
-        <div class="layui-form-item">
-            <div class="layui-inline">
-                <label class="layui-form-label" lang-i18n="common.order.code"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="selfCode" autocomplete="off"
-                           class="layui-input lay-unable-edit era-detail-disabled">
-                </div>
+    <div class="mo-edit-header" id="mo-edit-header">
+        <span class="mo-edit-badge">MO</span>
+        <div>
+            <div class="mo-edit-title">
+                <span id="mo-edit-selfCode"></span>
             </div>
-            <div class="layui-inline">
-                <label class="layui-form-label" lang-i18n="common.tenantId"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="tenantId" autocomplete="off"
-                           class="layui-input era-detail-disabled">
+            <div class="mo-edit-meta">
+                <div class="mo-edit-meta-item">
+                    <span class="mo-edit-meta-label" lang-i18n="bom.name"></span>
+                    <span class="mo-edit-meta-value" id="mo-edit-productNameAndCode"></span>
                 </div>
-            </div>
-
-        </div>
-        <div class="layui-form-item">
-            <div class="layui-inline">
-                <label class="layui-form-label" lang-i18n="bom.name"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="productName" autocomplete="off" lay-verify="required"
-                           class="layui-input" disabled>
+                <div class="mo-edit-meta-item">
+                    <span class="mo-edit-meta-label" lang-i18n="mo.num"></span>
+                    <span class="mo-edit-meta-value" id="mo-edit-num"></span>
                 </div>
-            </div>
-            <div class="layui-inline">
-                <label class="layui-form-label" lang-i18n="bom.code"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="productCode" autocomplete="off" lay-verify="required"
-                           class="layui-input" disabled>
+                <div class="mo-edit-meta-item">
+                    <span class="mo-edit-meta-label" lang-i18n="common.tenantId"></span>
+                    <span class="mo-edit-meta-value" id="mo-edit-tenantId"></span>
                 </div>
-            </div>
-            <div class="layui-inline era-detail-hidden">
-                <button type="button" id="form-select-bom-btn"
-                        class="layui-btn layui-btn-primary layui-border-blue "
-                        lang-i18n="select.bom"></button>
+                <div class="mo-edit-meta-item">
+                    <span class="mo-edit-meta-label" lang-i18n="mo.weight"></span>
+                    <span class="mo-edit-meta-value" id="mo-edit-weight"></span>
+                </div>
             </div>
         </div>
-        <div class="layui-form-item">
-            <div class="layui-inline">
-                <label class="layui-form-label" lang-i18n="mo.num"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="num" id="num" autocomplete="off" lay-verify="required"
-                           class="layui-input era-detail-disabled"
-                           onKeyUp="this.value = input_limit_int(this.value)">
-                </div>
-            </div>
-            <div class="layui-inline" id="weight-input">
-                <label class="layui-form-label" lang-i18n="mo.weight"></label>
-                <div class="layui-input-block">
-                    <input type="text" name="weight" id="weight" autocomplete="off" lay-verify="required"
-                           class="layui-input era-detail-disabled"
-                           onKeyUp="this.value = input_limit_float(this.value)">
-                </div>
-            </div>
-            <!--            <div class="layui-inline">-->
-            <!--                <label class="layui-form-label" lang-i18n="mps.execTime"></label>-->
-            <!--                <div class="layui-input-block">-->
-            <!--                    <input type="text" class="layui-input" name="execTime" id="execTime">-->
-            <!--                </div>-->
-            <!--            </div>-->
-        </div>
-    </form>
-    <div class="layui-form-item">
+    </div>
+    <div class="layui-form-item mo-edit-sectionCard">
         <table class="layui-hide" id="tb-line-detail"></table>
     </div>
-    <div class="layui-form-item">
+    <div class="layui-form-item mo-edit-sectionCard">
         <table class="layui-hide" id="tb-mps-tf"></table>
     </div>
-    <div class="layui-form era-detail-hidden" style="position: fixed; bottom: 5%; right: 5%">
+    <div class="layui-form era-detail-hidden mo-edit-actions">
         <button type="button" class="layui-btn" id="line-edit-button" lang-i18n="common.msg.confirm">确认</button>
-        <button type="button" class="layui-btn layui-btn-primary" onclick="closeWindow()">close</button>
+        <button type="button" class="layui-btn layui-btn-primary" lang-i18n="common.close" onclick="closeWindow()">
+            close
+        </button>
     </div>
 </div>
 <script type="text/html" id="bom-toolbar">
-    <div class="layui-btn-container" style="font-weight: bold;text-align: center;">
+    <div class="layui-btn-container mo-edit-toolbar-center">
         <span>{{ i18np.prop('menu.bom') }}</span>
+        {{# if (current_row_data && current_row_data.productName) { }}
+        <span class="mo-edit-title-sub">[{{ current_row_data.productName }}]</span>
+        {{# } }}
     </div>
 </script>
 <script type="text/html" id="tf-toolbar">
-    <div class="layui-btn-container" style="font-weight: bold;text-align: center;">
+    <div class="layui-btn-container mo-edit-toolbar-center">
         <span>{{ i18np.prop('mps.tf.name') }}</span>
-        {{# if (tfDatas.length>0) { }}
-        <span>[{{ current_row_data.lineName }}]</span>
+        {{# if (current_row_data && current_row_data.lineName) { }}
+        <span class="mo-edit-title-sub">[{{ current_row_data.lineName }}]</span>
         {{# } }}
     </div>
 </script>
@@ -109,9 +263,7 @@
     var details = [];
     var tfDatas = [];
     var table;
-    var form;
-    layui.use(["form", "layer", "table"], function () {
-        form = layui.form;
+    layui.use(["layer", "table"], function () {
         table = layui.table;
 
         let page_type = layui.url().search.page_type;
@@ -125,15 +277,16 @@
             get(router.mo_id, param, function (result) {
                 current_row_data = result;
                 details = result.detailDtoList;
-                form.val("line-edit-form", {
-                    "productName": result.productName,
-                    "selfCode": result.selfCode,
-                    "productCode": result.productCode,
-                    "num": result.num,
-                    "weight": result.weight,
-                    "tenantId": result.tenantId,
-                    // "execTime": result.execTime
-                });
+                // 顶部信息条：用电商化的“关键信息”快速定位当前单据
+                $('#mo-edit-selfCode').text(result.selfCode || '');
+                var productName = result.productName || '';
+                var productCode = result.productCode || '';
+                $('#mo-edit-productNameAndCode').text(
+                    productName + (productCode ? ' [ ' + productCode +' ] ' : '')
+                );
+                $('#mo-edit-num').text(result.num != null ? result.num : '');
+                $('#mo-edit-tenantId').text(result.tenantId || '');
+                $('#mo-edit-weight').text(result.weight != null ? result.weight : '');
                 if (current_row_data.lineCode !== null) {
                     var req = {
                         "code": current_row_data.lineCode
@@ -146,21 +299,15 @@
                 }
                 reloadTb();
             })
-            if (current_row_data.selfCode !== "") {
-                $(".lay-unable-edit").attr("disabled", "block");
-            }
 
         } else {
-            form.val("line-edit-form", {
-                "productName": "",
-                "selfCode": "",
-                "productCode": "",
-                "num": 1,
-                "weight": 0,
-                "tenantId": "0"
-            });
             current_row_data = {};
             details = [];
+            $('#mo-edit-selfCode').text('');
+            $('#mo-edit-num').text('1');
+            $('#mo-edit-tenantId').text('0');
+            $('#mo-edit-productNameAndCode').text('');
+            $('#mo-edit-weight').text('0');
         }
 
         var page_params = {
@@ -172,14 +319,14 @@
                         field: 'matNum',
                         title: i18np.prop("material.num"),
                         edit: 'text',
-                        style: 'color: red;'
+                        style: 'color: var(--status-alarm-text); font-weight: 700;'
                     },
 
                     {
                         field: 'priority',
                         title: i18np.prop("common.priority"),
                         edit: 'text',
-                        style: 'color: red;'
+                        style: 'color: var(--status-alarm-text); font-weight: 700;'
                     }
                 ]]
             },
@@ -198,7 +345,6 @@
         }
         var page = page_params.default_param
         if (page_type === '1') {
-            $('.layui-input').attr("disabled", "block");
             $('.era-detail-hidden').hide();
             page = page_params.detail_param;
         }

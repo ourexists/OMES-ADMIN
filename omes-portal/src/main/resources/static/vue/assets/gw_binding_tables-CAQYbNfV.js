@@ -1,0 +1,1 @@
+import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`gw_binding_tables`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/gw_binding_tables`}))}});export{i as default};

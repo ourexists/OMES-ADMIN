@@ -1,0 +1,1 @@
+import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`sync_resource`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/sync_resource`}))}});export{i as default};

@@ -14,7 +14,7 @@
     <script src="../static/js/global.js"></script>
 </head>
 <body>
-<div class="layui-tab-content" style="padding: 15px;">
+<div class="layui-tab-content form-table-layout">
     <form class="layui-form layui-row layui-col-space16">
         <div class="layui-col-md4">
             <div class="layui-input-wrap">
@@ -41,7 +41,9 @@
             <button type="reset" class="layui-btn layui-btn-primary" lang-i18n="common.clear">Clear</button>
         </div>
     </form>
-    <table class="layui-hide" id="tb-ebs-material"></table>
+    <div class="form-table-wrap">
+        <table class="layui-hide" id="tb-ebs-material"></table>
+    </div>
 </div>
 <script type="text/html" id="material-tool">
     <div class="layui-clear-space">
@@ -76,7 +78,6 @@
         var form = layui.form,
             dropdown = layui.dropdown,
             layer = layui.layer;
-
         // 创建表格实例
         table.render({
             elem: '#tb-ebs-material',
@@ -177,7 +178,7 @@
                     break;
                 case 'add':
                     current_row_data = null;
-                    openWindow('common.add', '/view/material_classify_form_edit', ['50%', '25%']);
+                    openMidWindow('common.add', '/view/material_classify_form_edit', ['50%', '25%']);
                     break;
                 case 'deleteBatch':
                     var data = checkStatus.data;
@@ -198,7 +199,7 @@
             var data = obj.data; // 获得当前行数据
             current_row_data = data;
             if (obj.event === 'edit') {
-                openWindow('common.edit', '/view/material_classify_form_edit', ['50%', '25%'])
+                openMidWindow('common.edit', '/view/material_classify_form_edit', ['50%', '25%'])
             } else if (obj.event === 'del') {
                 delWindow(router.mc_del, [data.id], reloadTb);
             }

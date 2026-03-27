@@ -129,6 +129,8 @@ let router = {
     "tf_id": "/tf/selectById",
     "tf_type": "/tf/type",
     "tf_changePriority": "/tf/changePriority",
+    "tfEdge_lineId": "/tfEdge/selectByLineId",
+    "tfEdge_saveByLineId": "/tfEdge/saveByLineId",
     "sync_page": "/sync/selectByPage",
     "sync_id": "/sync/selectById",
     "sync_breakpoint": "/sync/breakpointProcess",

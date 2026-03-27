@@ -1,0 +1,1 @@
+import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`equip_run_echarts`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/equip_run_echarts`}))}});export{i as default};
