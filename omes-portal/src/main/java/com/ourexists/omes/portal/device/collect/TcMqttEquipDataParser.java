@@ -51,7 +51,7 @@ public class TcMqttEquipDataParser implements EquipDataParser {
                 }
                 for (JSONObject object : ywArray.toArray(JSONObject.class)) {
                     String ywSn = object.getString(equipRealtimeConfig.getDeviceIdMap());
-                    String ssnn = sn + ywSn;
+                    String ssnn = sn + "yw" + ywSn;
                     if (equipRealtime.getSelfCode().equals(ssnn)) {
                         targets.add(doParse(equipRealtime, object));
                     }
