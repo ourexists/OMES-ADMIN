@@ -52,6 +52,9 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     @Autowired
     private EquipRecordAlarmFeign equipRecordAlarmFeign;
 
+    @Autowired
+    private RedisCacheValueConverter cacheValueConverter;
+
     private static final String CACHE_NAME = "equip_realtime_";
 
     private Cache tenantCache() {
@@ -82,7 +85,8 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         for (String redisKey : keys) {
             String cacheKey = redisKey.substring(keyPrefix.length());
             Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
-            if (valueWrapper != null && valueWrapper.get() instanceof EquipRealtime equipRealtime) {
+            EquipRealtime equipRealtime = valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), EquipRealtime.class);
+            if (equipRealtime != null) {
                 result.put(cacheKey, equipRealtime);
             }
         }
@@ -100,7 +104,8 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         List<EquipRealtime> sources = new ArrayList<>();
         for (EquipRealtime target : targets) {
             Cache.ValueWrapper valueWrapper = cache.get(target.getSelfCode());
-            if (valueWrapper != null && valueWrapper.get() instanceof EquipRealtime equipRealtime) {
+            EquipRealtime equipRealtime = valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), EquipRealtime.class);
+            if (equipRealtime != null) {
                 sources.add(equipRealtime);
             }
         }
@@ -145,7 +150,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     @Override
     public EquipRealtime get(String sn) {
         Cache.ValueWrapper valueWrapper = tenantCache().get(sn);
-        return valueWrapper == null ? null : (EquipRealtime) valueWrapper.get();
+        return valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), EquipRealtime.class);
     }
 
     @Override

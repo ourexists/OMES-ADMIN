@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>AI巡检报告</title>
+    <link rel="stylesheet" th:href="${portalStaticBaseUrl + '/static/layui/css/layui.css'}">
+    <link rel="stylesheet" th:href="${portalStaticBaseUrl + '/static/css/common.css'}">
+    <script th:src="${portalStaticBaseUrl + '/static/js/jquery.min.js'}"></script>
+    <script th:src="${portalStaticBaseUrl + '/static/layui/layui.js'}"></script>
+    <script src="/static/js/ai_global.js"></script>
+    <style>
+        .ai-container { padding: 16px; }
+        .ai-card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .ai-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+        .ai-result-box { min-height: 220px; white-space: pre-wrap; background: #f8f8f8; border: 1px solid #e6e6e6; padding: 12px; border-radius: 6px; }
+        .ai-meta { color: #666; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+<div class="ai-container">
+    <div class="ai-card">
+        <div class="ai-title">巡检报告生成</div>
+        <form class="layui-form layui-row layui-col-space16" id="ai-report-form">
+            <div class="layui-col-md3"><input type="number" id="days" class="layui-input" value="7" placeholder="统计天数"></div>
+            <div class="layui-col-md3"><input type="number" id="limit" class="layui-input" value="50" placeholder="最大巡检记录数"></div>
+            <div class="layui-col-md3"><input type="checkbox" id="onlyAbnormal" title="仅异常记录"></div>
+            <div class="layui-col-md3">
+                <button type="button" class="layui-btn layui-btn-xs" id="btn-generate">生成AI报告</button>
+                <button type="button" class="layui-btn layui-btn-xs layui-btn-normal" id="btn-reindex">重建知识库</button>
+                <button type="button" class="layui-btn layui-btn-xs layui-btn-primary" id="btn-kb-builder">知识库建立</button>
+                <button type="button" class="layui-btn layui-btn-xs layui-btn-danger" id="btn-multi-agent">多Agent对话</button>
+            </div>
+        </form>
+    </div>
+    <div class="ai-card">
+        <div class="ai-title">设备手册 / 故障案例问答</div>
+        <div class="layui-row layui-col-space16">
+            <div class="layui-col-md9"><input type="text" id="question" class="layui-input" placeholder="请输入问题，如：3号产线电机振动过大如何排查？"></div>
+            <div class="layui-col-md3"><button type="button" class="layui-btn layui-btn-warm" id="btn-ask">提问</button></div>
+        </div>
+        <div class="ai-meta" id="qa-meta" style="margin-top: 10px;"></div>
+        <div class="ai-result-box" id="qa-answer"></div>
+    </div>
+    <div class="ai-card">
+        <div class="ai-title">AI巡检报告</div>
+        <div class="ai-meta" id="report-meta"></div>
+        <div class="ai-result-box" id="report-content"></div>
+    </div>
+    <div class="ai-card">
+        <div class="ai-title">Agent Tool 执行面板</div>
+        <div class="layui-row layui-col-space16">
+            <div class="layui-col-md9"><input type="text" id="agent-prompt" class="layui-input" placeholder="输入目标，例如：查询异常并给出处理建议"></div>
+            <div class="layui-col-md3"><button type="button" class="layui-btn layui-btn-danger" id="btn-agent-run">执行Agent</button></div>
+        </div>
+        <div style="margin-top: 10px;">
+            <textarea id="agent-tools-json" class="layui-textarea" style="min-height: 120px;" placeholder='可选：传入显式 toolCalls JSON 数组，例如 [{"toolName":"inspection.query","arguments":{"days":7,"limit":50}}]'></textarea>
+        </div>
+        <div class="ai-meta" id="agent-meta" style="margin-top: 10px;"></div>
+        <div class="ai-result-box" id="agent-result"></div>
+    </div>
+</div>
+<script>
+layui.use(['form', 'layer'], function () {
+    var layer = layui.layer;
+    var query = layui.url().search || {};
+    var defaultTaskId = query.taskId || '';
+    var defaultEquipName = query.equipName || '';
+    var autoGenerate = String(query.autogen || '') === 'true';
+    function generateReport() {
+        var payload = {
+            days: parseInt($('#days').val(), 10),
+            limit: parseInt($('#limit').val(), 10),
+            includeOnlyAbnormal: $('#onlyAbnormal').is(':checked'),
+            taskId: defaultTaskId || '',
+            equipName: defaultEquipName || ''
+        };
+        post(router.inspect_ai_report_generate, payload, function (data) {
+            $('#report-content').text(data.report || '');
+            $('#report-meta').text('模型: ' + (data.modelUsed || '-') + ' | 记录数: ' + data.recordCount + ' | 异常记录: ' + data.abnormalCount + (defaultTaskId ? ' | 任务: ' + defaultTaskId : '') + (defaultEquipName ? ' | 设备关键字: ' + defaultEquipName : ''));
+        }, function (code, msg) {
+            layer.alert('生成失败: ' + msg + ' (' + code + ')');
+        });
+    }
+    $('#btn-generate').on('click', generateReport);
+    $('#btn-reindex').on('click', function () {
+        post(router.inspect_ai_knowledge_reindex, {limit: parseInt($('#limit').val(), 10)}, function (data) {
+            layer.msg('知识库重建完成，写入文档: ' + data.indexed + '，向量后端: ' + data.provider);
+        });
+    });
+    $('#btn-ask').on('click', function () {
+        var question = $('#question').val();
+        if (!question) {
+            layer.msg('请输入问题');
+            return;
+        }
+        post(router.inspect_ai_knowledge_ask, {question: question, topK: 5}, function (data) {
+            $('#qa-answer').text(data.answer || '');
+            $('#qa-meta').text('来源: 巡检RAG知识库');
+        });
+    });
+    $('#btn-kb-builder').on('click', function () { openMidWindow('知识库建立', '/view/inspect_ai_kb_builder', ['85%', '95%']); });
+    $('#btn-multi-agent').on('click', function () { openMidWindow('多Agent对话', '/view/inspect_ai_multi_agent_chat', ['90%', '95%']); });
+    $('#btn-agent-run').on('click', function () {
+        var userPrompt = ($('#agent-prompt').val() || '').trim();
+        if (!userPrompt) {
+            layer.msg('请输入 Agent 目标');
+            return;
+        }
+        var payload = {userPrompt: userPrompt};
+        var toolCallsRaw = ($('#agent-tools-json').val() || '').trim();
+        if (toolCallsRaw) {
+            try {
+                var parsed = JSON.parse(toolCallsRaw);
+                if (!Array.isArray(parsed)) {
+                    layer.msg('toolCalls 必须是 JSON 数组');
+                    return;
+                }
+                payload.toolCalls = parsed;
+            } catch (e) {
+                layer.msg('toolCalls JSON 格式不正确');
+                return;
+            }
+        }
+        post(router.inspect_ai_agent_run, payload, function (data) {
+            var tools = data.toolResults || [];
+            $('#agent-meta').text('已执行工具数: ' + tools.length);
+            $('#agent-result').text('Final Answer:\n' + (data.finalAnswer || '') + '\n\nTool Results:\n' + JSON.stringify(tools, null, 2));
+        }, function (code, msg) {
+            layer.alert('Agent 执行失败: ' + msg + ' (' + code + ')');
+        });
+    });
+    if (autoGenerate) {
+        generateReport();
+    }
+});
+</script>
+</body>
+</html>

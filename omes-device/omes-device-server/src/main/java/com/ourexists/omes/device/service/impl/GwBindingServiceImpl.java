@@ -40,7 +40,7 @@ public class GwBindingServiceImpl extends AbstractMyBatisPlusService<GwBindingMa
     @Override
     public void addOrUpdate(GwBindingDto dto) {
         dto.getConfig().setGwId(dto.getGwId());
-        saveOrUpdate(GwBinding.wrap(dto));
+        this.baseMapper.upsertByEquipId(GwBinding.wrap(dto));
         EquipRealtime equipRealtime = equipRealtimeManager.getById(dto.getEquipId());
         if (equipRealtime != null) {
             EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();

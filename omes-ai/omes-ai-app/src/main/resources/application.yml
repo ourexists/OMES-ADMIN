@@ -1,0 +1,78 @@
+server:
+  port: 10011
+  servlet:
+    context-path: /
+spring:
+  thymeleaf:
+    cache: false
+  mvc:
+    static-path-pattern: static/**
+  application:
+    name: OMES-AI-APP
+  config:
+    location: classpath:/,file:config/
+  profiles:
+    include: db-mysql
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: ALWAYS
+    time-zone: GMT+8
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:321213213}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        options:
+          model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
+          temperature: 0.2
+      embedding:
+        options:
+          model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_PORT:6334}
+        collection-name: ${QDRANT_COLLECTION:omes_inspection_kb}
+
+era:
+  permission:
+    ignore:
+      auth_check:
+        - /expose/**
+        - /
+        - /templates/**
+        - /view/**
+        - /files/**
+      api_check:
+        - /expose/**
+        - /
+        - /templates/**
+        - /view/**
+        - /files/**
+  token:
+    store-type: Db
+
+ai:
+  portal-static-base-url: ${AI_PORTAL_STATIC_BASE_URL:http://127.0.0.1:10010}
+  inspection:
+    enabled: true
+    default-days: 7
+    default-limit: 50
+    vector-provider: qdrant
+    top-k: 5
+    portal-base-url: ${AI_PORTAL_BASE_URL:http://127.0.0.1:10010}
+    agent-portal-proxy-enabled: ${AI_AGENT_PORTAL_PROXY_ENABLED:true}
+    multi-agent:
+      allow-custom-agent: true
+      max-history: 20
+      max-message-length: 2000
+      enabled-agents:
+        - planner-agent
+        - inspection-agent
+        - knowledge-agent
+      custom-agent-allowed-roles:
+        - ADMIN
+        - AI_ADMIN
