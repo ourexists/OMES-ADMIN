@@ -26,6 +26,22 @@ spring:
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:5s}
+      lettuce:
+        pool:
+          max-active: ${REDIS_POOL_MAX_ACTIVE:50}
+          max-idle: ${REDIS_POOL_MAX_IDLE:20}
+          min-idle: ${REDIS_POOL_MIN_IDLE:5}
+          max-wait: ${REDIS_POOL_MAX_WAIT:2s}
+  cache:
+    type: redis
 
 management:
   endpoint:
@@ -90,3 +106,7 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+ai:
+  proxy:
+    base-url: ${AI_APP_BASE_URL:http://127.0.0.1:10011}
