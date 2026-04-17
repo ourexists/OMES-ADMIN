@@ -1,6 +1,5 @@
 package com.ourexists.omes.portal.device.cache;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
@@ -15,18 +14,18 @@ import com.ourexists.omes.message.enums.MessageSourceEnum;
 import com.ourexists.omes.message.enums.MessageTypeEnum;
 import com.ourexists.omes.message.feign.NotifyFeign;
 import com.ourexists.omes.message.model.NotifyDto;
-import com.ourexists.omes.ucenter.feign.TenantFeign;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCache;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -34,6 +33,9 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private EquipFeign equipFeign;
@@ -52,10 +54,39 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     private static final String CACHE_NAME = "equip_realtime_";
 
-    public Cache<Object, Object> nativeCache() {
+    private Cache tenantCache() {
         String tenantId = UserContext.getTenant().getTenantId();
-        CaffeineCache springCache = (CaffeineCache) cacheManager.getCache(CACHE_NAME + tenantId);
-        return springCache.getNativeCache();
+        Cache springCache = cacheManager.getCache(CACHE_NAME + tenantId);
+        if (springCache == null) {
+            throw new BusinessException("缓存未初始化: " + CACHE_NAME + tenantId);
+        }
+        return springCache;
+    }
+
+    private Cache tenantCache(String tenantId) {
+        Cache springCache = cacheManager.getCache(CACHE_NAME + tenantId);
+        if (springCache == null) {
+            throw new BusinessException("缓存未初始化: " + CACHE_NAME + tenantId);
+        }
+        return springCache;
+    }
+
+    private Map<String, EquipRealtime> getAll(String tenantId) {
+        Cache cache = tenantCache(tenantId);
+        String keyPrefix = CACHE_NAME + tenantId + "::";
+        Set<String> keys = stringRedisTemplate.keys(keyPrefix + "*");
+        if (CollectionUtils.isEmpty(keys)) {
+            return new HashMap<>();
+        }
+        Map<String, EquipRealtime> result = new HashMap<>(keys.size());
+        for (String redisKey : keys) {
+            String cacheKey = redisKey.substring(keyPrefix.length());
+            Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
+            if (valueWrapper != null && valueWrapper.get() instanceof EquipRealtime equipRealtime) {
+                result.put(cacheKey, equipRealtime);
+            }
+        }
+        return result;
     }
 
     @PostConstruct
@@ -65,72 +96,63 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @Override
     public void realtimeHandle(List<EquipRealtime> targets) {
-        Map<Object, Object> map = nativeCache().asMap();
+        Cache cache = tenantCache();
         List<EquipRealtime> sources = new ArrayList<>();
         for (EquipRealtime target : targets) {
-            sources.add((EquipRealtime) map.get(target.getSelfCode()));
+            Cache.ValueWrapper valueWrapper = cache.get(target.getSelfCode());
+            if (valueWrapper != null && valueWrapper.get() instanceof EquipRealtime equipRealtime) {
+                sources.add(equipRealtime);
+            }
         }
         changeListener(sources, targets);
         for (EquipRealtime target : targets) {
-            map.put(target.getSelfCode(), target);
+            cache.put(target.getSelfCode(), target);
         }
-        nativeCache().putAll(map);
     }
 
     @Override
     public void addOrUpdate(EquipRealtime equipRealtime) {
-        nativeCache().put(equipRealtime.getSelfCode(), equipRealtime);
+        tenantCache().put(equipRealtime.getSelfCode(), equipRealtime);
     }
 
 
     @Override
     public void remove(String sn) {
-        nativeCache().invalidate(sn);
+        tenantCache().evict(sn);
     }
 
     @Override
     public void removeBatch(List<String> ids) {
-        Map<Object, Object> map = nativeCache().asMap();
-        List<String> sns = new ArrayList<>();
-        for (Map.Entry<Object, Object> entry : map.entrySet()) {
-            EquipRealtime e = (EquipRealtime) entry.getValue();
-            if (ids.contains(e.getId())) {
-                sns.add(e.getSelfCode());
-            }
-        }
-        nativeCache().invalidateAll(sns);
+        Cache cache = tenantCache();
+        Map<String, EquipRealtime> all = getAll(UserContext.getTenant().getTenantId());
+        List<String> sns = all.values().stream()
+                .filter(e -> ids.contains(e.getId()))
+                .map(EquipRealtime::getSelfCode)
+                .collect(Collectors.toList());
+        sns.forEach(cache::evict);
     }
 
     @Override
     public void clear() {
-        nativeCache().cleanUp();
+        tenantCache().clear();
     }
 
     @Override
     public Map<String, EquipRealtime> getAll() {
-        Map<String, EquipRealtime> r = new HashMap<>();
-        ConcurrentMap<Object, Object> c = nativeCache().asMap();
-        for (Map.Entry<Object, Object> entry : c.entrySet()) {
-            r.put((String) entry.getKey(), (EquipRealtime) entry.getValue());
-        }
-        return r;
+        return getAll(UserContext.getTenant().getTenantId());
     }
 
     @Override
     public EquipRealtime get(String sn) {
-        Object r = nativeCache().getIfPresent(sn);
-        if (r == null) {
-            return null;
-        } else {
-            return (EquipRealtime) r;
-        }
+        Cache.ValueWrapper valueWrapper = tenantCache().get(sn);
+        return valueWrapper == null ? null : (EquipRealtime) valueWrapper.get();
     }
 
     @Override
     public EquipRealtime getById(String id) {
-        ConcurrentMap<Object, Object> c = nativeCache().asMap();
-        for (Map.Entry<Object, Object> entry : c.entrySet()) {
-            EquipRealtime equipRealtime = (EquipRealtime) entry.getValue();
+        Map<String, EquipRealtime> c = getAll(UserContext.getTenant().getTenantId());
+        for (Map.Entry<String, EquipRealtime> entry : c.entrySet()) {
+            EquipRealtime equipRealtime = entry.getValue();
             if (id.equals(equipRealtime.getId())) {
                 return equipRealtime;
             }
@@ -197,7 +219,8 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 equipRealtimeMap.put(equipDto.getTenantId(), r);
             }
             for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
-                nativeCache().putAll(entry.getValue());
+                Cache cache = tenantCache(entry.getKey());
+                entry.getValue().forEach(cache::put);
             }
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
