@@ -1,0 +1,55 @@
+/**
+ * 设备监控科技大屏 — 色彩与主题变量（唯一修改入口）
+ * 图表/地图 JS 通过 getTechScreenColors() / getTechScreenCssVar() 读取，勿在业务里写死色值。
+ */
+:root {
+    /* —— 页面基底 —— */
+    --tech-bg-page: #050a0f;
+    --tech-bg-page-end: #04080e;
+    --tech-text-primary: #e8eef5;
+
+    /* —— 主色（青主次 / 蓝辅 / 金对比）—— */
+    --tech-cyan: #00d8ff;
+    --tech-blue: #1890ff;
+    --tech-gold: #ffcc00;
+    --tech-cyan-rgb: 0, 216, 255;
+    --tech-blue-rgb: 24, 144, 255;
+
+    /* —— UI 边框、光晕、面板 —— */
+    --tech-border: rgba(var(--tech-cyan-rgb), 0.32);
+    --tech-glow: rgba(var(--tech-cyan-rgb), 0.48);
+    --panel-bg: rgba(8, 20, 38, 0.42);
+    --scroll-track: rgba(5, 15, 28, 0.65);
+    --scroll-thumb: rgba(var(--tech-cyan-rgb), 0.45);
+
+    /* —— 设备状态 / 与 ECharts 系列一致（供 getTechScreenColors 读取）—— */
+    --color-status-online: var(--tech-cyan);
+    --color-status-offline: #8a93a1;
+    --color-status-alarm: #ff5a5a;
+    --color-status-running: #41d57a;
+    --color-status-stopped: var(--tech-gold);
+
+    --color-area-online: rgba(0, 216, 255, 0.22);
+    --color-area-running: rgba(65, 213, 122, 0.2);
+    --color-area-alarm: rgba(255, 90, 90, 0.22);
+
+    /* —— 图表坐标（趋势图）—— */
+    --chart-axis: #1e3a55;
+    --chart-text: #a8b8c8;
+    --chart-split: rgba(var(--tech-cyan-rgb), 0.14);
+    --chart-split-soft: rgba(var(--tech-cyan-rgb), 0.12);
+
+    /* —— 地图占位与弹层 —— */
+    --map-bg-loading: #020814;
+
+    /* —— 布局（非色彩，可一并集中）—— */
+    --header-h: clamp(48px, 5.2vh, 72px);
+    --footer-h: clamp(36px, 4vh, 52px);
+    --body-gap: clamp(4px, 0.4vw, 10px);
+    --side-width: min(22%, 420px);
+    --title-fs: clamp(18px, 1.4vw, 26px);
+    --panel-title-fs: clamp(11px, 0.9vw, 14px);
+    --edge-gap: clamp(8px, 0.7vw, 16px);
+    --left-pane-w: clamp(280px, 20vw, 420px);
+    --right-pane-w: clamp(240px, 17vw, 360px);
+}
