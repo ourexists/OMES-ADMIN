@@ -15,13 +15,33 @@ import com.ourexists.omes.device.pojo.EquipCollect;
 import com.ourexists.omes.device.service.EquipCollectService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
 public class EquipCollectServiceImpl extends AbstractMyBatisPlusService<EquipCollectMapper, EquipCollect>
         implements EquipCollectService {
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean saveBatch(Collection<EquipCollect> entityList, int batchSize) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            return false;
+        }
+        List<EquipCollect> all = new ArrayList<>(entityList);
+        int size = all.size();
+        int chunk = Math.max(batchSize, 1);
+        for (int i = 0; i < size; i += chunk) {
+            int end = Math.min(i + chunk, size);
+            List<EquipCollect> part = all.subList(i, end);
+            this.baseMapper.insertBatchWithJsonb(part);
+        }
+        return true;
+    }
 
     @Override
     public Page<EquipCollect> selectByPage(EquipCollectPageQuery dto) {

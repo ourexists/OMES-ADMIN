@@ -35,17 +35,20 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
     private final WorkshopFeign workshopFeign;
 
     private final TenantFeign tenantFeign;
+    private final RedisCacheValueConverter cacheValueConverter;
 
     private static final String CACHE_NAME = "WORKSHOP_REALTIME_";
 
     public DWorkshopRealtimeManager(CacheManager cacheManager,
                                     StringRedisTemplate stringRedisTemplate,
                                     WorkshopFeign workshopFeign,
-                                    TenantFeign tenantFeign) {
+                                    TenantFeign tenantFeign,
+                                    RedisCacheValueConverter cacheValueConverter) {
         this.cacheManager = cacheManager;
         this.stringRedisTemplate = stringRedisTemplate;
         this.workshopFeign = workshopFeign;
         this.tenantFeign = tenantFeign;
+        this.cacheValueConverter = cacheValueConverter;
     }
 
     @PostConstruct
@@ -86,7 +89,8 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         for (String redisKey : keys) {
             String cacheKey = redisKey.substring(keyPrefix.length());
             Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
-            if (valueWrapper != null && valueWrapper.get() instanceof WorkshopRealtime workshopRealtime) {
+            WorkshopRealtime workshopRealtime = valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), WorkshopRealtime.class);
+            if (workshopRealtime != null) {
                 result.put(cacheKey, workshopRealtime);
             }
         }
@@ -162,7 +166,7 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
     @Override
     public WorkshopRealtime get(String id) {
         Cache.ValueWrapper valueWrapper = tenantCache().get(id);
-        return valueWrapper == null ? null : (WorkshopRealtime) valueWrapper.get();
+        return valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), WorkshopRealtime.class);
     }
 
     @Override

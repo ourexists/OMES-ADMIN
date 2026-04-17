@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>AI知识库建立</title>
+    <link rel="stylesheet" th:href="${portalStaticBaseUrl + '/static/layui/css/layui.css'}">
+    <link rel="stylesheet" th:href="${portalStaticBaseUrl + '/static/css/common.css'}">
+    <script th:src="${portalStaticBaseUrl + '/static/js/jquery.min.js'}"></script>
+    <script th:src="${portalStaticBaseUrl + '/static/layui/layui.js'}"></script>
+    <script src="/static/js/ai_global.js"></script>
+    <style>
+        .kb-container { padding: 16px; }
+        .kb-card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .kb-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+        .kb-preview { min-height: 220px; white-space: pre-wrap; border: 1px solid #e6e6e6; background: #fafafa; border-radius: 6px; padding: 10px; }
+    </style>
+</head>
+<body>
+<div class="kb-container">
+    <div class="kb-card">
+        <div class="kb-title">知识来源配置</div>
+        <div class="layui-row layui-col-space16">
+            <div class="layui-col-md3">
+                <select id="knowledgeType" class="layui-select">
+                    <option value="unstructured">非结构化（TXT/MD/手册文本）</option>
+                    <option value="structured">结构化（JSON/CSV）</option>
+                </select>
+            </div>
+            <div class="layui-col-md5"><input type="text" id="sourceName" class="layui-input" placeholder="来源名称（如：设备A维护手册、故障案例库）"></div>
+            <div class="layui-col-md4"><input type="file" id="sourceFile" class="layui-input"></div>
+        </div>
+    </div>
+    <div class="kb-card">
+        <div class="kb-title">知识内容编辑</div>
+        <textarea id="kbContent" class="layui-textarea" style="min-height: 220px;" placeholder="可直接粘贴文本；结构化请粘贴JSON对象/JSON数组"></textarea>
+        <div style="margin-top: 10px;">
+            <button type="button" class="layui-btn" id="btn-ingest">上传并入库</button>
+            <button type="button" class="layui-btn layui-btn-primary" id="btn-clear">清空</button>
+        </div>
+    </div>
+    <div class="kb-card">
+        <div class="kb-title">解析预览</div>
+        <div id="preview" class="kb-preview"></div>
+    </div>
+</div>
+<script>
+layui.use(['layer'], function () {
+    var layer = layui.layer;
+    function csvToJson(csvText) {
+        var lines = (csvText || '').split(/\r?\n/).filter(function (x) { return x.trim() !== ''; });
+        if (lines.length < 2) return [];
+        var headers = lines[0].split(',').map(function (h) { return h.trim(); });
+        var rows = [];
+        for (var i = 1; i < lines.length; i++) {
+            var cols = lines[i].split(',');
+            var obj = {};
+            for (var j = 0; j < headers.length; j++) obj[headers[j]] = (cols[j] || '').trim();
+            rows.push(obj);
+        }
+        return rows;
+    }
+    $('#sourceFile').on('change', function (e) {
+        var file = (e.target.files || [])[0];
+        if (!file) return;
+        if (!$('#sourceName').val()) $('#sourceName').val(file.name);
+        var reader = new FileReader();
+        reader.onload = function (evt) {
+            var text = evt.target.result || '';
+            var type = $('#knowledgeType').val();
+            var lower = (file.name || '').toLowerCase();
+            if (type === 'structured' && lower.endsWith('.csv')) {
+                $('#kbContent').val(JSON.stringify(csvToJson(text), null, 2));
+            } else {
+                $('#kbContent').val(text);
+            }
+            $('#preview').text($('#kbContent').val().slice(0, 2000));
+        };
+        reader.readAsText(file, 'UTF-8');
+    });
+    $('#kbContent').on('input', function () { $('#preview').text(($('#kbContent').val() || '').slice(0, 2000)); });
+    $('#btn-clear').on('click', function () {
+        $('#kbContent').val('');
+        $('#preview').text('');
+        $('#sourceFile').val('');
+    });
+    $('#btn-ingest').on('click', function () {
+        var type = $('#knowledgeType').val();
+        var content = $('#kbContent').val();
+        if (!content || !content.trim()) {
+            layer.msg('请先输入或上传知识内容');
+            return;
+        }
+        var payload = {
+            knowledgeType: type,
+            sourceName: $('#sourceName').val() || '',
+            textContent: type === 'unstructured' ? content : '',
+            structuredContent: type === 'structured' ? content : ''
+        };
+        post(router.inspect_ai_knowledge_ingest, payload, function (data) {
+            layer.msg('入库成功，文档片段数: ' + data.ingested + '，后端: ' + data.provider);
+        }, function (code, msg) {
+            layer.alert('入库失败: ' + msg + ' (' + code + ')');
+        });
+    });
+});
+</script>
+</body>
+</html>

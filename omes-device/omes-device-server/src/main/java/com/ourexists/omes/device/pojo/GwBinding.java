@@ -10,6 +10,7 @@ import com.ourexists.omes.device.model.GwBindingDto;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class GwBinding {
 
     private String gwId;
 
-    @TableField(value = "config", typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "config", typeHandler = JacksonTypeHandler.class, jdbcType = JdbcType.OTHER)
     private EquipConfigDetail config;
 
     public static GwBindingDto covert(GwBinding source) {
