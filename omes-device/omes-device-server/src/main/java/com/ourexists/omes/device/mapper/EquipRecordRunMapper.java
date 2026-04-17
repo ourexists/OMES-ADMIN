@@ -14,7 +14,7 @@ import org.apache.ibatis.annotations.Select;
 public interface EquipRecordRunMapper extends BaseMapper<EquipRecordRun> {
 
     /** 某设备累计运行分钟数(state=1)，无 end_time 的段按当前时间截断 */
-    @Select("SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE, start_time, IFNULL(end_time, NOW()))), 0) FROM t_equip_record_run WHERE sn = #{sn} AND state = 1")
+    @Select("SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (COALESCE(end_time, NOW()) - start_time)) / 60), 0) FROM t_equip_record_run WHERE sn = #{sn} AND state = 1")
     Long sumRunMinutesBySn(@Param("sn") String sn);
 
     /** 某设备运行段数(state=1)，即启停周期数 */

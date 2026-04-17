@@ -17,13 +17,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface AccRoleMapper extends BaseMapper<AccRole> {
 
-    @Delete("delete a from r_ucenter_acc_role a , t_ucenter_role b " +
+    @Delete("delete from r_ucenter_acc_role a using t_ucenter_role b " +
             "where b.id=a.role_id " +
             "and a.acc_id=#{accId} " +
             "and b.tenant_id=#{tenantId}")
     Integer removeRelationByAcc(String accId, String tenantId);
 
-    @Delete("delete a from r_ucenter_acc_role a , t_ucenter_role b " +
+    @Delete("delete from r_ucenter_acc_role a using t_ucenter_role b " +
             "where b.id=a.role_id " +
             "and a.role_id=#{roleId} " +
             "and b.tenant_id=#{tenantId}")

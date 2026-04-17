@@ -212,7 +212,7 @@ public class MPSServiceImpl extends AbstractMyBatisPlusService<MPSMapper, MPS> i
         this.update(
                 new LambdaUpdateWrapper<MPS>()
                         .set(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getCode())
-                        .setSql("priority=(sequence*1000+batch*10+" + maxPriority + ")")
+                        .setSql("priority=(sequence*1000+batch*10+{0})", maxPriority)
                         .in(MPS::getId, ids)
                         .eq(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getPreCode())
         );
@@ -243,7 +243,7 @@ public class MPSServiceImpl extends AbstractMyBatisPlusService<MPSMapper, MPS> i
         this.update(
                 new LambdaUpdateWrapper<MPS>()
                         .set(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getCode())
-                        .setSql("priority=(sequence*1000+batch*10+" + maxPriority + ")")
+                        .setSql("priority=(sequence*1000+batch*10+{0})", maxPriority)
                         .eq(MPS::getMoCode, moCode)
                         .eq(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getPreCode())
         );
@@ -267,7 +267,7 @@ public class MPSServiceImpl extends AbstractMyBatisPlusService<MPSMapper, MPS> i
         this.update(
                 new LambdaUpdateWrapper<MPS>()
                         .set(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getCode())
-                        .setSql("priority=(sequence*1000+batch*10+" + maxPriority + ")")
+                        .setSql("priority=(sequence*1000+batch*10+{0})", maxPriority)
                         .in(MPS::getMoCode, moCodes)
                         .eq(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getPreCode())
         );
@@ -279,7 +279,7 @@ public class MPSServiceImpl extends AbstractMyBatisPlusService<MPSMapper, MPS> i
         this.update(
                 new LambdaUpdateWrapper<MPS>()
                         .set(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getCode())
-                        .setSql("priority=(sequence*1000+batch*10+" + maxPriority + ")")
+                        .setSql("priority=(sequence*1000+batch*10+{0})", maxPriority)
                         .in(MPS::getMoCode, moCodes)
                         .eq(MPS::getStatus, MPSStatusEnum.WAIT_EXEC.getPreCode())
                         .le(MPS::getExecTime, DateUtil.getCurrentSystemTime())

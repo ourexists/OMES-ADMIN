@@ -40,10 +40,24 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
                 .eq(StringUtils.hasText(dto.getPlatform()), Message::getPlatform, dto.getPlatform())
                 .ge(dto.getCreatedTimeStart() != null, Message::getCreatedTime, dto.getCreatedTimeStart())
                 .lt(dto.getCreatedTimeEnd() != null, Message::getCreatedTime, dto.getCreatedTimeEnd())
-                .inSql(StringUtils.hasText(dto.getAccId()) && dto.getReadStatus() == null, Message::getId, "select message_id from r_message_read where acc_id=" + dto.getAccId())
-                .inSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.read.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where is_read=true and acc_id=" + dto.getAccId())
-                .inSql(StringUtils.hasText(dto.getAccId()) && MessageReadEnum.unread.getCode().equals(dto.getReadStatus()), Message::getId, "select message_id from r_message_read where is_read=false and acc_id=" + dto.getAccId())
                 .orderByDesc(Message::getId);
+        if (StringUtils.hasText(dto.getAccId())) {
+            LambdaQueryWrapper<MessageRead> mrw = new LambdaQueryWrapper<MessageRead>()
+                    .eq(MessageRead::getAccId, dto.getAccId())
+                    .select(MessageRead::getMessageId);
+            if (MessageReadEnum.read.getCode().equals(dto.getReadStatus())) {
+                mrw.eq(MessageRead::getIsRead, true);
+            } else if (MessageReadEnum.unread.getCode().equals(dto.getReadStatus())) {
+                mrw.eq(MessageRead::getIsRead, false);
+            }
+            List<String> messageIds = messageReadMapper.selectList(mrw).stream()
+                    .map(MessageRead::getMessageId)
+                    .toList();
+            if (CollectionUtils.isEmpty(messageIds)) {
+                return new Page<>(dto.getPage(), dto.getPageSize(), 0);
+            }
+            qw.in(Message::getId, messageIds);
+        }
         Page<Message> page = this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
         List<MessageVo> r = Message.covert(page.getRecords());
         if (StringUtils.hasText(dto.getAccId()) && !CollectionUtils.isEmpty(r)) {
@@ -121,10 +135,18 @@ public class MessageServiceImpl extends AbstractMyBatisPlusService<MessageMapper
 
     @Override
     public Long countReadStatus(String userId, String platform, Integer readStatus) {
+        List<String> messageIds = this.list(new LambdaQueryWrapper<Message>()
+                        .eq(StringUtils.hasText(platform), Message::getPlatform, platform)
+                        .select(Message::getId)).stream()
+                .map(Message::getId)
+                .toList();
+        if (CollectionUtils.isEmpty(messageIds)) {
+            return 0L;
+        }
         return this.messageReadMapper.selectCount(new LambdaQueryWrapper<MessageRead>()
                 .eq(MessageRead::getAccId, userId)
                 .eq(MessageRead::getIsRead, readStatus == 1)
-                .inSql(MessageRead::getMessageId, "select id from t_message where platform='" + platform + "'")
+                .in(MessageRead::getMessageId, messageIds)
         );
     }
 }

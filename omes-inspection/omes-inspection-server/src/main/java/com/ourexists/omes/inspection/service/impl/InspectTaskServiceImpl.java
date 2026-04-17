@@ -68,10 +68,10 @@ public class InspectTaskServiceImpl extends AbstractMyBatisPlusService<InspectTa
 
     @Override
     public int markOverdueTasks() {
-        // 计划执行日期早于当前日期的待执行任务标记为已逾期（MySQL：DATE(scheduled_time) < CURDATE()）
+        // 计划执行日期早于当前日期的待执行任务标记为已逾期（跨库写法：CURRENT_DATE）
         LambdaUpdateWrapper<InspectTask> uw = new LambdaUpdateWrapper<InspectTask>()
                 .eq(InspectTask::getStatus, InspectTaskStatusEnum.PENDING.getCode())
-                .apply("DATE(scheduled_time) < CURDATE()")
+                .apply("DATE(scheduled_time) < CURRENT_DATE")
                 .set(InspectTask::getStatus, InspectTaskStatusEnum.OVERDUE.getCode());
         return Math.toIntExact(baseMapper.update(null, uw));
     }
