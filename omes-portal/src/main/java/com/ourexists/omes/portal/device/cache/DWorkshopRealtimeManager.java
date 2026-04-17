@@ -1,6 +1,5 @@
 package com.ourexists.omes.portal.device.cache;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
@@ -17,20 +16,21 @@ import com.ourexists.omes.ucenter.tenant.TenantVo;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCache;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Component
 public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
 
     private final CacheManager cacheManager;
+    private final StringRedisTemplate stringRedisTemplate;
 
     private final WorkshopFeign workshopFeign;
 
@@ -39,9 +39,11 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
     private static final String CACHE_NAME = "WORKSHOP_REALTIME_";
 
     public DWorkshopRealtimeManager(CacheManager cacheManager,
+                                    StringRedisTemplate stringRedisTemplate,
                                     WorkshopFeign workshopFeign,
                                     TenantFeign tenantFeign) {
         this.cacheManager = cacheManager;
+        this.stringRedisTemplate = stringRedisTemplate;
         this.workshopFeign = workshopFeign;
         this.tenantFeign = tenantFeign;
     }
@@ -61,18 +63,39 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         }
     }
 
-    private Cache<Object, Object> nativeCache() {
+    private Cache tenantCache() {
         String tenantId = UserContext.getTenant().getTenantId();
-        CaffeineCache springCache = (CaffeineCache) cacheManager.getCache(CACHE_NAME + tenantId);
+        Cache springCache = cacheManager.getCache(CACHE_NAME + tenantId);
         if (springCache == null) {
             throw new IllegalStateException("[WorkshopRealtime] cache not found");
         }
-        return springCache.getNativeCache();
+        return springCache;
+    }
+
+    private Map<String, WorkshopRealtime> getAllByTenant(String tenantId) {
+        Cache cache = cacheManager.getCache(CACHE_NAME + tenantId);
+        if (cache == null) {
+            return new HashMap<>();
+        }
+        String keyPrefix = CACHE_NAME + tenantId + "::";
+        Set<String> keys = stringRedisTemplate.keys(keyPrefix + "*");
+        if (CollectionUtils.isEmpty(keys)) {
+            return new HashMap<>();
+        }
+        Map<String, WorkshopRealtime> result = new HashMap<>(keys.size());
+        for (String redisKey : keys) {
+            String cacheKey = redisKey.substring(keyPrefix.length());
+            Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
+            if (valueWrapper != null && valueWrapper.get() instanceof WorkshopRealtime workshopRealtime) {
+                result.put(cacheKey, workshopRealtime);
+            }
+        }
+        return result;
     }
 
     @Override
     public void realtimeHandle(List<WorkshopRealtime> targets) {
-        Map<Object, Object> map = new HashMap<>();
+        Cache cache = tenantCache();
         for (WorkshopRealtime target : targets) {
             if (!StringUtils.hasText(target.getId())) {
                 throw new IllegalArgumentException("[WorkshopRealtime] id is required");
@@ -83,10 +106,7 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
             }
             source.setAttrsRealtime(target.getAttrsRealtime());
             source.setTime(new Date());
-            map.put(source.getId(), source);
-        }
-        if (!CollectionUtils.isEmpty(map)) {
-            nativeCache().putAll(map);
+            cache.put(source.getId(), source);
         }
     }
 
@@ -100,11 +120,11 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
                 realtime.setAttrsRealtime(realtime.getConfig().getAttrs());
             }
         }
-        nativeCache().put(realtime.getId(), realtime);
+        tenantCache().put(realtime.getId(), realtime);
     }
 
     public void build(List<WorkshopRealtime> realtimes) {
-        Map<Object, Object> map = new HashMap<>();
+        Cache cache = tenantCache();
         for (WorkshopRealtime realtime : realtimes) {
             if (!StringUtils.hasText(realtime.getId())) {
                 throw new IllegalArgumentException("[WorkshopRealtime] id is required");
@@ -114,39 +134,35 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
                     realtime.setAttrsRealtime(realtime.getConfig().getAttrs());
                 }
             }
-            map.put(realtime.getId(), realtime);
+            cache.put(realtime.getId(), realtime);
         }
-        nativeCache().putAll(map);
     }
 
     @Override
     public void remove(String id) {
-        nativeCache().invalidate(id);
+        tenantCache().evict(id);
     }
 
     @Override
     public void removeBatch(List<String> ids) {
-        nativeCache().invalidateAll(ids);
+        Cache cache = tenantCache();
+        ids.forEach(cache::evict);
     }
 
     @Override
     public void clear() {
-        nativeCache().cleanUp();
+        tenantCache().clear();
     }
 
     @Override
     public Map<String, WorkshopRealtime> getAll() {
-        Map<String, WorkshopRealtime> r = new HashMap<>();
-        ConcurrentMap<Object, Object> c = nativeCache().asMap();
-        for (Map.Entry<Object, Object> entry : c.entrySet()) {
-            r.put((String) entry.getKey(), (WorkshopRealtime) entry.getValue());
-        }
-        return r;
+        return getAllByTenant(UserContext.getTenant().getTenantId());
     }
 
     @Override
     public WorkshopRealtime get(String id) {
-        return (WorkshopRealtime) nativeCache().getIfPresent(id);
+        Cache.ValueWrapper valueWrapper = tenantCache().get(id);
+        return valueWrapper == null ? null : (WorkshopRealtime) valueWrapper.get();
     }
 
     @Override
