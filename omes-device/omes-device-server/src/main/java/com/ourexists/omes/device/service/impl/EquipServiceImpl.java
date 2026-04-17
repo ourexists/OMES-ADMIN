@@ -10,8 +10,10 @@ import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusSe
 import com.ourexists.omes.device.mapper.EquipMapper;
 import com.ourexists.omes.device.model.EquipPageQuery;
 import com.ourexists.omes.device.pojo.Equip;
+import com.ourexists.omes.device.pojo.GwBinding;
 import com.ourexists.omes.device.pojo.Workshop;
 import com.ourexists.omes.device.service.EquipService;
+import com.ourexists.omes.device.service.GwBindingService;
 import com.ourexists.omes.device.service.WorkshopService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,8 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
 
     @Autowired
     private WorkshopService workshopService;
+    @Autowired
+    private GwBindingService gwBindingService;
 
     @Override
     public Page<Equip> selectByPage(EquipPageQuery dto) {
@@ -53,8 +57,18 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
                 .in(!CollectionUtils.isEmpty(dto.getWorkshopCodes()), Equip::getWorkshopCode, dto.getWorkshopCodes())
                 .like(StringUtils.hasText(dto.getName()), Equip::getName, dto.getName())
                 .isNotNull(dto.getExistHealth() != null && dto.getExistHealth(), Equip::getHealthTemplateId)
-                .inSql(StringUtils.hasText(dto.getGwId()), Equip::getId, "select equip_id from r_gw_binding where gw_id=" + dto.getGwId())
                 .orderByDesc(Equip::getId);
+        if (StringUtils.hasText(dto.getGwId())) {
+            List<String> equipIds = gwBindingService.list(new LambdaQueryWrapper<GwBinding>()
+                            .eq(GwBinding::getGwId, dto.getGwId())
+                            .select(GwBinding::getEquipId)).stream()
+                    .map(GwBinding::getEquipId)
+                    .toList();
+            if (CollectionUtils.isEmpty(equipIds)) {
+                return new Page<>(dto.getPage(), dto.getPageSize(), 0);
+            }
+            qw.in(Equip::getId, equipIds);
+        }
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
 

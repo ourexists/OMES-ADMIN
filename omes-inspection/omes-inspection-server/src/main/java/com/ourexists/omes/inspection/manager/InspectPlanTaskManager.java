@@ -21,6 +21,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import jakarta.annotation.PreDestroy;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,6 +62,18 @@ public class InspectPlanTaskManager implements InitializingBean {
         for (InspectPlan plan : enabled) {
             registerPlan(plan.getId());
         }
+    }
+
+    @PreDestroy
+    public void destroy() {
+        for (ScheduledFuture<?> future : planIdToFuture.values()) {
+            if (future != null) {
+                future.cancel(true);
+            }
+        }
+        planIdToFuture.clear();
+        scheduler.shutdown();
+        log.info("inspect plan task scheduler shutdown");
     }
 
     /** 扫描并标记逾期任务（计划执行日期已过且仍为待执行 -> 已逾期） */

@@ -66,9 +66,14 @@ public class WorkshopViewer implements WorkshopFeign {
     @Operation(summary = "查询分配的树", description = "查询分配的树")
     @GetMapping("selectAssign")
     public JsonResponseEntity<List<WorkshopTreeNode>> selectAssign(@RequestParam String assignId) {
+        List<String> workshopCodes = assignService.list(new LambdaQueryWrapper<WorkshopAssign>()
+                        .eq(WorkshopAssign::getAssignId, assignId)
+                        .select(WorkshopAssign::getWorkshopCode)).stream()
+                .map(WorkshopAssign::getWorkshopCode)
+                .toList();
         List<WorkshopTreeNode> nodes = Workshop.covert(
                 service.list(new LambdaQueryWrapper<Workshop>()
-                        .inSql(Workshop::getSelfCode, "select workshop_code from r_workshop_assign where assign_id = " + assignId)));
+                        .in(CollectionUtil.isNotBlank(workshopCodes), Workshop::getSelfCode, workshopCodes)));
         return JsonResponseEntity.success(nodes);
     }
 

@@ -17,13 +17,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DepartUsersMapper extends BaseMapper<DepartUsers> {
 
-    @Delete("delete a from r_ucenter_depart_users a, t_ucenter_depart b " +
+    @Delete("delete from r_ucenter_depart_users a using t_ucenter_depart b " +
             "where b.id=a.depart_id " +
             "and a.acc_id=#{accId} " +
             "and b.tenant_id=#{tenantId}")
     Integer removeRelationByAcc(String accId, String tenantId);
 
-    @Delete("delete a from r_ucenter_depart_users a, t_ucenter_depart b " +
+    @Delete("delete from r_ucenter_depart_users a using t_ucenter_depart b " +
             "where b.id=a.depart_id " +
             "and a.depart_id=#{departId} " +
             "and b.tenant_id=#{tenantId}")

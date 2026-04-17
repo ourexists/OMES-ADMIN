@@ -118,7 +118,7 @@ public interface AccountMapper extends BaseMapper<Account> {
             "</where>" +
             "group by a.id " +
             "order by id desc " +
-            "limit #{limitPage}, #{pageSize} " +
+            "limit #{pageSize} offset #{limitPage} " +
             "</script>")
     List<Account> page(AccPageQuery pageQuery);
 
