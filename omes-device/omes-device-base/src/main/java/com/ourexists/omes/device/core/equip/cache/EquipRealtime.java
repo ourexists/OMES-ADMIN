@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -62,6 +63,11 @@ public class EquipRealtime {
             } else {
                 this.equipAttrRealtimes = null;
             }
+        }
+        if (this.alarmState != 0) {
+            this.alarmState = 0;
+            this.alarmChangeTime = new Date();
+            this.alarmTexts = new ArrayList<>();
         }
     }
 

@@ -28,7 +28,7 @@ public interface AccountMapper extends BaseMapper<Account> {
 
     @Select("<script>" +
             "select count(1) from (" +
-            "select * from p_ucenter_acc a " +
+            "select a.id from p_ucenter_acc a " +
             "left join r_ucenter_tenant_acc b " +
             "on a.id = b.acc_id " +
             "<where>" +

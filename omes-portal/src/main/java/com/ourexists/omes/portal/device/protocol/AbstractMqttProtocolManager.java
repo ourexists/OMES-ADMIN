@@ -11,8 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.util.StringUtils;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +35,54 @@ public abstract class AbstractMqttProtocolManager implements ProtocolManager {
     /** key: gatewayId，value: 该网关的 MqttClient */
     private final Map<String, MqttClient> connectionMap = new ConcurrentHashMap<>();
 
+    /**
+     * 本机机器码后缀（首块可用网卡 MAC 十六进制；失败则用主机名哈希），用于 MQTT clientId 区分多实例。
+     */
+    private static volatile String machineCodeSuffix;
+
+    private static String resolveMachineCodeSuffix() {
+        if (machineCodeSuffix != null) {
+            return machineCodeSuffix;
+        }
+        synchronized (AbstractMqttProtocolManager.class) {
+            if (machineCodeSuffix != null) {
+                return machineCodeSuffix;
+            }
+            machineCodeSuffix = computeMachineCodeSuffix();
+            return machineCodeSuffix;
+        }
+    }
+
+    private static String computeMachineCodeSuffix() {
+        try {
+            Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
+            while (nis.hasMoreElements()) {
+                NetworkInterface ni = nis.nextElement();
+                try {
+                    if (ni.isLoopback() || !ni.isUp()) {
+                        continue;
+                    }
+                } catch (SocketException e) {
+                    continue;
+                }
+                byte[] mac = ni.getHardwareAddress();
+                if (mac != null && mac.length > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    for (byte b : mac) {
+                        sb.append(String.format("%02x", b));
+                    }
+                    return sb.toString();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("MQTT clientId machineCode: failed to enumerate network interfaces: {}", e.getMessage());
+        }
+        try {
+            return Integer.toHexString(InetAddress.getLocalHost().getHostName().hashCode());
+        } catch (Exception e) {
+            return "na";
+        }
+    }
 
     @Override
     public synchronized void stopAll() {
@@ -83,7 +135,8 @@ public abstract class AbstractMqttProtocolManager implements ProtocolManager {
 
     private MqttClient createAndConnect(ProtocolConnect gw) throws MqttException {
         String baseId = gw.getId();
-        String clientId = "omes_mqtt_" + baseId;
+        String machineCode = resolveMachineCodeSuffix();
+        String clientId = "omes_mqtt_" + baseId + "_" + machineCode;
 
         MqttClient client = new MqttClient(gw.getUri(), clientId, null);
 

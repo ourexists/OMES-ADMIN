@@ -403,15 +403,54 @@
 
         .map-device-list {
             margin-top: 4px;
-            max-height: 220px;
+            max-height: min(52vh, 360px);
             overflow-y: auto;
             padding-right: 4px;
         }
 
         .map-device-item {
-            padding: 2px 0;
+            padding: 6px 0 8px;
             border-bottom: 1px dashed rgba(0, 216, 255, 0.2);
-            white-space: nowrap;
+            white-space: normal;
+        }
+
+        .map-device-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 8px;
+            margin-bottom: 2px;
+        }
+
+        .map-popup-section {
+            margin-top: 6px;
+            padding: 4px 0 2px 8px;
+            border-left: 2px solid rgba(0, 216, 255, 0.35);
+        }
+
+        .map-popup-section-title {
+            display: block;
+            font-size: 10px;
+            color: #7dd3fc;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+
+        .map-popup-sub {
+            display: block;
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .map-popup-alarm-line {
+            color: #fca5a5;
+        }
+
+        .map-device-code {
+            margin-left: 4px;
+            opacity: 0.85;
         }
 
         .map-device-item:last-child {
@@ -1717,9 +1756,12 @@
             const devices = g.items.map(function (d) {
                 return {
                     name: d.name || d.selfCode || '-',
+                    selfCode: d.selfCode,
                     onlineState: d.onlineState,
                     runState: d.runState,
-                    alarmState: d.alarmState
+                    alarmState: d.alarmState,
+                    attrs: d.attrs,
+                    alarmTexts: d.alarmTexts
                 };
             });
             result.push({
@@ -2369,6 +2411,43 @@
         return 5;
     }
 
+    function mapPopupEscape(text) {
+        if (text == null) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function mapPopupAttrDisplayValue(t) {
+        if (t == null || t.value == null) return '—';
+        const v = t.value;
+        if (typeof v === 'object') return mapPopupEscape(JSON.stringify(v));
+        return mapPopupEscape(String(v));
+    }
+
+    function mapPopupAttrsHtml(attrs) {
+        if (!attrs || !attrs.length) return '';
+        let h = '<div class="map-popup-section"><span class="map-popup-section-title">实时属性</span>';
+        attrs.forEach(function (t) {
+            const unit = (t.unit != null && String(t.unit).trim()) ? (' ' + mapPopupEscape(String(t.unit).trim())) : '';
+            h += '<span class="map-popup-row map-popup-sub">' + mapPopupEscape(t.name || '-') + '：' + mapPopupAttrDisplayValue(t) + unit + '</span>';
+        });
+        h += '</div>';
+        return h;
+    }
+
+    function mapPopupAlarmsHtml(alarmTexts) {
+        if (!alarmTexts || !alarmTexts.length) return '';
+        let h = '<div class="map-popup-section"><span class="map-popup-section-title">报警信息</span>';
+        alarmTexts.forEach(function (txt) {
+            h += '<span class="map-popup-row map-popup-sub map-popup-alarm-line">' + mapPopupEscape(txt) + '</span>';
+        });
+        h += '</div>';
+        return h;
+    }
+
     function createPopupHtml(d) {
         if (d.isSceneAggregate && Array.isArray(d.devices)) {
             const devices = d.devices;
@@ -2386,14 +2465,19 @@
                 const alarmDot = (dev.alarmState || 0) >= 1
                     ? '<span class="status-dot-map status-alarm"></span>'
                     : '<span class="status-dot-map status-offline"></span>';
-                listHtml += '<div class="map-device-item"><span class="map-device-name">' + (dev.name || '-') + '</span>' +
-                    ' 在线:' + onlineDot + ' 运行:' + runDot + ' 告警:' + alarmDot + '</div>';
+                const codeHint = dev.selfCode ? '<span class="map-popup-sub map-device-code">' + mapPopupEscape(dev.selfCode) + '</span>' : '';
+                listHtml += '<div class="map-device-item">' +
+                    '<div class="map-device-head"><span class="map-device-name">' + mapPopupEscape(dev.name || '-') + '</span>' + codeHint +
+                    '<span>在线:' + onlineDot + ' 运行:' + runDot + ' 告警:' + alarmDot + '</span></div>' +
+                    mapPopupAttrsHtml(dev.attrs) +
+                    mapPopupAlarmsHtml(dev.alarmTexts) +
+                    '</div>';
             });
             listHtml += '</div>';
             const st = d.sceneStats || {};
             const summary = '<span class="map-popup-row">设备 ' + (st.total || 0) + ' 台（在线 ' + (st.online || 0) + ' / 离线 ' + (st.offline || 0) + '）</span>';
             return {
-                title: '<b>' + (d.sceneName || d.name || '场景') + '</b>',
+                title: '<b>' + mapPopupEscape(d.sceneName || d.name || '场景') + '</b>',
                 body: summary + listHtml
             };
         }
@@ -2401,18 +2485,16 @@
         if (d.onlineState === 1) {
             runSpan = d.runState === 1 ? '<span class="status-dot-map status-running"></span>' : '<span class="status-dot-map status-stopped"></span>';
         }
+        const wsName = d.workshop == null ? '' : mapPopupEscape(d.workshop.name || '');
         let html =
-            `<span class="map-popup-row">${i18np.prop("workshop.name")}：${d.workshop === null ? '' : d.workshop.name}</span>` +
-            `<span class="map-popup-row">${i18np.prop("equip.code")}：${d.selfCode}</span>` +
-            `<span class="map-popup-row">${i18np.prop("equip.onlineState")}：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}</span>` +
-            `<span class="map-popup-row">${i18np.prop("equip.runState")}：${runSpan}</span>` +
-            `<span class="map-popup-row">${i18np.prop("equip.alarmState")}：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}</span>`;
-        if (d.attrs != null) {
-            d.attrs.forEach(function (t) {
-                html += `<span class="map-popup-row">${t.name}：${t.value == null ? 'unknow' : t.value}${t.unit ? ' ' + t.unit : ''}</span>`;
-            });
-        }
-        return {title: `<b>${d.name}</b>`, body: html};
+            `<span class="map-popup-row">${mapPopupEscape(i18np.prop("workshop.name"))}：${wsName}</span>` +
+            `<span class="map-popup-row">${mapPopupEscape(i18np.prop("equip.code"))}：${mapPopupEscape(d.selfCode || '')}</span>` +
+            `<span class="map-popup-row">${mapPopupEscape(i18np.prop("equip.onlineState"))}：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}</span>` +
+            `<span class="map-popup-row">${mapPopupEscape(i18np.prop("equip.runState"))}：${runSpan}</span>` +
+            `<span class="map-popup-row">${mapPopupEscape(i18np.prop("equip.alarmState"))}：${(d.alarmState || 0) >= 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}</span>`;
+        html += mapPopupAttrsHtml(d.attrs);
+        html += mapPopupAlarmsHtml(d.alarmTexts);
+        return {title: '<b>' + mapPopupEscape(d.name || '') + '</b>', body: html};
     }
 
     window.onresize = () => {
