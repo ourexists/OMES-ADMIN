@@ -14,10 +14,6 @@
     <script src="../static/js/echarts.min.js"></script>
 </head>
 <style>
-    /*body {*/
-    /*    background: var(--bg-page, #f3f5f8);*/
-    /*}*/
-
     .equip-detail-header {
         display: flex;
         align-items: center;
@@ -64,10 +60,6 @@
         background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%);
     }
 
-    .equip-icon.online {
-        background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
-    }
-
     .equip-name-row {
         display: flex;
         align-items: center;
@@ -85,12 +77,6 @@
         padding: 2px 8px;
         border-radius: 4px;
         font-size: 12px;
-    }
-
-    .equip-status-tag.online {
-        background: #f6ffed;
-        color: #52c41a;
-        border: 1px solid #b7eb8f;
     }
 
     .equip-status-tag.offline {
@@ -196,7 +182,6 @@
         border-radius: 4px;
         padding: 0;
         margin: 0;
-        /*border: 1px solid var(--border-base, #e1e6ef);*/
     }
 
     .layui-tab-title {
@@ -445,20 +430,6 @@
         background: #d9363e;
     }
 
-    .ctrl-switch-status {
-        font-size: 13px;
-        font-weight: 600;
-        min-width: 30px;
-    }
-
-    .ctrl-switch-status.s-on {
-        color: #52c41a;
-    }
-
-    .ctrl-switch-status.s-off {
-        color: #8c8c8c;
-    }
-
     .ctrl-analog-wrap {
         display: flex;
         align-items: center;
@@ -626,11 +597,6 @@
                         <span class="info-value" id="infoOnlineChangeTime">-</span>
                     </div>
                 </div>
-                <div class="info-section" id="gatewaySection" style="display:none">
-                    <div class="info-section-title">网关信息</div>
-                    <div class="info-row"><span class="info-label">网关</span><span class="info-value" id="infoGateway">-</span>
-                    </div>
-                </div>
                 <div class="info-section" id="attrsSection" style="display:none">
                     <div class="info-section-title" lang-i18n="equipattr.name"></div>
                     <div id="attrsContainer"></div>
@@ -642,7 +608,7 @@
             </div>
 
             <!-- Tab2: 实时状态（equip_collect_echarts 内容） -->
-            <div class="layui-tab-item" id="realtimeTabContent">
+            <div class="layui-tab-item">
                 <div class="realtime-header">
                     <form class="layui-form layui-row layui-col-space16" id="realtimeQueryForm">
                         <div class="layui-form-item">
@@ -877,8 +843,8 @@
         $('#equipName').text(d.name || '-');
         $('#equipSn').text(d.selfCode || '-');
         $('#equipWorkshop').text(d.workshop ? d.workshop.name : '-');
-        $('#equipStatusTag').text(statusText).removeClass('online offline alarm run stop').addClass(statusClass);
-        $('#equipIcon').removeClass('offline alarm run stop online').addClass(statusClass);
+        $('#equipStatusTag').text(statusText).removeClass('offline alarm run stop').addClass(statusClass);
+        $('#equipIcon').removeClass('offline alarm run stop').addClass(statusClass);
 
         $('#infoName').text(d.name || '-');
         $('#infoSn').text(d.selfCode || '-');
@@ -1510,7 +1476,6 @@
                 }
             });
         });
-        let title = $('#realtime-startDate').val() + ' - ' + $('#realtime-endDate').val();
         table.reload('realtimeTbCommon', {
             cols: [col],
             url: initRequestUrl(router.equip_collect_page),

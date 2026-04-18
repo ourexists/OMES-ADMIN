@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="../static/layui/css/layui.css">
     <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="../static/tree-select/treeSelect.css">
-    <link rel="stylesheet" href="../static/fullscreen/fullscreen.css">
     <script src="../static/js/jquery.min.js"></script>
     <script src="../static/layui/layui.js"></script>
     <script src="../static/js/i18n.js"></script>
@@ -14,153 +13,376 @@
     <script src="../static/js/theme.js"></script>
     <script src="../static/js/echarts.min.js"></script>
     <script src="../static/tree-select/treeSelect.js"></script>
-    <script src="../static/fullscreen/fullscreen.js"></script>
 </head>
 <style>
-    html, body{
+    html, body {
         height: 100%;
         margin: 0;
-        overflow: hidden; /* iframe 内避免双滚动 */
-    }
-
-    .kpi-card {
-        text-align: center;
-        padding: 20px 0;
-    }
-
-    .kpi-num {
-        font-size: 28px;
-        font-weight: bold;
-        margin-top: 10px;
-    }
-
-    .kpi-title {
-        color: var(--text-muted);
-        margin-top: 5px;
-    }
-
-    .header-workshop { font-size: 14px; color: var(--color-link); }
-    .kpi-icon-online { font-size: 30px; color: var(--status-online-legacy); }
-    .kpi-icon-offline { font-size: 30px; color: var(--status-offline-legacy); }
-    .kpi-icon-alarm { font-size: 30px; color: var(--status-alarm-legacy); }
-    .kpi-icon-run { font-size: 30px; color: var(--status-running-legacy); }
-    .kpi-icon-stop { font-size: 30px; color: var(--status-stopped); }
-
-    .header {
-        display: flex;
-        align-items: center; /* 上下居中 */
-        justify-content: space-between;
-    }
-
-    .oemes-container {
-        background: var(--bg-page, #f3f5f8);
-        height: 100%;
         overflow: hidden;
     }
 
-    #statusChart, #trendChart{
+    /* ========== 工作台整体 ========== */
+    .overview-wb.oemes-container {
+        box-sizing: border-box;
+        min-height: 100%;
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 20px 22px 24px;
+        background: #fafafa;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .overview-wb .layui-row {
+        margin-bottom: 4px;
+    }
+
+    .overview-wb .layui-card {
+        border-radius: 12px;
+        border: 1px solid #ececec;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.028), 0 4px 14px rgba(0, 0, 0, 0.035);
+        overflow: hidden;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .overview-wb .layui-card:not(.wb-toolbar-card):hover {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04), 0 10px 22px rgba(0, 0, 0, 0.045);
+        border-color: #e2e2e3;
+    }
+
+    .overview-wb .wb-toolbar-card:hover {
+        border-color: #ececec;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.028), 0 4px 14px rgba(0, 0, 0, 0.035);
+    }
+
+    /* 顶栏 */
+    .wb-toolbar-card .layui-card-body {
+        padding: 18px 22px;
+    }
+
+    .wb-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .wb-toolbar-main {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        padding-left: 14px;
+        border-left: 4px solid #c4c4c8;
+    }
+
+    .wb-page-title {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--text-main, #1e293b);
+        line-height: 1.3;
+    }
+
+    .wb-page-sub {
+        margin: 0;
+        font-size: 12px;
+        color: var(--text-sub, #64748b);
+        letter-spacing: 0.04em;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .header-workshop {
+        display: inline-flex;
+        align-items: center;
+        max-width: min(48vw, 420px);
+        padding: 4px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #52525c;
+        background: #f4f4f5;
+        border: 1px solid #e8e8ea;
+        border-radius: 999px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .header-workshop:empty {
+        display: none;
+    }
+
+    .overview-wb #btnOverviewFullscreen {
+        border-radius: 8px;
+        font-weight: 500;
+        box-shadow: none;
+    }
+
+    /* 分区标题 */
+    .wb-section {
+        margin-top: 8px;
+        margin-bottom: 10px;
+    }
+
+    .wb-section-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 0 2px;
+    }
+
+    .wb-section-title {
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-sub, #64748b);
+        letter-spacing: 0.06em;
+    }
+
+    .wb-section-title::before {
+        content: '';
+        flex-shrink: 0;
+        width: 3px;
+        height: 13px;
+        margin-right: 8px;
+        border-radius: 2px;
+        background: linear-gradient(180deg, #d4d4d8, #b4b4ba);
+    }
+
+    /* KPI */
+    .kpi-card {
+        text-align: center;
+        padding: 8px 6px 16px;
+    }
+
+    .wb-kpi-icon-wrap {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 10px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .wb-kpi-icon-wrap .layui-icon {
+        font-size: 26px;
+    }
+
+    .wb-kpi-icon-wrap--total {
+        background: #f0f0f2;
+        color: #71717a;
+    }
+
+    .wb-kpi-icon-wrap--online {
+        background: rgba(14, 165, 233, 0.12);
+        color: var(--status-online-legacy, #0ea5e9);
+    }
+
+    .wb-kpi-icon-wrap--offline {
+        background: rgba(148, 163, 184, 0.1);
+        color: var(--status-offline-legacy, #94a3b8);
+    }
+
+    .wb-kpi-icon-wrap--alarm {
+        background: rgba(244, 63, 94, 0.12);
+        color: var(--status-alarm-legacy, #f43f5e);
+    }
+
+    .wb-kpi-icon-wrap--run {
+        background: rgba(16, 185, 129, 0.14);
+        color: var(--status-running-legacy, #10b981);
+    }
+
+    .wb-kpi-icon-wrap--stop {
+        background: rgba(245, 158, 11, 0.16);
+        color: var(--status-stopped, #f59e0b);
+    }
+
+    .kpi-num {
+        font-size: 26px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        margin-top: 2px;
+        color: var(--text-main, #1e293b);
+        letter-spacing: -0.02em;
+    }
+
+    .kpi-title {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-sub, #64748b);
+        font-weight: 500;
+    }
+
+    /* 图表 / 表格卡片头 */
+    .overview-wb .layui-card-header {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main, #1e293b);
+        border-bottom: 1px solid #f0f0f0;
+        background: linear-gradient(180deg, #fcfcfc 0%, #fff 100%);
+    }
+
+    .overview-wb .wb-chart .layui-card-body {
+        padding: 12px 14px 16px;
+    }
+
+    .overview-wb .wb-alarm .layui-card-body {
+        padding: 0;
+    }
+
+    .overview-wb .wb-alarm .layui-table-view {
+        margin: 0;
+    }
+
+    #statusChart, #trendChart {
         width: 100%;
     }
 </style>
 <body>
-<div class="layui-fluid oemes-container" style="padding:15px;">
-    <!-- 标题栏 -->
+<div class="layui-fluid oemes-container overview-wb">
     <div class="layui-row layui-col-space15">
         <div class="layui-col-md12">
-            <div class="layui-card">
-                <div class="layui-card-body header">
-                    <span style="font-size:20px;font-weight:600;">设备管理平台</span>
-                    <span class="header-workshop" id="workshopName"></span>
+            <div class="layui-card wb-toolbar-card">
+                <div class="layui-card-body wb-toolbar">
+                    <div class="wb-toolbar-main">
+                        <h1 class="wb-page-title" lang-i18n="overview.page_title">设备管理平台</h1>
+                        <p class="wb-page-sub" lang-i18n="overview.subtitle">工作台 · 设备运行数据一览</p>
+                    </div>
+                    <div class="header-right">
+                        <span class="header-workshop" id="workshopName"></span>
+                        <button type="button" class="layui-btn layui-btn-primary layui-btn-sm" id="btnOverviewFullscreen"
+                                title="" aria-label="">
+                            <i class="layui-icon layui-icon-screen-full" aria-hidden="true"></i>
+                            <span class="btn-overview-fs-text" lang-i18n="common.fullscreen">全屏</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- KPI 区域 -->
-    <div class="layui-row layui-col-space15">
-        <div class="layui-col-md2">
-            <div class="layui-card">
-                <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-engine" style="font-size:30px;"></i>
-                    <div class="kpi-num" id="totalCount">0</div>
-                    <div class="kpi-title" lang-i18n="equip.total"></div>
+    <div class="wb-section">
+        <div class="wb-section-head">
+            <span class="wb-section-title" lang-i18n="overview.section_kpi">数据概览</span>
+        </div>
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md2">
+                <div class="layui-card">
+                    <div class="layui-card-body kpi-card">
+                        <div class="wb-kpi-icon-wrap wb-kpi-icon-wrap--total">
+                            <i class="layui-icon layui-icon-engine"></i>
+                        </div>
+                        <div class="kpi-num" id="totalCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.total"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layui-col-md2">
-            <div class="layui-card">
-                <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-rss kpi-icon-online"></i>
-                    <div class="kpi-num" id="onlineCount">0</div>
-                    <div class="kpi-title" lang-i18n="equip.online">在线设备</div>
+            <div class="layui-col-md2">
+                <div class="layui-card">
+                    <div class="layui-card-body kpi-card">
+                        <div class="wb-kpi-icon-wrap wb-kpi-icon-wrap--online">
+                            <i class="layui-icon layui-icon-rss"></i>
+                        </div>
+                        <div class="kpi-num" id="onlineCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.online">在线设备</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layui-col-md2">
-            <div class="layui-card">
-                <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-rss kpi-icon-offline"></i>
-                    <div class="kpi-num" id="offlineCount">0</div>
-                    <div class="kpi-title" lang-i18n="equip.offline">离线设备</div>
+            <div class="layui-col-md2">
+                <div class="layui-card">
+                    <div class="layui-card-body kpi-card">
+                        <div class="wb-kpi-icon-wrap wb-kpi-icon-wrap--offline">
+                            <i class="layui-icon layui-icon-rss"></i>
+                        </div>
+                        <div class="kpi-num" id="offlineCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.offline">离线设备</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layui-col-md2">
-            <div class="layui-card">
-                <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-notice kpi-icon-alarm"></i>
-                    <div class="kpi-num" id="alarmCount">0</div>
-                    <div class="kpi-title" lang-i18n="equip.alarm">告警设备</div>
+            <div class="layui-col-md2">
+                <div class="layui-card">
+                    <div class="layui-card-body kpi-card">
+                        <div class="wb-kpi-icon-wrap wb-kpi-icon-wrap--alarm">
+                            <i class="layui-icon layui-icon-notice"></i>
+                        </div>
+                        <div class="kpi-num" id="alarmCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.alarm">告警设备</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layui-col-md2">
-            <div class="layui-card">
-                <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-loading kpi-icon-run"></i>
-                    <div class="kpi-num" id="runCount">0</div>
-                    <div class="kpi-title" lang-i18n="equip.run">运行设备</div>
+            <div class="layui-col-md2">
+                <div class="layui-card">
+                    <div class="layui-card-body kpi-card">
+                        <div class="wb-kpi-icon-wrap wb-kpi-icon-wrap--run">
+                            <i class="layui-icon layui-icon-loading"></i>
+                        </div>
+                        <div class="kpi-num" id="runCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.run">运行设备</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="layui-col-md2">
-            <div class="layui-card">
-                <div class="layui-card-body kpi-card">
-                    <i class="layui-icon layui-icon-pause kpi-icon-stop"></i>
-                    <div class="kpi-num" id="stopCount">0</div>
-                    <div class="kpi-title" lang-i18n="equip.stop">停止设备</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 数据分析图表 -->
-    <div class="layui-row layui-col-space15">
-        <div class="layui-col-md6">
-            <div class="layui-card">
-                <div class="layui-card-header" lang-i18n="title.equip_status">设备状态分布</div>
-                <div class="layui-card-body">
-                    <div id="statusChart" style="height:320px; width: 100%"></div>
-                </div>
-            </div>
-        </div>
-        <div class="layui-col-md6">
-            <div class="layui-card">
-                <div class="layui-card-header" lang-i18n="title.equip_trend_7">设备近7日在线趋势</div>
-                <div class="layui-card-body">
-                    <div id="trendChart" style="height:320px; width: 100%"></div>
+            <div class="layui-col-md2">
+                <div class="layui-card">
+                    <div class="layui-card-body kpi-card">
+                        <div class="wb-kpi-icon-wrap wb-kpi-icon-wrap--stop">
+                            <i class="layui-icon layui-icon-pause"></i>
+                        </div>
+                        <div class="kpi-num" id="stopCount">0</div>
+                        <div class="kpi-title" lang-i18n="equip.stop">停止设备</div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 设备列表 -->
-    <div class="layui-row layui-col-space15">
-        <div class="layui-col-md12">
-            <div class="layui-card">
-                <div class="layui-card-header">报警明细</div>
-                <div class="layui-card-body">
-                    <table id="alarmTable" lay-filter="alarmTable"></table>
+    <div class="wb-section">
+        <div class="wb-section-head">
+            <span class="wb-section-title" lang-i18n="overview.section_charts">数据分析</span>
+        </div>
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-card wb-chart">
+                    <div class="layui-card-header" lang-i18n="title.equip_status">设备状态分布</div>
+                    <div class="layui-card-body">
+                        <div id="statusChart" style="height:320px; width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-card wb-chart">
+                    <div class="layui-card-header" lang-i18n="title.equip_trend_7">设备近7日在线趋势</div>
+                    <div class="layui-card-body">
+                        <div id="trendChart" style="height:320px; width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wb-section">
+        <div class="wb-section-head">
+            <span class="wb-section-title" lang-i18n="overview.section_alarm">告警动态</span>
+        </div>
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md12">
+                <div class="layui-card wb-alarm">
+                    <div class="layui-card-header" lang-i18n="overview.alarm_detail">报警明细</div>
+                    <div class="layui-card-body">
+                        <table id="alarmTable" lay-filter="alarmTable"></table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -182,36 +404,74 @@
     let selected_tree_node;
     let countLock = false;
     let chartLock = false;
-    let messageLock = false;
     let table;
+
+    /**
+     * global.js 的 post() 为同步 XHR，会长时间阻塞主线程导致卡顿。
+     * 与 post 一致，仅改为异步。
+     */
+    function postAsync(url, param, successFunc, failFuc, urlParam) {
+        let req_url = initRequestUrl(url);
+        if (urlParam != null) {
+            urlParam.forEach((value, key) => {
+                req_url += '&' + key + '=' + value;
+            });
+        }
+        $.ajax({
+            url: req_url,
+            data: JSON.stringify(param),
+            type: 'POST',
+            dataType: 'json',
+            headers: getCommonHeader(),
+            async: true,
+            contentType: 'application/json',
+            success: function (data) {
+                handleResponseData(data, successFunc, failFuc);
+            },
+            error: function (e, msg) {
+                if (e.status >= 401 && e.status < 500) {
+                    layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
+                        localStorage.removeItem(store.token_header);
+                        window.parent.location.href = '/view/login';
+                    });
+                } else {
+                    layer.alert('请求异常，错误提示：' + msg);
+                }
+                if (typeof failFuc === 'function') {
+                    try {
+                        failFuc();
+                    } catch (ignore) {
+                    }
+                }
+            }
+        });
+    }
+
     layui.use(function () {
         table = layui.table;
         var $ = layui.$;
 
-        const fullscreen = new FullScreen();
         get(router.workshop_tree, null, function (result) {
-                const sceneTree = new TreeSelect({
-                    data: result,
-                    needVirtualRoot: true,
-                    virtualRootName: i18np.prop('common.all'),
-                    customName: {
-                        title: 'name',
-                        field: 'selfCode'
-                    },
-                    onSelect: function (obj) {
-                        //获取当前点击的节点数据
-                        selected_tree_node = obj;
-                        reloadCount();
-                        reloadTrendChart();
-                        if (obj.selfCode == null) {
-                            $('#workshopName').text('');
-                        } else {
-                            $('#workshopName').text(obj.name);
-                        }
+            new TreeSelect({
+                data: result,
+                needVirtualRoot: true,
+                virtualRootName: i18np.prop('common.all'),
+                customName: {
+                    title: 'name',
+                    field: 'selfCode'
+                },
+                onSelect: function (obj) {
+                    selected_tree_node = obj;
+                    reloadCount();
+                    reloadTrendChart();
+                    if (obj.selfCode == null) {
+                        $('#workshopName').text('');
+                    } else {
+                        $('#workshopName').text(obj.name);
                     }
-                })
-            }
-        )
+                }
+            });
+        });
 
         table.render({
             elem: '#alarmTable',
@@ -238,7 +498,7 @@
             },
             response: {
                 statusName: 'code', //规定返回的状态码字段为code
-                statusCode: 200, //规定成功的状态码味200
+                statusCode: 200,
             },
             parseData: function (res) {
                 return {
@@ -255,11 +515,9 @@
             height: 'full'
         });
 
-        table.on('tool(alarmTable)', function (obj) { // 双击 toolDouble
-            var data = obj.data; // 获得当前行数据
-            current_row_data = data;
+        table.on('tool(alarmTable)', function (obj) {
             if (obj.event === 'read') {
-                markAlarmRead(data.id);
+                markAlarmRead(obj.data.id);
             }
         });
 
@@ -270,25 +528,98 @@
             initCountChart();
         }, 200)
 
+        let resizeChartsRaf = null;
         const resizeCharts = () => {
-            try {
-                statusChart?.resize?.()
-            } catch (e) {}
-            try {
-                trendChart?.resize?.()
-            } catch (e) {}
+            if (resizeChartsRaf != null) {
+                cancelAnimationFrame(resizeChartsRaf);
+            }
+            resizeChartsRaf = requestAnimationFrame(() => {
+                resizeChartsRaf = null;
+                try {
+                    statusChart?.resize?.();
+                } catch (e) {}
+                try {
+                    trendChart?.resize?.();
+                } catch (e) {}
+            });
+        };
+
+        window.addEventListener('resize', resizeCharts);
+        setTimeout(resizeCharts, 300);
+
+        const overviewRoot = document.querySelector('.oemes-container');
+
+        function syncOverviewFullscreenLabel() {
+            const fs = !!(document.fullscreenElement || document.webkitFullscreenElement ||
+                document.mozFullScreenElement || document.msFullscreenElement);
+            const enter = (typeof i18np !== 'undefined' && i18np.prop)
+                ? i18np.prop('common.fullscreen') : '全屏';
+            const exit = (typeof i18np !== 'undefined' && i18np.prop)
+                ? i18np.prop('common.fullscreen_exit') : '退出全屏';
+            const label = fs ? exit : enter;
+            $('.btn-overview-fs-text').text(label);
+            $('#btnOverviewFullscreen').attr('title', label).attr('aria-label', label);
         }
 
-        // iframe 尺寸变化时重绘图表
-        window.addEventListener('resize', resizeCharts)
-        // 首次初始化完成后再做一次，避免初始高度测不准
-        setTimeout(resizeCharts, 300)
+        syncOverviewFullscreenLabel();
 
-        setInterval(() => {
+        function requestOverviewFullscreen(el) {
+            if (!el) {
+                return;
+            }
+            if (el.requestFullscreen) {
+                el.requestFullscreen();
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            } else if (el.mozRequestFullScreen) {
+                el.mozRequestFullScreen();
+            } else if (el.msRequestFullscreen) {
+                el.msRequestFullscreen();
+            }
+        }
+
+        function exitOverviewFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+
+        $('#btnOverviewFullscreen').on('click', function () {
+            const fs = document.fullscreenElement || document.webkitFullscreenElement ||
+                document.mozFullScreenElement || document.msFullscreenElement;
+            if (fs) {
+                exitOverviewFullscreen();
+            } else {
+                requestOverviewFullscreen(overviewRoot);
+            }
+        });
+
+        $(document).on('fullscreenchange webkitfullscreenchange mozfullscreenchange MSFullscreenChange', function () {
+            syncOverviewFullscreenLabel();
+            requestAnimationFrame(function () {
+                try {
+                    statusChart?.resize?.();
+                } catch (e) {}
+                try {
+                    trendChart?.resize?.();
+                } catch (e) {}
+            });
+        });
+
+        setInterval(function () {
+            if (document.visibilityState === 'hidden') {
+                return;
+            }
             reloadCount();
             reloadTrendChart();
             reloadMessage();
-        }, 10000)
+        }, 10000);
     });
 
     function initCountChart() {
@@ -317,11 +648,8 @@
                     avoidLabelOverlap: false,
                     label: {
                         show: true,
-                        formatter: '{d}%'   // ⭐ 只显示百分比
+                        formatter: '{d}%'
                     },
-                    // labelLine: {
-                    //     show: false
-                    // },
                     data: []
                 },
                 {
@@ -335,9 +663,6 @@
                         fontSize: 10,
                         formatter: '{d}%'
                     },
-                    // labelLine: {
-                    //     show: false
-                    // },
                     data: []
                 }
             ]
@@ -369,40 +694,35 @@
     }
 
     function reloadMessage() {
-        if (messageLock) {
+        if (!table) {
             return;
         }
-        messageLock = true;
-        try {
-            table.reloadData('alarmTable', {
-                url: initRequestUrl(router.message_page),
-                where: {
-                    platform: client.platform,
-                    limitCurrentUser: true,
-                    type: 1,
-                },
-            });
-        } finally {
-            messageLock = false;
-        }
+        table.reloadData('alarmTable', {
+            url: initRequestUrl(router.message_page),
+            where: {
+                platform: client.platform,
+                limitCurrentUser: true,
+                type: 1,
+            },
+        });
     }
 
     function reloadCount() {
         if (countLock) {
-            return
+            return;
         }
         countLock = true;
-        try {
-            post(router.equip_count, {
-                needWorkshopCascade: true,
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-            }, function (result) {
-                $("#totalCount").text(result.total);
-                $("#onlineCount").text(result.online);
-                $("#offlineCount").text(result.offline);
-                $("#alarmCount").text(result.alarm);
-                $("#runCount").text(result.run);
-                $("#stopCount").text(result.stopped);
+        postAsync(router.equip_count, {
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            $("#totalCount").text(result.total);
+            $("#onlineCount").text(result.online);
+            $("#offlineCount").text(result.offline);
+            $("#alarmCount").text(result.alarm);
+            $("#runCount").text(result.run);
+            $("#stopCount").text(result.stopped);
+            if (statusChart) {
                 statusChart.setOption({
                     series: [
                         {
@@ -420,10 +740,11 @@
                         }
                     ]
                 }, false);
-            })
-        } finally {
+            }
             countLock = false;
-        }
+        }, function () {
+            countLock = false;
+        });
     }
 
     function markAlarmRead(messageId) {
@@ -433,37 +754,36 @@
     }
 
     function reloadTrendChart() {
-        if (chartLock) {
-            return
+        if (chartLock || !trendChart) {
+            return;
         }
         chartLock = true;
-        try {
-            const now = new Date();
-            const end = new Date(now);
-            const start = new Date(now);
-            end.setDate(now.getDate() - 1);
-            start.setDate(now.getDate() - 8);
-            post(router.equip_state_snapshot_count, {
-                startDate: formatDate(start),
-                endDate: formatDate(end),
-                onlineState: 1,
-                countType: 1,
-                needWorkshopCascade: true,
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-            }, function (result) {
-                const data = [];
-                result.forEach(item => {
-                    data.push([item.time, item.num]);
-                })
-                trendChart.setOption({
-                    series: [{
-                        data: data
-                    }]
-                }, false);
-            })
-        } finally {
+        const now = new Date();
+        const end = new Date(now);
+        const start = new Date(now);
+        end.setDate(now.getDate() - 1);
+        start.setDate(now.getDate() - 8);
+        postAsync(router.equip_state_snapshot_count, {
+            startDate: formatDate(start),
+            endDate: formatDate(end),
+            onlineState: 1,
+            countType: 1,
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            const data = [];
+            (result || []).forEach(function (item) {
+                data.push([item.time, item.num]);
+            });
+            trendChart.setOption({
+                series: [{
+                    data: data
+                }]
+            }, false);
             chartLock = false;
-        }
+        }, function () {
+            chartLock = false;
+        });
     }
 
     // 释放图表资源，避免重复打开 iframe 后内存持续增长

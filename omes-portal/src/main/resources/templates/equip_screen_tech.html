@@ -17,10 +17,6 @@
     <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <script src="../static/js/techScreenMaplibre.js"></script>
     <script src="../static/tree-select/treeSelect.js"></script>
-    <!--    <script src="https://api.map.baidu.com/api?v=1.0&&type=webgl&ak=xqC8Us41v5zZxz5SGXOwslbpxAGakVMs"></script>-->
-    <!--    <script src="../static/map/baiduMap.js"></script>-->
-
-
     <style>
         /* 科技风：优先使用本地字体，Orbitron 可选 */
         html, body {
@@ -74,67 +70,6 @@
             flex-direction: column;
         }
 
-        /* ========== 顶部：科技风标题栏 ========== */
-        .screen-header {
-            height: var(--header-h);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 clamp(20px, 1.5vw, 36px);
-            background: linear-gradient(180deg, rgba(0, 216, 255, 0.07) 0%, transparent 100%);
-            border-bottom: 1px solid var(--tech-border);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        .screen-title-wrap {
-            display: flex;
-            align-items: baseline;
-            gap: clamp(8px, 0.6vw, 14px);
-        }
-
-        .screen-title {
-            font-size: var(--title-fs);
-            font-weight: 700;
-            letter-spacing: clamp(2px, 0.2vw, 6px);
-            color: #f0f9ff;
-            text-shadow: 0 0 20px var(--tech-glow), 0 0 36px rgba(24, 144, 255, 0.35);
-        }
-
-        .screen-title-accent {
-            display: inline-block;
-            width: 4px;
-            height: 24px;
-            background: linear-gradient(180deg, var(--tech-cyan), var(--tech-blue));
-            margin-right: 12px;
-            vertical-align: middle;
-            box-shadow: 0 0 12px var(--tech-cyan);
-            animation: pulse-bar 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-bar {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        #workshopName {
-            font-size: clamp(12px, 0.9vw, 15px);
-            color: var(--tech-cyan);
-            letter-spacing: 2px;
-            margin-left: 8px;
-        }
-
-        .header-time {
-            font-size: clamp(12px, 0.9vw, 16px);
-            color: var(--tech-cyan);
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--tech-glow);
-        }
-
         /* ========== 主体：左 | 中间(地图在上方) | 右 ========== */
         .screen-body {
             flex: 1;
@@ -161,7 +96,6 @@
             display: flex;
             flex-direction: column;
             gap: var(--body-gap);
-            color: #1f1f1f;
         }
 
         /* 中间列：地图 65%，下方健康区 35% */
@@ -590,21 +524,6 @@
             }
         }
 
-        /* ========== 底部 ========== */
-        .screen-footer {
-            height: var(--footer-h);
-            flex-shrink: 0;
-            padding: 0 clamp(16px, 1.2vw, 24px);
-            background: rgba(5, 14, 28, 0.92);
-            border-top: 1px solid var(--tech-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            color: #94a3b8;
-            font-size: clamp(10px, 0.75vw, 12px);
-            letter-spacing: 1px;
-        }
-
         #alarmMarquee {
             color: #fca5a5;
             font-weight: 500;
@@ -633,6 +552,7 @@
         }
 
         .screen-header {
+            flex-shrink: 0;
             height: clamp(56px, 6vh, 82px);
             padding: 0 clamp(12px, 1vw, 22px);
             display: grid;
@@ -711,9 +631,12 @@
         }
 
         .screen-title {
+            font-weight: 700;
             font-size: clamp(20px, 1.45vw, 28px);
             letter-spacing: clamp(2px, 0.25vw, 5px);
             line-height: 1;
+            color: #f0f9ff;
+            text-shadow: 0 0 20px var(--tech-glow), 0 0 36px rgba(24, 144, 255, 0.35);
             padding: 8px clamp(14px, 1.2vw, 26px);
             border: 1px solid rgba(0, 216, 255, 0.38);
             background: linear-gradient(180deg, rgba(9, 30, 58, 0.92) 0%, rgba(6, 20, 40, 0.72) 100%);
@@ -778,7 +701,9 @@
             border-radius: 4px;
             box-shadow: inset 0 0 10px rgba(24, 144, 255, 0.15);
             font-size: clamp(11px, 0.82vw, 14px);
+            color: var(--tech-cyan);
             letter-spacing: 1px;
+            text-shadow: 0 0 10px var(--tech-glow);
         }
 
         #workshopName {
@@ -791,6 +716,9 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            font-size: clamp(12px, 0.9vw, 15px);
+            color: var(--tech-cyan);
+            letter-spacing: 2px;
         }
 
         .screen-body {
@@ -1098,8 +1026,17 @@
         }
 
         .screen-footer {
+            flex-shrink: 0;
             height: clamp(34px, 3.8vh, 52px);
+            padding: 0 clamp(16px, 1.2vw, 24px);
             background: linear-gradient(180deg, rgba(4, 16, 34, 0.75) 0%, rgba(3, 12, 28, 0.95) 100%);
+            border-top: 1px solid var(--tech-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #94a3b8;
+            font-size: clamp(10px, 0.75vw, 12px);
+            letter-spacing: 1px;
         }
 
         .screen-footer.notice {
@@ -1539,7 +1476,6 @@
                 <div class="panel-title" lang-i18n="title.equip_trend"></div>
                 <div class="chart-wrap">
                     <div id="currentTrendChart" style="height:100%;"></div>
-
                 </div>
             </div>
             <div class="panel-box alarm-panel">
