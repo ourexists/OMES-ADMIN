@@ -62,7 +62,7 @@ public class CaptchaAuthenticationProvider extends EraAuthenticationProvider {
         if (hcaptcha == null) {
             throw new BadCredentialsException("图形码失效！");
         }
-        if (!hcaptcha.equals(captcha)) {
+        if (!hcaptcha.equalsIgnoreCase(captcha)) {
             authValidRuleCache.removeCaptcha(uuid);
             throw new BadCredentialsException("图形码验证失败！");
         }
