@@ -98,14 +98,17 @@ public class TcMqttEquipDataParser implements EquipDataParser {
         int alarm = 0;
         if (!CollectionUtils.isEmpty(equipRealtime.getEquipRealtimeConfig().getAlarms())) {
             List<String> alarms = new ArrayList<>();
+            Integer level = -1;
             for (EquipAlarmRealtime alarmRealtime : equipRealtime.getEquipRealtimeConfig().getAlarms()) {
                 Object raw = parsedObj.get(alarmRealtime.getMap());
                 if (alarmRuleProcessor.match(raw, alarmRealtime)) {
                     alarm = 1;
+                    level = alarmRealtime.getLevel() > level ? alarmRealtime.getLevel() : level;
                     alarms.add(alarmRealtime.getText());
                 }
             }
             target.setAlarmTexts(alarms);
+            target.setAlarmLevel(level);
         }
         if (alarm == 1) {
             target.alarm();

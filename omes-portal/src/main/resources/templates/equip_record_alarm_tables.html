@@ -95,6 +95,21 @@
         })
         form.render();
 
+        var alarmLevelI18nKeys = [
+            'equipHealth.alarmLevelMinor',
+            'equipHealth.alarmLevelGeneral',
+            'equipHealth.alarmLevelSerious',
+            'equipHealth.alarmLevelFault'
+        ];
+
+        function formatAlarmLevel(lv) {
+            if (lv == null || lv === '') return '-';
+            var n = parseInt(lv, 10);
+            if (isNaN(n)) return String(lv);
+            var key = alarmLevelI18nKeys[n];
+            return key ? i18np.prop(key) : String(lv);
+        }
+
         var default_param = {
             cols: [[
                 {field: 'LAY_INDEX', title: 'NO'},
@@ -112,6 +127,23 @@
                 {field: 'startTime', title: i18np.prop('equiprun.runStartTime')},
                 {field: 'endTime', title: i18np.prop('equiprun.runEndTime')},
                 {field: 'duration', title: i18np.prop('equiprun.duration')},
+                {
+                    field: 'level',
+                    title: i18np.prop('equipattr.alarmLevel'),
+                    width: 100,
+                    templet: function (d) {
+                        return formatAlarmLevel(d.level);
+                    }
+                },
+                {
+                    field: 'reason',
+                    title: i18np.prop('equipRecordAlarm.reason'),
+                    minWidth: 200,
+                    templet: function (d) {
+                        var r = d.reason;
+                        return (r != null && String(r).trim() !== '') ? layui.util.escape(String(r)) : '-';
+                    }
+                },
             ]],
             defaultToolbar: ['filter', 'exports', 'print'],
         }

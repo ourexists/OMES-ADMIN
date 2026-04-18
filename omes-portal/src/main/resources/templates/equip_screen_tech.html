@@ -313,7 +313,7 @@
         .alarm-item {
             display: flex;
             align-items: flex-start;
-            padding: 6px 4px;
+            padding: 8px 6px 10px;
             border-bottom: 1px dashed rgba(0, 216, 255, 0.2);
             transition: background 0.2s;
         }
@@ -326,7 +326,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            margin: 4px 10px 0 0;
+            margin: 6px 10px 0 0;
             background: #ef4444;
             box-shadow: 0 0 8px #ef4444;
             flex-shrink: 0;
@@ -337,19 +337,20 @@
             min-width: 0;
         }
 
-        .alarm-header {
+        /* 第一行：等级标签居左，时间与操作按钮居右，避免与标题挤在同一行导致重叠 */
+        .alarm-row-top {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            gap: 10px;
+            min-width: 0;
         }
 
-        .alarm-header-left {
-            display: flex;
+        .alarm-row-actions {
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            min-width: 0;
-            flex: 1;
+            flex-shrink: 0;
         }
 
         .alarm-level-tag {
@@ -504,39 +505,55 @@
         }
 
         .alarm-title {
-            flex: 1;
-            min-width: 0;
-            color: #f1f5f9;
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            line-height: 1.4;
             font-weight: 500;
+            color: #f1f5f9;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .alarm-time {
-            color: #64748b;
-            font-size: 11px;
-            flex-shrink: 0;
+            color: #94a3b8;
+            font-size: 10px;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            line-height: 1.3;
         }
 
         .alarm-content {
-            margin-top: 2px;
+            margin-top: 5px;
+            padding-bottom: 1px;
             color: #94a3b8;
             font-size: 11px;
+            line-height: 1.45;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .alarm-read-btn {
-            padding: 2px 8px;
-            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            font-size: 0;
             color: var(--tech-cyan);
             background: rgba(0, 216, 255, 0.1);
             border: 1px solid rgba(0, 216, 255, 0.38);
-            border-radius: 2px;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s;
+            flex-shrink: 0;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+
+        .alarm-read-btn .layui-icon {
+            font-size: 12px;
         }
 
         .alarm-read-btn:hover {
@@ -1556,6 +1573,48 @@
     /** 与 equip_screen_tech_theme.css 中 --color-status-* 同源（见 getTechScreenColorsSafe） */
     const TECH_COLORS = getTechScreenColorsSafe();
 
+    /**
+     * 大屏专用异步 POST。global.js 的 post() 使用 sync XHR（async:false），
+     * 多接口连续请求会长时间阻塞主线程，页面表现为卡死。
+     * 逻辑与 post 一致，仅改为异步并依赖 handleResponseData（global.js）。
+     */
+    function postAsync(url, param, successFunc, failFuc, urlParam) {
+        let req_url = initRequestUrl(url);
+        if (urlParam != null) {
+            urlParam.forEach((value, key) => {
+                req_url += '&' + key + '=' + value;
+            });
+        }
+        $.ajax({
+            url: req_url,
+            data: JSON.stringify(param),
+            type: 'POST',
+            dataType: 'json',
+            headers: getCommonHeader(),
+            async: true,
+            contentType: 'application/json',
+            success: function (data) {
+                handleResponseData(data, successFunc, failFuc);
+            },
+            error: function (e, msg) {
+                if (e.status >= 401 && e.status < 500) {
+                    layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
+                        localStorage.removeItem(store.token_header);
+                        window.parent.location.href = '/view/login';
+                    });
+                } else {
+                    layer.alert('请求异常，错误提示：' + msg);
+                }
+                if (typeof failFuc === 'function') {
+                    try {
+                        failFuc();
+                    } catch (ignore) { /* ignore */
+                    }
+                }
+            }
+        });
+    }
+
     layui.use(function () {
         var $ = layui.$;
 
@@ -1646,13 +1705,27 @@
             $('#currentTime').text(new Date().toLocaleString());
         }, 1000);
 
-        setInterval(async () => {
-            reloadCount();
-            reloadCurrentTrendChart();
-            reloadHealth();
-            reloadMessage();
-            reloadMap(false);
-        }, 30000);
+        const SCREEN_REFRESH_MS = 30000;
+        let screenRefreshTimer = null;
+        function scheduleScreenDataRefresh() {
+            if (screenRefreshTimer != null) {
+                clearTimeout(screenRefreshTimer);
+            }
+            screenRefreshTimer = setTimeout(function tick() {
+                screenRefreshTimer = null;
+                if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+                    screenRefreshTimer = setTimeout(tick, SCREEN_REFRESH_MS);
+                    return;
+                }
+                reloadCount();
+                reloadCurrentTrendChart();
+                reloadHealth();
+                reloadMessage();
+                reloadMap(false);
+                screenRefreshTimer = setTimeout(tick, SCREEN_REFRESH_MS);
+            }, SCREEN_REFRESH_MS);
+        }
+        scheduleScreenDataRefresh();
     });
 
     function initMap() {
@@ -2016,7 +2089,7 @@
         }
 
         function loadHealthIndicators(snSet) {
-            post(router.equip_health_listByStatTime, {
+            postAsync(router.equip_health_listByStatTime, {
                 statTime: formatDate(statDate),
                 pageNum: 1,
                 pageSize: 9999
@@ -2035,7 +2108,7 @@
             loadHealthIndicators(null);
             return;
         }
-        post(router.equip_page, {
+        postAsync(router.equip_page, {
             workshopCode: workshopCode,
             needWorkshopCascade: true,
             requirePage: false,
@@ -2051,46 +2124,59 @@
         });
     }
 
+    function alarmHtmlEsc(s) {
+        if (s == null) return '';
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
     function reloadMessage() {
         if (messageLock) return;
         messageLock = true;
-        try {
-            post(router.message_page, {
-                page: 1,
-                pageSize: 10,
-                platform: client.platform,
-                limitCurrentUser: true,
-                type: 1
-            }, function (res) {
+        postAsync(router.message_page, {
+            page: 1,
+            pageSize: 10,
+            platform: client.platform,
+            limitCurrentUser: true,
+            type: 1
+        }, function (res) {
+            try {
                 const list = res || [];
                 let html = '';
                 list.forEach(item => {
                     const level = resolveAlarmLevel(item);
                     const levelText = level === 'danger' ? '严重' : (level === 'warn' ? '警告' : '提示');
+                    const readBtn = item.readStatus == 0
+                        ? `<button type="button" class="alarm-read-btn" onclick='markAlarmRead(${JSON.stringify(item.id)}, this)' title="标记已读"><i class="layui-icon layui-icon-success"></i></button>`
+                        : '';
+                    const alarmDot = item.readStatus == 0 ? '<div class="alarm-dot"></div>' : '';
                     html += `
                         <div class="alarm-item level-${level} ${item.readStatus == 0 ? 'new' : 'read'}">
-                            <div class="alarm-dot"></div>
+                            ${alarmDot}
                             <div class="alarm-body">
-                                <div class="alarm-header">
-                                    <div class="alarm-header-left">
-                                        <span class="alarm-level-tag level-${level}">${levelText}</span>
-                                        <span class="alarm-title">${item.title}</span>
-                                    </div>
-                                    <div class="alarm-header-right">
-                                        <span class="alarm-time">${item.createdTime}</span>
-                                        ${item.readStatus == 0 ? `<button class="alarm-read-btn" onclick="markAlarmRead('${item.id}', this)"><icon class="layui-icon layui-icon-success"> </icon></button>` : ''}
+                                <div class="alarm-row-top">
+                                    <span class="alarm-level-tag level-${level}">${levelText}</span>
+                                    <div class="alarm-row-actions">
+                                        <span class="alarm-time">${alarmHtmlEsc(item.createdTime)}</span>
+                                        ${readBtn}
                                     </div>
                                 </div>
-                                <div class="alarm-content" title="${item.context}">${item.context}</div>
+                                <div class="alarm-title">${alarmHtmlEsc(item.title)}</div>
+                                <div class="alarm-content" title="${alarmHtmlEsc(item.context)}">${alarmHtmlEsc(item.context)}</div>
                             </div>
                         </div>
                     `;
                 });
                 $('#alarmList').html(html);
-            });
-        } finally {
+            } finally {
+                messageLock = false;
+            }
+        }, function () {
             messageLock = false;
-        }
+        });
     }
 
     function resolveAlarmLevel(item) {
@@ -2103,11 +2189,11 @@
     function reloadCount() {
         if (countLock) return;
         countLock = true;
-        try {
-            post(router.equip_count, {
-                needWorkshopCascade: true,
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-            }, function (result) {
+        postAsync(router.equip_count, {
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            try {
                 $("#totalCount").text(result.total);
                 $("#onlineCount").text(result.online);
                 $("#offlineCount").text(result.offline);
@@ -2135,10 +2221,12 @@
                     ]
                 }, false);
                 updateAlarmMarquee(result.alarm);
-            });
-        } finally {
+            } finally {
+                countLock = false;
+            }
+        }, function () {
             countLock = false;
-        }
+        });
     }
 
     function updateKpiWarnState(result) {
@@ -2256,35 +2344,37 @@
         }
     }
 
-    async function reloadTrendChart() {
+    function reloadTrendChart() {
         if (chartLock) return;
         chartLock = true;
-        try {
-            const now = new Date();
-            const end = new Date(now);
-            const start = new Date(now);
-            end.setDate(now.getDate() - 1);
-            start.setDate(now.getDate() - 8);
-            post(router.equip_state_snapshot_count, {
-                startDate: formatDate(start),
-                endDate: formatDate(end),
-                onlineState: 1,
-                countType: 1,
-                needWorkshopCascade: true,
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-            }, function (result) {
+        const now = new Date();
+        const end = new Date(now);
+        const start = new Date(now);
+        end.setDate(now.getDate() - 1);
+        start.setDate(now.getDate() - 8);
+        postAsync(router.equip_state_snapshot_count, {
+            startDate: formatDate(start),
+            endDate: formatDate(end),
+            onlineState: 1,
+            countType: 1,
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+        }, function (result) {
+            try {
                 const data = (result || []).map(item => [item.time, item.num]);
                 trendChart.setOption({
                     xAxis: {min: start, max: end},
                     series: [{data: data}]
                 }, false);
-            });
-        } finally {
+            } finally {
+                chartLock = false;
+            }
+        }, function () {
             chartLock = false;
-        }
+        });
     }
 
-    async function reloadCurrentTrendChart() {
+    function reloadCurrentTrendChart() {
         if (currentTrendChartLock) return;
         currentTrendChartLock = true;
         const end = new Date();
@@ -2296,58 +2386,70 @@
         let pending = 3;
         const check = () => {
             if (--pending !== 0) return;
-            currentTrendChart.setOption({
-                xAxis: {min: start, max: end},
-                series: [{data: onlineData}, {data: runData}, {data: alarmData}]
-            }, false);
+            try {
+                currentTrendChart.setOption({
+                    xAxis: {min: start, max: end},
+                    series: [{data: onlineData}, {data: runData}, {data: alarmData}]
+                }, false);
+            } catch (e) { /* ignore */
+            }
             currentTrendChartLock = false;
         };
-        post(router.equip_state_snapshot_count, {
-            startDate: formatDate(start), endDate: formatDate(end), onlineState: 1,
-            needWorkshopCascade: true, workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-        }, function (result) {
+        const snap = {
+            startDate: formatDate(start),
+            endDate: formatDate(end),
+            needWorkshopCascade: true,
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode
+        };
+        postAsync(router.equip_state_snapshot_count, Object.assign({onlineState: 1}, snap), function (result) {
             onlineData = (result || []).map(item => [item.time, item.num]);
             check();
-        });
-        post(router.equip_state_snapshot_count, {
-            startDate: formatDate(start), endDate: formatDate(end), alarmState: 1,
-            needWorkshopCascade: true, workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-        }, function (result) {
-            alarmData = (result || []).map(item => [item.time, item.num]);
+        }, function () {
             check();
         });
-        post(router.equip_state_snapshot_count, {
-            startDate: formatDate(start), endDate: formatDate(end), runState: 1,
-            needWorkshopCascade: true, workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-        }, function (result) {
+        postAsync(router.equip_state_snapshot_count, Object.assign({alarmState: 1}, snap), function (result) {
+            alarmData = (result || []).map(item => [item.time, item.num]);
+            check();
+        }, function () {
+            check();
+        });
+        postAsync(router.equip_state_snapshot_count, Object.assign({runState: 1}, snap), function (result) {
             runData = (result || []).map(item => [item.time, item.num]);
+            check();
+        }, function () {
             check();
         });
     }
 
-    async function reloadMap(needViewReset) {
+    function reloadMap(needViewReset) {
         if (reloading) return;
         reloading = true;
-        try {
-            let params = {
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-                needRealtime: true,
-                requirePage: false,
-                needWorkshopCascade: true,
-                queryWorkshop: true,
-                queryAttrs: true,
-            };
-            post(router.equip_page, params, function (e) {
+        const params = {
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+            needRealtime: true,
+            requirePage: false,
+            needWorkshopCascade: true,
+            queryWorkshop: true,
+            queryAttrs: true,
+        };
+        const done = function () {
+            reloading = false;
+        };
+        postAsync(router.equip_page, params, function (e) {
+            try {
                 if (e == null) {
                     renderMaplibreMarkers([], needViewReset);
                     return;
                 }
                 let r = e.filter(item => item.lng != null && item.lat != null);
                 renderMaplibreMarkers(r, needViewReset);
-            });
-        } finally {
-            reloading = false;
-        }
+            } finally {
+                done();
+            }
+        }, function () {
+            renderMaplibreMarkers([], needViewReset);
+            done();
+        });
     }
 
     function markAlarmRead(messageId, btn) {
@@ -2355,6 +2457,8 @@
             const item = btn.closest('.alarm-item');
             item.classList.remove('new');
             item.classList.add('read');
+            const dot = item.querySelector('.alarm-dot');
+            if (dot) dot.remove();
             btn.remove();
         });
     }

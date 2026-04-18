@@ -33,6 +33,8 @@ public class EquipRealtime {
 
     private List<String> alarmTexts;
 
+    private Integer alarmLevel;
+
     private String tenantId;
 
     private String workshopCode;
