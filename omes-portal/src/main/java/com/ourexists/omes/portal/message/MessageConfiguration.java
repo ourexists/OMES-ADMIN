@@ -60,7 +60,7 @@ public class MessageConfiguration {
                 UserContext.setTenant(new TenantInfo().setTenantId(notifyMsg.getTenantId()));
                 try {
                     List<String> accIds = null;
-                    if (MessageSourceEnum.System.name().equals(notifyMsg.getSource())) {
+                    if (MessageSourceEnum.System.name().equals(notifyMsg.getSource()) || !notifyMsg.getPlatform().equals("mes-app")) {
                         AccPageQuery accPageQuery = new AccPageQuery();
                         accPageQuery.setRequirePage(false);
                         accPageQuery.setPlatform(notifyMsg.getPlatform());

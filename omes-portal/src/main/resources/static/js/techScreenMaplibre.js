@@ -63,7 +63,7 @@ function TechScreenMaplibre(options) {
         activePopup = new maplibregl.Popup({
             offset: 14,
             closeButton: true,
-            maxWidth: '320px',
+            maxWidth: 'min(480px, 92vw)',
             className: 'maplibre-tech-popup'
         })
             .setLngLat(e.lngLat)
