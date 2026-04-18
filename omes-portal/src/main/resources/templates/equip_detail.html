@@ -47,18 +47,23 @@
         color: #fff;
         font-size: 28px;
     }
+
     .equip-icon.offline {
         background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%);
     }
+
     .equip-icon.alarm {
         background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
     }
+
     .equip-icon.run {
         background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
     }
+
     .equip-icon.stop {
         background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%);
     }
+
     .equip-icon.online {
         background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
     }
@@ -87,21 +92,25 @@
         color: #52c41a;
         border: 1px solid #b7eb8f;
     }
+
     .equip-status-tag.offline {
         background: #f5f5f5;
         color: #8c8c8c;
         border: 1px solid #d9d9d9;
     }
+
     .equip-status-tag.alarm {
         background: #fff2f0;
         color: #ff4d4f;
         border: 1px solid #ffccc7;
     }
+
     .equip-status-tag.run {
         background: #f6ffed;
         color: #52c41a;
         border: 1px solid #b7eb8f;
     }
+
     .equip-status-tag.stop {
         background: #fff7e6;
         color: #fa8c16;
@@ -210,6 +219,7 @@
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 12px;
     }
+
     .attr-card {
         position: relative;
         background: var(--bg-panel, #fff);
@@ -224,12 +234,37 @@
         align-items: center;
         text-align: center;
     }
-    .attr-card:nth-child(6n+1) { background: #e6f7ff; border-color: #91d5ff; }
-    .attr-card:nth-child(6n+2) { background: #f6ffed; border-color: #b7eb8f; }
-    .attr-card:nth-child(6n+3) { background: #fff7e6; border-color: #ffd591; }
-    .attr-card:nth-child(6n+4) { background: #fff1f0; border-color: #ffa39e; }
-    .attr-card:nth-child(6n+5) { background: #f9f0ff; border-color: #d3adf7; }
-    .attr-card:nth-child(6n+6) { background: #e6fffb; border-color: #87e8de; }
+
+    .attr-card:nth-child(6n+1) {
+        background: #e6f7ff;
+        border-color: #91d5ff;
+    }
+
+    .attr-card:nth-child(6n+2) {
+        background: #f6ffed;
+        border-color: #b7eb8f;
+    }
+
+    .attr-card:nth-child(6n+3) {
+        background: #fff7e6;
+        border-color: #ffd591;
+    }
+
+    .attr-card:nth-child(6n+4) {
+        background: #fff1f0;
+        border-color: #ffa39e;
+    }
+
+    .attr-card:nth-child(6n+5) {
+        background: #f9f0ff;
+        border-color: #d3adf7;
+    }
+
+    .attr-card:nth-child(6n+6) {
+        background: #e6fffb;
+        border-color: #87e8de;
+    }
+
     .attr-card .attr-pin {
         position: absolute;
         top: 8px;
@@ -238,21 +273,25 @@
         font-size: 16px;
         pointer-events: none;
     }
+
     .attr-card .attr-label {
         font-size: 16px;
         color: var(--text-sub, #6b7785);
         margin-bottom: 6px;
         line-height: 1.25;
     }
+
     .attr-card .attr-value-wrap {
         line-height: 1.25;
         word-break: break-all;
     }
+
     .attr-card .attr-value {
         font-size: 28px;
         font-weight: 600;
         color: #2f3b4a;
     }
+
     .attr-card .attr-unit {
         font-size: 15px;
         font-weight: 400;
@@ -266,6 +305,7 @@
         grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 14px;
     }
+
     .ctrl-card {
         background: var(--bg-panel, #fff);
         border: 1px solid var(--border-base, #e1e6ef);
@@ -276,61 +316,82 @@
         flex-direction: column;
         gap: 10px;
     }
+
     .ctrl-card .ctrl-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
     }
+
     .ctrl-card .ctrl-name {
         font-size: 15px;
         font-weight: 600;
         color: #2f3b4a;
     }
+
     .ctrl-card .ctrl-type-tag {
         font-size: 11px;
         padding: 1px 8px;
         border-radius: 4px;
     }
+
     .ctrl-card .ctrl-type-tag.digital {
         background: #e6f7ff;
         color: #1890ff;
         border: 1px solid #91d5ff;
     }
+
     .ctrl-card .ctrl-type-tag.analog {
         background: #fff7e6;
         color: #fa8c16;
         border: 1px solid #ffd591;
     }
+
     .ctrl-card .ctrl-addr {
         font-size: 12px;
         color: #8c8c8c;
         font-family: Consolas, Monaco, monospace;
     }
+
     .ctrl-card .ctrl-current {
         font-size: 13px;
         color: #595959;
     }
+
     .ctrl-card .ctrl-current-val {
         font-weight: 600;
         font-size: 15px;
     }
-    .ctrl-card .ctrl-current-val.v-on { color: #52c41a; }
-    .ctrl-card .ctrl-current-val.v-off { color: #8c8c8c; }
-    .ctrl-card .ctrl-current-val.v-num { color: #1890ff; }
+
+    .ctrl-card .ctrl-current-val.v-on {
+        color: #52c41a;
+    }
+
+    .ctrl-card .ctrl-current-val.v-off {
+        color: #8c8c8c;
+    }
+
+    .ctrl-card .ctrl-current-val.v-num {
+        color: #1890ff;
+    }
+
     .ctrl-card .ctrl-body {
         display: flex;
         align-items: center;
         gap: 10px;
     }
+
     .ctrl-card .ctrl-range {
         font-size: 11px;
         color: #8c8c8c;
     }
+
     .ctrl-switch-wrap {
         display: flex;
         align-items: center;
         gap: 12px;
     }
+
     .ctrl-switch-btn {
         min-width: 70px;
         height: 36px;
@@ -341,53 +402,70 @@
         border: none;
         transition: all .2s;
     }
+
     .ctrl-switch-btn.on {
         background: #f0f0f0;
         color: #8c8c8c;
         border: 1px solid #d9d9d9;
     }
+
     .ctrl-switch-btn.on:hover {
         background: #e8e8e8;
     }
+
     .ctrl-switch-btn.on.active {
         background: #52c41a;
         color: #fff;
         border: none;
         box-shadow: 0 2px 6px rgba(82, 196, 26, .4);
     }
+
     .ctrl-switch-btn.on.active:hover {
         background: #389e0d;
     }
+
     .ctrl-switch-btn.off {
         background: #f0f0f0;
         color: #8c8c8c;
         border: 1px solid #d9d9d9;
     }
+
     .ctrl-switch-btn.off:hover {
         background: #e8e8e8;
     }
+
     .ctrl-switch-btn.off.active {
         background: #ff4d4f;
         color: #fff;
         border: none;
         box-shadow: 0 2px 6px rgba(255, 77, 79, .4);
     }
+
     .ctrl-switch-btn.off.active:hover {
         background: #d9363e;
     }
+
     .ctrl-switch-status {
         font-size: 13px;
         font-weight: 600;
         min-width: 30px;
     }
-    .ctrl-switch-status.s-on { color: #52c41a; }
-    .ctrl-switch-status.s-off { color: #8c8c8c; }
+
+    .ctrl-switch-status.s-on {
+        color: #52c41a;
+    }
+
+    .ctrl-switch-status.s-off {
+        color: #8c8c8c;
+    }
+
     .ctrl-analog-wrap {
         display: flex;
         align-items: center;
         gap: 8px;
         flex: 1;
     }
+
     .ctrl-analog-wrap input {
         width: 100px;
         height: 32px;
@@ -397,14 +475,17 @@
         font-size: 14px;
         outline: none;
     }
+
     .ctrl-analog-wrap input:focus {
         border-color: #1890ff;
-        box-shadow: 0 0 0 2px rgba(24,144,255,.12);
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, .12);
     }
+
     .ctrl-analog-wrap .ctrl-unit {
         font-size: 13px;
         color: #8c8c8c;
     }
+
     .ctrl-analog-wrap .ctrl-send-btn {
         height: 32px;
         padding: 0 14px;
@@ -416,12 +497,49 @@
         cursor: pointer;
         white-space: nowrap;
     }
+
     .ctrl-analog-wrap .ctrl-send-btn:hover {
         background: #096dd9;
     }
+
     .ctrl-analog-wrap .ctrl-send-btn:disabled {
         background: #d9d9d9;
         cursor: not-allowed;
+    }
+
+    /* 日志 Tab：三态报表 */
+    .state-report-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .state-report-toolbar .layui-form-mid {
+        color: #8c8c8c;
+        font-size: 12px;
+    }
+
+    .state-report-tabs {
+        margin-top: 4px;
+        border: 1px solid var(--border-base, #e1e6ef);
+        border-radius: 4px;
+        background: var(--bg-panel, #fff);
+    }
+
+    .state-report-tabs .layui-tab-title {
+        margin-bottom: 0;
+        border-bottom: 1px solid #e4e8ee;
+    }
+
+    .state-report-tabs .layui-tab-content {
+        padding: 12px 12px 4px;
+        margin: 0;
+    }
+
+    .state-report-tabs .layui-tab-item {
+        overflow: visible;
     }
 </style>
 <body>
@@ -572,8 +690,41 @@
 
             <!-- Tab4: 日志查看 -->
             <div class="layui-tab-item">
-                <div class="info-section">
-                    <p class="layui-text" style="color:#8c8c8c">日志查看模块待扩展</p>
+                <form class="layui-form" id="stateReportQueryForm">
+                    <div class="state-report-toolbar">
+                        <div class="layui-inline" id="state-timeline-daterange">
+                            <div class="layui-input-inline" style="width: 170px;">
+                                <input type="text" id="state-timeline-start" class="layui-input"
+                                       placeholder="开始时间">
+                            </div>
+                            <div class="layui-input-inline" style="width: 170px;">
+                                <input type="text" id="state-timeline-end" class="layui-input"
+                                       placeholder="结束时间">
+                            </div>
+                        </div>
+                        <button type="button" class="layui-btn layui-btn-sm" lay-submit
+                                lay-filter="state-timeline-doSearch">查询
+                        </button>
+                        <span class="layui-form-mid">时间跨度最长 30 天</span>
+                    </div>
+                </form>
+                <div class="layui-tab layui-tab-brief state-report-tabs" lay-filter="stateReportTriTab">
+                    <ul class="layui-tab-title">
+                        <li class="layui-this" lay-id="stateRun">运行</li>
+                        <li lay-id="stateOnline">在线</li>
+                        <li lay-id="stateAlarm">报警</li>
+                    </ul>
+                    <div class="layui-tab-content">
+                        <div class="layui-tab-item layui-show">
+                            <table class="layui-hide" id="stateTbRun"></table>
+                        </div>
+                        <div class="layui-tab-item">
+                            <table class="layui-hide" id="stateTbOnline"></table>
+                        </div>
+                        <div class="layui-tab-item">
+                            <table class="layui-hide" id="stateTbAlarm"></table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -590,6 +741,7 @@
     let realtime_tread_chart;
     let realtime_table_inited = false;
     let realtime_collect_inited = false;
+    let state_report_tables_inited = false;
     let table;
 
     layui.use(function () {
@@ -604,7 +756,9 @@
             return;
         }
 
-        setTimeout(function () { loadEquipData(); }, 100);
+        setTimeout(function () {
+            loadEquipData();
+        }, 100);
 
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'visible' && equipId) loadEquipData(true);
@@ -628,11 +782,26 @@
             type: 'datetime',
             lang: localStorage.getItem(store.language)
         });
+        laydate.render({
+            elem: '#state-timeline-daterange',
+            range: ['#state-timeline-start', '#state-timeline-end'],
+            rangeLinked: true,
+            type: 'datetime',
+            lang: localStorage.getItem(store.language)
+        });
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
         const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
         $('#realtime-startDate').val(formatDate(startOfDay));
         $('#realtime-endDate').val(formatDate(endOfDay));
+        (function () {
+            var stEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            var stStart = new Date(stEnd);
+            stStart.setDate(stStart.getDate() - 6);
+            stStart.setHours(0, 0, 0, 0);
+            $('#state-timeline-start').val(formatDate(stStart));
+            $('#state-timeline-end').val(formatDate(stEnd));
+        })();
 
         form.on('submit(realtime-doSearch)', function () {
             if (realtime_run_chart) reloadRealtimeRunCharts();
@@ -649,6 +818,23 @@
                     if (realtime_tread_chart) realtime_tread_chart.resize();
                 }, 50);
             }
+            if (data.index === 3) {
+                initStateTimelinePanel();
+                setTimeout(function () {
+                    resizeStateReportTables();
+                }, 80);
+            }
+        });
+
+        form.on('submit(state-timeline-doSearch)', function () {
+            loadStateTimelines();
+            return false;
+        });
+
+        element.on('tab(stateReportTriTab)', function () {
+            setTimeout(function () {
+                resizeStateReportTables();
+            }, 60);
         });
     });
 
@@ -661,6 +847,9 @@
             equipData = data;
             sn = data.selfCode || '';
             renderEquipInfo(data);
+            if (sn && isEquipDetailLogTabActive()) {
+                loadStateTimelines();
+            }
             if (realtime) layer.msg(i18np.prop('common.reload') + ' OK', {time: 800});
         }, function () {
             if (loadIndex != null) layer.close(loadIndex);
@@ -715,6 +904,12 @@
             $('#attrsContainer').html(html);
         }
         loadControlConfig();
+    }
+
+
+    function isEquipDetailLogTabActive() {
+        var $t = $('.layui-tab[lay-filter="equipDetailTab"] .layui-tab-title li.layui-this');
+        return $t.attr('lay-id') === 'log';
     }
 
     function loadControlConfig() {
@@ -838,7 +1033,9 @@
             var $wrap = $('#ctrl-sw-' + idx);
             $wrap.find('.ctrl-switch-btn.on').toggleClass('active', isOn);
             $wrap.find('.ctrl-switch-btn.off').toggleClass('active', !isOn);
-            setTimeout(function () { loadEquipData(true); }, 1500);
+            setTimeout(function () {
+                loadEquipData(true);
+            }, 1500);
         }, function (code, msg) {
             layer.msg(msg || '写入失败', {icon: 2, time: 2000});
             $btn.prop('disabled', false);
@@ -864,7 +1061,9 @@
             layer.msg('写入成功', {icon: 1, time: 1500});
             $btn.prop('disabled', false).text('写入');
             $('#ctrl-val-' + idx).text(val);
-            setTimeout(function () { loadEquipData(true); }, 1500);
+            setTimeout(function () {
+                loadEquipData(true);
+            }, 1500);
         }, function (code, msg) {
             layer.msg(msg || '写入失败', {icon: 2, time: 2000});
             $btn.prop('disabled', false).text('写入');
@@ -944,11 +1143,13 @@
         if (!realtime_run_chart || !sn) return;
         let startDate = parseDate($('#realtime-startDate').val()), endDate = parseDate($('#realtime-endDate').val());
         let r = [], pending = 3;
+
         function done() {
             if (--pending > 0) return;
             r = mergeRealtimeRecords(r);
             realtime_run_chart.setOption({xAxis: {min: startDate, max: endDate}, series: [{data: r}]}, false);
         }
+
         post(router.equip_online_count, {
             sn: sn,
             startDate: formatDate(startDate),
@@ -1000,6 +1201,209 @@
             else merged.push([].concat(cur));
         }
         return merged;
+    }
+
+    function resizeStateReportTables() {
+        if (!state_report_tables_inited || !table) return;
+        try {
+            table.resize('stateRecordRun');
+            table.resize('stateRecordOnline');
+            table.resize('stateRecordAlarm');
+        } catch (e) {
+        }
+    }
+
+    function parseRecordTime(v) {
+        if (v == null) return null;
+        if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) return v;
+        if (typeof v === 'number') return new Date(v);
+        var s = String(v);
+        if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(s)) return parseDate(s.substring(0, 19));
+        var d = new Date(s);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    function getStateReportWhere() {
+        return {
+            sn: sn,
+            startDate: $('#state-timeline-start').val(),
+            endDate: $('#state-timeline-end').val()
+        };
+    }
+
+    function stateReportParseData(res) {
+        return {
+            code: res.code,
+            msg: res.msg,
+            count: (res.pagination && res.pagination.total) || 0,
+            data: res.data || []
+        };
+    }
+
+    function formatStateReportAlarmLevel(lv) {
+        if (lv == null || lv === '') return '-';
+        var n = parseInt(lv, 10);
+        if (isNaN(n)) return String(lv);
+        var keys = [
+            'equipHealth.alarmLevelMinor',
+            'equipHealth.alarmLevelGeneral',
+            'equipHealth.alarmLevelSerious',
+            'equipHealth.alarmLevelFault'
+        ];
+        var key = keys[n];
+        return key ? i18np.prop(key) : String(lv);
+    }
+
+    function buildStateReportColsRun() {
+        return [[
+            {field: 'startTime', title: i18np.prop('equiprun.runStartTime'), minWidth: 168},
+            {field: 'endTime', title: i18np.prop('equiprun.runEndTime'), minWidth: 168},
+            {
+                field: 'state', title: i18np.prop('equip.state'), width: 96, templet: function (d) {
+                    return d.state === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop');
+                }
+            },
+            {field: 'powerStart', title: i18np.prop('equiprun.powerStart'), width: 110},
+            {field: 'powerEnd', title: i18np.prop('equiprun.powerEnd'), width: 110},
+            {field: 'duration', title: i18np.prop('equiprun.duration'), width: 120},
+            {field: 'powerUse', title: i18np.prop('equiprun.powerUse'), width: 100}
+        ]];
+    }
+
+    function buildStateReportColsOnline() {
+        return [[
+            {field: 'startTime', title: i18np.prop('equiprun.runStartTime'), minWidth: 168},
+            {field: 'endTime', title: i18np.prop('equiprun.runEndTime'), minWidth: 168},
+            {
+                field: 'state', title: i18np.prop('equip.state'), width: 96, templet: function (d) {
+                    return d.state === 1 ? i18np.prop('equip.online') : i18np.prop('equip.offline');
+                }
+            },
+            {field: 'duration', title: i18np.prop('equiprun.duration'), width: 120}
+        ]];
+    }
+
+    function buildStateReportColsAlarm() {
+        return [[
+            {field: 'startTime', title: i18np.prop('equiprun.runStartTime'), minWidth: 160},
+            {field: 'endTime', title: i18np.prop('equiprun.runEndTime'), minWidth: 160},
+            {
+                field: 'state', title: i18np.prop('equip.state'), width: 88, templet: function (d) {
+                    return d.state === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common');
+                }
+            },
+            {field: 'duration', title: i18np.prop('equiprun.duration'), width: 112},
+            {
+                field: 'level', title: i18np.prop('equipattr.alarmLevel'), width: 100, templet: function (d) {
+                    return formatStateReportAlarmLevel(d.level);
+                }
+            },
+            {
+                field: 'reason', title: i18np.prop('equipRecordAlarm.reason'), minWidth: 160, templet: function (d) {
+                    var r = d.reason;
+                    return (r != null && String(r).trim() !== '') ? layui.util.escape(String(r)) : '-';
+                }
+            }
+        ]];
+    }
+
+    function initStateReportTables(where) {
+        var base = {
+            method: 'POST',
+            headers: getCommonHeader(),
+            contentType: 'application/json',
+            request: {pageName: 'page', limitName: 'pageSize'},
+            response: {statusName: 'code', statusCode: 200},
+            parseData: stateReportParseData,
+            page: true,
+            limit: 15,
+            limits: [15, 30, 50]
+        };
+        table.render(Object.assign({}, base, {
+            elem: '#stateTbRun',
+            id: 'stateRecordRun',
+            url: initRequestUrl(router.equipRecordRun_page),
+            where: where,
+            cols: buildStateReportColsRun(),
+            height: 300
+        }));
+        table.render(Object.assign({}, base, {
+            elem: '#stateTbOnline',
+            id: 'stateRecordOnline',
+            url: initRequestUrl(router.equipRecordOnline_page),
+            where: where,
+            cols: buildStateReportColsOnline(),
+            height: 300
+        }));
+        table.render(Object.assign({}, base, {
+            elem: '#stateTbAlarm',
+            id: 'stateRecordAlarm',
+            url: initRequestUrl(router.equipRecordAlarm_page),
+            where: where,
+            cols: buildStateReportColsAlarm(),
+            height: 340
+        }));
+        state_report_tables_inited = true;
+        setTimeout(function () {
+            resizeStateReportTables();
+        }, 60);
+    }
+
+    function reloadStateReportTables() {
+        var w = getStateReportWhere();
+        if (!state_report_tables_inited) {
+            initStateReportTables(w);
+            return;
+        }
+        table.reloadData('stateRecordRun', {
+            url: initRequestUrl(router.equipRecordRun_page),
+            where: w,
+            page: {curr: 1}
+        });
+        table.reloadData('stateRecordOnline', {
+            url: initRequestUrl(router.equipRecordOnline_page),
+            where: w,
+            page: {curr: 1}
+        });
+        table.reloadData('stateRecordAlarm', {
+            url: initRequestUrl(router.equipRecordAlarm_page),
+            where: w,
+            page: {curr: 1}
+        });
+        setTimeout(function () {
+            resizeStateReportTables();
+        }, 60);
+    }
+
+    function initStateTimelinePanel() {
+        if (!sn) {
+            layer.msg(equipData ? '当前设备无编号（selfCode），无法查询三态记录' : '请先等待设备数据加载完成', {time: 2200});
+            return;
+        }
+        loadStateTimelines();
+    }
+
+    function loadStateTimelines() {
+        if (!sn) {
+            layer.msg('当前设备无编号（selfCode），无法查询三态记录', {time: 2200});
+            return;
+        }
+        var startDate = parseRecordTime($('#state-timeline-start').val());
+        var endDate = parseRecordTime($('#state-timeline-end').val());
+        if (!startDate || !endDate) {
+            layer.msg('请选择起止时间');
+            return;
+        }
+        var span = endDate.getTime() - startDate.getTime();
+        if (span <= 0) {
+            layer.msg('结束时间须晚于开始时间');
+            return;
+        }
+        if (span > 30 * 24 * 60 * 60 * 1000) {
+            layer.msg('时间范围不能超过 30 天');
+            return;
+        }
+        reloadStateReportTables();
     }
 
     function initRealtimeTread() {

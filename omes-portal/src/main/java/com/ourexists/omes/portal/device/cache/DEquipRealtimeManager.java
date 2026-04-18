@@ -3,6 +3,7 @@ package com.ourexists.omes.portal.device.cache;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.cache.*;
 import com.ourexists.omes.device.feign.EquipFeign;
@@ -240,7 +241,13 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             for (EquipRealtime target : targets) {
                 if (source.getId().equals(target.getId())) {
                     if (!source.getAlarmState().equals(target.getAlarmState())) {
-                        EquipRecordAlarmDto dto = new EquipRecordAlarmDto().setSn(source.getSelfCode()).setState(target.getAlarmState()).setStartTime(new Date()).setTenantId(source.getTenantId());
+                        EquipRecordAlarmDto dto = new EquipRecordAlarmDto()
+                                .setSn(source.getSelfCode())
+                                .setState(target.getAlarmState())
+                                .setStartTime(new Date())
+                                .setTenantId(source.getTenantId())
+                                .setLevel(target.getAlarmLevel())
+                                .setReason(CollectionUtil.join(target.getAlarmTexts(), ","));
                         r.add(dto);
 
                         if (target.getAlarmState() == 1) {

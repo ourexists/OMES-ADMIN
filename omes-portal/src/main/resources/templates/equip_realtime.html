@@ -213,6 +213,9 @@
     let laytpl;
     let viewMode = localStorage.getItem('equip_realtime_view') || 'card';
     let filterOnlineState = localStorage.getItem('equip_realtime_filter') !== null ? localStorage.getItem('equip_realtime_filter') : ''; // ''=全部, '1'=在线, '0'=离线, 'run'=运行, 'stop'=停止, 'alarm'=告警
+    /** 轮询定时器；设备列表必须用异步请求，勿用 global.post（async:false 会阻塞主线程导致卡死） */
+    let realtimePollTimer = null;
+    const REALTIME_POLL_MS = 5000;
 
     layui.use(function () {
         table = layui.table;
@@ -268,6 +271,9 @@
             reloadData(true, data.field);
             return false; // 阻止默认 form 跳转
         });
+
+        startRealtimePolling();
+        document.addEventListener('visibilitychange', onEquipRealtimeVisibility);
     });
 
     function openDetail(id) {
@@ -333,33 +339,68 @@
         if (reloading) return;
         reloading = true;
 
-        try {
-            let params = {
-                workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
-                name: $('#name').val(),
-                selfCode: $('#selfCode').val(),
-                type: $('#type').val(),
-                needRealtime: true,
-                requirePage: false,
-                needWorkshopCascade: true,
-                queryWorkshop: true,
-                queryAttrs: true,
-            };
-            post(router.equip_page, params, function (e) {
-                if (e == null) {
-                    return;
+        let params = {
+            workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
+            name: $('#name').val(),
+            selfCode: $('#selfCode').val(),
+            type: $('#type').val(),
+            needRealtime: true,
+            requirePage: false,
+            needWorkshopCascade: true,
+            queryWorkshop: true,
+            queryAttrs: true,
+        };
+        let req_url = initRequestUrl(router.equip_page);
+        $.ajax({
+            url: req_url,
+            data: JSON.stringify(params),
+            type: 'POST',
+            dataType: 'json',
+            headers: getCommonHeader(),
+            async: true,
+            contentType: 'application/json',
+            success: function (data) {
+                handleResponseData(data, function (e) {
+                    if (e == null) {
+                        return;
+                    }
+                    dataList = e;
+                    renderData();
+                });
+            },
+            error: function (e, msg) {
+                if (e.status >= 401 && e.status < 500) {
+                    layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
+                        localStorage.removeItem(store.token_header);
+                        window.parent.location.href = '/view/login';
+                    });
+                } else {
+                    layer.alert('请求异常，错误提示：' + msg);
                 }
-                dataList = e;
-                renderData();
-            })
-        } finally {
-            reloading = false;
-        }
+            },
+            complete: function () {
+                reloading = false;
+            }
+        });
     }
 
-    setInterval(async () => {
-        reloadData();
-    }, 5000);
+    function startRealtimePolling() {
+        if (realtimePollTimer !== null) {
+            clearInterval(realtimePollTimer);
+        }
+        realtimePollTimer = setInterval(function () {
+            if (document.hidden) {
+                return;
+            }
+            reloadData();
+        }, REALTIME_POLL_MS);
+    }
+
+    function onEquipRealtimeVisibility() {
+        if (!document.hidden) {
+            reloadData();
+        }
+    }
 </script>
 </body>
 
