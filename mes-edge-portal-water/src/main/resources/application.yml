@@ -15,7 +15,7 @@ spring:
   config:
     location: classpath:/,file:config/
   profiles:
-    include: db-mysql
+    include: db-postgres
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     default-property-inclusion: ALWAYS
