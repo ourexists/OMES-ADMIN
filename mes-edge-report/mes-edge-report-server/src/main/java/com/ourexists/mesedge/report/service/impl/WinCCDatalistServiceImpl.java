@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
 import com.ourexists.mesedge.report.mapper.WinCCDatalistMapper;
+import com.ourexists.mesedge.report.model.WinCCDataTotalRowDto;
 import com.ourexists.mesedge.report.model.WinCCDatalist;
 import com.ourexists.mesedge.report.model.WinCCDatalistPageQuery;
 import com.ourexists.mesedge.report.service.WinCCDatalistService;
@@ -31,6 +32,15 @@ public class WinCCDatalistServiceImpl extends AbstractMyBatisPlusService<WinCCDa
         page.setRecords(winCCDatalistList);
         page.setTotal(size);
         return page;
+    }
+
+    @Override
+    public WinCCDataTotalRowDto selectTotalRow(WinCCDatalistPageQuery dto) {
+        WinCCDataTotalRowDto totalRowDto = new WinCCDataTotalRowDto();
+        totalRowDto.setAvg(WinCCDatalist.covert(this.baseMapper.aggregateByPageQuery(dto, "AVG")));
+        totalRowDto.setMax(WinCCDatalist.covert(this.baseMapper.aggregateByPageQuery(dto, "MAX")));
+        totalRowDto.setMin(WinCCDatalist.covert(this.baseMapper.aggregateByPageQuery(dto, "MIN")));
+        return totalRowDto;
     }
 
 }

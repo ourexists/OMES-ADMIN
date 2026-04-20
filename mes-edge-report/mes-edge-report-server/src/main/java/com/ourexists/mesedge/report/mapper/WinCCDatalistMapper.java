@@ -8,7 +8,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.ourexists.mesedge.report.model.WinCCDatalist;
 import com.ourexists.mesedge.report.model.WinCCDatalistPageQuery;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.SelectProvider;
 
 import java.util.List;
 
@@ -101,46 +103,49 @@ public interface WinCCDatalistMapper extends BaseMapper<WinCCDatalist> {
 
             "<if test=\"interval==3\">" +
             " JOIN (" +
-            "SELECT DATE_FORMAT(exec_time, '%Y-%m-%d %H:00:00') AS hour_time," +
+            "SELECT date_trunc('hour', exec_time) AS hour_time," +
             "MAX(id) AS max_id " +
             "FROM t_wincc_datalist " +
             "where exec_time &gt;= #{startDate} and exec_time &lt;= #{endDate} " +
             "GROUP BY hour_time) x " +
-            "ON DATE_FORMAT(b.execTime, '%Y-%m-%d %H:00:00') = x.hour_time " +
+            "ON date_trunc('hour', b.execTime) = x.hour_time " +
             "AND b.id = x.max_id " +
             "</if>" +
 
             "<if test=\"interval==1\">" +
             " JOIN (" +
             "SELECT " +
-            "DATE_FORMAT(exec_time, '%Y-%m-%d %H:') AS hour_part," +
-            "FLOOR(MINUTE(exec_time)/10) AS ten_min_part," +
+            "date_trunc('hour', exec_time) AS hour_part," +
+            "FLOOR(EXTRACT(MINUTE FROM exec_time)/10) AS ten_min_part," +
             "MAX(id) AS max_id "+
             "FROM t_wincc_datalist " +
             "where exec_time &gt;= #{startDate} and exec_time &lt;= #{endDate} " +
             "GROUP BY hour_part, ten_min_part " +
             ") x " +
-            "ON DATE_FORMAT(b.execTime, '%Y-%m-%d %H:') = x.hour_part " +
-            "AND FLOOR(MINUTE(b.execTime)/10) = x.ten_min_part " +
+            "ON date_trunc('hour', b.execTime) = x.hour_part " +
+            "AND FLOOR(EXTRACT(MINUTE FROM b.execTime)/10) = x.ten_min_part " +
             "AND b.id = x.max_id " +
             "</if>" +
 
             "<if test=\"interval==2\">" +
             " JOIN (" +
             "SELECT " +
-            "DATE_FORMAT(exec_time, '%Y-%m-%d %H:') AS hour_part," +
-            "FLOOR(MINUTE(exec_time)/30) AS ten_min_part," +
+            "date_trunc('hour', exec_time) AS hour_part," +
+            "FLOOR(EXTRACT(MINUTE FROM exec_time)/30) AS ten_min_part," +
             "MAX(id) AS max_id "+
             "FROM t_wincc_datalist " +
             "where exec_time &gt;= #{startDate} and exec_time &lt;= #{endDate} " +
             "GROUP BY hour_part, ten_min_part " +
             ") x " +
-            "ON DATE_FORMAT(b.execTime, '%Y-%m-%d %H:') = x.hour_part " +
-            "AND FLOOR(MINUTE(b.execTime)/30) = x.ten_min_part " +
+            "ON date_trunc('hour', b.execTime) = x.hour_part " +
+            "AND FLOOR(EXTRACT(MINUTE FROM b.execTime)/30) = x.ten_min_part " +
             "AND b.id = x.max_id " +
             "</if>" +
             "</script>"
     )
     List<WinCCDatalist> page(WinCCDatalistPageQuery dto);
+
+    @SelectProvider(type = WinCCDatalistSqlProvider.class, method = "aggregateByPageQuery")
+    WinCCDatalist aggregateByPageQuery(@Param("dto") WinCCDatalistPageQuery dto, @Param("agg") String agg);
 
 }
