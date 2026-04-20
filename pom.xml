@@ -32,7 +32,6 @@
         <module>mes-edge-mat</module>
         <module>mes-edge-mo</module>
         <module>mes-edge-mps</module>
-        <module>mes-edge-portal-dts</module>
         <module>mes-edge-portal-ms</module>
         <module>mes-edge-sync</module>
         <module>mes-edge-task</module>

@@ -1515,23 +1515,26 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
         var that = this;
         var options = that.config;
         var avgNums = {};
+        var hasAvgRowData = !!avgRowData;
 
         if (!options.avgRow) return;
-        var size = data.length;
-        layui.each(data, function (i1, item1) {
-            // 若数据项为空数组，则不往下执行（因为删除数据时，会将原有数据设置为 []）
-            if (layui.type(item1) === 'array' && item1.length === 0) return;
-            that.eachCols(function (i3, item3) {
-                var field = item3.field || i3, content = item1[field];
+        if (!hasAvgRowData) {
+            var size = data.length;
+            layui.each(data, function (i1, item1) {
+                // 若数据项为空数组，则不往下执行（因为删除数据时，会将原有数据设置为 []）
+                if (layui.type(item1) === 'array' && item1.length === 0) return;
+                that.eachCols(function (i3, item3) {
+                    var field = item3.field || i3, content = item1[field];
 
-                if (item3.avgRow) {
-                    avgNums[field] = ((avgNums[field] || 0) + (parseFloat(content) || 0));
-                }
+                    if (item3.avgRow) {
+                        avgNums[field] = ((avgNums[field] || 0) + (parseFloat(content) || 0));
+                    }
+                });
             });
-        });
-        layui.each(avgNums, function (i1, item1) {
-            avgNums[i1] = item1 / size;
-        });
+            layui.each(avgNums, function (i1, item1) {
+                avgNums[i1] = item1 / size;
+            });
+        }
 
         that.dataAvg = []; // 记录合计行结果
 
@@ -1561,7 +1564,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
                 }) || text) : text;
 
                 // 如果直接传入了合计行数据，则不输出自动计算的结果
-                return AVG_NUMS || getContent;
+                return AVG_NUMS != null ? AVG_NUMS : getContent;
             }();
 
 
@@ -1572,7 +1575,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
                 // 如果 totalRow 参数为字符类型，则解析为自定义模版
                 if (typeof totalRow === 'string') {
                     return laytpl(totalRow).render($.extend({
-                        AVG_NUMS: AVG_NUMS || avgNums[field], AVG_ROW: avgRowData || {}, LAY_COL: item3
+                        AVG_NUMS: AVG_NUMS != null ? AVG_NUMS : avgNums[field], AVG_ROW: avgRowData || {}, LAY_COL: item3
                     }, item3));
                 }
 
@@ -1617,25 +1620,28 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
         var that = this;
         var options = that.config;
         var minNums = {};
+        var hasMinRowData = !!minRowData;
 
         if (!options.minRow) return;
-        layui.each(data, function (i1, item1) {
-            // 若数据项为空数组，则不往下执行（因为删除数据时，会将原有数据设置为 []）
-            if (layui.type(item1) === 'array' && item1.length === 0) return;
-            that.eachCols(function (i3, item3) {
-                var field = item3.field || i3, content = item1[field];
+        if (!hasMinRowData) {
+            layui.each(data, function (i1, item1) {
+                // 若数据项为空数组，则不往下执行（因为删除数据时，会将原有数据设置为 []）
+                if (layui.type(item1) === 'array' && item1.length === 0) return;
+                that.eachCols(function (i3, item3) {
+                    var field = item3.field || i3, content = item1[field];
 
-                if (item3.minRow) {
-                    var source = minNums[field];
-                    var nw = parseFloat(content);
-                    if (source == null) {
-                        minNums[field] = nw;
-                    } else {
-                        minNums[field] = source < nw ? source : nw;
+                    if (item3.minRow) {
+                        var source = minNums[field];
+                        var nw = parseFloat(content);
+                        if (source == null) {
+                            minNums[field] = nw;
+                        } else {
+                            minNums[field] = source < nw ? source : nw;
+                        }
                     }
-                }
+                });
             });
-        });
+        }
 
         that.dataMin = []; // 记录合计行结果
 
@@ -1660,12 +1666,12 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
                 tplData[field] = thisMinNum;
 
                 // 获取自动计算的合并内容
-                var getContent = item3.avgRow ? (parseTempData.call(that, {
+                var getContent = item3.minRow ? (parseTempData.call(that, {
                     item3: item3, content: thisMinNum, tplData: tplData
                 }) || text) : text;
 
                 // 如果直接传入了合计行数据，则不输出自动计算的结果
-                return MIN_NUMS || getContent;
+                return MIN_NUMS != null ? MIN_NUMS : getContent;
             }();
 
 
@@ -1676,7 +1682,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
                 // 如果 totalRow 参数为字符类型，则解析为自定义模版
                 if (typeof totalRow === 'string') {
                     return laytpl(totalRow).render($.extend({
-                        MIN_NUMS: MIN_NUMS || minNums[field], MIN_ROW: minRowData || {}, LAY_COL: item3
+                        MIN_NUMS: MIN_NUMS != null ? MIN_NUMS : minNums[field], MIN_ROW: minRowData || {}, LAY_COL: item3
                     }, item3));
                 }
 
@@ -1721,25 +1727,28 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
         var that = this;
         var options = that.config;
         var maxNums = {};
+        var hasMaxRowData = !!maxRowData;
 
         if (!options.maxRow) return;
-        layui.each(data, function (i1, item1) {
-            // 若数据项为空数组，则不往下执行（因为删除数据时，会将原有数据设置为 []）
-            if (layui.type(item1) === 'array' && item1.length === 0) return;
-            that.eachCols(function (i3, item3) {
-                var field = item3.field || i3, content = item1[field];
+        if (!hasMaxRowData) {
+            layui.each(data, function (i1, item1) {
+                // 若数据项为空数组，则不往下执行（因为删除数据时，会将原有数据设置为 []）
+                if (layui.type(item1) === 'array' && item1.length === 0) return;
+                that.eachCols(function (i3, item3) {
+                    var field = item3.field || i3, content = item1[field];
 
-                if (item3.maxRow) {
-                    var source = maxNums[field];
-                    var nw = parseFloat(content);
-                    if (source == null) {
-                        maxNums[field] = nw;
-                    } else {
-                        maxNums[field] = source > nw ? source : nw;
+                    if (item3.maxRow) {
+                        var source = maxNums[field];
+                        var nw = parseFloat(content);
+                        if (source == null) {
+                            maxNums[field] = nw;
+                        } else {
+                            maxNums[field] = source > nw ? source : nw;
+                        }
                     }
-                }
+                });
             });
-        });
+        }
 
         that.dataMax = []; // 记录合计行结果
 
@@ -1764,12 +1773,12 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
                 tplData[field] = thisMaxNum;
 
                 // 获取自动计算的合并内容
-                var getContent = item3.avgRow ? (parseTempData.call(that, {
+                var getContent = item3.maxRow ? (parseTempData.call(that, {
                     item3: item3, content: thisMaxNum, tplData: tplData
                 }) || text) : text;
 
                 // 如果直接传入了合计行数据，则不输出自动计算的结果
-                return MAX_NUMS || getContent;
+                return MAX_NUMS != null ? MAX_NUMS : getContent;
             }();
 
             // td 显示内容
@@ -1779,7 +1788,7 @@ layui.define(['lay', 'laytpl', 'laypage', 'form', 'util'], function (exports) {
                 // 如果 totalRow 参数为字符类型，则解析为自定义模版
                 if (typeof totalRow === 'string') {
                     return laytpl(totalRow).render($.extend({
-                        MAX_NUMS: MAX_NUMS || maxNums[field], MIN_ROW: maxRowData || {}, LAY_COL: item3
+                        MAX_NUMS: MAX_NUMS != null ? MAX_NUMS : maxNums[field], MIN_ROW: maxRowData || {}, LAY_COL: item3
                     }, item3));
                 }
 

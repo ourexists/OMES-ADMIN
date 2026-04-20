@@ -6,6 +6,7 @@ package com.ourexists.mesedge.report.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.IMyBatisPlusService;
+import com.ourexists.mesedge.report.model.WinCCDataTotalRowDto;
 import com.ourexists.mesedge.report.model.WinCCDatalist;
 import com.ourexists.mesedge.report.model.WinCCDatalistPageQuery;
 
@@ -17,5 +18,7 @@ import com.ourexists.mesedge.report.model.WinCCDatalistPageQuery;
 public interface WinCCDatalistService extends IMyBatisPlusService<WinCCDatalist> {
 
     Page<WinCCDatalist> selectByPage(WinCCDatalistPageQuery dto);
+
+    WinCCDataTotalRowDto selectTotalRow(WinCCDatalistPageQuery dto);
 
 }

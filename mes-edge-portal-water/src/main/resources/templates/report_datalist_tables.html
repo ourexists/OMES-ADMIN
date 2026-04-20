@@ -651,12 +651,16 @@
                 statusCode: 200, //规定成功的状态码味200
             },
             parseData: function (res) {
+                var totalRow = res.data && res.data.totalRow ? res.data.totalRow : {};
                 return {
                     "code": res.code,
                     "msg": res.msg,
                     "count": res.pagination.total,
                     "data": res.data.results,
-                    "totalRow": res.data.totalRow
+                    "totalRow": totalRow.total,
+                    "avgRow": totalRow.avg,
+                    "minRow": totalRow.min,
+                    "maxRow": totalRow.max
                 };
             },
             // limit: 10,

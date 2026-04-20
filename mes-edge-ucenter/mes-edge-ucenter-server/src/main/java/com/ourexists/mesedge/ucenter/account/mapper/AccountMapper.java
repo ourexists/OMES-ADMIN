@@ -27,8 +27,7 @@ public interface AccountMapper extends BaseMapper<Account> {
             "a.birth_day as birthDay, a.sex, a.mobile, a.email, a.init, a.platform ";
 
     @Select("<script>" +
-            "select count(1) from (" +
-            "select * from p_ucenter_acc a " +
+            "select count(distinct a.id) from p_ucenter_acc a " +
             "left join r_ucenter_tenant_acc b " +
             "on a.id = b.acc_id " +
             "<where>" +
@@ -69,7 +68,6 @@ public interface AccountMapper extends BaseMapper<Account> {
             "</foreach>" +
             "</if>" +
             "</where>" +
-            "group by a.id ) c" +
             "</script>")
     int pageCount(AccPageQuery pageQuery);
 
@@ -117,8 +115,8 @@ public interface AccountMapper extends BaseMapper<Account> {
             "</if>" +
             "</where>" +
             "group by a.id " +
-            "order by id desc " +
-            "limit #{limitPage}, #{pageSize} " +
+            "order by a.id desc " +
+            "limit #{pageSize} offset #{limitPage} " +
             "</script>")
     List<Account> page(AccPageQuery pageQuery);
 
