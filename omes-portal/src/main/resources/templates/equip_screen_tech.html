@@ -2286,8 +2286,10 @@
         const now = new Date();
         const end = new Date(now);
         const start = new Date(now);
-        end.setDate(now.getDate() - 1);
-        start.setDate(now.getDate() - 8);
+        // 近7日：包含今天在内，向前回溯 6 天
+        end.setHours(23, 59, 59, 999);
+        start.setDate(now.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
         postAsync(router.equip_state_snapshot_count, {
             startDate: formatDate(start),
             endDate: formatDate(end),
@@ -2297,7 +2299,10 @@
             workshopCode: selected_tree_node == null ? null : selected_tree_node.selfCode,
         }, function (result) {
             try {
-                const data = (result || []).map(item => [item.time, item.num]);
+                const rows = Array.isArray(result)
+                    ? result
+                    : (Array.isArray(result && result.list) ? result.list : (Array.isArray(result && result.data) ? result.data : []));
+                const data = rows.map(item => [item.time, item.num]);
                 trendChart.setOption({
                     xAxis: {min: start, max: end},
                     series: [{data: data}]
