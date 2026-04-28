@@ -1536,7 +1536,8 @@
                 if (e.status >= 401 && e.status < 500) {
                     layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
                         localStorage.removeItem(store.token_header);
-                        window.parent.location.href = '/view/login';
+                        const redirect = window.location.pathname + window.location.search;
+                        window.parent.location.href = '/view/login?redirect=' + encodeURIComponent(redirect);
                     });
                 } else {
                     layer.alert('请求异常，错误提示：' + msg);

@@ -47,8 +47,5 @@ public class GrantWebSecurityConfigurer {
         return new MSEAuthExceptionEntryPoint(new AntPathMatcher());
     }
 
-    @Bean
-    public PermissionStore permissionStore() {
-        return new InMemoryPermissionStore();
-    }
+
 }

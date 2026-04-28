@@ -1,0 +1,91 @@
+server:
+  port: 10011
+  servlet:
+    context-path: /
+spring:
+  thymeleaf:
+    cache: false
+  mvc:
+    static-path-pattern: static/**
+  application:
+    name: OMES-AI
+  config:
+    location: classpath:/,file:config/
+  profiles:
+    include: db-postgres
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: ALWAYS
+    time-zone: GMT+8
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:5s}
+      lettuce:
+        pool:
+          max-active: ${REDIS_POOL_MAX_ACTIVE:50}
+          max-idle: ${REDIS_POOL_MAX_IDLE:20}
+          min-idle: ${REDIS_POOL_MIN_IDLE:5}
+          max-wait: ${REDIS_POOL_MAX_WAIT:2s}
+era:
+  permission:
+    ignore:
+      auth_check:
+        - /expose/**
+        - /files/**
+        - /bridge/resolve
+      api_check:
+        - /expose/**
+        - /files/**
+        - /bridge/resolve
+  token:
+    store-type: redis
+
+ai:
+  llm:
+    default-provider: ${AI_DEFAULT_PROVIDER:openai}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      default-model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
+      embedding-model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      default-model: ${DEEPSEEK_CHAT_MODEL:deepseek-chat}
+    qwen:
+      api-key: ${QWEN_API_KEY:}
+      base-url: ${QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      default-model: ${QWEN_CHAT_MODEL:qwen-plus}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
+      base-url: ${ANTHROPIC_BASE_URL:}
+      default-model: ${ANTHROPIC_CHAT_MODEL:claude-3-5-sonnet}
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: ${GEMINI_BASE_URL:}
+      default-model: ${GEMINI_CHAT_MODEL:gemini-1.5-pro}
+agent:
+  vector-provider: ${AGENT_VECTOR_PROVIDER:qdrant}
+  qdrant:
+    host: ${QDRANT_HOST:localhost}
+    port: ${QDRANT_PORT:6334}
+    collection-name: ${QDRANT_COLLECTION:omes_inspection_kb}
+    api-key: ${QDRANT_API_KEY:}
+    use-tls: ${QDRANT_USE_TLS:false}
+  top-k: 5
+  tool-call-uri: ${AI_PORTAL_BASE_URL:http://127.0.0.1:10010}
+  agent-proxy-enabled: ${AI_AGENT_PORTAL_PROXY_ENABLED:true}
+  multi-agent:
+    runtime-config-path: ${AI_AGENT_CHAIN_CONFIG_PATH:config/ai-agent-chain.json}
+    max-history: 20
+    max-message-length: 2000
+  session:
+    short-term-ttl-minutes: ${AI_AGENT_SESSION_SHORT_TERM_TTL_MINUTES:120}

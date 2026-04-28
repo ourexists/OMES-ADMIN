@@ -222,6 +222,17 @@
         var form = layui.form;
         var layer = layui.layer;
         let redirect = layui.url().search.redirect;
+        if (redirect != null && redirect !== '') {
+            try {
+                redirect = decodeURIComponent(redirect);
+            } catch (e) {
+                redirect = null;
+            }
+            // 仅允许站内相对路径，避免开放重定向
+            if (redirect != null && !redirect.startsWith('/')) {
+                redirect = null;
+            }
+        }
         var $ = layui.$;
 
         $(".systemName").html(window.APP_CONFIG.systemName);

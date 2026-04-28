@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${db_host}/${db_schema}?reWriteBatchedInserts=true&sslmode=disable
+    username: ${db_username}
+    password: ${db_password}
+
+mybatis-plus:
+  configuration:
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath*:mappers/**.xml
+  type-aliases-package: com.ourexists.omes.portal.*.entity
+  global-config:
+    banner: false
