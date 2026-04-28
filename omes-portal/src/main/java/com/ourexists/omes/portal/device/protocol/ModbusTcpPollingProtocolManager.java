@@ -10,13 +10,22 @@ import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
 import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.plc4x.java.api.PlcConnection;
+import org.apache.plc4x.java.api.messages.PlcReadRequest;
+import org.apache.plc4x.java.api.messages.PlcReadResponse;
+import org.apache.plc4x.java.api.types.PlcResponseCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Modbus TCP 定时轮询协议管理器（基于 Apache PLC4X plc4j）。
@@ -42,6 +51,13 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
     private static final int DEFAULT_PORT = 502;
     private static final int READ_TIMEOUT_MS = 10_000;
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
+    private static final int MAX_REGISTER_SPAN = 125;
+    private static final int MAX_BIT_SPAN = 2000;
+    private static final int FALLBACK_BATCH_SIZE = 100;
+    private static final Pattern SIMPLE_ADDR = Pattern.compile(
+            "^(holding-register|input-register|coil|discrete-input):(\\d+)$",
+            Pattern.CASE_INSENSITIVE
+    );
 
     public ModbusTcpPollingProtocolManager(EquipFeign equipFeign,
                                            WorkshopFeign workshopFeign,
@@ -114,6 +130,143 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
         } catch (NumberFormatException ignored) {
         }
         return s;
+    }
+
+    /**
+     * Modbus 读取按区域与跨度分块，避免单请求数据量过大触发 PDU/设备限制。
+     */
+    @Override
+    protected String readOnce(PlcConnection connection, ConnectSpec spec) throws Exception {
+        Map<String, Object> result = new LinkedHashMap<>();
+        Map<String, List<SimpleTag>> grouped = new LinkedHashMap<>();
+        List<FallbackTag> fallback = new ArrayList<>();
+
+        for (Map.Entry<String, String> e : spec.tagNames.entrySet()) {
+            String converted = convertAddress(e.getValue());
+            SimpleTag parsed = parseSimpleTag(e.getKey(), converted);
+            if (parsed != null) {
+                grouped.computeIfAbsent(parsed.area, k -> new ArrayList<>()).add(parsed);
+            } else {
+                fallback.add(new FallbackTag(e.getKey(), converted));
+            }
+        }
+
+        int chunkNo = 0;
+        for (Map.Entry<String, List<SimpleTag>> group : grouped.entrySet()) {
+            String area = group.getKey();
+            List<SimpleTag> tags = group.getValue();
+            tags.sort(Comparator.comparingInt(t -> t.address));
+            int maxSpan = maxSpanForArea(area);
+
+            int i = 0;
+            while (i < tags.size()) {
+                int start = tags.get(i).address;
+                int end = start;
+                List<SimpleTag> chunkTags = new ArrayList<>();
+                chunkTags.add(tags.get(i));
+                i++;
+                while (i < tags.size()) {
+                    SimpleTag next = tags.get(i);
+                    int newEnd = Math.max(end, next.address);
+                    if (newEnd - start + 1 <= maxSpan) {
+                        chunkTags.add(next);
+                        end = newEnd;
+                        i++;
+                    } else {
+                        break;
+                    }
+                }
+
+                chunkNo++;
+                readChunk(connection, area, start, end, chunkTags, chunkNo, result);
+            }
+        }
+
+        for (int i = 0; i < fallback.size(); i += FALLBACK_BATCH_SIZE) {
+            int end = Math.min(i + FALLBACK_BATCH_SIZE, fallback.size());
+            readFallbackBatch(connection, fallback.subList(i, end), result);
+        }
+
+        return result.isEmpty() ? null : JSONObject.toJSONString(result);
+    }
+
+    private void readChunk(PlcConnection connection,
+                           String area,
+                           int start,
+                           int end,
+                           List<SimpleTag> chunkTags,
+                           int chunkNo,
+                           Map<String, Object> result) throws Exception {
+        int quantity = end - start + 1;
+        String alias = "__chunk_" + chunkNo;
+        String query = area + ":" + start + "[" + quantity + "]";
+        PlcReadRequest.Builder builder = connection.readRequestBuilder();
+        builder.addTagAddress(alias, query);
+        PlcReadResponse response = builder.build().execute().get(READ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        if (!PlcResponseCode.OK.equals(response.getResponseCode(alias))) {
+            return;
+        }
+        Object block = response.getObject(alias);
+        for (SimpleTag tag : chunkTags) {
+            int index = tag.address - start;
+            Object value = getElement(block, index);
+            if (value != null) {
+                result.put(tag.tagName, value);
+            }
+        }
+    }
+
+    private void readFallbackBatch(PlcConnection connection, List<FallbackTag> batch, Map<String, Object> result) throws Exception {
+        PlcReadRequest.Builder builder = connection.readRequestBuilder();
+        for (FallbackTag tag : batch) {
+            builder.addTagAddress(tag.tagName, tag.address);
+        }
+        PlcReadResponse response = builder.build().execute().get(READ_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        for (FallbackTag tag : batch) {
+            if (PlcResponseCode.OK.equals(response.getResponseCode(tag.tagName))) {
+                result.put(tag.tagName, response.getObject(tag.tagName));
+            }
+        }
+    }
+
+    private static SimpleTag parseSimpleTag(String tagName, String convertedAddress) {
+        if (!StringUtils.hasText(convertedAddress)) {
+            return null;
+        }
+        Matcher m = SIMPLE_ADDR.matcher(convertedAddress.trim());
+        if (!m.matches()) {
+            return null;
+        }
+        String area = m.group(1).toLowerCase();
+        int address = Integer.parseInt(m.group(2));
+        return new SimpleTag(tagName, area, address);
+    }
+
+    private static int maxSpanForArea(String area) {
+        if ("coil".equals(area) || "discrete-input".equals(area)) {
+            return MAX_BIT_SPAN;
+        }
+        return MAX_REGISTER_SPAN;
+    }
+
+    private static Object getElement(Object source, int index) {
+        if (source == null || index < 0) {
+            return null;
+        }
+        if (source instanceof List<?> list) {
+            return index < list.size() ? list.get(index) : null;
+        }
+        Class<?> cls = source.getClass();
+        if (cls.isArray()) {
+            return index < Array.getLength(source) ? Array.get(source, index) : null;
+        }
+        return index == 0 ? source : null;
+    }
+
+    private record SimpleTag(String tagName, String area, int address) {
+    }
+
+    private record FallbackTag(String tagName, String address) {
     }
 
     /**

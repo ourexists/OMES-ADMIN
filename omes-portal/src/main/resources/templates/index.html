@@ -381,7 +381,8 @@
         let token = localStorage.getItem(store.token_header);
         let userInfo = localStorage.getItem(store.user_info);
         if (token == null || userInfo == null) {
-            window.location.href = '/view/login';
+            const redirect = window.location.pathname + window.location.search;
+            window.location.href = '/view/login?redirect=' + encodeURIComponent(redirect);
             return
         }
         let u = JSON.parse(userInfo);

@@ -317,6 +317,11 @@ function initRequestUrl(url) {
     return url + "?lang=" + localStorage.getItem(store.language);
 }
 
+function goLoginWithRedirect() {
+    var redirect = window.location.pathname + window.location.search;
+    window.parent.location.href = '/view/login?redirect=' + encodeURIComponent(redirect);
+}
+
 function auth(url, param, successFunc, failFuc) {
     let req_url = initRequestUrl(url);
     const basicAuth = btoa(client.id + ":" + client.sc);
@@ -355,7 +360,7 @@ function handleResponseData(data, successFunc, failFuc) {
     } else if (data.code >= 401 && data.code < 500 && data.code !== 404 && data.code !== 406) {
         layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
             localStorage.removeItem(store.token_header);
-            window.parent.location.href = '/view/login';
+            goLoginWithRedirect();
         })
     } else {
         if (failFuc != null) {
@@ -388,7 +393,7 @@ function post(url, param, successFunc, failFuc, urlParam) {
             if (e.status >= 401 && e.status < 500) {
                 layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
                     localStorage.removeItem(store.token_header);
-                    window.parent.location.href = '/view/login';
+                    goLoginWithRedirect();
                 })
             } else {
                 layer.alert('请求异常，错误提示：' + msg);
@@ -410,7 +415,7 @@ function get(url, param, successFunc, failFuc) {
             if (e.status >= 401 && e.status < 500) {
                 layer.confirm(i18np.prop('common.msg.lock_token'), null, function () {
                     localStorage.removeItem(store.token_header);
-                    window.parent.location.href = '/view/login';
+                    goLoginWithRedirect();
                 })
             } else {
                 layer.alert('请求异常，错误提示：' + msg);
@@ -546,26 +551,75 @@ let tabFunction = {
 };
 window.tabFunction = tabFunction;
 
-function openTab(url, id, name, filter, element) {
-    //判断右侧是否有tab
-    if (element.length <= 0) {
-        tabFunction.tabAdd(url, id, name, filter);
-    } else {
-        //判断tab是否已经存在
-        let isExist = false;
-        $.each(element, function () {
-            //筛选id是否存在
-            if ($(this).attr('lay-id') === id) {
-                isExist = true;
+function appendQuery(url, key, value) {
+    if (!value) return url;
+    const joiner = url.indexOf('?') >= 0 ? '&' : '?';
+    return url + joiner + encodeURIComponent(key) + '=' + encodeURIComponent(value);
+}
+
+function issueAiBridgeTicket() {
+    return new Promise(function (resolve, reject) {
+        $.ajax({
+            url: '/open/ai/bridge/issue?lang=' + encodeURIComponent(localStorage.getItem(store.language) || 'zh'),
+            type: 'GET',
+            headers: getCommonHeader(),
+            dataType: 'json',
+            success: function (res) {
+                if (res && res.code === 200 && res.data && res.data.ticket) {
+                    resolve(res.data.ticket);
+                } else {
+                    reject(new Error((res && res.msg) || 'issue ticket failed'));
+                }
+            },
+            error: function (xhr, msg) {
+                reject(new Error(msg || ('issue ticket error: ' + (xhr && xhr.status))));
             }
         });
-        //不存在，增加tab
-        if (isExist === false) {
-            tabFunction.tabAdd(url, id, name, filter);
-        }
+    });
+}
+
+async function buildAiBridgeUrl(url) {
+    if (!url) return url;
+    const text = String(url);
+    // Only decorate external AI web links to avoid leaking auth info.
+    const isExternal = /^https?:\/\//i.test(text);
+    const isAiWebTarget = text.indexOf('omes-ai-web') >= 0 || text.indexOf(':3000') >= 0 || text.indexOf('/ai-web') >= 0;
+    if (!isExternal || !isAiWebTarget || text.indexOf('bridge_ticket=') >= 0) {
+        return text;
     }
-    //转到要打开的tab
-    tabFunction.tabChange(id, filter);
+    const ticket = await issueAiBridgeTicket();
+    return appendQuery(text, 'bridge_ticket', ticket);
+}
+
+function openTab(url, id, name, filter, element) {
+    const open = function (targetUrl) {
+        //判断右侧是否有tab
+        if (element.length <= 0) {
+            tabFunction.tabAdd(targetUrl, id, name, filter);
+        } else {
+            //判断tab是否已经存在
+            let isExist = false;
+            $.each(element, function () {
+                //筛选id是否存在
+                if ($(this).attr('lay-id') === id) {
+                    isExist = true;
+                }
+            });
+            //不存在，增加tab
+            if (isExist === false) {
+                tabFunction.tabAdd(targetUrl, id, name, filter);
+            }
+        }
+        //转到要打开的tab
+        tabFunction.tabChange(id, filter);
+    };
+    Promise.resolve(buildAiBridgeUrl(url))
+        .then(function (targetUrl) {
+            open(targetUrl || url);
+        })
+        .catch(function () {
+            open(url);
+        });
 }
 
 function input_limit_float(value) {

@@ -345,6 +345,25 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
     private static final int MAX_READ_RETRIES = 3;
     private static final long RETRY_DELAY_MS = 1_000L;
 
+    /**
+     * 执行一次读取。子类可重写以实现协议特定的批量/分块策略。
+     */
+    protected String readOnce(PlcConnection connection, ConnectSpec spec) throws Exception {
+        PlcReadRequest.Builder builder = connection.readRequestBuilder();
+        for (Map.Entry<String, String> e : spec.tagNames.entrySet()) {
+            builder.addTagAddress(e.getKey(), convertAddress(e.getValue()));
+        }
+        PlcReadResponse response = builder.build().execute().get(readTimeoutMs, TimeUnit.MILLISECONDS);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (String tagName : spec.tagNames.keySet()) {
+            if (PlcResponseCode.OK.equals(response.getResponseCode(tagName))) {
+                result.put(tagName, response.getObject(tagName));
+            }
+        }
+        return result.isEmpty() ? null : JSONObject.toJSONString(result);
+    }
+
     private String doRead(String connectId, ConnectSpec spec) throws Exception {
         Exception lastException = null;
         for (int attempt = 1; attempt <= MAX_READ_RETRIES; attempt++) {
@@ -356,20 +375,7 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
                     log.warn("{} connection does not support read: {}", protocol(), spec.connectionUrl);
                     return null;
                 }
-
-                PlcReadRequest.Builder builder = connection.readRequestBuilder();
-                for (Map.Entry<String, String> e : spec.tagNames.entrySet()) {
-                    builder.addTagAddress(e.getKey(), convertAddress(e.getValue()));
-                }
-                PlcReadResponse response = builder.build().execute().get(readTimeoutMs, TimeUnit.MILLISECONDS);
-
-                Map<String, Object> result = new LinkedHashMap<>();
-                for (String tagName : spec.tagNames.keySet()) {
-                    if (PlcResponseCode.OK.equals(response.getResponseCode(tagName))) {
-                        result.put(tagName, response.getObject(tagName));
-                    }
-                }
-                return result.isEmpty() ? null : JSONObject.toJSONString(result);
+                return readOnce(connection, spec);
             } catch (Exception e) {
                 lastException = e;
                 log.warn("{} read attempt {}/{} failed (connectId={}, uri={}): {}",
