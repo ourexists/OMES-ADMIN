@@ -53,6 +53,8 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
     private static final int DEFAULT_POOL_SIZE = 4;
     /** 写入后延迟读的等待时间（ms），给 PLC 扫描周期预留时间 */
     private static final long WRITE_READ_DELAY_MS = 500L;
+    /** 单次读取的默认分片大小，避免一次请求过大导致超时 */
+    private static final int DEFAULT_READ_CHUNK_SIZE = 100;
 
     private final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
     private final Map<String, ScheduledFuture<?>> taskMap = new ConcurrentHashMap<>();
@@ -349,19 +351,33 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
      * 执行一次读取。子类可重写以实现协议特定的批量/分块策略。
      */
     protected String readOnce(PlcConnection connection, ConnectSpec spec) throws Exception {
-        PlcReadRequest.Builder builder = connection.readRequestBuilder();
-        for (Map.Entry<String, String> e : spec.tagNames.entrySet()) {
-            builder.addTagAddress(e.getKey(), convertAddress(e.getValue()));
-        }
-        PlcReadResponse response = builder.build().execute().get(readTimeoutMs, TimeUnit.MILLISECONDS);
-
         Map<String, Object> result = new LinkedHashMap<>();
-        for (String tagName : spec.tagNames.keySet()) {
-            if (PlcResponseCode.OK.equals(response.getResponseCode(tagName))) {
-                result.put(tagName, response.getObject(tagName));
+        List<Map.Entry<String, String>> entries = new ArrayList<>(spec.tagNames.entrySet());
+        int chunkSize = getReadChunkSize();
+
+        for (int from = 0; from < entries.size(); from += chunkSize) {
+            int to = Math.min(from + chunkSize, entries.size());
+            PlcReadRequest.Builder builder = connection.readRequestBuilder();
+            List<Map.Entry<String, String>> chunk = entries.subList(from, to);
+            for (Map.Entry<String, String> e : chunk) {
+                builder.addTagAddress(e.getKey(), convertAddress(e.getValue()));
+            }
+            PlcReadResponse response = builder.build().execute().get(readTimeoutMs, TimeUnit.MILLISECONDS);
+            for (Map.Entry<String, String> e : chunk) {
+                String tagName = e.getKey();
+                if (PlcResponseCode.OK.equals(response.getResponseCode(tagName))) {
+                    result.put(tagName, response.getObject(tagName));
+                }
             }
         }
         return result.isEmpty() ? null : JSONObject.toJSONString(result);
+    }
+
+    /**
+     * 子类可重写该值按协议或现场能力调优。
+     */
+    protected int getReadChunkSize() {
+        return DEFAULT_READ_CHUNK_SIZE;
     }
 
     private String doRead(String connectId, ConnectSpec spec) throws Exception {
