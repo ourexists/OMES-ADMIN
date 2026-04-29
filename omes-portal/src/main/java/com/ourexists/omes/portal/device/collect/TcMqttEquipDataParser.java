@@ -58,11 +58,7 @@ public class TcMqttEquipDataParser implements EquipDataParser {
                 }
             }
         }
-        if (!CollectionUtils.isEmpty(targets)) {
-            equipRealtimeManager.realtimeHandle(targets);
-        }
         return targets;
-
     }
 
     public EquipRealtime doParse(EquipRealtime equipRealtime, JSONObject parsedObj) {

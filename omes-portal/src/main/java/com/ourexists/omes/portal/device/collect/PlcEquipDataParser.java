@@ -38,9 +38,6 @@ public class PlcEquipDataParser implements EquipDataParser {
             }
             targets.add(doParse(equipRealtime, jo));
         }
-        if (!CollectionUtils.isEmpty(targets)) {
-            equipRealtimeManager.realtimeHandle(targets);
-        }
         return targets;
     }
 
