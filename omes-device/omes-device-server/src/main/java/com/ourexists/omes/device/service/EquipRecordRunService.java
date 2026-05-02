@@ -27,6 +27,8 @@ public interface EquipRecordRunService extends IMyBatisPlusService<EquipRecordRu
 
     void add(EquipRecordRunDto dto);
 
+    void addBatch(List<EquipRecordRunDto> dtos);
+
     List<EquipRecordRunVo> countMerging(EquipRecordCountQuery query);
 
     /** 某设备累计运行分钟数(全历史, state=1) */

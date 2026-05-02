@@ -709,6 +709,7 @@
     let realtime_collect_inited = false;
     let state_report_tables_inited = false;
     let table;
+    let equipConfigAttrs = [];
 
     layui.use(function () {
         let form = layui.form;
@@ -882,6 +883,7 @@
         if (!equipId) return;
         get(router.equip_config, {equipId: equipId}, function (d) {
             var cfgAttrs = (d && d.config && d.config.attrs) ? d.config.attrs : [];
+            equipConfigAttrs = cfgAttrs || [];
             if (cfgAttrs.length > 0) {
                 if (equipData && equipData.attrs) {
                     var attrValMap = {};
@@ -926,6 +928,7 @@
             }
         });
     }
+
 
     function renderControls(controls) {
         var html = '';

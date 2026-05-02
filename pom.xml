@@ -39,6 +39,7 @@
         <module>omes-task</module>
         <module>omes-ucenter</module>
         <module>omes-message</module>
+        <module>omes-stream</module>
     </modules>
 
     <parent>

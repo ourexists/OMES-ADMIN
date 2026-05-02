@@ -17,7 +17,7 @@ public interface EquipCollectMapper extends BaseMapper<EquipCollect> {
             "(" +
             "#{item.id}, " +
             "#{item.sn}, " +
-            "CAST(#{item.data, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler, jdbcType=OTHER} AS jsonb), " +
+            "#{item.data, typeHandler=com.ourexists.omes.device.typehandler.PgJsonbMapStringTypeHandler, jdbcType=OTHER}, " +
             "#{item.time}, " +
             "#{item.tenantId}, " +
             "#{item.createdBy}, " +

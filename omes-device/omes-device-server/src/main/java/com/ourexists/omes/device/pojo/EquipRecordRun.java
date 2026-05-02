@@ -33,6 +33,9 @@ public class EquipRecordRun extends EraEntity {
 
     private BigDecimal powerEnd;
 
+    /** 区间业务事件 ID（与流侧 prevEventId 对应） */
+    private String eventId;
+
     public static <T extends EquipRecordRunDto> T covert(EquipRecordRun source, Class<T> clazz) {
         if (source == null) {
             return null;

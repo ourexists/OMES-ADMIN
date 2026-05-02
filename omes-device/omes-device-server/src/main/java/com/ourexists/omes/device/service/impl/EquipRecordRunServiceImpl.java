@@ -15,6 +15,7 @@ import com.ourexists.omes.device.model.EquipRecordCountQuery;
 import com.ourexists.omes.device.model.EquipRecordRunDto;
 import com.ourexists.omes.device.model.EquipRecordRunPageQuery;
 import com.ourexists.omes.device.model.EquipRecordRunVo;
+import com.ourexists.omes.device.pojo.EquipRecordEventEndPatch;
 import com.ourexists.omes.device.pojo.EquipRecordRun;
 import com.ourexists.omes.device.service.EquipRecordRunService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Service
@@ -59,6 +61,20 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
     public void add(EquipRecordRunDto dto) {
         dto.setId(null);
         EquipRecordRun current = EquipRecordRun.wrap(dto);
+        if (StringUtils.hasText(dto.getPrevEventId())) {
+            EquipRecordRun toClose = this.getOne(new LambdaQueryWrapper<EquipRecordRun>()
+                    .eq(EquipRecordRun::getEventId, dto.getPrevEventId())
+                    .eq(EquipRecordRun::getSn, dto.getSn())
+                    .last("limit 1"));
+            if (toClose != null) {
+                if (!toClose.getState().equals(current.getState())) {
+                    toClose.setEndTime(current.getStartTime());
+                    this.updateById(toClose);
+                    this.save(current);
+                }
+                return;
+            }
+        }
         EquipRecordRun last = this.getOne(new LambdaQueryWrapper<EquipRecordRun>()
                 .eq(EquipRecordRun::getSn, dto.getSn())
                 .orderByDesc(EquipRecordRun::getStartTime, EquipRecordRun::getId)
@@ -74,6 +90,26 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
         } else {
             this.save(current);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addBatch(List<EquipRecordRunDto> ordered) {
+        if (CollectionUtil.isBlank(ordered)) {
+            return;
+        }
+        LinkedHashMap<String, EquipRecordEventEndPatch> closePatchBySnEvent = new LinkedHashMap<>();
+        for (EquipRecordRunDto dto : ordered) {
+            dto.setId(null);
+            if (StringUtils.hasText(dto.getPrevEventId()) && StringUtils.hasText(dto.getSn())) {
+                String key = dto.getSn() + "\0" + dto.getPrevEventId();
+                closePatchBySnEvent.put(key, new EquipRecordEventEndPatch(dto.getSn(), dto.getPrevEventId(), dto.getStartTime()));
+            }
+        }
+        if (!closePatchBySnEvent.isEmpty()) {
+            baseMapper.batchUpdateEndTimeByEventId(new ArrayList<>(closePatchBySnEvent.values()));
+        }
+        this.saveBatch(EquipRecordRun.wrap(ordered));
     }
 
     @Override

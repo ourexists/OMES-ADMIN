@@ -58,9 +58,7 @@ public class EquipRecordOnlineViewer implements EquipRecordOnlineFeign {
 //    @Operation(summary = "批量新增记录", description = "批量新增记录")
 //    @PostMapping("addBatch")
     public JsonResponseEntity<Boolean> addBatch(@Validated @RequestBody List<EquipRecordOnlineDto> dtos) {
-        for (EquipRecordOnlineDto dto : dtos) {
-            service.add(dto);
-        }
+        service.addBatch(dtos);
         return JsonResponseEntity.success(true);
     }
 

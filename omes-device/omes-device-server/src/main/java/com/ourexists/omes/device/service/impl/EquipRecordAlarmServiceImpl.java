@@ -16,6 +16,7 @@ import com.ourexists.omes.device.model.EquipRecordAlarmPageQuery;
 import com.ourexists.omes.device.model.EquipRecordAlarmVo;
 import com.ourexists.omes.device.model.EquipRecordCountQuery;
 import com.ourexists.omes.device.pojo.EquipRecordAlarm;
+import com.ourexists.omes.device.pojo.EquipRecordEventEndPatch;
 import com.ourexists.omes.device.service.EquipRecordAlarmService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,27 +25,20 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Service
-public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<EquipRecordAlarmMapper, EquipRecordAlarm>
-        implements EquipRecordAlarmService {
+public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<EquipRecordAlarmMapper, EquipRecordAlarm> implements EquipRecordAlarmService {
 
     @Autowired
     private EquipRealtimeManager realtimeManager;
 
     @Override
     public Page<EquipRecordAlarm> selectByPage(EquipRecordAlarmPageQuery dto) {
-        LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
-                .eq(StringUtils.hasText(dto.getSn()), EquipRecordAlarm::getSn, dto.getSn())
-                .eq(dto.getState() != null, EquipRecordAlarm::getState, dto.getState())
-                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
-                    wrapper
-                            .between(EquipRecordAlarm::getStartTime, dto.getStartDate(), dto.getEndDate())
-                            .or()
-                            .between(EquipRecordAlarm::getEndTime, dto.getStartDate(), dto.getEndDate());
-                })
-                .orderByDesc(EquipRecordAlarm::getId);
+        LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>().eq(StringUtils.hasText(dto.getSn()), EquipRecordAlarm::getSn, dto.getSn()).eq(dto.getState() != null, EquipRecordAlarm::getState, dto.getState()).and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
+            wrapper.between(EquipRecordAlarm::getStartTime, dto.getStartDate(), dto.getEndDate()).or().between(EquipRecordAlarm::getEndTime, dto.getStartDate(), dto.getEndDate());
+        }).orderByDesc(EquipRecordAlarm::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
 
@@ -59,11 +53,18 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
     public void add(EquipRecordAlarmDto dto) {
         dto.setId(null);
         EquipRecordAlarm current = EquipRecordAlarm.wrap(dto);
-        EquipRecordAlarm last = this.getOne(new LambdaQueryWrapper<EquipRecordAlarm>()
-                .eq(EquipRecordAlarm::getSn, dto.getSn())
-                .orderByDesc(EquipRecordAlarm::getStartTime, EquipRecordAlarm::getId)
-                .last("limit 1")
-        );
+        if (StringUtils.hasText(dto.getPrevEventId())) {
+            EquipRecordAlarm toClose = this.getOne(new LambdaQueryWrapper<EquipRecordAlarm>().eq(EquipRecordAlarm::getEventId, dto.getPrevEventId()).eq(EquipRecordAlarm::getSn, dto.getSn()).last("limit 1"));
+            if (toClose != null) {
+                if (!toClose.getState().equals(current.getState())) {
+                    toClose.setEndTime(current.getStartTime());
+                    this.updateById(toClose);
+                    this.save(current);
+                }
+                return;
+            }
+        }
+        EquipRecordAlarm last = this.getOne(new LambdaQueryWrapper<EquipRecordAlarm>().eq(EquipRecordAlarm::getSn, dto.getSn()).orderByDesc(EquipRecordAlarm::getStartTime, EquipRecordAlarm::getId).last("limit 1"));
         if (last != null) {
             //处理中间服务中断
             if (!last.getState().equals(current.getState())) {
@@ -77,6 +78,26 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addBatch(List<EquipRecordAlarmDto> ordered) {
+        if (CollectionUtil.isBlank(ordered)) {
+            return;
+        }
+        LinkedHashMap<String, EquipRecordEventEndPatch> closePatchBySnEvent = new LinkedHashMap<>();
+        for (EquipRecordAlarmDto dto : ordered) {
+            dto.setId(null);
+            if (StringUtils.hasText(dto.getPrevEventId()) && StringUtils.hasText(dto.getSn())) {
+                String key = dto.getSn() + "\0" + dto.getPrevEventId();
+                closePatchBySnEvent.put(key, new EquipRecordEventEndPatch(dto.getSn(), dto.getPrevEventId(), dto.getStartTime()));
+            }
+        }
+        if (!closePatchBySnEvent.isEmpty()) {
+            baseMapper.batchUpdateEndTimeByEventId(new ArrayList<>(closePatchBySnEvent.values()));
+        }
+        this.saveBatch(EquipRecordAlarm.wrap(ordered));
+    }
+
+    @Override
     public List<EquipRecordAlarmVo> countMerging(EquipRecordCountQuery query) {
         List<EquipRecordAlarmVo> r = new ArrayList<>();
         EquipRealtime equipRealtime = realtimeManager.get(query.getSn());
@@ -85,8 +106,7 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
         if (query.getEndDate().after(now)) {
             query.setEndDate(now);
         }
-        if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null
-                && !equipRealtime.getAlarmChangeTime().after(query.getStartDate())) {
+        if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null && !equipRealtime.getAlarmChangeTime().after(query.getStartDate())) {
             EquipRecordAlarmVo e = new EquipRecordAlarmVo();
             e.setSn(query.getSn());
             e.setStartTime(query.getStartDate());
@@ -96,8 +116,7 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
             r.add(e);
         } else {
             Date queryEndDate;
-            if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null &&
-                    equipRealtime.getAlarmChangeTime().before(query.getEndDate())) {
+            if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null && equipRealtime.getAlarmChangeTime().before(query.getEndDate())) {
                 EquipRecordAlarmVo e = new EquipRecordAlarmVo();
                 e.setSn(query.getSn());
                 e.setStartTime(equipRealtime.getAlarmChangeTime());
@@ -109,15 +128,9 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
             } else {
                 queryEndDate = query.getEndDate();
             }
-            LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
-                    .eq(EquipRecordAlarm::getSn, query.getSn())
-                    .and(wrapper -> {
-                        wrapper
-                                .between(EquipRecordAlarm::getStartTime, query.getStartDate(), queryEndDate)
-                                .or()
-                                .between(EquipRecordAlarm::getEndTime, query.getStartDate(), queryEndDate);
-                    })
-                    .orderByDesc(EquipRecordAlarm::getId);
+            LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>().eq(EquipRecordAlarm::getSn, query.getSn()).and(wrapper -> {
+                wrapper.between(EquipRecordAlarm::getStartTime, query.getStartDate(), queryEndDate).or().between(EquipRecordAlarm::getEndTime, query.getStartDate(), queryEndDate);
+            }).orderByDesc(EquipRecordAlarm::getId);
             List<EquipRecordAlarmVo> vos = EquipRecordAlarm.covert(this.list(qw), EquipRecordAlarmVo.class);
             if (CollectionUtil.isNotBlank(vos)) {
                 for (EquipRecordAlarmVo vo : vos) {

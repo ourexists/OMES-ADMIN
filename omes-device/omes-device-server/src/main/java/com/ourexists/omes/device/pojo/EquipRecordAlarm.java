@@ -33,6 +33,9 @@ public class EquipRecordAlarm extends EraEntity {
     /** 报警等级: 0=轻微, 1=一般, 2=严重, 3=故障 */
     private Integer level;
 
+    /** 区间业务事件 ID（与流侧 prevEventId 对应） */
+    private String eventId;
+
     public static <T extends EquipRecordAlarmDto> T covert(EquipRecordAlarm source, Class<T> clazz) {
         if (source == null) {
             return null;

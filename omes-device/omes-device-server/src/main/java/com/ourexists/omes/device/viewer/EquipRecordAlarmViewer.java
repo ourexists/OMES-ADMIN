@@ -50,9 +50,7 @@ public class EquipRecordAlarmViewer implements EquipRecordAlarmFeign {
     @Operation(summary = "批量新增记录", description = "批量新增记录")
     @PostMapping("addBatch")
     public JsonResponseEntity<Boolean> addBatch(@Validated @RequestBody List<EquipRecordAlarmDto> dtos) {
-        for (EquipRecordAlarmDto dto : dtos) {
-            service.add(dto);
-        }
+        service.addBatch(dtos);
         return JsonResponseEntity.success(true);
     }
 

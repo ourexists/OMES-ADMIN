@@ -28,5 +28,7 @@ public interface EquipRecordOnlineService extends IMyBatisPlusService<EquipRecor
 
     void add(EquipRecordOnlineDto dto);
 
+    void addBatch(List<EquipRecordOnlineDto> dtos);
+
     List<EquipRecordOnlineVo> countMerging(EquipRealtime equipRealtime, EquipRecordCountQuery query);
 }

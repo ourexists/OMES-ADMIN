@@ -3,18 +3,11 @@ package com.ourexists.omes.portal.device.cache;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.core.equip.cache.*;
 import com.ourexists.omes.device.feign.EquipFeign;
-import com.ourexists.omes.device.feign.EquipRecordAlarmFeign;
-import com.ourexists.omes.device.feign.EquipRecordOnlineFeign;
-import com.ourexists.omes.device.feign.EquipRecordRunFeign;
-import com.ourexists.omes.device.model.*;
-import com.ourexists.omes.message.enums.MessageSourceEnum;
-import com.ourexists.omes.message.enums.MessageTypeEnum;
-import com.ourexists.omes.message.feign.NotifyFeign;
-import com.ourexists.omes.message.model.NotifyDto;
+import com.ourexists.omes.device.model.EquipDto;
+import com.ourexists.omes.device.model.EquipPageQuery;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -40,18 +33,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
 
     @Autowired
     private EquipFeign equipFeign;
-
-    @Autowired
-    private NotifyFeign notifyFeign;
-
-    @Autowired
-    private EquipRecordRunFeign equipRecordRunFeign;
-
-    @Autowired
-    private EquipRecordOnlineFeign equipRecordOnlineFeign;
-
-    @Autowired
-    private EquipRecordAlarmFeign equipRecordAlarmFeign;
 
     @Autowired
     private RedisCacheValueConverter cacheValueConverter;
@@ -99,28 +80,11 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         reload();
     }
 
-    @Override
-    public void realtimeHandle(List<EquipRealtime> targets) {
-        Cache cache = tenantCache();
-        List<EquipRealtime> sources = new ArrayList<>();
-        for (EquipRealtime target : targets) {
-            Cache.ValueWrapper valueWrapper = cache.get(target.getSelfCode());
-            EquipRealtime equipRealtime = valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), EquipRealtime.class);
-            if (equipRealtime != null) {
-                sources.add(equipRealtime);
-            }
-        }
-        changeListener(sources, targets);
-        for (EquipRealtime target : targets) {
-            cache.put(target.getSelfCode(), target);
-        }
-    }
 
     @Override
     public void addOrUpdate(EquipRealtime equipRealtime) {
         tenantCache().put(equipRealtime.getSelfCode(), equipRealtime);
     }
-
 
     @Override
     public void remove(String sn) {
@@ -131,10 +95,7 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     public void removeBatch(List<String> ids) {
         Cache cache = tenantCache();
         Map<String, EquipRealtime> all = getAll(UserContext.getTenant().getTenantId());
-        List<String> sns = all.values().stream()
-                .filter(e -> ids.contains(e.getId()))
-                .map(EquipRealtime::getSelfCode)
-                .collect(Collectors.toList());
+        List<String> sns = all.values().stream().filter(e -> ids.contains(e.getId())).map(EquipRealtime::getSelfCode).collect(Collectors.toList());
         sns.forEach(cache::evict);
     }
 
@@ -230,68 +191,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             }
         } catch (EraCommonException e) {
             log.error(e.getMessage(), e);
-        }
-    }
-
-    public void changeListener(Collection<EquipRealtime> sources, Collection<EquipRealtime> targets) {
-        List<EquipRecordAlarmDto> r = new ArrayList<>();
-        List<EquipRecordRunDto> r1 = new ArrayList<>();
-        List<EquipRecordOnlineDto> r2 = new ArrayList<>();
-        for (EquipRealtime source : sources) {
-            for (EquipRealtime target : targets) {
-                if (source.getId().equals(target.getId())) {
-                    if (!source.getAlarmState().equals(target.getAlarmState())) {
-                        EquipRecordAlarmDto dto = new EquipRecordAlarmDto()
-                                .setSn(source.getSelfCode())
-                                .setState(target.getAlarmState())
-                                .setStartTime(new Date())
-                                .setTenantId(source.getTenantId())
-                                .setLevel(target.getAlarmLevel())
-                                .setReason(CollectionUtil.join(target.getAlarmTexts(), ","));
-                        r.add(dto);
-
-                        if (target.getAlarmState() == 1) {
-                            List<String> platforms = new ArrayList<>();
-                            platforms.add("mes-app");
-                            platforms.add("mes-edge");
-                            StringBuilder context = new StringBuilder();
-                            if (!CollectionUtils.isEmpty(target.getAlarmTexts())) {
-                                for (String alarmText : target.getAlarmTexts()) {
-                                    context.append(alarmText).append("\r\n");
-                                }
-                            } else {
-                                context.append("设备报警");
-                            }
-                            NotifyDto notifyDto = new NotifyDto().setStep(0).setContext(context.toString()).setTitle("【" + target.getName() + "】异常报警").setSource(MessageSourceEnum.Equip.name()).setSourceId(source.getId()).setPlatforms(platforms).setType(MessageTypeEnum.ALARM.getCode());
-                            notifyFeign.createAndStart(notifyDto);
-
-                        }
-                    }
-                    if (!source.getRunState().equals(target.getRunState())) {
-                        EquipRecordRunDto dto = new EquipRecordRunDto().setSn(source.getSelfCode()).setState(target.getRunState()).setStartTime(new Date()).setTenantId(source.getTenantId());
-                        r1.add(dto);
-                    }
-
-                    if (!source.getOnlineState().equals(target.getOnlineState())) {
-                        EquipRecordOnlineDto dto = new EquipRecordOnlineDto().setSn(source.getSelfCode()).setState(target.getOnlineState()).setStartTime(new Date()).setTenantId(source.getTenantId());
-                        r2.add(dto);
-                    }
-                }
-            }
-        }
-        try {
-            if (!CollectionUtils.isEmpty(r)) {
-                RemoteHandleUtils.getDataFormResponse(equipRecordAlarmFeign.addBatch(r));
-            }
-            if (!CollectionUtils.isEmpty(r1)) {
-                RemoteHandleUtils.getDataFormResponse(equipRecordRunFeign.addBatch(r1));
-            }
-            if (!CollectionUtils.isEmpty(r2)) {
-                RemoteHandleUtils.getDataFormResponse(equipRecordOnlineFeign.addBatch(r2));
-            }
-        } catch (EraCommonException e) {
-            log.error(e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
         }
     }
 }

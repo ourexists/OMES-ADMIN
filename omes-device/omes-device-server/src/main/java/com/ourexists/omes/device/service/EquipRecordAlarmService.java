@@ -27,5 +27,7 @@ public interface EquipRecordAlarmService extends IMyBatisPlusService<EquipRecord
 
     void add(EquipRecordAlarmDto dto);
 
+    void addBatch(List<EquipRecordAlarmDto> dtos);
+
     List<EquipRecordAlarmVo> countMerging(EquipRecordCountQuery query);
 }
