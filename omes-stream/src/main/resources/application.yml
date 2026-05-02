@@ -1,0 +1,41 @@
+server:
+  port: 10018
+
+spring:
+  application:
+    name: omes-stream
+  devtools:
+    restart:
+      enabled: false
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: ALWAYS
+    time-zone: GMT+8
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:TyY6Df3bZe}
+    virtual-host: "${RABBITMQ_VHOST:/}"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+omes:
+  device:
+    flink:
+      enable-checkpointing: ${OMES_FLINK_ENABLE_CHECKPOINTING:false}
+      checkpoint-interval-ms: ${OMES_FLINK_RMQ_CHECKPOINT_MS:10000}
+      checkpoint-timeout-ms: ${OMES_FLINK_CHECKPOINT_TIMEOUT_MS:120000}
+      rmq-prefetch: ${OMES_FLINK_RMQ_PREFETCH:100}
+    rabbitmq:
+      equip-realtime-queue: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
+      equip-notify-create-queue: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
+      equip-stream-persist-queue: ${OMES_EQUIP_STREAM_PERSIST_QUEUE:omes.equip.stream.persist}
+    offline-timeout-ms: ${OMES_EQUIP_OFFLINE_TIMEOUT_MS:30000}
+    snapshot-interval-ms: ${OMES_EQUIP_SNAPSHOT_INTERVAL_MS:30000}
+    attr-fluctuation-window-ms: ${OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS:30000}
+    attr-fluctuation-slide-ms: ${OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS:5000}

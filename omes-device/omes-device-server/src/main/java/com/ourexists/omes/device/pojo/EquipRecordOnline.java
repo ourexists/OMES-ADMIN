@@ -28,6 +28,9 @@ public class EquipRecordOnline extends EraEntity {
 
     private Integer state;
 
+    /** 区间业务事件 ID（与流侧 prevEventId 对应） */
+    private String eventId;
+
     public static <T extends EquipRecordOnlineDto> T covert(EquipRecordOnline source, Class<T> clazz) {
         if (source == null) {
             return null;

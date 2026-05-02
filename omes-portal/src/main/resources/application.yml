@@ -3,6 +3,13 @@ server:
   servlet:
     context-path: /
 spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:TyY6Df3bZe}
+    # 必须带引号，否则 YAML 会把 `/` 误解析；需与 omes-stream（Flink RMQSource）使用同一 vhost
+    virtual-host: "${RABBITMQ_VHOST:/}"
   messages:
     basename: i18n/messages
   thymeleaf:
@@ -10,7 +17,7 @@ spring:
   mvc:
     static-path-pattern: static/**
   application:
-    name: OEMS-ADMIN
+    name: OMES-ADMIN
   config:
     location: classpath:/,file:config/
   profiles:
@@ -110,3 +117,13 @@ springdoc:
 ai:
   proxy:
     base-url: ${AI_APP_BASE_URL:http://127.0.0.1:10011}
+
+omes:
+  device:
+    rabbitmq:
+      equip-realtime-queue: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
+      equip-notify-create-queue: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
+      equip-stream-persist-queue: ${OMES_EQUIP_STREAM_PERSIST_QUEUE:omes.equip.stream.persist}
+      # change 消息聚合成批再调 device 批量接口：条数阈值与最大等待（毫秒，防抖）
+      equip-stream-persist-batch-size: ${OMES_EQUIP_STREAM_PERSIST_BATCH_SIZE:32}
+      equip-stream-persist-batch-flush-ms: ${OMES_EQUIP_STREAM_PERSIST_BATCH_FLUSH_MS:200}

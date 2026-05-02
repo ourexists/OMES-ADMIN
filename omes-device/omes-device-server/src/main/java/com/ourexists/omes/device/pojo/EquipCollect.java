@@ -2,8 +2,8 @@ package com.ourexists.omes.device.pojo;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
+import com.ourexists.omes.device.typehandler.PgJsonbMapStringTypeHandler;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
 import com.ourexists.omes.device.model.EquipCollectDto;
 import lombok.Getter;
@@ -25,7 +25,7 @@ public class EquipCollect extends EraEntity {
 
     private String sn;
 
-    @TableField(value = "data", typeHandler = JacksonTypeHandler.class, jdbcType = JdbcType.OTHER)
+    @TableField(value = "data", typeHandler = PgJsonbMapStringTypeHandler.class, jdbcType = JdbcType.OTHER)
     private Map<String, String> data;
 
     private Date time;

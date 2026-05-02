@@ -335,6 +335,14 @@
                 <button type="button" class="layui-btn layui-btn-sm" id="btn-add-attr-row" lang-i18n="equipattr.addRow">
                     新增一行
                 </button>
+                <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-enable-all-fluctuation"
+                        lang-i18n="equipattr.enableAllFluctuation">
+                    全部开启波动检测
+                </button>
+                <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-disable-all-fluctuation"
+                        lang-i18n="equipattr.disableAllFluctuation">
+                    全部关闭波动检测
+                </button>
                 <button type="button" class="layui-btn layui-btn-sm layui-btn-primary" id="btn-attr-json-paste"
                         lang-i18n="equipattr.openJsonPaste">JSON配置模式
                 </button>
@@ -347,6 +355,10 @@
                     <th lang-i18n="equipattr.value">属性默认值</th>
                     <th lang-i18n="equipattr.unit">单位</th>
                     <th class="col-check" lang-i18n="equipattr.needCollect">是否采集</th>
+                    <th class="col-check" lang-i18n="equipattr.fluctuationEnabled">开启波动检测</th>
+                    <th lang-i18n="equipattr.fluctuationThresholdRatio">波动比例阈值</th>
+                    <th lang-i18n="equipattr.fluctuationMinDelta">最小有效幅值</th>
+                    <th lang-i18n="equipattr.fluctuationConsecutiveWindows">连续窗口数</th>
                     <th class="col-op" lang-i18n="common.operate">操作</th>
                 </tr>
                 </thead>
@@ -557,7 +569,11 @@
                 map: {value: "mapField", comment: i18np.prop("equipattr.map") || "属性映射"},
                 value: {value: "defaultValue", comment: i18np.prop("equipattr.value") || "属性默认值"},
                 unit: {value: "ml", comment: i18np.prop("equipattr.unit") || "单位"},
-                needCollect: {value: true, comment: i18np.prop("equipattr.needCollect") || "是否采集"}
+                needCollect: {value: true, comment: i18np.prop("equipattr.needCollect") || "是否采集"},
+                fluctuationEnabled: {value: true, comment: i18np.prop("equipattr.fluctuationEnabled") + "(" + i18np.prop("common.optional") + ")"},
+                fluctuationThresholdRatio: {value: 0.5, comment: i18np.prop("equipattr.fluctuationThresholdRatio") + "(" + i18np.prop("common.optional") + ")"},
+                fluctuationMinDelta: {value: 0.0, comment: i18np.prop("equipattr.fluctuationMinDelta") + "(" + i18np.prop("common.optional") + ")"},
+                fluctuationConsecutiveWindows: {value: 1, comment: i18np.prop("equipattr.fluctuationConsecutiveWindows") + "(" + i18np.prop("common.optional") + ")"}
             }
         ];
         var alarmTemplateForComment = [
@@ -583,12 +599,19 @@
         // ---------- 属性配置动态表单（扁平结构：name/map/value/unit/needCollect） ----------
         function getAttrRowData(tr) {
             var $tr = $(tr);
+            var fluctRatioRaw = $tr.find('.attr-fluct-ratio').val();
+            var fluctMinDeltaRaw = $tr.find('.attr-fluct-min-delta').val();
+            var fluctConsecutiveRaw = $tr.find('.attr-fluct-consecutive').val();
             return {
                 name: $tr.find('.attr-name').val() || '',
                 map: $tr.find('.attr-map').val() || '',
                 value: $tr.find('.attr-value').val() || '',
                 unit: $tr.find('.attr-unit').val() || '',
-                needCollect: $tr.find('.attr-needCollect').prop('checked')
+                needCollect: $tr.find('.attr-needCollect').prop('checked'),
+                fluctuationEnabled: $tr.find('.attr-fluct-enabled').prop('checked'),
+                fluctuationThresholdRatio: fluctRatioRaw === '' ? null : parseFloat(fluctRatioRaw),
+                fluctuationMinDelta: fluctMinDeltaRaw === '' ? null : parseFloat(fluctMinDeltaRaw),
+                fluctuationConsecutiveWindows: fluctConsecutiveRaw === '' ? null : parseInt(fluctConsecutiveRaw, 10)
             };
         }
 
@@ -610,13 +633,22 @@
             var n = flatAttr(data, 'name') || '', m = flatAttr(data, 'map') || '', v = flatAttr(data, 'value') || '',
                 u = flatAttr(data, 'unit') || '';
             var needCollect = data.needCollect === true || (data.needCollect && data.needCollect.value);
+            var fluctEnabled = data.fluctuationEnabled !== false && !(data.fluctuationEnabled && data.fluctuationEnabled.value === false);
+            var fluctRatio = flatAttr(data, 'fluctuationThresholdRatio');
+            var fluctMinDelta = flatAttr(data, 'fluctuationMinDelta');
+            var fluctConsecutive = flatAttr(data, 'fluctuationConsecutiveWindows');
             var checked = needCollect ? ' checked' : '';
+            var fluctChecked = fluctEnabled ? ' checked' : '';
             var row = '<tr>' +
                 '<td><input type="text" class="layui-input attr-name" value="' + (n + '').replace(/"/g, '&quot;') + '"></td>' +
                 '<td><input type="text" class="layui-input attr-map" value="' + (m + '').replace(/"/g, '&quot;') + '"></td>' +
                 '<td><input type="text" class="layui-input attr-value" value="' + (v + '').replace(/"/g, '&quot;') + '"></td>' +
                 '<td><input type="text" class="layui-input attr-unit" value="' + (u + '').replace(/"/g, '&quot;') + '"></td>' +
                 '<td class="col-check"><input type="checkbox" class="attr-needCollect" lay-skin="primary"' + checked + '></td>' +
+                '<td class="col-check"><input type="checkbox" class="attr-fluct-enabled" lay-skin="primary"' + fluctChecked + '></td>' +
+                '<td><input type="number" step="0.01" min="0" class="layui-input attr-fluct-ratio" value="' + ((fluctRatio == null ? '' : fluctRatio) + '').replace(/"/g, '&quot;') + '" placeholder="' + (i18np.prop('equipattr.fluctuationThresholdRatioPlaceholder') || '留空使用默认值 0.5') + '"></td>' +
+                '<td><input type="number" step="0.01" min="0" class="layui-input attr-fluct-min-delta" value="' + ((fluctMinDelta == null ? '' : fluctMinDelta) + '').replace(/"/g, '&quot;') + '" placeholder="' + (i18np.prop('equipattr.fluctuationMinDeltaPlaceholder') || '留空使用默认值 0') + '"></td>' +
+                '<td><input type="number" step="1" min="1" class="layui-input attr-fluct-consecutive" value="' + ((fluctConsecutive == null ? '' : fluctConsecutive) + '').replace(/"/g, '&quot;') + '" placeholder="' + (i18np.prop('equipattr.fluctuationConsecutiveWindowsPlaceholder') || '留空使用默认值 1') + '"></td>' +
                 '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-attr">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
             $('#attr-tbody').append(row);
         }
@@ -631,7 +663,11 @@
                     map: flatAttr(item, 'map'),
                     value: flatAttr(item, 'value'),
                     unit: flatAttr(item, 'unit'),
-                    needCollect: item.needCollect === true || (item.needCollect && item.needCollect.value)
+                    needCollect: item.needCollect === true || (item.needCollect && item.needCollect.value),
+                    fluctuationEnabled: item.fluctuationEnabled !== false && !(item.fluctuationEnabled && item.fluctuationEnabled.value === false),
+                    fluctuationThresholdRatio: flatAttr(item, 'fluctuationThresholdRatio'),
+                    fluctuationMinDelta: flatAttr(item, 'fluctuationMinDelta'),
+                    fluctuationConsecutiveWindows: flatAttr(item, 'fluctuationConsecutiveWindows')
                 });
             }
             layui.form.render('checkbox');
@@ -639,6 +675,14 @@
 
         $('#btn-add-attr-row').on('click', function () {
             addAttrRow();
+            layui.form.render('checkbox');
+        });
+        $('#btn-enable-all-fluctuation').on('click', function () {
+            $('#attr-tbody .attr-fluct-enabled').prop('checked', true);
+            layui.form.render('checkbox');
+        });
+        $('#btn-disable-all-fluctuation').on('click', function () {
+            $('#attr-tbody .attr-fluct-enabled').prop('checked', false);
             layui.form.render('checkbox');
         });
         $(document).on('click', '.btn-remove-attr', function () {

@@ -5,10 +5,10 @@ import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.portal.device.collect.JSONEquipDataParser;
 import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
-import com.ourexists.omes.portal.device.collect.event.EquipRealtimeHandleEvent;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -24,7 +24,7 @@ public class CommonMqttProtocolManager extends AbstractMqttProtocolManager {
     private JSONWorkshopDataParser JSONWorkshopDataParser;
 
     @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private MessageChannel equipRealtimeInputChannel;
 
     @Override
     public String protocol() {
@@ -42,7 +42,7 @@ public class CommonMqttProtocolManager extends AbstractMqttProtocolManager {
             List<EquipRealtime> realtimes = equipDataParser.parse(gw.getId(), payload);
             if (!CollectionUtils.isEmpty(realtimes)) {
                 for (EquipRealtime target : realtimes) {
-                    eventPublisher.publishEvent(new EquipRealtimeHandleEvent(target));
+                    equipRealtimeInputChannel.send(MessageBuilder.withPayload(target).build());
                 }
             }
             JSONWorkshopDataParser.parse(gw.getId(), payload);

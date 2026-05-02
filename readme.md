@@ -34,6 +34,29 @@ OMES 工业设备管理平台
 
 ![img.png](架构图.png)
 
+启动说明（Flink + RabbitMQ）
+-----------------------------------
+
+`omes-portal` 内嵌 Flink `RMQSource` 在 JDK 17/21 下运行时，需要开放部分 JDK 模块给 Flink/Chill 反射访问。
+
+1. IDEA 启动（推荐在运行配置中设置）  
+在 `OMES-ADMIN` 对应的 Run Configuration 的 `VM options` 增加：
+
+```text
+--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED
+```
+
+2. `java -jar` 启动  
+可以在启动命令中追加相同参数，或通过环境变量统一注入：
+
+```text
+JAVA_TOOL_OPTIONS=--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED
+```
+
+3. 现象说明  
+若未配置上述参数，RabbitMQ 消费线程可能出现如下异常并反复重启：  
+`InaccessibleObjectException: module java.base does not "opens java.util" ...`
+
 ---
 进行中: 生产计划流程结合
 

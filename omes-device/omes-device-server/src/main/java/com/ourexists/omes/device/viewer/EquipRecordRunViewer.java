@@ -50,9 +50,7 @@ public class EquipRecordRunViewer implements EquipRecordRunFeign {
     @Operation(summary = "批量新增记录", description = "批量新增记录")
     @PostMapping("addBatch")
     public JsonResponseEntity<Boolean> addBatch(@Validated @RequestBody List<EquipRecordRunDto> dtos) {
-        for (EquipRecordRunDto dto : dtos) {
-            service.add(dto);
-        }
+        service.addBatch(dtos);
         return JsonResponseEntity.success(true);
     }
 

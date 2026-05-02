@@ -5,13 +5,19 @@
 package com.ourexists.omes.portal.device.protocol;
 
 import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
-import com.ourexists.omes.portal.device.collect.TcMqttEquipDataParser;
 import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
+import com.ourexists.omes.portal.device.collect.TcMqttEquipDataParser;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 /**
  * 统一 MQTT 订阅管理器：根据网关配置动态创建/销毁订阅连接，支持启停控制。
@@ -27,6 +33,9 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
     @Autowired
     private JSONWorkshopDataParser JSONWorkshopDataParser;
 
+    @Autowired
+    private MessageChannel equipRealtimeInputChannel;
+
     @Override
     public String protocol() {
         return "TC_MQTT";
@@ -40,7 +49,12 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
             if (payload == null) {
                 return;
             }
-            tcMqttEquipDataParser.parse(gw.getId(), payload);
+            List<EquipRealtime> realtimes = tcMqttEquipDataParser.parse(gw.getId(), payload);
+            if (!CollectionUtils.isEmpty(realtimes)) {
+                for (EquipRealtime target : realtimes) {
+                    equipRealtimeInputChannel.send(MessageBuilder.withPayload(target).build());
+                }
+            }
             JSONWorkshopDataParser.parse(gw.getId(), payload);
         };
     }

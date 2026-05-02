@@ -6,12 +6,6 @@ import java.util.Map;
 public interface EquipRealtimeManager {
 
     /**
-     * 实时数据处理
-     * @param targets
-     */
-    void realtimeHandle(List<EquipRealtime> targets);
-
-    /**
      * @param equipRealtime 设备实时态
      */
     void addOrUpdate(EquipRealtime equipRealtime);

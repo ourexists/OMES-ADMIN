@@ -269,4 +269,5 @@ public class EquipController {
         }
         return JsonResponseEntity.success(true);
     }
+
 }

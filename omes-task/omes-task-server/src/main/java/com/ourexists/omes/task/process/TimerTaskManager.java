@@ -5,6 +5,7 @@ package com.ourexists.omes.task.process;
 
 import com.ourexists.omes.task.process.task.TimerTask;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,20 @@ public class TimerTaskManager {
     @PostConstruct
     public void init() {
         scheduler.setPoolSize(10);
+        scheduler.setWaitForTasksToCompleteOnShutdown(false);
+        scheduler.setAwaitTerminationSeconds(3);
         scheduler.initialize();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        for (ScheduledFuture<?> future : taskMap.values()) {
+            if (future != null) {
+                future.cancel(true);
+            }
+        }
+        taskMap.clear();
+        scheduler.shutdown();
     }
 
     /**
