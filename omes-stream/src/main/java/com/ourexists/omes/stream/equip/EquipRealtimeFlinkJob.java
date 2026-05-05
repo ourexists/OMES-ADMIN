@@ -10,6 +10,9 @@ import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig
  * <p>
  * Configuration: Flink {@code ParameterTool} merges program args, {@code -D} system properties, and environment
  * variables (see module {@code README.md} for {@code OMES_*} / {@code RABBITMQ_*} and dotted property keys).
+ * <p>
+ *  messaging 仍为 Flink 连接器 + RabbitMQ Java 客户端：Flink 非 Spring 容器，无法直接使用 Spring Cloud Stream；
+ *  与门户侧的 Stream 拓扑通过共用队列名、vhost（及实时队列上并行绑定 TopicExchange）对齐。
  */
 @Slf4j
 public final class EquipRealtimeFlinkJob {

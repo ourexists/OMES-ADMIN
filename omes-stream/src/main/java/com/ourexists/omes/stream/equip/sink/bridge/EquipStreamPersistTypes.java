@@ -1,6 +1,6 @@
 package com.ourexists.omes.stream.equip.sink.bridge;
 
-/** 与门户 {@code EquipStreamPersistMessageListener} 约定的 JSON 字段 {@code type}。 */
+/** 与门户持久化桥接消息 JSON 字段 {@code type} 约定一致（各队列仅含对应 type，字段仍保留便于排查）。 */
 public final class EquipStreamPersistTypes {
 
     public static final String CHANGE = "change";

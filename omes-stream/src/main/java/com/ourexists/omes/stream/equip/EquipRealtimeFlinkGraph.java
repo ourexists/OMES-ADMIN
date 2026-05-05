@@ -117,7 +117,7 @@ public final class EquipRealtimeFlinkGraph {
                 .name("equip-collect-snapshot-timed");
 
         changeStream
-                .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistQueue()))
+                .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
                 .name("equip-realtime-change-persist-bridge-rmq-sink")
                 .setParallelism(1);
         changeStream
@@ -125,7 +125,7 @@ public final class EquipRealtimeFlinkGraph {
                 .name("equip-realtime-alarm-notify-sink")
                 .setParallelism(1);
         fluctuationChangeStream
-                .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistQueue()))
+                .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
                 .name("equip-attr-fluctuation-persist-bridge-rmq-sink")
                 .setParallelism(1);
         fluctuationChangeStream
@@ -133,17 +133,19 @@ public final class EquipRealtimeFlinkGraph {
                 .name("equip-attr-fluctuation-alarm-notify-sink")
                 .setParallelism(1);
         snapshotStream
-                .addSink(new EquipStateSnapshotBridgeSink(rmq, cfg.equipStreamPersistQueue()))
+                .addSink(new EquipStateSnapshotBridgeSink(rmq, cfg.equipStreamPersistStateQueue()))
                 .name("equip-realtime-snapshot-persist-bridge-rmq-sink")
                 .setParallelism(1);
         collectSnapshotStream
-                .addSink(new EquipCollectSnapshotBridgeSink(rmq, cfg.equipStreamPersistQueue()))
+                .addSink(new EquipCollectSnapshotBridgeSink(rmq, cfg.equipStreamPersistCollectQueue()))
                 .name("equip-collect-snapshot-persist-bridge-rmq-sink")
                 .setParallelism(1);
         log.info(
-                "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} persistQueue={}",
+                "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} persistChange={} persistState={} persistCollect={}",
                 cfg.equipRealtimeRabbitQueue(),
-                cfg.equipStreamPersistQueue());
+                cfg.equipStreamPersistChangeQueue(),
+                cfg.equipStreamPersistStateQueue(),
+                cfg.equipStreamPersistCollectQueue());
         env.execute("equip-realtime-job");
     }
 }

@@ -4,7 +4,9 @@ package com.ourexists.omes.stream.equip;
 public final class EquipRealtimeFlinkJobConfig {
     private final String equipRealtimeRabbitQueue;
     private final String equipNotifyCreateQueue;
-    private final String equipStreamPersistQueue;
+    private final String equipStreamPersistChangeQueue;
+    private final String equipStreamPersistStateQueue;
+    private final String equipStreamPersistCollectQueue;
     private final long flinkRmqCheckpointIntervalMs;
     private final boolean flinkEnableCheckpointing;
     private final long flinkCheckpointTimeoutMs;
@@ -18,7 +20,9 @@ public final class EquipRealtimeFlinkJobConfig {
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
             String equipNotifyCreateQueue,
-            String equipStreamPersistQueue,
+            String equipStreamPersistChangeQueue,
+            String equipStreamPersistStateQueue,
+            String equipStreamPersistCollectQueue,
             long flinkRmqCheckpointIntervalMs,
             boolean flinkEnableCheckpointing,
             long flinkCheckpointTimeoutMs,
@@ -30,7 +34,9 @@ public final class EquipRealtimeFlinkJobConfig {
             int parallelism) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
-        this.equipStreamPersistQueue = equipStreamPersistQueue;
+        this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
+        this.equipStreamPersistStateQueue = equipStreamPersistStateQueue;
+        this.equipStreamPersistCollectQueue = equipStreamPersistCollectQueue;
         this.flinkRmqCheckpointIntervalMs = flinkRmqCheckpointIntervalMs;
         this.flinkEnableCheckpointing = flinkEnableCheckpointing;
         this.flinkCheckpointTimeoutMs = flinkCheckpointTimeoutMs;
@@ -50,8 +56,16 @@ public final class EquipRealtimeFlinkJobConfig {
         return equipNotifyCreateQueue;
     }
 
-    public String equipStreamPersistQueue() {
-        return equipStreamPersistQueue;
+    public String equipStreamPersistChangeQueue() {
+        return equipStreamPersistChangeQueue;
+    }
+
+    public String equipStreamPersistStateQueue() {
+        return equipStreamPersistStateQueue;
+    }
+
+    public String equipStreamPersistCollectQueue() {
+        return equipStreamPersistCollectQueue;
     }
 
     public long flinkRmqCheckpointIntervalMs() {

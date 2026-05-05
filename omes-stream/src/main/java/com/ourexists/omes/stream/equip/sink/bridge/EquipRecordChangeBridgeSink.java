@@ -74,7 +74,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
                     .setPrevEventId(event.getOnlinePrevSegmentEventId());
             root.set("online", objectMapper.valueToTree(online));
         }
-        // 供门户 EquipStreamPersistMessageListener 写 Redis（Spring Cache 与门户 DEquipRealtimeManager 一致）
+        // 供门户 equipStreamPersistChange 队列经 Aggregator 写 Redis（与门户 DEquipRealtimeManager 一致）
         root.set("realtime", objectMapper.valueToTree(target));
         publish(objectMapper.writeValueAsBytes(root));
     }

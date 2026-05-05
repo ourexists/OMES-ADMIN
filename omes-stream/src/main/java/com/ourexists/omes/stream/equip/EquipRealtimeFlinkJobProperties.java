@@ -10,7 +10,21 @@ final class EquipRealtimeFlinkJobProperties {
         return new EquipRealtimeFlinkJobConfig(
                 str(pt, "omes.device.rabbitmq.equip-realtime-queue", "OMES_EQUIP_REALTIME_QUEUE", "omes.equip.realtime"),
                 str(pt, "omes.device.rabbitmq.equip-notify-create-queue", "OMES_EQUIP_NOTIFY_CREATE_QUEUE", "omes.notify.create"),
-                str(pt, "omes.device.rabbitmq.equip-stream-persist-queue", "OMES_EQUIP_STREAM_PERSIST_QUEUE", "omes.equip.stream.persist"),
+                str(
+                        pt,
+                        "omes.device.rabbitmq.equip-stream-persist-change-queue",
+                        "OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE",
+                        "omes.equip.stream.persist.change"),
+                str(
+                        pt,
+                        "omes.device.rabbitmq.equip-stream-persist-state-queue",
+                        "OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE",
+                        "omes.equip.stream.persist.state"),
+                str(
+                        pt,
+                        "omes.device.rabbitmq.equip-stream-persist-collect-queue",
+                        "OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE",
+                        "omes.equip.stream.persist.collect"),
                 pt.getLong(
                         "omes.device.flink.checkpoint-interval-ms",
                         pt.getLong("OMES_FLINK_RMQ_CHECKPOINT_MS", pt.getLong("OMES_FLINK_CHECKPOINT_INTERVAL_MS", 10_000L))),
