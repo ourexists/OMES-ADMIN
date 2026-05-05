@@ -1,7 +1,6 @@
 package com.ourexists.omes.stream.equip;
 
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
-import com.ourexists.omes.stream.equip.model.EquipAttrFluctuationWindowEvent;
 import com.ourexists.omes.stream.equip.model.EquipCollectSnapshotEvent;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import com.ourexists.omes.stream.equip.model.EquipStateSnapshotEvent;
@@ -77,7 +76,7 @@ public final class EquipRealtimeFlinkGraph {
 
         DataStream<EquipRealtime> source = env
                 .addSource(rmqSource)
-                .setParallelism(1)
+                .setParallelism(cfg.parallelism())
                 .name("equip-realtime-rmq-source");
         DataStream<EquipRealtime> validStream = source
                 .filter(e -> e != null && StringUtils.isNotBlank(e.getSelfCode()))
@@ -94,21 +93,16 @@ public final class EquipRealtimeFlinkGraph {
                 .process(new EquipOfflineDetectProcessFunction(cfg.offlineTimeoutMs()))
                 .name("equip-realtime-offline-detect");
 
-        DataStream<EquipAttrFluctuationWindowEvent> fluctuationWindowStream = validStream
+        DataStream<EquipRealtimeChangeEvent> fluctuationChangeStream = validStream
                 .keyBy(EquipRealtime::getSelfCode)
                 .window(SlidingProcessingTimeWindows.of(
                         Duration.ofMillis(cfg.attrFluctuationWindowMs()),
                         Duration.ofMillis(cfg.attrFluctuationSlideMs())))
-                .process(new EquipAttrFluctuationWindowProcessFunction())
-                .name("equip-realtime-attr-fluctuation-window");
-        DataStream<EquipRealtime> fluctuationAlarmStream = fluctuationWindowStream
-                .keyBy(event -> event.getSelfCode() + "|" + event.getAttrName())
-                .process(new EquipAttrFluctuationConsecutiveProcessFunction())
-                .name("equip-realtime-attr-fluctuation-consecutive");
+                .process(new EquipAttrFluctuationProcessFunction())
+                .name("equip-realtime-attr-fluctuation");
 
         DataStream<EquipRealtimeChangeEvent> changeStream = windowStream
                 .union(offlineStream)
-                .union(fluctuationAlarmStream)
                 .keyBy(EquipRealtime::getSelfCode)
                 .process(new EquipRealtimeChangeDetectProcessFunction())
                 .name("equip-realtime-change-detect");
@@ -129,6 +123,14 @@ public final class EquipRealtimeFlinkGraph {
         changeStream
                 .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
                 .name("equip-realtime-alarm-notify-sink")
+                .setParallelism(1);
+        fluctuationChangeStream
+                .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistQueue()))
+                .name("equip-attr-fluctuation-persist-bridge-rmq-sink")
+                .setParallelism(1);
+        fluctuationChangeStream
+                .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
+                .name("equip-attr-fluctuation-alarm-notify-sink")
                 .setParallelism(1);
         snapshotStream
                 .addSink(new EquipStateSnapshotBridgeSink(rmq, cfg.equipStreamPersistQueue()))
