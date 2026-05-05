@@ -84,6 +84,10 @@ public class EquipRealtimeChangeDetectProcessFunction extends KeyedProcessFuncti
         if (previous == null) {
             return true;
         }
+        // Online/offline transitions must apply even when event-time lags (Flink offline timer vs skewed device clocks).
+        if (!Objects.equals(previous.getOnlineState(), current.getOnlineState())) {
+            return true;
+        }
         return EquipRealtimeEventTimeUtil.isNewerOrSame(current, previous);
     }
 
