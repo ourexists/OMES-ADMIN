@@ -21,7 +21,7 @@ public class CommonMqttProtocolManager extends AbstractMqttProtocolManager {
     private JSONEquipDataParser equipDataParser;
 
     @Autowired
-    private JSONWorkshopDataParser JSONWorkshopDataParser;
+    private JSONWorkshopDataParser dataParser;
 
     @Autowired
     private MessageChannel equipRealtimeInputChannel;
@@ -45,7 +45,7 @@ public class CommonMqttProtocolManager extends AbstractMqttProtocolManager {
                     equipRealtimeInputChannel.send(MessageBuilder.withPayload(target).build());
                 }
             }
-            JSONWorkshopDataParser.parse(gw.getId(), payload);
+            dataParser.parse(gw.getId(), payload);
         };
     }
 }
