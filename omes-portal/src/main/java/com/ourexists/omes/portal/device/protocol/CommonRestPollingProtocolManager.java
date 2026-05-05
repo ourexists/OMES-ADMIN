@@ -28,7 +28,7 @@ public class CommonRestPollingProtocolManager extends AbstractRestPollingProtoco
     private JSONEquipDataParser equipDataParser;
 
     @Autowired
-    private JSONWorkshopDataParser JSONWorkshopDataParser;
+    private JSONWorkshopDataParser dataParser;
 
     @Override
     public String protocol() {
@@ -43,7 +43,7 @@ public class CommonRestPollingProtocolManager extends AbstractRestPollingProtoco
     @Override
     protected void respHandle(ProtocolConnect connect, String payload) {
         equipDataParser.parse(connect.getId(), payload);
-        JSONWorkshopDataParser.parse(connect.getId(), payload);
+        dataParser.parse(connect.getId(), payload);
     }
 
     @Override

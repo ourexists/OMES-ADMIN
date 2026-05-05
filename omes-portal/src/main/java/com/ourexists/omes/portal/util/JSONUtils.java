@@ -1,4 +1,4 @@
-package com.ourexists.omes.portal.utils;
+package com.ourexists.omes.portal.util;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;

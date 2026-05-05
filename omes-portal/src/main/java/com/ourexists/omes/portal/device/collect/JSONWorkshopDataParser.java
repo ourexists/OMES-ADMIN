@@ -8,7 +8,7 @@ import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtime;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeCollect;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeConfig;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeManager;
-import com.ourexists.omes.portal.utils.JSONUtils;
+import com.ourexists.omes.portal.util.JSONUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;

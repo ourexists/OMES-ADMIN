@@ -40,6 +40,7 @@
         <module>omes-ucenter</module>
         <module>omes-message</module>
         <module>omes-stream</module>
+        <module>omes-control</module>
     </modules>
 
     <parent>

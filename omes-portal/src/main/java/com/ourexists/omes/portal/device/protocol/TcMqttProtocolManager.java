@@ -31,7 +31,7 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
     private TcMqttEquipDataParser tcMqttEquipDataParser;
 
     @Autowired
-    private JSONWorkshopDataParser JSONWorkshopDataParser;
+    private JSONWorkshopDataParser dataParser;
 
     @Autowired
     private MessageChannel equipRealtimeInputChannel;
@@ -55,7 +55,7 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
                     equipRealtimeInputChannel.send(MessageBuilder.withPayload(target).build());
                 }
             }
-            JSONWorkshopDataParser.parse(gw.getId(), payload);
+            dataParser.parse(gw.getId(), payload);
         };
     }
 }
