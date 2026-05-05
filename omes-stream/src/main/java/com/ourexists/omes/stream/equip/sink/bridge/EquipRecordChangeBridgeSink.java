@@ -8,8 +8,8 @@ import com.ourexists.omes.device.model.EquipRecordRunDto;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -42,7 +42,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
         if (event.isAlarmChanged()) {
             String reason = CollectionUtils.isEmpty(target.getAlarmTexts())
                     ? null
-                    : target.getAlarmTexts().stream().filter(StringUtils::hasText).collect(Collectors.joining(","));
+                    : target.getAlarmTexts().stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(","));
             EquipRecordAlarmDto alarm = new EquipRecordAlarmDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getAlarmState())

@@ -1,12 +1,13 @@
 package com.ourexists.omes.stream.equip.process;
 
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
-import org.springframework.beans.BeanUtils;
 
 import java.util.Date;
 
@@ -47,8 +48,14 @@ public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<Stri
         if (timer == null || timestamp != timer) {
             return;
         }
+        String currentKey = ctx.getCurrentKey();
+        if (StringUtils.isBlank(currentKey)) {
+            return;
+        }
         EquipRealtime offlineTarget = new EquipRealtime();
-        BeanUtils.copyProperties(latestEvent, offlineTarget);
+        BeanUtils.copyProperties(offlineTarget, latestEvent);
+        // 下游 union 后再次 keyBy(selfCode)；BeanUtils/状态反序列化可能导致 selfCode 为空，必须用当前 key 保证分区键非空
+        offlineTarget.setSelfCode(currentKey);
         offlineTarget.offline();
         offlineTarget.setTime(new Date(timestamp));
         out.collect(offlineTarget);

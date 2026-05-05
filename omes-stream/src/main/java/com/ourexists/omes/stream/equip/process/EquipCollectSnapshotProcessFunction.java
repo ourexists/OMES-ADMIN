@@ -10,7 +10,8 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
-import org.springframework.util.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 
 import java.util.Collections;
 import java.util.Date;
@@ -55,7 +56,7 @@ public class EquipCollectSnapshotProcessFunction extends KeyedProcessFunction<St
             return;
         }
         Map<String, String> data = extractCollectData(latest);
-        if (!CollectionUtils.isEmpty(data)) {
+        if (!MapUtils.isEmpty(data)) {
             EquipCollectDto dto = new EquipCollectDto();
             dto.setSn(latest.getSelfCode());
             dto.setTime(new Date(timestamp));

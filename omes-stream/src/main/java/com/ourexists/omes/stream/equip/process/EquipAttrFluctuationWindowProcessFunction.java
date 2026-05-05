@@ -7,7 +7,7 @@ import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class EquipAttrFluctuationWindowProcessFunction extends ProcessWindowFunc
                 continue;
             }
             for (EquipAttrRealtime attr : realtime.getEquipAttrRealtimes()) {
-                if (attr == null || !StringUtils.hasText(attr.getName()) || !StringUtils.hasText(attr.getValue())) {
+                if (attr == null || StringUtils.isBlank(attr.getName()) || StringUtils.isBlank(attr.getValue())) {
                     continue;
                 }
                 if (Boolean.FALSE.equals(attr.getFluctuationEnabled())) {
@@ -49,7 +49,7 @@ public class EquipAttrFluctuationWindowProcessFunction extends ProcessWindowFunc
             return;
         }
         for (EquipAttrRealtime attr : latest.getEquipAttrRealtimes()) {
-            if (attr == null || !StringUtils.hasText(attr.getName())) {
+            if (attr == null || StringUtils.isBlank(attr.getName())) {
                 continue;
             }
             if (Boolean.FALSE.equals(attr.getFluctuationEnabled())) {
