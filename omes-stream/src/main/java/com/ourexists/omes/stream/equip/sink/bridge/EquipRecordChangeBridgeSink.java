@@ -6,10 +6,10 @@ import com.ourexists.omes.device.model.EquipRecordAlarmDto;
 import com.ourexists.omes.device.model.EquipRecordOnlineDto;
 import com.ourexists.omes.device.model.EquipRecordRunDto;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -38,7 +38,6 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
         }
         Date start = new Date();
         ObjectNode root = objectMapper.createObjectNode();
-        root.put("type", EquipStreamPersistTypes.CHANGE);
         if (event.isAlarmChanged()) {
             String reason = CollectionUtils.isEmpty(target.getAlarmTexts())
                     ? null
@@ -76,6 +75,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
         }
         // 供门户 equipStreamPersistChange 队列经 Aggregator 写 Redis（与门户 DEquipRealtimeManager 一致）
         root.set("realtime", objectMapper.valueToTree(target));
+        root.put("eventId", newOutboundEventId());
         publish(objectMapper.writeValueAsBytes(root));
     }
 }

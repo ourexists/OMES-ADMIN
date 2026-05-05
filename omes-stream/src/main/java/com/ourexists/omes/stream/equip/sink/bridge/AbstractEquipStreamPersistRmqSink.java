@@ -1,16 +1,16 @@
 package com.ourexists.omes.stream.equip.sink.bridge;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
-import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.IOException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
+
+import java.io.IOException;
+import java.util.UUID;
 
 /**
  * stream 侧将持久化载荷写入 RabbitMQ，由门户消费后调 device Feign 入库（桥接）。
@@ -28,6 +28,11 @@ public abstract class AbstractEquipStreamPersistRmqSink<T> extends RichSinkFunct
     protected AbstractEquipStreamPersistRmqSink(RMQConnectionConfig rmqConnectionConfig, String queueName) {
         this.rmqConnectionConfig = rmqConnectionConfig;
         this.queueName = queueName;
+    }
+
+    /** 每条出站 MQ 消息的幂等键（消费端 / Kafka 等可据此去重）。 */
+    public String newOutboundEventId() {
+        return UUID.randomUUID().toString();
     }
 
     @Override
