@@ -126,7 +126,10 @@
             <artifactId>era-framework-idempotent</artifactId>
             <version>${era-framework-dependencies.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aspects</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.eclipse.milo</groupId>
             <artifactId>sdk-client</artifactId>
