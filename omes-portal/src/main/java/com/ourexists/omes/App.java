@@ -4,7 +4,6 @@
 
 package com.ourexists.omes;
 
-import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 @EnableScheduling
 @SpringBootApplication
 @EnableAsync
-@EnableRabbit
 @PropertySource(value = {"file:config/config.properties"})
 public class App {
 

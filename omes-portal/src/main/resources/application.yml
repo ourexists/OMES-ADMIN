@@ -30,6 +30,57 @@ spring:
     loadbalancer:
       retry:
         enabled: true
+    # 多个 Consumer 时必须显式声明 function.definition（见 Spring Cloud Stream 文档）
+    function:
+      definition: equipStreamPersistChange;equipStreamPersistStateSnapshot;equipStreamPersistCollectSnapshot;equipNotifyCreate
+    # 设备侧 RabbitMQ 走 Spring Cloud Stream + rabbit binder；换 Kafka 等 broker 时可改 binder 与中继拓扑（Flink omes-stream 仍为独立 AMQP 客户端）
+    stream:
+      default-binder: rabbit
+      bindings:
+        equipRealtime-out-0:
+          destination: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
+          # 随生产者声明 TopicExchange + 与 Flink 共用的持久队列（queue-name-group-only 见 rabbit 段）
+          producer:
+            required-groups:
+              - ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
+        # 仅消费 Flink 桥接 sink 已声明的队列：destination/group 与物理队列名一致
+        equipStreamPersistChange-in-0:
+          destination: ${OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE:omes.equip.stream.persist.change}
+          group: ${OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE:omes.equip.stream.persist.change}
+        equipStreamPersistStateSnapshot-in-0:
+          destination: ${OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE:omes.equip.stream.persist.state}
+          group: ${OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE:omes.equip.stream.persist.state}
+        equipStreamPersistCollectSnapshot-in-0:
+          destination: ${OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE:omes.equip.stream.persist.collect}
+          group: ${OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE:omes.equip.stream.persist.collect}
+        equipNotifyCreate-in-0:
+          destination: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
+          group: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
+      rabbit:
+        bindings:
+          equipRealtime-out-0:
+            producer:
+              queue-name-group-only: true
+          equipStreamPersistChange-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          equipStreamPersistStateSnapshot-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          equipStreamPersistCollectSnapshot-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          equipNotifyCreate-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
@@ -119,11 +170,9 @@ ai:
     base-url: ${AI_APP_BASE_URL:http://127.0.0.1:10011}
 
 omes:
-  device:
-    rabbitmq:
-      equip-realtime-queue: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
-      equip-notify-create-queue: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
-      equip-stream-persist-queue: ${OMES_EQUIP_STREAM_PERSIST_QUEUE:omes.equip.stream.persist}
-      # change 消息聚合成批再调 device 批量接口：条数阈值与最大等待（毫秒，防抖）
-      equip-stream-persist-batch-size: ${OMES_EQUIP_STREAM_PERSIST_BATCH_SIZE:32}
-      equip-stream-persist-batch-flush-ms: ${OMES_EQUIP_STREAM_PERSIST_BATCH_FLUSH_MS:200}
+  equip:
+    # change 消息聚合成批再调 device 批量接口：条数阈值与最大等待（毫秒，防抖）
+    stream-persist-batch-size: ${OMES_EQUIP_STREAM_PERSIST_BATCH_SIZE:32}
+    stream-persist-batch-flush-ms: ${OMES_EQUIP_STREAM_PERSIST_BATCH_FLUSH_MS:200}
+
+

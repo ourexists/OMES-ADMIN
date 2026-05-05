@@ -61,7 +61,9 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 |------|------|
 | `OMES_EQUIP_REALTIME_QUEUE` | 设备实时消费队列 |
 | `OMES_EQUIP_NOTIFY_CREATE_QUEUE` | 告警通知队列（可空，空则告警 Sink 不发送） |
-| `OMES_EQUIP_STREAM_PERSIST_QUEUE` | 流式持久化桥接队列 |
+| `OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE` | 运行/报警/在线变更桥接队列 |
+| `OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE` | 状态周期快照桥接队列 |
+| `OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE` | 采集周期快照桥接队列 |
 | `OMES_FLINK_ENABLE_CHECKPOINTING` | 是否开启 checkpoint（`true`/`false`） |
 | `OMES_FLINK_RMQ_CHECKPOINT_MS` / `OMES_FLINK_CHECKPOINT_INTERVAL_MS` | checkpoint 间隔（毫秒） |
 | `OMES_FLINK_CHECKPOINT_TIMEOUT_MS` | checkpoint 超时（毫秒） |

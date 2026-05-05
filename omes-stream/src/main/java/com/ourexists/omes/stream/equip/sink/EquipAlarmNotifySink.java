@@ -8,12 +8,13 @@ import com.ourexists.omes.message.model.NotifyDto;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class EquipAlarmNotifySink extends RichSinkFunction<EquipRealtimeChangeEv
             return;
         }
         try {
-            com.rabbitmq.client.ConnectionFactory cf = rmqConnectionConfig.getConnectionFactory();
+            ConnectionFactory cf = rmqConnectionConfig.getConnectionFactory();
             connection = cf.newConnection();
             channel = connection.createChannel();
             // 与门户 {@code new Queue(name, true)} 一致，幂等声明
