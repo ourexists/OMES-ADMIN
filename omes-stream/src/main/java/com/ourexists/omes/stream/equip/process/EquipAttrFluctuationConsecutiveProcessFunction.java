@@ -7,8 +7,8 @@ import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
-import org.springframework.beans.BeanUtils;
-import org.springframework.util.CollectionUtils;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class EquipAttrFluctuationConsecutiveProcessFunction extends KeyedProcess
             return;
         }
         EquipRealtime alarmRealtime = new EquipRealtime();
-        BeanUtils.copyProperties(latest, alarmRealtime);
+        BeanUtils.copyProperties(alarmRealtime, latest);
         List<String> mergedAlarmTexts = new ArrayList<>();
         if (!CollectionUtils.isEmpty(latest.getAlarmTexts())) {
             mergedAlarmTexts.addAll(latest.getAlarmTexts());

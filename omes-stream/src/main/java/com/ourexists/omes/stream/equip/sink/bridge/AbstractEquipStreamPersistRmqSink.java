@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 
@@ -34,7 +34,7 @@ public abstract class AbstractEquipStreamPersistRmqSink<T> extends RichSinkFunct
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
         objectMapper = new ObjectMapper();
-        if (!StringUtils.hasText(queueName) || rmqConnectionConfig == null) {
+        if (StringUtils.isBlank(queueName) || rmqConnectionConfig == null) {
             log.warn("{} disabled: queue empty or RMQ config null", getClass().getSimpleName());
             return;
         }
@@ -50,7 +50,7 @@ public abstract class AbstractEquipStreamPersistRmqSink<T> extends RichSinkFunct
     }
 
     protected void publish(byte[] body) {
-        if (!StringUtils.hasText(queueName) || channel == null || !channel.isOpen()) {
+        if (StringUtils.isBlank(queueName) || channel == null || !channel.isOpen()) {
             return;
         }
         try {
