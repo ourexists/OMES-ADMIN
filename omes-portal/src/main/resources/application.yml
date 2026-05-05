@@ -36,6 +36,8 @@ spring:
     # 设备侧 RabbitMQ 走 Spring Cloud Stream + rabbit binder；换 Kafka 等 broker 时可改 binder 与中继拓扑（Flink omes-stream 仍为独立 AMQP 客户端）
     stream:
       default-binder: rabbit
+      # 站内通知经 StreamBridge 出站，再由 notifyMessageDispatch 消费（与 equipRealtime-out 同源模式）
+      source: notifyMessageSource
       bindings:
         equipRealtime-out-0:
           destination: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
@@ -174,5 +176,7 @@ omes:
     # change 消息聚合成批再调 device 批量接口：条数阈值与最大等待（毫秒，防抖）
     stream-persist-batch-size: ${OMES_EQUIP_STREAM_PERSIST_BATCH_SIZE:32}
     stream-persist-batch-flush-ms: ${OMES_EQUIP_STREAM_PERSIST_BATCH_FLUSH_MS:200}
+    # stream eventId Redis 幂等键存活时间（小时）；过期后同 eventId 可再次入库
+    stream-persist-idempotent-ttl-hours: ${OMES_EQUIP_STREAM_PERSIST_IDEMPOTENT_TTL_HOURS:168}
 
 

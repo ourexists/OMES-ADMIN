@@ -18,8 +18,8 @@ public class EquipStateSnapshotBridgeSink extends AbstractEquipStreamPersistRmqS
             return;
         }
         ObjectNode root = objectMapper.createObjectNode();
-        root.put("type", EquipStreamPersistTypes.STATE_SNAPSHOT);
         root.set("snapshot", objectMapper.valueToTree(event.getSnapshot()));
+        root.put("eventId", newOutboundEventId());
         publish(objectMapper.writeValueAsBytes(root));
     }
 }

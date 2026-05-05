@@ -18,6 +18,7 @@ import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 public class EquipAlarmNotifySink extends RichSinkFunction<EquipRealtimeChangeEvent> {
@@ -86,7 +87,8 @@ public class EquipAlarmNotifySink extends RichSinkFunction<EquipRealtimeChangeEv
                     .setSource(MessageSourceEnum.Equip.name())
                     .setSourceId(source.getId())
                     .setPlatforms(platforms)
-                    .setType(MessageTypeEnum.ALARM.getCode());
+                    .setType(MessageTypeEnum.ALARM.getCode())
+                    .setEventId(UUID.randomUUID().toString());
             byte[] body = objectMapper.writeValueAsBytes(notifyDto);
             channel.basicPublish("", queueName, null, body);
         } catch (Exception e) {

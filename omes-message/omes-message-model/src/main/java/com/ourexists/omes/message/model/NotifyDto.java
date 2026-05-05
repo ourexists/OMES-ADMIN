@@ -32,4 +32,7 @@ public class NotifyDto {
     private String source;
 
     private String sourceId;
+
+    /** stream 出站生成的幂等键，供消费端 / Kafka 去重。 */
+    private String eventId;
 }

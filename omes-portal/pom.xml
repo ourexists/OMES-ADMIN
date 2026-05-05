@@ -121,6 +121,11 @@
             <groupId>com.ourexists.era</groupId>
             <artifactId>era-framework-webserver-authorization</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ourexists.era</groupId>
+            <artifactId>era-framework-idempotent</artifactId>
+            <version>${era-framework-dependencies.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.eclipse.milo</groupId>

@@ -35,7 +35,7 @@ public class EquipPersistBatchWriter {
     private final EquipRecordAlarmFeign equipRecordAlarmFeign;
     private final EquipRecordRunFeign equipRecordRunFeign;
     private final EquipRecordOnlineFeign equipRecordOnlineFeign;
-    private final EquipRealtimeManager equipRealtimeManager;
+
 
     public void writeAggregatedBatch(Collection<?> payloads) {
         if (payloads == null || payloads.isEmpty()) {
@@ -47,7 +47,8 @@ public class EquipPersistBatchWriter {
         List<EquipRealtime> realtimes = new ArrayList<>();
         try {
             for (Object o : payloads) {
-                if (!(o instanceof JsonNode root)) {
+                JsonNode root = unwrapPersistRoot(o);
+                if (root == null) {
                     continue;
                 }
                 appendFromRoot(root, alarms, runs, onlines, realtimes);
@@ -61,10 +62,6 @@ public class EquipPersistBatchWriter {
             }
             if (!onlines.isEmpty()) {
                 RemoteHandleUtils.getDataFormResponse(equipRecordOnlineFeign.addBatch(onlines));
-            }
-            for (EquipRealtime rt : realtimes) {
-                UserContext.getTenant().setTenantId(rt.getTenantId());
-                equipRealtimeManager.addOrUpdate(rt);
             }
         } catch (Exception e) {
             log.error("Equip stream persist: aggregated batch write failed, messageCount={}", payloads.size(), e);
@@ -102,7 +99,8 @@ public class EquipPersistBatchWriter {
         List<EquipStateSnapshotDto> dtos = new ArrayList<>();
         try {
             for (Object o : payloads) {
-                if (!(o instanceof JsonNode root)) {
+                JsonNode root = unwrapPersistRoot(o);
+                if (root == null) {
                     continue;
                 }
                 if (root.hasNonNull(FIELD_SNAPSHOT)) {
@@ -125,7 +123,8 @@ public class EquipPersistBatchWriter {
         List<EquipCollectDto> dtos = new ArrayList<>();
         try {
             for (Object o : payloads) {
-                if (!(o instanceof JsonNode root)) {
+                JsonNode root = unwrapPersistRoot(o);
+                if (root == null) {
                     continue;
                 }
                 if (root.hasNonNull(FIELD_COLLECT)) {
@@ -139,5 +138,15 @@ public class EquipPersistBatchWriter {
         } catch (Exception e) {
             log.error("Equip stream persist: collect snapshot batch write failed, messageCount={}", payloads.size(), e);
         }
+    }
+
+    private static JsonNode unwrapPersistRoot(Object o) {
+        if (o instanceof JsonNode j) {
+            return j;
+        }
+        if (o instanceof EquipPersistMqEvent e) {
+            return e.getRoot();
+        }
+        return null;
     }
 }
