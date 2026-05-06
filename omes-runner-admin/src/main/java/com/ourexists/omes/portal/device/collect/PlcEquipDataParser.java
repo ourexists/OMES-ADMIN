@@ -11,7 +11,6 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class PlcEquipDataParser implements EquipDataParser {
@@ -24,16 +23,12 @@ public class PlcEquipDataParser implements EquipDataParser {
 
     @Override
     public List<EquipRealtime> parse(String gwId, String sourceData) {
-        Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll();
+        List<EquipRealtime> realtimeList = equipRealtimeManager.listByGwId(gwId);
         List<EquipRealtime> targets = new ArrayList<>();
         JSONObject jo = JSONObject.parseObject(sourceData);
-        for (EquipRealtime equipRealtime : realtimeMap.values()) {
+        for (EquipRealtime equipRealtime : realtimeList) {
             EquipRealtimeConfig equipRealtimeConfig = equipRealtime.getEquipRealtimeConfig();
             if (equipRealtimeConfig == null) {
-                continue;
-            }
-            //采集方式不匹配
-            if (!gwId.equals(equipRealtimeConfig.getGwId())) {
                 continue;
             }
             targets.add(doParse(equipRealtime, jo));
