@@ -29,7 +29,7 @@ import java.time.Duration;
 public final class EquipRealtimeFlinkGraph {
 
     private static final ReduceFunction<EquipRealtime> PICK_LATEST_EVENT_REDUCER =
-            (left, right) -> EquipRealtimeEventTimeUtil.isNewerOrSame(right, left) ? right : left;
+            EquipRealtimeEventTimeUtil::pickLatestForWindowReduce;
 
     private EquipRealtimeFlinkGraph() {}
 

@@ -47,6 +47,12 @@ public class EquipRealtime {
 
     private Date alarmChangeTime;
 
+    /**
+     * 进入 Flink 作业时的单调序号（反序列化时赋值）。用于滑动窗口 reduce / 变化检测：
+     * 当设备 {@link #time} 为空或多条相同导致无法区分先后时，按入站顺序取“最后一条”真实态，避免误把离线态当作最新（必定离线）。
+     */
+    private Long streamIngressSeq;
+
     public void online() {
         if (this.onlineState != 1) {
             this.onlineChangeTime = new Date();
