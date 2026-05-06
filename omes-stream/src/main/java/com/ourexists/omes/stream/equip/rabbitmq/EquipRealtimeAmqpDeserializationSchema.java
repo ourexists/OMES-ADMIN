@@ -14,11 +14,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public class EquipRealtimeAmqpDeserializationSchema implements DeserializationSchema<EquipRealtime> {
 
     private static final ObjectMapper MAPPER = buildMapper();
+
+    /** 跨并行度子任务全局单调，保证同一 JVM 内入站顺序可比较 */
+    private static final AtomicLong STREAM_INGRESS_SEQ = new AtomicLong();
 
     private static ObjectMapper buildMapper() {
         ObjectMapper mapper = new ObjectMapper()
@@ -37,6 +41,7 @@ public class EquipRealtimeAmqpDeserializationSchema implements DeserializationSc
         try {
             EquipRealtime realtime = MAPPER.readValue(message, EquipRealtime.class);
             normalizeForFlinkSerialization(realtime);
+            realtime.setStreamIngressSeq(STREAM_INGRESS_SEQ.incrementAndGet());
             return realtime;
         } catch (Exception e) {
             log.warn("Drop malformed equip realtime message: {}", new String(message, StandardCharsets.UTF_8), e);
