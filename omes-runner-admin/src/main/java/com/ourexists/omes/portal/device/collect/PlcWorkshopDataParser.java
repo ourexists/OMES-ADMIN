@@ -16,7 +16,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -30,23 +29,12 @@ public class PlcWorkshopDataParser implements WorkshopDataParser {
 
     @Override
     public List<WorkshopRealtime> parse(String gwId, String sourceData) {
-        Map<String, WorkshopRealtime> realtimeMap = workshopRealtimeManager.getAll();
+        List<WorkshopRealtime> realtimeList = workshopRealtimeManager.listByGwId(gwId);
         List<WorkshopRealtime> targets = new ArrayList<>();
         JSONObject jo = JSONObject.parseObject(sourceData);
-        for (WorkshopRealtime realtime : realtimeMap.values()) {
+        for (WorkshopRealtime realtime : realtimeList) {
             WorkshopRealtimeConfig config = realtime.getConfig();
             if (config == null) {
-                continue;
-            }
-            boolean isMatch = false;
-            for (WorkshopRealtimeCollect attr : config.getAttrs()) {
-                if (attr.getGwId().equals(gwId)) {
-                    isMatch = true;
-                    break;
-                }
-            }
-            //采集方式不匹配
-            if (!isMatch) {
                 continue;
             }
             targets.add(doParse(realtime, jo));
