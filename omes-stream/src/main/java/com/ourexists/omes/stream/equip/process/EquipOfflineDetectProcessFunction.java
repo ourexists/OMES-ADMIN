@@ -2,6 +2,7 @@ package com.ourexists.omes.stream.equip.process;
 
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
+import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -22,6 +23,7 @@ import java.util.List;
 public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<String, EquipRealtime, EquipRealtime> {
 
     private final long timeoutMs;
+    private final long stateTtlMinutes;
 
     private transient ValueState<EquipRealtime> latestEventState;
 
@@ -31,19 +33,27 @@ public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<Stri
     /** 最近一次「采纳」的设备数据对应的处理时间，用于判断自上次获取起是否已满 timeoutMs */
     private transient ValueState<Long> lastAcquireProcessingTimeState;
 
-    public EquipOfflineDetectProcessFunction(long timeoutMs) {
+    public EquipOfflineDetectProcessFunction(long timeoutMs, long stateTtlMinutes) {
         if (timeoutMs <= 0L) {
             throw new IllegalArgumentException("offlineTimeoutMs must be positive, was: " + timeoutMs);
         }
+        EquipStreamStateTtl.validateMinutesOption(stateTtlMinutes);
         this.timeoutMs = timeoutMs;
+        this.stateTtlMinutes = stateTtlMinutes;
     }
 
     @Override
     public void open(Configuration parameters) {
-        latestEventState = getRuntimeContext().getState(new ValueStateDescriptor<>("latest-event-state", EquipRealtime.class));
-        timeoutTimerState = getRuntimeContext().getState(new ValueStateDescriptor<>("timeout-timer-state", Long.class));
-        lastAcquireProcessingTimeState =
-                getRuntimeContext().getState(new ValueStateDescriptor<>("offline-last-accepted-processing-time", Long.class));
+        ValueStateDescriptor<EquipRealtime> latestDesc = new ValueStateDescriptor<>("latest-event-state", EquipRealtime.class);
+        EquipStreamStateTtl.enableIfConfigured(latestDesc, stateTtlMinutes);
+        ValueStateDescriptor<Long> timerDesc = new ValueStateDescriptor<>("timeout-timer-state", Long.class);
+        EquipStreamStateTtl.enableIfConfigured(timerDesc, stateTtlMinutes);
+        ValueStateDescriptor<Long> acquireDesc =
+                new ValueStateDescriptor<>("offline-last-accepted-processing-time", Long.class);
+        EquipStreamStateTtl.enableIfConfigured(acquireDesc, stateTtlMinutes);
+        latestEventState = getRuntimeContext().getState(latestDesc);
+        timeoutTimerState = getRuntimeContext().getState(timerDesc);
+        lastAcquireProcessingTimeState = getRuntimeContext().getState(acquireDesc);
     }
 
     @Override
@@ -70,6 +80,7 @@ public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<Stri
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<EquipRealtime> out) throws Exception {
         EquipRealtime latestEvent = latestEventState.value();
         if (latestEvent == null) {
+            ctx.timerService().deleteProcessingTimeTimer(timestamp);
             return;
         }
         long now = ctx.timerService().currentProcessingTime();

@@ -4,6 +4,7 @@ import com.ourexists.omes.device.core.equip.cache.EquipAttrRealtime;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
+import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,15 +30,21 @@ public class EquipAttrFluctuationProcessFunction
 
     private static final double MIN_BASELINE = 1e-6D;
 
+    private final long stateTtlMinutes;
+
     private transient MapState<String, Integer> consecutiveByAttr;
+
+    public EquipAttrFluctuationProcessFunction(long stateTtlMinutes) {
+        EquipStreamStateTtl.validateMinutesOption(stateTtlMinutes);
+        this.stateTtlMinutes = stateTtlMinutes;
+    }
 
     @Override
     public void open(Configuration parameters) {
-        consecutiveByAttr =
-                getRuntimeContext()
-                        .getMapState(
-                                new MapStateDescriptor<>(
-                                        "equip-attr-fluctuation-consecutive-by-attr", String.class, Integer.class));
+        MapStateDescriptor<String, Integer> desc =
+                new MapStateDescriptor<>("equip-attr-fluctuation-consecutive-by-attr", String.class, Integer.class);
+        EquipStreamStateTtl.enableIfConfigured(desc, stateTtlMinutes);
+        consecutiveByAttr = getRuntimeContext().getMapState(desc);
     }
 
     @Override

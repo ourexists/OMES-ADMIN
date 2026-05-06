@@ -4,6 +4,7 @@ import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.model.EquipStateSnapshotDto;
 import com.ourexists.omes.stream.equip.model.EquipStateSnapshotEvent;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
+import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
@@ -13,18 +14,26 @@ import org.apache.flink.util.Collector;
 import java.util.Date;
 
 public class EquipStateSnapshotProcessFunction extends KeyedProcessFunction<String, EquipRealtime, EquipStateSnapshotEvent> {
+
     private final long snapshotIntervalMs;
+    private final long stateTtlMinutes;
     private transient ValueState<EquipRealtime> latestState;
     private transient ValueState<Long> nextSnapshotTimerState;
 
-    public EquipStateSnapshotProcessFunction(long snapshotIntervalMs) {
+    public EquipStateSnapshotProcessFunction(long snapshotIntervalMs, long stateTtlMinutes) {
+        EquipStreamStateTtl.validateMinutesOption(stateTtlMinutes);
         this.snapshotIntervalMs = snapshotIntervalMs;
+        this.stateTtlMinutes = stateTtlMinutes;
     }
 
     @Override
     public void open(Configuration parameters) {
-        latestState = getRuntimeContext().getState(new ValueStateDescriptor<>("snapshot-latest-state", EquipRealtime.class));
-        nextSnapshotTimerState = getRuntimeContext().getState(new ValueStateDescriptor<>("snapshot-next-timer", Long.class));
+        ValueStateDescriptor<EquipRealtime> latestDesc = new ValueStateDescriptor<>("snapshot-latest-state", EquipRealtime.class);
+        EquipStreamStateTtl.enableIfConfigured(latestDesc, stateTtlMinutes);
+        ValueStateDescriptor<Long> timerDesc = new ValueStateDescriptor<>("snapshot-next-timer", Long.class);
+        EquipStreamStateTtl.enableIfConfigured(timerDesc, stateTtlMinutes);
+        latestState = getRuntimeContext().getState(latestDesc);
+        nextSnapshotTimerState = getRuntimeContext().getState(timerDesc);
     }
 
     @Override
@@ -55,6 +64,7 @@ public class EquipStateSnapshotProcessFunction extends KeyedProcessFunction<Stri
     public void onTimer(long timestamp, OnTimerContext ctx, Collector<EquipStateSnapshotEvent> out) throws Exception {
         EquipRealtime latest = latestState.value();
         if (latest == null) {
+            ctx.timerService().deleteProcessingTimeTimer(timestamp);
             nextSnapshotTimerState.clear();
             return;
         }
