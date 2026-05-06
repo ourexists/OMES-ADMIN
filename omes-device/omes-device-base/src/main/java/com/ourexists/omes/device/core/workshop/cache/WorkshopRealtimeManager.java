@@ -28,13 +28,14 @@ public interface WorkshopRealtimeManager {
 
     void remove(String id);
 
-    void removeBatch(List<String> id);
-
     void clear();
 
     Map<String, WorkshopRealtime> getAll();
 
     WorkshopRealtime get(String id);
+
+    /** 按采集网关 ID 返回缓存中的场景实时对象列表；顺序无保证，索引与主缓存不一致时可能少于 Set 成员数 */
+    List<WorkshopRealtime> listByGwId(String gwId);
 
     void reload();
 }
