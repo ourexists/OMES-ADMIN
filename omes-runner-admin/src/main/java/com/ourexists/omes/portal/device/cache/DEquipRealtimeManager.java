@@ -1,9 +1,8 @@
 package com.ourexists.omes.portal.device.cache;
 
 import com.ourexists.era.framework.core.exceptions.BusinessException;
-import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
-import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.omes.device.core.equip.cache.*;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.model.EquipDto;
@@ -38,6 +37,9 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     private RedisCacheValueConverter cacheValueConverter;
 
     private static final String CACHE_NAME = "equip_realtime_";
+
+    /** 单次 reload 拉取条数，避免一次性加载百万设备导致 OOM / Feign 超时 */
+    private static final int RELOAD_PAGE_SIZE = 500;
 
     private Cache tenantCache() {
         String tenantId = UserContext.getTenant().getTenantId();
@@ -92,14 +94,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     }
 
     @Override
-    public void removeBatch(List<String> ids) {
-        Cache cache = tenantCache();
-        Map<String, EquipRealtime> all = getAll(UserContext.getTenant().getTenantId());
-        List<String> sns = all.values().stream().filter(e -> ids.contains(e.getId())).map(EquipRealtime::getSelfCode).collect(Collectors.toList());
-        sns.forEach(cache::evict);
-    }
-
-    @Override
     public void clear() {
         tenantCache().clear();
     }
@@ -130,67 +124,80 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     @Override
     public void reload() {
         UserContext.defaultTenant();
-        EquipPageQuery query = new EquipPageQuery();
-        query.setRequirePage(false);
-        query.setQueryConfig(true);
         try {
-            List<EquipDto> equipDtos = RemoteHandleUtils.getDataFormResponse(equipFeign.selectByPage(query));
-            Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
-            for (EquipDto equipDto : equipDtos) {
-                Map<String, EquipRealtime> r = equipRealtimeMap.get(equipDto.getTenantId());
-                if (r == null) {
-                    r = new HashMap<>();
+            int pageNum = 1;
+            while (true) {
+                EquipPageQuery query = new EquipPageQuery();
+                query.setRequirePage(true);
+                query.setPage(pageNum);
+                query.setPageSize(RELOAD_PAGE_SIZE);
+                query.setQueryConfig(true);
+                JsonResponseEntity<List<EquipDto>> response = equipFeign.selectByPage(query);
+                List<EquipDto> equipDtos = response == null ? null : response.getData();
+                if (CollectionUtils.isEmpty(equipDtos)) {
+                    break;
                 }
-                EquipRealtime equipRealtime = new EquipRealtime();
-                BeanUtils.copyProperties(equipDto, equipRealtime);
+                putReloadBatch(equipDtos);
+                if (equipDtos.size() < RELOAD_PAGE_SIZE) {
+                    break;
+                }
+                pageNum++;
+            }
+        } catch (Exception e) {
+            log.error("reload equip realtime cache failed: {}", e.getMessage(), e);
+        }
+    }
 
-                if (equipDto.getConfig() != null && equipDto.getConfig().getConfig() != null) {
-                    EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();
-                    BeanUtils.copyProperties(equipDto.getConfig().getConfig(), equipRealtimeConfig);
-                    if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getAttrs())) {
-                        List<EquipAttrRealtime> attrs = new ArrayList<>();
-                        equipDto.getConfig().getConfig().getAttrs().forEach(attr -> {
-                            EquipAttrRealtime equipAttrRealtime = new EquipAttrRealtime();
-                            BeanUtils.copyProperties(attr, equipAttrRealtime);
-                            attrs.add(equipAttrRealtime);
-                        });
-                        equipRealtimeConfig.setAttrs(attrs);
-                    }
-                    if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getAlarms())) {
-                        List<EquipAlarmRealtime> alarms = new ArrayList<>();
-                        equipDto.getConfig().getConfig().getAlarms().forEach(alarm -> {
-                            EquipAlarmRealtime equipAlarmRealtime = new EquipAlarmRealtime();
-                            BeanUtils.copyProperties(alarm, equipAlarmRealtime);
-                            alarms.add(equipAlarmRealtime);
-                        });
-                        equipRealtimeConfig.setAlarms(alarms);
-                    }
-                    if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getControls())) {
-                        List<EquipControlRealtime> controls = new ArrayList<>();
-                        equipDto.getConfig().getConfig().getControls().forEach(ctrl -> {
-                            EquipControlRealtime equipControlRealtime = new EquipControlRealtime();
-                            BeanUtils.copyProperties(ctrl, equipControlRealtime);
-                            controls.add(equipControlRealtime);
-                        });
-                        equipRealtimeConfig.setControls(controls);
-                    }
-                    equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
-                    equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
-                    equipRealtime.setEquipControlRealtimes(equipRealtimeConfig.getControls());
-                    Date currentDate = new Date();
-                    equipRealtime.setAlarmChangeTime(currentDate);
-                    equipRealtime.setRunChangeTime(currentDate);
-                    equipRealtime.setOnlineChangeTime(currentDate);
+    private void putReloadBatch(List<EquipDto> equipDtos) {
+        Map<String, Map<String, EquipRealtime>> equipRealtimeMap = new HashMap<>();
+        for (EquipDto equipDto : equipDtos) {
+            Map<String, EquipRealtime> r = equipRealtimeMap.computeIfAbsent(equipDto.getTenantId(), k -> new HashMap<>());
+            EquipRealtime equipRealtime = new EquipRealtime();
+            BeanUtils.copyProperties(equipDto, equipRealtime);
+
+            if (equipDto.getConfig() != null && equipDto.getConfig().getConfig() != null) {
+                EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();
+                BeanUtils.copyProperties(equipDto.getConfig().getConfig(), equipRealtimeConfig);
+                if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getAttrs())) {
+                    List<EquipAttrRealtime> attrs = new ArrayList<>();
+                    equipDto.getConfig().getConfig().getAttrs().forEach(attr -> {
+                        EquipAttrRealtime equipAttrRealtime = new EquipAttrRealtime();
+                        BeanUtils.copyProperties(attr, equipAttrRealtime);
+                        attrs.add(equipAttrRealtime);
+                    });
+                    equipRealtimeConfig.setAttrs(attrs);
                 }
-                r.put(equipDto.getSelfCode(), equipRealtime);
-                equipRealtimeMap.put(equipDto.getTenantId(), r);
+                if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getAlarms())) {
+                    List<EquipAlarmRealtime> alarms = new ArrayList<>();
+                    equipDto.getConfig().getConfig().getAlarms().forEach(alarm -> {
+                        EquipAlarmRealtime equipAlarmRealtime = new EquipAlarmRealtime();
+                        BeanUtils.copyProperties(alarm, equipAlarmRealtime);
+                        alarms.add(equipAlarmRealtime);
+                    });
+                    equipRealtimeConfig.setAlarms(alarms);
+                }
+                if (!CollectionUtils.isEmpty(equipDto.getConfig().getConfig().getControls())) {
+                    List<EquipControlRealtime> controls = new ArrayList<>();
+                    equipDto.getConfig().getConfig().getControls().forEach(ctrl -> {
+                        EquipControlRealtime equipControlRealtime = new EquipControlRealtime();
+                        BeanUtils.copyProperties(ctrl, equipControlRealtime);
+                        controls.add(equipControlRealtime);
+                    });
+                    equipRealtimeConfig.setControls(controls);
+                }
+                equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
+                equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
+                equipRealtime.setEquipControlRealtimes(equipRealtimeConfig.getControls());
+                Date currentDate = new Date();
+                equipRealtime.setAlarmChangeTime(currentDate);
+                equipRealtime.setRunChangeTime(currentDate);
+                equipRealtime.setOnlineChangeTime(currentDate);
             }
-            for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
-                Cache cache = tenantCache(entry.getKey());
-                entry.getValue().forEach(cache::put);
-            }
-        } catch (EraCommonException e) {
-            log.error(e.getMessage(), e);
+            r.put(equipDto.getSelfCode(), equipRealtime);
+        }
+        for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {
+            Cache cache = tenantCache(entry.getKey());
+            entry.getValue().forEach(cache::put);
         }
     }
 }

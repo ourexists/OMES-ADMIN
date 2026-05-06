@@ -92,21 +92,31 @@ public class EquipViewer implements EquipFeign {
                 List<String> ids = r.stream().map(EquipDto::getId).toList();
                 equipConfigs = GwBinding.covert(gwBindingService.queryByEquip(ids));
             }
+            Map<String, WorkshopTreeNode> workshopByCode = null;
+            if (!CollectionUtils.isEmpty(workshopDtos)) {
+                workshopByCode = new HashMap<>(workshopDtos.size() * 4 / 3 + 1);
+                for (WorkshopTreeNode w : workshopDtos) {
+                    workshopByCode.put(w.getSelfCode(), w);
+                }
+            }
+            Map<String, GwBindingDto> configByEquipId = null;
+            if (!CollectionUtils.isEmpty(equipConfigs)) {
+                configByEquipId = new HashMap<>(equipConfigs.size() * 4 / 3 + 1);
+                for (GwBindingDto g : equipConfigs) {
+                    configByEquipId.put(g.getEquipId(), g);
+                }
+            }
             for (EquipDto equipDto : r) {
-                if (!CollectionUtils.isEmpty(workshopDtos)) {
-                    for (WorkshopTreeNode workshopDto : workshopDtos) {
-                        if (equipDto.getWorkshopCode().equals(workshopDto.getSelfCode())) {
-                            equipDto.setWorkshop(workshopDto);
-                            break;
-                        }
+                if (workshopByCode != null && equipDto.getWorkshopCode() != null) {
+                    WorkshopTreeNode workshopNode = workshopByCode.get(equipDto.getWorkshopCode());
+                    if (workshopNode != null) {
+                        equipDto.setWorkshop(workshopNode);
                     }
                 }
-                if (!CollectionUtils.isEmpty(equipConfigs)) {
-                    for (GwBindingDto gwBindingDto : equipConfigs) {
-                        if (gwBindingDto.getEquipId().equals(equipDto.getId())) {
-                            equipDto.setConfig(gwBindingDto);
-                            break;
-                        }
+                if (configByEquipId != null) {
+                    GwBindingDto cfg = configByEquipId.get(equipDto.getId());
+                    if (cfg != null) {
+                        equipDto.setConfig(cfg);
                     }
                 }
                 if (dto.getNeedRealtime()) {

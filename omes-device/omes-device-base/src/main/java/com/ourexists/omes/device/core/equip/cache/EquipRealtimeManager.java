@@ -1,6 +1,5 @@
 package com.ourexists.omes.device.core.equip.cache;
 
-import java.util.List;
 import java.util.Map;
 
 public interface EquipRealtimeManager {
@@ -11,8 +10,6 @@ public interface EquipRealtimeManager {
     void addOrUpdate(EquipRealtime equipRealtime);
 
     void remove(String sn);
-
-    void removeBatch(List<String> ids);
 
     void clear();
 
