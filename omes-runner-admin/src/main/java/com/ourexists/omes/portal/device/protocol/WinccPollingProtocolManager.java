@@ -7,6 +7,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.feign.WorkshopFeign;
@@ -74,7 +75,12 @@ public class WinccPollingProtocolManager extends AbstractRestPollingProtocolMana
     protected void respHandle(ProtocolConnect connect, String payload) {
         Map<String, Object> m = parseWinccResponse(payload);
         String r = JSON.toJSONString(m);
-        equipDataParser.parse(connect.getId(), r);
+        List<EquipRealtime> realtimes = equipDataParser.parse(connect.getId(), r);
+        if (!CollectionUtils.isEmpty(realtimes)) {
+            for (EquipRealtime target : realtimes) {
+                equipRealtimeStreamOutbound.send(target);
+            }
+        }
         workshopDataParser.parse(connect.getId(), r);
     }
 

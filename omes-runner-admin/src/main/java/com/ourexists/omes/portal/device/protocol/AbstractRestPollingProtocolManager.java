@@ -9,6 +9,7 @@ import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.enums.ConnectValidTypeEnum;
 import com.ourexists.omes.portal.device.collect.JSONEquipDataParser;
+import com.ourexists.omes.portal.mq.EquipRealtimeStreamOutbound;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +76,7 @@ public abstract class AbstractRestPollingProtocolManager implements ProtocolMana
     private IdleConnectionEvictor idleConnectionEvictor;
 
     @Autowired
-    private JSONEquipDataParser equipDataParser;
+    protected EquipRealtimeStreamOutbound equipRealtimeStreamOutbound;
 
     @PostConstruct
     public void init() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {

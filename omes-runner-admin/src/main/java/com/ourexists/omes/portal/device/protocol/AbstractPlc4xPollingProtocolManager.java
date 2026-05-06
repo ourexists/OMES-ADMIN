@@ -6,6 +6,7 @@ package com.ourexists.omes.portal.device.protocol;
 import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.EquipFeign;
@@ -13,6 +14,7 @@ import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
 import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
+import com.ourexists.omes.portal.mq.EquipRealtimeStreamOutbound;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.apache.plc4x.java.api.types.PlcResponseCode;
 import org.apache.plc4x.java.utils.cache.CachedPlcConnectionManager;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
@@ -69,17 +72,20 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
     private final PlcWorkshopDataParser workshopDataParser;
     private final int readTimeoutMs;
     private final String threadPrefix;
+    private final EquipRealtimeStreamOutbound equipRealtimeStreamOutbound;
 
     protected AbstractPlc4xPollingProtocolManager(EquipFeign equipFeign,
                                                   WorkshopFeign workshopFeign,
                                                   PlcEquipDataParser equipDataParser,
                                                   PlcWorkshopDataParser workshopDataParser,
+                                                  EquipRealtimeStreamOutbound equipRealtimeStreamOutbound,
                                                   int readTimeoutMs,
                                                   String threadPrefix) {
         this.equipFeign = equipFeign;
         this.workshopFeign = workshopFeign;
         this.equipDataParser = equipDataParser;
         this.workshopDataParser = workshopDataParser;
+        this.equipRealtimeStreamOutbound = equipRealtimeStreamOutbound;
         this.readTimeoutMs = readTimeoutMs;
         this.threadPrefix = threadPrefix;
         this.connectionManager = CachedPlcConnectionManager.getBuilder()
@@ -171,7 +177,12 @@ public abstract class AbstractPlc4xPollingProtocolManager implements ProtocolMan
                 try {
                     String payload = doRead(connectId, spec);
                     if (StringUtils.hasText(payload)) {
-                        equipDataParser.parse(connectId, payload);
+                        List<EquipRealtime> realtimes = equipDataParser.parse(connectId, payload);
+                        if (!CollectionUtils.isEmpty(realtimes)) {
+                            for (EquipRealtime target : realtimes) {
+                                equipRealtimeStreamOutbound.send(target);
+                            }
+                        }
                         workshopDataParser.parse(connectId, payload);
                     }
                 } catch (Exception e) {
