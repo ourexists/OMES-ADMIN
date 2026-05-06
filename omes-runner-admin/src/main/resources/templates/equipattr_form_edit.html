@@ -313,14 +313,6 @@
             </div>
             <div class="map-examples-content" id="map-examples-content"></div>
         </div>
-        <div class="layui-form-item" id="deviceIdMap-wrap" style="display: none;">
-            <label class="layui-form-label" lang-i18n="equip.deviceIdMap">SN号映射</label>
-            <div class="layui-input-block">
-                <input type="text" name="deviceIdMap" id="input-deviceIdMap" placeholder="如：deviceId"
-                       autocomplete="off"
-                       class="layui-input">
-            </div>
-        </div>
         <div class="layui-form-item">
             <label class="layui-form-label" lang-i18n="equip.runMap">运行映射</label>
             <div class="layui-input-block">
@@ -494,7 +486,6 @@
             $('#gateway-placeholder').show().text(i18np.prop('gateway.pleaseSelect') || '请选择网关');
             $('#selected-gateway-card').hide().empty();
             $('#control-config-box').hide();
-            $('#deviceIdMap-wrap').hide();
             renderMapExamples(null);
             return;
         }
@@ -515,8 +506,6 @@
         } else {
             $('#control-config-box').hide();
         }
-        var showDeviceIdMap = (protocolNormalized === 'mqtt' || protocolNormalized === 'tcmqtt');
-        $('#deviceIdMap-wrap').toggle(showDeviceIdMap);
         renderMapExamples(d.protocol);
     }
 
@@ -570,10 +559,22 @@
                 value: {value: "defaultValue", comment: i18np.prop("equipattr.value") || "属性默认值"},
                 unit: {value: "ml", comment: i18np.prop("equipattr.unit") || "单位"},
                 needCollect: {value: true, comment: i18np.prop("equipattr.needCollect") || "是否采集"},
-                fluctuationEnabled: {value: true, comment: i18np.prop("equipattr.fluctuationEnabled") + "(" + i18np.prop("common.optional") + ")"},
-                fluctuationThresholdRatio: {value: 0.5, comment: i18np.prop("equipattr.fluctuationThresholdRatio") + "(" + i18np.prop("common.optional") + ")"},
-                fluctuationMinDelta: {value: 0.0, comment: i18np.prop("equipattr.fluctuationMinDelta") + "(" + i18np.prop("common.optional") + ")"},
-                fluctuationConsecutiveWindows: {value: 1, comment: i18np.prop("equipattr.fluctuationConsecutiveWindows") + "(" + i18np.prop("common.optional") + ")"}
+                fluctuationEnabled: {
+                    value: true,
+                    comment: i18np.prop("equipattr.fluctuationEnabled") + "(" + i18np.prop("common.optional") + ")"
+                },
+                fluctuationThresholdRatio: {
+                    value: 0.5,
+                    comment: i18np.prop("equipattr.fluctuationThresholdRatio") + "(" + i18np.prop("common.optional") + ")"
+                },
+                fluctuationMinDelta: {
+                    value: 0.0,
+                    comment: i18np.prop("equipattr.fluctuationMinDelta") + "(" + i18np.prop("common.optional") + ")"
+                },
+                fluctuationConsecutiveWindows: {
+                    value: 1,
+                    comment: i18np.prop("equipattr.fluctuationConsecutiveWindows") + "(" + i18np.prop("common.optional") + ")"
+                }
             }
         ];
         var alarmTemplateForComment = [
@@ -1040,13 +1041,11 @@
         function fillFormFromConfig(loadedConfig) {
             if (!loadedConfig || typeof loadedConfig !== 'object') return;
             var alarms = loadedConfig.alarms;
-            var deviceIdMap = loadedConfig.deviceIdMap;
             var rm = loadedConfig.runMap;
             var attrs = loadedConfig.attrs;
             var controls = loadedConfig.controls;
             var gwId = loadedConfig.gwId;
 
-            $('#input-deviceIdMap').val(typeof deviceIdMap === 'object' && deviceIdMap && deviceIdMap.value != null ? deviceIdMap.value : (deviceIdMap || ''));
             $('#input-runMap').val(typeof rm === 'object' && rm && rm.value != null ? rm.value : (rm || ''));
             $('#json-input').val(JSON.stringify(attrs != null ? attrs : [], null, 4));
             $('#json-alarm-input').val(JSON.stringify(alarms != null ? alarms : [], null, 4));
@@ -1082,7 +1081,6 @@
 
         function getCurrentConfigJSON() {
             var config = {
-                deviceIdMap: ($('#input-deviceIdMap').val() || '').trim(),
                 runMap: ($('#input-runMap').val() || '').trim(),
                 attrs: getAttrsFromForm(),
                 alarms: getAlarmsFromForm(),
@@ -1210,7 +1208,6 @@
             configJSON.attrs = getAttrsFromForm();
             configJSON.alarms = getAlarmsFromForm();
             configJSON.controls = getControlsFromForm();
-            configJSON.deviceIdMap = ($("#input-deviceIdMap").val() || "").trim();
             configJSON.runMap = ($("#input-runMap").val() || "").trim();
             post(router.equip_setConfig, {
                 "equipId": id,

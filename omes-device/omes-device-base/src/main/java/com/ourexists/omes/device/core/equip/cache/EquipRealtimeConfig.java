@@ -13,8 +13,6 @@ public class EquipRealtimeConfig {
 
     private String gwId;
 
-    private String deviceIdMap;
-
     private String runMap;
 
     private List<EquipAttrRealtime> attrs;
