@@ -3,6 +3,10 @@ server:
   servlet:
     context-path: /
 spring:
+  autoconfigure:
+    exclude:
+      # 由 RedissonClientConfiguration 基于 RedisConnectionFactory 创建，与 RedisTemplate 同源
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
   rabbitmq:
     host: ${RABBITMQ_HOST:127.0.0.1}
     port: ${RABBITMQ_PORT:5672}
