@@ -9,6 +9,7 @@ import com.github.s7connector.api.S7Connector;
 import com.github.s7connector.api.factory.S7ConnectorFactory;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.EquipFeign;
@@ -18,12 +19,15 @@ import com.ourexists.omes.portal.device.collect.EquipDataParser;
 import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
 import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
 import com.ourexists.omes.portal.device.collect.WorkshopDataParser;
+import com.ourexists.omes.portal.mq.EquipRealtimeStreamOutbound;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.nio.ByteBuffer;
@@ -102,15 +106,18 @@ public class S7PollingProtocolManager implements ProtocolManager {
     private final WorkshopFeign workshopFeign;
     private final EquipDataParser equipDataParser;
     private final WorkshopDataParser workshopDataParser;
+    private final EquipRealtimeStreamOutbound equipRealtimeStreamOutbound;
 
     public S7PollingProtocolManager(EquipFeign equipFeign,
                                     WorkshopFeign workshopFeign,
                                     PlcEquipDataParser equipDataParser,
-                                    PlcWorkshopDataParser workshopDataParser) {
+                                    PlcWorkshopDataParser workshopDataParser,
+                                    EquipRealtimeStreamOutbound equipRealtimeStreamOutbound) {
         this.equipFeign = equipFeign;
         this.workshopFeign = workshopFeign;
         this.equipDataParser = equipDataParser;
         this.workshopDataParser = workshopDataParser;
+        this.equipRealtimeStreamOutbound = equipRealtimeStreamOutbound;
     }
 
     @Override
@@ -188,7 +195,12 @@ public class S7PollingProtocolManager implements ProtocolManager {
                 try {
                     String payload = doRead(connectId, config, tags);
                     if (StringUtils.hasText(payload)) {
-                        equipDataParser.parse(connectId, payload);
+                        List<EquipRealtime> realtimes =  equipDataParser.parse(connectId, payload);
+                        if (!CollectionUtils.isEmpty(realtimes)) {
+                            for (EquipRealtime target : realtimes) {
+                                equipRealtimeStreamOutbound.send(target);
+                            }
+                        }
                         workshopDataParser.parse(connectId, payload);
                     }
                 } catch (Exception e) {

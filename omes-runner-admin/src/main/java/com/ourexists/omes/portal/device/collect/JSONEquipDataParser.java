@@ -119,7 +119,7 @@ public class JSONEquipDataParser implements EquipDataParser {
             int bracket = part.indexOf('[');
             if (bracket >= 0) {
                 String key = bracket == 0 ? "" : part.substring(0, bracket);
-                if (key.length() > 0) current = getDirect(current, key);
+                if (!key.isEmpty()) current = getDirect(current, key);
                 int end = part.indexOf(']', bracket);
                 while (bracket >= 0 && end >= 0) {
                     try {

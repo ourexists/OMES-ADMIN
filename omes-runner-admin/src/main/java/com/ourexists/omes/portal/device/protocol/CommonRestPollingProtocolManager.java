@@ -3,12 +3,16 @@
  */
 package com.ourexists.omes.portal.device.protocol;
 
+import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.portal.device.collect.JSONEquipDataParser;
 import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 /**
  * REST 定时轮询协议管理器：
@@ -42,7 +46,12 @@ public class CommonRestPollingProtocolManager extends AbstractRestPollingProtoco
 
     @Override
     protected void respHandle(ProtocolConnect connect, String payload) {
-        equipDataParser.parse(connect.getId(), payload);
+        List<EquipRealtime> realtimes = equipDataParser.parse(connect.getId(), payload);
+        if (!CollectionUtils.isEmpty(realtimes)) {
+            for (EquipRealtime target : realtimes) {
+                equipRealtimeStreamOutbound.send(target);
+            }
+        }
         dataParser.parse(connect.getId(), payload);
     }
 

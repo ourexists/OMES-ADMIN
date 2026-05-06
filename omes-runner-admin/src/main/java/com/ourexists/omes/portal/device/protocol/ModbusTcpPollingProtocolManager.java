@@ -9,6 +9,7 @@ import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
 import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
+import com.ourexists.omes.portal.mq.EquipRealtimeStreamOutbound;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.plc4x.java.api.PlcConnection;
 import org.apache.plc4x.java.api.messages.PlcReadRequest;
@@ -18,11 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,8 +59,9 @@ public class ModbusTcpPollingProtocolManager extends AbstractPlc4xPollingProtoco
     public ModbusTcpPollingProtocolManager(EquipFeign equipFeign,
                                            WorkshopFeign workshopFeign,
                                            PlcEquipDataParser equipDataParser,
-                                           PlcWorkshopDataParser workshopDataParser) {
-        super(equipFeign, workshopFeign, equipDataParser, workshopDataParser, READ_TIMEOUT_MS, "modbus-polling-");
+                                           PlcWorkshopDataParser workshopDataParser,
+                                           EquipRealtimeStreamOutbound equipRealtimeStreamOutbound) {
+        super(equipFeign, workshopFeign, equipDataParser, workshopDataParser, equipRealtimeStreamOutbound, READ_TIMEOUT_MS, "modbus-polling-");
     }
 
     @Override

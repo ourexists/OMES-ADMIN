@@ -9,6 +9,7 @@ import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.feign.WorkshopFeign;
 import com.ourexists.omes.portal.device.collect.PlcEquipDataParser;
 import com.ourexists.omes.portal.device.collect.PlcWorkshopDataParser;
+import com.ourexists.omes.portal.mq.EquipRealtimeStreamOutbound;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -44,8 +45,9 @@ public class OPCUaPollingProtocolManager extends AbstractPlc4xPollingProtocolMan
     public OPCUaPollingProtocolManager(EquipFeign equipFeign,
                                        WorkshopFeign workshopFeign,
                                        PlcEquipDataParser equipDataParser,
-                                       PlcWorkshopDataParser workshopDataParser) {
-        super(equipFeign, workshopFeign, equipDataParser, workshopDataParser, READ_TIMEOUT_MS, "opcua-polling-");
+                                       PlcWorkshopDataParser workshopDataParser,
+                                       EquipRealtimeStreamOutbound equipRealtimeStreamOutbound) {
+        super(equipFeign, workshopFeign, equipDataParser, workshopDataParser, equipRealtimeStreamOutbound, READ_TIMEOUT_MS, "opcua-polling-");
     }
 
     @Override
