@@ -794,10 +794,10 @@
             var maxCell = '<td><input type="text" class="layui-input alarm-max" value="' + maxStr + '" placeholder="上限"' + (!isRange ? ' style="visibility:hidden;height:0;padding:0;border:0;"' : '') + '></td>';
             var row = '<tr data-type="' + type + '">' +
                 '<td><input type="text" class="layui-input alarm-map" value="' + mapStr + '"></td>' +
-                '<td><select class="alarm-type" lay-filter="alarm-type-select">' + opts + '</select></td>' +
+                '<td><select class="alarm-type" lay-filter="alarm-type-select" lay-append-to="body">' + opts + '</select></td>' +
                 valCell + minCell + maxCell +
                 '<td><input type="text" class="layui-input alarm-text" value="' + textStr + '"></td>' +
-                '<td><select class="alarm-level" lay-filter="alarm-level-select">' + levelOpts + '</select></td>' +
+                '<td><select class="alarm-level" lay-filter="alarm-level-select" lay-append-to="body">' + levelOpts + '</select></td>' +
                 '<td class="col-op"><button type="button" class="layui-btn layui-btn-xs layui-btn-danger btn-remove-alarm">' + (i18np.prop('common.delete') || '删除') + '</button></td></tr>';
             $('#alarm-tbody').append(row);
             form.render('select');
@@ -944,7 +944,7 @@
             var row = '<tr data-ctrl-type="' + type + '" data-ctrl-map="' + mapStr + '">' +
                 '<td><input type="text" class="layui-input ctrl-name" value="' + nameStr + '"></td>' +
                 '<td><input type="text" class="layui-input ctrl-map" value="' + mapStr + '"></td>' +
-                '<td><select class="ctrl-type" lay-filter="ctrl-type-select">' + opts + '</select></td>' +
+                '<td><select class="ctrl-type" lay-filter="ctrl-type-select" lay-append-to="body">' + opts + '</select></td>' +
                 '<td><input type="text" class="layui-input ctrl-unit" value="' + unitStr + '"' + (!isAnalog ? hideStyle : '') + '></td>' +
                 '<td><input type="text" class="layui-input ctrl-min" value="' + minStr + '" placeholder="最小值"' + (!isAnalog ? hideStyle : '') + '></td>' +
                 '<td><input type="text" class="layui-input ctrl-max" value="' + maxStr + '" placeholder="最大值"' + (!isAnalog ? hideStyle : '') + '></td>' +
