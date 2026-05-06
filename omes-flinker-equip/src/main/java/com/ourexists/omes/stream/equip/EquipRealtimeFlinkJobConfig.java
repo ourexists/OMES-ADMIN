@@ -31,6 +31,8 @@ public final class EquipRealtimeFlinkJobConfig {
     private final long stateTtlMinutesAttrFluctuation;
     private final long stateTtlMinutesStateSnapshot;
     private final long stateTtlMinutesCollectSnapshot;
+    /** Keyed state TTL for alarm-notify dedupe; {@code -1} disables expiry. */
+    private final long stateTtlMinutesAlarmNotifyDedupe;
 
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
@@ -52,7 +54,8 @@ public final class EquipRealtimeFlinkJobConfig {
             long stateTtlMinutesChangeDetect,
             long stateTtlMinutesAttrFluctuation,
             long stateTtlMinutesStateSnapshot,
-            long stateTtlMinutesCollectSnapshot) {
+            long stateTtlMinutesCollectSnapshot,
+            long stateTtlMinutesAlarmNotifyDedupe) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
         this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
@@ -73,6 +76,7 @@ public final class EquipRealtimeFlinkJobConfig {
         this.stateTtlMinutesAttrFluctuation = stateTtlMinutesAttrFluctuation;
         this.stateTtlMinutesStateSnapshot = stateTtlMinutesStateSnapshot;
         this.stateTtlMinutesCollectSnapshot = stateTtlMinutesCollectSnapshot;
+        this.stateTtlMinutesAlarmNotifyDedupe = stateTtlMinutesAlarmNotifyDedupe;
     }
 
     public String equipRealtimeRabbitQueue() {
@@ -153,5 +157,9 @@ public final class EquipRealtimeFlinkJobConfig {
 
     public long stateTtlMinutesCollectSnapshot() {
         return stateTtlMinutesCollectSnapshot;
+    }
+
+    public long stateTtlMinutesAlarmNotifyDedupe() {
+        return stateTtlMinutesAlarmNotifyDedupe;
     }
 }

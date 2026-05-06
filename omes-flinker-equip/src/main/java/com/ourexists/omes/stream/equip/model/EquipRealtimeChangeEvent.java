@@ -83,4 +83,23 @@ public class EquipRealtimeChangeEvent {
     public String getOnlineSegmentEventId() {
         return onlineSegmentEventId;
     }
+
+    /**
+     * Same source/target and run/online segment metadata, but strips alarm persistence so the persist bridge will not
+     * emit an {@code alarm} payload (used when alarm fingerprint matches an already-persisted segment).
+     */
+    public EquipRealtimeChangeEvent withoutAlarmPersistence() {
+        return new EquipRealtimeChangeEvent(
+                source,
+                target,
+                false,
+                runChanged,
+                onlineChanged,
+                null,
+                null,
+                runPrevSegmentEventId,
+                runSegmentEventId,
+                onlinePrevSegmentEventId,
+                onlineSegmentEventId);
+    }
 }

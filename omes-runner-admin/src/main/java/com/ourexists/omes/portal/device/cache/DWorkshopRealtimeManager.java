@@ -22,9 +22,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -121,34 +119,6 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         return springCache;
     }
 
-    private Map<String, WorkshopRealtime> getAllByTenant(String tenantId) {
-        Cache cache = cacheManager.getCache(workshopRedisCacheName(tenantId));
-        if (cache == null) {
-            return new HashMap<>();
-        }
-        String name = workshopRedisCacheName(tenantId);
-        String prefix = name + "::";
-        String pattern = name + "::*";
-        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(500).build();
-        Map<String, WorkshopRealtime> result = new HashMap<>();
-        try (Cursor<String> cursor = stringRedisTemplate.scan(options)) {
-            while (cursor.hasNext()) {
-                String redisKey = cursor.next();
-                if (!redisKey.startsWith(prefix)) {
-                    continue;
-                }
-                String cacheKey = redisKey.substring(prefix.length());
-                Cache.ValueWrapper valueWrapper = cache.get(cacheKey);
-                WorkshopRealtime workshopRealtime =
-                        valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), WorkshopRealtime.class);
-                if (workshopRealtime != null) {
-                    result.put(cacheKey, workshopRealtime);
-                }
-            }
-        }
-        return result;
-    }
-
     @Override
     public void realtimeHandle(List<WorkshopRealtime> targets) {
         withWorkshopDataSyncMutation(() -> {
@@ -164,6 +134,9 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
                 Set<String> oldGws = collectGwIds(source);
                 source.setAttrsRealtime(target.getAttrsRealtime());
                 source.setTime(new Date());
+                if (StringUtils.hasText(tenantId)) {
+                    source.setTenantId(tenantId);
+                }
                 Set<String> newGws = collectGwIds(source);
                 luaUpsertWorkshop(tenantId, source, oldGws, newGws);
             }
@@ -191,6 +164,9 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
                 if (realtime.getConfig() != null && realtime.getConfig().getAttrs() != null) {
                     realtime.setAttrsRealtime(realtime.getConfig().getAttrs());
                 }
+            }
+            if (!StringUtils.hasText(realtime.getTenantId())) {
+                realtime.setTenantId(tenantId);
             }
             Cache.ValueWrapper oldW = cache.get(realtime.getId());
             WorkshopRealtime old =
@@ -230,10 +206,6 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
         });
     }
 
-    @Override
-    public Map<String, WorkshopRealtime> getAll() {
-        return getAllByTenant(UserContext.getTenant().getTenantId());
-    }
 
     @Override
     public WorkshopRealtime get(String id) {
@@ -306,6 +278,7 @@ public class DWorkshopRealtimeManager implements WorkshopRealtimeManager {
                 }
                 WorkshopRealtime workshopRealtime = new WorkshopRealtime();
                 workshopRealtime.setId(dto.getWorkshopId());
+                workshopRealtime.setTenantId(tenantId);
                 WorkshopRealtimeConfig configRealtime = new WorkshopRealtimeConfig();
                 BeanUtils.copyProperties(config, configRealtime);
                 List<WorkshopRealtimeCollect> attrs = toRealtimeCollectList(config);

@@ -19,6 +19,7 @@ import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
@@ -129,18 +130,34 @@ public final class EquipRealtimeFlinkGraph {
                 .process(new EquipCollectSnapshotProcessFunction(cfg.snapshotIntervalMs(), cfg.stateTtlMinutesCollectSnapshot()))
                 .name("equip-collect-snapshot-timed");
 
-        changeStream
+        DataStream<EquipRealtimeChangeEvent> changeStreamValid = changeStream
+                .filter(
+                        e -> e != null
+                                && e.getTarget() != null
+                                && StringUtils.isNotBlank(e.getTarget().getSelfCode()))
+                .name("equip-change-stream-valid");
+        DataStream<EquipRealtimeChangeEvent> fluctuationValid = fluctuationChangeStream
+                .filter(
+                        e -> e != null
+                                && e.getTarget() != null
+                                && StringUtils.isNotBlank(e.getTarget().getSelfCode()))
+                .name("equip-fluctuation-stream-valid");
+        SingleOutputStreamOperator<EquipRealtimeChangeEvent> changeAlarmDeduped = changeStreamValid
+                .keyBy(e -> e.getTarget().getSelfCode())
+                .process(new EquipAlarmChangeDedupeProcessFunction(cfg.stateTtlMinutesAlarmNotifyDedupe()))
+                .name("equip-alarm-fingerprint-dedupe");
+        changeAlarmDeduped
                 .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
-                .name("equip-realtime-change-persist-bridge-rmq-sink");
-        changeStream
+                .name("equip-persist-alarm-dedupe-bridge-rmq-sink");
+        changeAlarmDeduped
                 .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
-                .name("equip-realtime-alarm-notify-sink");
-        fluctuationChangeStream
+                .name("equip-alarm-notify-sink");
+        fluctuationValid
                 .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
                 .name("equip-attr-fluctuation-persist-bridge-rmq-sink");
-        fluctuationChangeStream
+        fluctuationValid
                 .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
-                .name("equip-attr-fluctuation-alarm-notify-sink");
+                .name("equip-attr-fluctuation-notify-sink");
         snapshotStream
                 .addSink(new EquipStateSnapshotBridgeSink(rmq, cfg.equipStreamPersistStateQueue()))
                 .name("equip-realtime-snapshot-persist-bridge-rmq-sink");

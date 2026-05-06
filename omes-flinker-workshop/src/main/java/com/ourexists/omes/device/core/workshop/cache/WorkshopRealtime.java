@@ -20,11 +20,7 @@ public class WorkshopRealtime {
 
     private Date time;
 
-    /** 租户（门户缓存与流式出站 JSON 携带，供下游按租户入库）。 */
     private String tenantId;
 
-    /**
-     * 进入 Flink 作业时的单调序号（反序列化时赋值）；{@code time} 相同或为空时用于比较先后。
-     */
     private Long streamIngressSeq;
 }
