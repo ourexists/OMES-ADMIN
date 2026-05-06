@@ -7,14 +7,30 @@ public final class EquipRealtimeFlinkJobConfig {
     private final String equipStreamPersistChangeQueue;
     private final String equipStreamPersistStateQueue;
     private final String equipStreamPersistCollectQueue;
-    private final long flinkRmqCheckpointIntervalMs;
+    private final long flinkCheckpointIntervalMs;
     private final boolean flinkEnableCheckpointing;
     private final long flinkCheckpointTimeoutMs;
+    /** When true, disables barrier alignment blocking under load (saves checkpoint latency during backpressure). */
+    private final boolean flinkUnalignedCheckpoint;
+    /**
+     * When positive and {@link #flinkUnalignedCheckpoint} is true: try aligned barriers first, then switch to unaligned
+     * after this duration (reduces alignment stalls under backpressure; cheaper checkpoints when the pipeline is idle).
+     */
+    private final long flinkAlignedCheckpointTimeoutMs;
     private final int flinkRmqPrefetch;
     private final long offlineTimeoutMs;
     private final long snapshotIntervalMs;
     private final long attrFluctuationWindowMs;
     private final long attrFluctuationSlideMs;
+    /**
+     * Keyed state idle TTL in minutes per operator; {@code -1} means disable Flink State TTL (default). Positive enables
+     * expiry.
+     */
+    private final long stateTtlMinutesOfflineDetect;
+    private final long stateTtlMinutesChangeDetect;
+    private final long stateTtlMinutesAttrFluctuation;
+    private final long stateTtlMinutesStateSnapshot;
+    private final long stateTtlMinutesCollectSnapshot;
 
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
@@ -22,27 +38,41 @@ public final class EquipRealtimeFlinkJobConfig {
             String equipStreamPersistChangeQueue,
             String equipStreamPersistStateQueue,
             String equipStreamPersistCollectQueue,
-            long flinkRmqCheckpointIntervalMs,
+            long flinkCheckpointIntervalMs,
             boolean flinkEnableCheckpointing,
             long flinkCheckpointTimeoutMs,
+            boolean flinkUnalignedCheckpoint,
+            long flinkAlignedCheckpointTimeoutMs,
             int flinkRmqPrefetch,
             long offlineTimeoutMs,
             long snapshotIntervalMs,
             long attrFluctuationWindowMs,
-            long attrFluctuationSlideMs) {
+            long attrFluctuationSlideMs,
+            long stateTtlMinutesOfflineDetect,
+            long stateTtlMinutesChangeDetect,
+            long stateTtlMinutesAttrFluctuation,
+            long stateTtlMinutesStateSnapshot,
+            long stateTtlMinutesCollectSnapshot) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
         this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
         this.equipStreamPersistStateQueue = equipStreamPersistStateQueue;
         this.equipStreamPersistCollectQueue = equipStreamPersistCollectQueue;
-        this.flinkRmqCheckpointIntervalMs = flinkRmqCheckpointIntervalMs;
+        this.flinkCheckpointIntervalMs = flinkCheckpointIntervalMs;
         this.flinkEnableCheckpointing = flinkEnableCheckpointing;
         this.flinkCheckpointTimeoutMs = flinkCheckpointTimeoutMs;
+        this.flinkUnalignedCheckpoint = flinkUnalignedCheckpoint;
+        this.flinkAlignedCheckpointTimeoutMs = flinkAlignedCheckpointTimeoutMs;
         this.flinkRmqPrefetch = flinkRmqPrefetch;
         this.offlineTimeoutMs = offlineTimeoutMs;
         this.snapshotIntervalMs = snapshotIntervalMs;
         this.attrFluctuationWindowMs = attrFluctuationWindowMs;
         this.attrFluctuationSlideMs = attrFluctuationSlideMs;
+        this.stateTtlMinutesOfflineDetect = stateTtlMinutesOfflineDetect;
+        this.stateTtlMinutesChangeDetect = stateTtlMinutesChangeDetect;
+        this.stateTtlMinutesAttrFluctuation = stateTtlMinutesAttrFluctuation;
+        this.stateTtlMinutesStateSnapshot = stateTtlMinutesStateSnapshot;
+        this.stateTtlMinutesCollectSnapshot = stateTtlMinutesCollectSnapshot;
     }
 
     public String equipRealtimeRabbitQueue() {
@@ -65,8 +95,8 @@ public final class EquipRealtimeFlinkJobConfig {
         return equipStreamPersistCollectQueue;
     }
 
-    public long flinkRmqCheckpointIntervalMs() {
-        return flinkRmqCheckpointIntervalMs;
+    public long flinkCheckpointIntervalMs() {
+        return flinkCheckpointIntervalMs;
     }
 
     public boolean flinkEnableCheckpointing() {
@@ -75,6 +105,14 @@ public final class EquipRealtimeFlinkJobConfig {
 
     public long flinkCheckpointTimeoutMs() {
         return flinkCheckpointTimeoutMs;
+    }
+
+    public boolean flinkUnalignedCheckpoint() {
+        return flinkUnalignedCheckpoint;
+    }
+
+    public long flinkAlignedCheckpointTimeoutMs() {
+        return flinkAlignedCheckpointTimeoutMs;
     }
 
     public int flinkRmqPrefetch() {
@@ -95,5 +133,25 @@ public final class EquipRealtimeFlinkJobConfig {
 
     public long attrFluctuationSlideMs() {
         return attrFluctuationSlideMs;
+    }
+
+    public long stateTtlMinutesOfflineDetect() {
+        return stateTtlMinutesOfflineDetect;
+    }
+
+    public long stateTtlMinutesChangeDetect() {
+        return stateTtlMinutesChangeDetect;
+    }
+
+    public long stateTtlMinutesAttrFluctuation() {
+        return stateTtlMinutesAttrFluctuation;
+    }
+
+    public long stateTtlMinutesStateSnapshot() {
+        return stateTtlMinutesStateSnapshot;
+    }
+
+    public long stateTtlMinutesCollectSnapshot() {
+        return stateTtlMinutesCollectSnapshot;
     }
 }

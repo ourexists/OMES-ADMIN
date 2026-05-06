@@ -3,6 +3,7 @@ package com.ourexists.omes.stream.equip.process;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
+import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
@@ -13,20 +14,37 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class EquipRealtimeChangeDetectProcessFunction extends KeyedProcessFunction<String, EquipRealtime, EquipRealtimeChangeEvent> {
+
+    private final long stateTtlMinutes;
+
     private transient ValueState<EquipRealtime> previousState;
     private transient ValueState<String> openAlarmSegmentEventIdState;
     private transient ValueState<String> openRunSegmentEventIdState;
     private transient ValueState<String> openOnlineSegmentEventIdState;
 
+    public EquipRealtimeChangeDetectProcessFunction(long stateTtlMinutes) {
+        EquipStreamStateTtl.validateMinutesOption(stateTtlMinutes);
+        this.stateTtlMinutes = stateTtlMinutes;
+    }
+
     @Override
     public void open(Configuration parameters) {
-        previousState = getRuntimeContext().getState(new ValueStateDescriptor<>("equip-realtime-change-previous-state", EquipRealtime.class));
-        openAlarmSegmentEventIdState =
-                getRuntimeContext().getState(new ValueStateDescriptor<>("equip-realtime-open-alarm-segment-event-id", String.class));
-        openRunSegmentEventIdState =
-                getRuntimeContext().getState(new ValueStateDescriptor<>("equip-realtime-open-run-segment-event-id", String.class));
-        openOnlineSegmentEventIdState =
-                getRuntimeContext().getState(new ValueStateDescriptor<>("equip-realtime-open-online-segment-event-id", String.class));
+        ValueStateDescriptor<EquipRealtime> prevDesc =
+                new ValueStateDescriptor<>("equip-realtime-change-previous-state", EquipRealtime.class);
+        EquipStreamStateTtl.enableIfConfigured(prevDesc, stateTtlMinutes);
+        ValueStateDescriptor<String> alarmIdDesc =
+                new ValueStateDescriptor<>("equip-realtime-open-alarm-segment-event-id", String.class);
+        EquipStreamStateTtl.enableIfConfigured(alarmIdDesc, stateTtlMinutes);
+        ValueStateDescriptor<String> runIdDesc =
+                new ValueStateDescriptor<>("equip-realtime-open-run-segment-event-id", String.class);
+        EquipStreamStateTtl.enableIfConfigured(runIdDesc, stateTtlMinutes);
+        ValueStateDescriptor<String> onlineIdDesc =
+                new ValueStateDescriptor<>("equip-realtime-open-online-segment-event-id", String.class);
+        EquipStreamStateTtl.enableIfConfigured(onlineIdDesc, stateTtlMinutes);
+        previousState = getRuntimeContext().getState(prevDesc);
+        openAlarmSegmentEventIdState = getRuntimeContext().getState(alarmIdDesc);
+        openRunSegmentEventIdState = getRuntimeContext().getState(runIdDesc);
+        openOnlineSegmentEventIdState = getRuntimeContext().getState(onlineIdDesc);
     }
 
     @Override

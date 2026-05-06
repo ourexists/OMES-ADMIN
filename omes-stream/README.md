@@ -65,21 +65,27 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 | `OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE` | 状态周期快照桥接队列 |
 | `OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE` | 采集周期快照桥接队列 |
 | `OMES_FLINK_ENABLE_CHECKPOINTING` | 是否开启 checkpoint（`true`/`false`） |
-| `OMES_FLINK_RMQ_CHECKPOINT_MS` / `OMES_FLINK_CHECKPOINT_INTERVAL_MS` | checkpoint 间隔（毫秒） |
+| `OMES_FLINK_CHECKPOINT_MS` | checkpoint 间隔（毫秒） |
 | `OMES_FLINK_CHECKPOINT_TIMEOUT_MS` | checkpoint 超时（毫秒） |
+| `OMES_FLINK_UNALIGNED_CHECKPOINT` | 非对齐 checkpoint（减轻 barrier 对齐在背压下的阻塞；默认 `true`） |
+| `OMES_FLINK_ALIGNED_CHECKPOINT_TIMEOUT_MS` | 先尝试对齐 barrier，超过该时间（毫秒）后切到非对齐；`0` 表示不设（默认 `30000`） |
 | `OMES_FLINK_RMQ_PREFETCH` | RMQ prefetch |
-| `OMES_FLINK_PARALLELISM` | 默认并行度 |
+| `OMES_FLINK_STATE_TTL_MINUTES_OFFLINE_DETECT` | 离线检测算子 keyed state：`-1` 不启用 TTL（默认），正整数为空闲保留 **分钟** |
+| `OMES_FLINK_STATE_TTL_MINUTES_CHANGE_DETECT` | 变更检测算子（同上） |
+| `OMES_FLINK_STATE_TTL_MINUTES_ATTR_FLUCTUATION` | 属性波动 MapState（同上） |
+| `OMES_FLINK_STATE_TTL_MINUTES_STATE_SNAPSHOT` | 状态周期快照算子（同上） |
+| `OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT` | 采集周期快照算子（同上） |
 
-亦支持点分键名传参，例如：`omes.device.flink.enable-checkpointing`。
+亦支持点分键名传参，例如：`omes.device.flink.enable-checkpointing`、`omes.device.flink.state-ttl-minutes.change-detect`。
 
 ### 业务参数
 
-| 变量 | 说明 |
-|------|------|
-| `OMES_EQUIP_OFFLINE_TIMEOUT_MS` | 离线判定：无新设备数据入站的时长阈值（默认 90s，点分键 `omes.device.offline-timeout-ms`） |
-| `OMES_EQUIP_SNAPSHOT_INTERVAL_MS` | 快照周期 |
-| `OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS` | 属性波动窗口 |
-| `OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS` | 属性波动滑动步长 |
+| 变量 | 说明                         |
+|------|----------------------------|
+| `OMES_EQUIP_OFFLINE_TIMEOUT_MS` | 离线判定：无新设备数据入站的时长阈值（默认 90s） |
+| `OMES_EQUIP_SNAPSHOT_INTERVAL_MS` | 快照周期                       |
+| `OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS` | 属性波动窗口                     |
+| `OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS` | 属性波动滑动步长                   |
 
 ## 日志
 
@@ -88,4 +94,5 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 ## 常见问题
 
 1. **集群缺 Flink 类 / UnsupportedClassVersionError** — 集群须为 **Flink 1.20.x + Java 17**，与本模块 `flink.version`、`maven.compiler.release` 一致；提交 `*-flink.jar`。  
-2. **DTO 与设备缓存模型不一致** — 内联类路径见 `src/main/java/com/ourexists/omes/device/` 与 `.../message/`；与 `omes-device`、`omes-message` 仓库同源字段变更时请两边对齐。
+2. **DTO 与设备缓存模型不一致** — 内联类路径见 `src/main/java/com/ourexists/omes/device/` 与 `.../message/`；与 `omes-device`、`omes-message` 仓库同源字段变更时请两边对齐。  
+3. **Keyed state TTL** — 各算子**分别**配置：默认 **`-1`** 表示**不启用** State TTL；设为正整数表示空闲保留分钟数，见 `EquipStreamStateTtl`。
