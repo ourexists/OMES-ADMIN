@@ -63,7 +63,6 @@ public class LineFlowServiceImpl implements LineFlowService {
             throw new BusinessException(e.getMessage());
         }
         if (connect == null) {
-            return;
         }
 //        try {
 //            opcUaContext.createClient(connect.getServerName(), connect.getHost(), connect.getPort(), connect.getSuffix());

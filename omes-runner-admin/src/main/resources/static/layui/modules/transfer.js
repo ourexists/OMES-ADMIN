@@ -341,7 +341,7 @@ layui.define(['laytpl', 'form'], function(exports){
         delete item2.selected;
         if(item == item2.value){
           selectedData.push(item2);
-        };
+        }
       });
     });
     return selectedData;

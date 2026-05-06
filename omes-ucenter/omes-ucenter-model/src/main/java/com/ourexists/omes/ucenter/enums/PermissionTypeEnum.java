@@ -9,7 +9,7 @@ public enum PermissionTypeEnum {
     OTHER(2);
 
     @Getter
-    private Integer code;
+    private final Integer code;
 
     PermissionTypeEnum(Integer code) {
         this.code = code;

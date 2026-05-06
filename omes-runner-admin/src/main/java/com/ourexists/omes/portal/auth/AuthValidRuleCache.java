@@ -23,9 +23,9 @@ public class AuthValidRuleCache {
 
     public static final Integer CAPTCHA_EXPIRE_MINUTES = 3;
 
-    private Cache<String, String> captchaCache;
+    private final Cache<String, String> captchaCache;
 
-    private Cache<String, Long> wrongCache;
+    private final Cache<String, Long> wrongCache;
 
 
     public AuthValidRuleCache() {

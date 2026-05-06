@@ -8,8 +8,8 @@ public enum DeviceTypeEnum {
 
     cang(0, "${device.type.cang}"),
     cheng(1, "${device.type.cheng}");
-    private Integer code;
-    private String desc;
+    private final Integer code;
+    private final String desc;
 
     DeviceTypeEnum(int code, String desc) {
         this.code = code;

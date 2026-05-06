@@ -11,8 +11,8 @@ public enum DeviceLocalizationEnum {
     zaizhi(2, "${device.localization.zaizhi}"),
     hunhe(3, "${device.localization.hunhe}");
 
-    private Integer code;
-    private String desc;
+    private final Integer code;
+    private final String desc;
 
     DeviceLocalizationEnum(int code, String desc) {
         this.code = code;

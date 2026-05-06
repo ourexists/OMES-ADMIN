@@ -14,9 +14,9 @@ public enum LineTypeEnum {
     PARAM(1, "${line.type.param}"),
     CHANGE(2, "${line.type.change}");
 
-    private Integer code;
+    private final Integer code;
 
-    private String name;
+    private final String name;
 
     LineTypeEnum(Integer code, String name) {
         this.code = code;

@@ -20,7 +20,7 @@ public class TimerTaskManager {
     private final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
     private final Map<String, ScheduledFuture<?>> taskMap = new ConcurrentHashMap<>();
 
-    private Map<String, TimerTask> timerTaskMap;
+    private final Map<String, TimerTask> timerTaskMap;
 
     public TimerTaskManager(Map<String, TimerTask> timerTaskMap) {
         this.timerTaskMap = new ConcurrentHashMap<>();

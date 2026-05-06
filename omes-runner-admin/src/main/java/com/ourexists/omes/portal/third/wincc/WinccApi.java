@@ -40,7 +40,7 @@ import java.util.Map;
 @Component
 public class WinccApi {
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
 
     public static final String TAG_PATH = "/tagManagement/Values";

@@ -17,11 +17,11 @@ public enum MPSStatusEnum {
     FILE(4, 3, "${mps.status.file}"),
     ;
 
-    private Integer code;
+    private final Integer code;
 
-    private Integer preCode;
+    private final Integer preCode;
 
-    private String name;
+    private final String name;
 
     MPSStatusEnum(Integer code, Integer preCode, String name) {
         this.code = code;

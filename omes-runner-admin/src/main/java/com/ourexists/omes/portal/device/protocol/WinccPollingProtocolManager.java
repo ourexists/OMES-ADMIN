@@ -34,13 +34,13 @@ import java.util.*;
 @Component
 public class WinccPollingProtocolManager extends AbstractRestPollingProtocolManager {
 
-    private EquipFeign equipFeign;
+    private final EquipFeign equipFeign;
 
-    private WorkshopFeign workshopFeign;
+    private final WorkshopFeign workshopFeign;
 
-    private WorkshopDataParser workshopDataParser;
+    private final WorkshopDataParser workshopDataParser;
 
-    private EquipDataParser equipDataParser;
+    private final EquipDataParser equipDataParser;
 
     public WinccPollingProtocolManager(EquipFeign equipFeign,
                                        WorkshopFeign workshopFeign,

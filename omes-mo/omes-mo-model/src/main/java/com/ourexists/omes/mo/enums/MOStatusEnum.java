@@ -15,9 +15,9 @@ public enum MOStatusEnum {
     RUN(2, "${mo.status.run}"),
     COMPLETE(3, "${mo.status.complete}");
 
-    private Integer code;
+    private final Integer code;
 
-    private String name;
+    private final String name;
 
     MOStatusEnum(Integer code, String name) {
         this.code = code;
