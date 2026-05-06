@@ -19,6 +19,8 @@ import java.util.Map;
 @Component
 public class JSONEquipDataParser implements EquipDataParser {
 
+    public static final String CODE_KEY = "code";
+
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
 
@@ -28,6 +30,7 @@ public class JSONEquipDataParser implements EquipDataParser {
     @Override
     public List<EquipRealtime> parse(String gwId, String sourceData) {
         JSONArray devArray = new JSONArray();
+        List<EquipRealtime> targets = new ArrayList<>();
         if (JSON.isValidArray(sourceData)) {
             devArray = JSON.parseArray(sourceData);
         } else {
@@ -37,25 +40,14 @@ public class JSONEquipDataParser implements EquipDataParser {
             return null;
         }
         JSONObject[] devArrays = devArray.toArray(JSONObject.class);
-        Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll();
-        List<EquipRealtime> targets = new ArrayList<>();
-        for (EquipRealtime equipRealtime : realtimeMap.values()) {
-            EquipRealtimeConfig equipRealtimeConfig = equipRealtime.getEquipRealtimeConfig();
-            if (equipRealtimeConfig == null) {
+        for (JSONObject object : devArrays) {
+            String ssn = getStringByPath(object, CODE_KEY);
+            EquipRealtime equipRealtime = equipRealtimeManager.get(ssn);
+            if (equipRealtime == null || equipRealtime.getEquipRealtimeConfig() == null ||
+                    !gwId.equals(equipRealtime.getEquipRealtimeConfig().getGwId())) {
                 continue;
             }
-            //采集方式不匹配
-            if (!gwId.equals(equipRealtimeConfig.getGwId())) {
-                continue;
-            }
-
-            for (JSONObject object : devArrays) {
-                String ssn = getStringByPath(object, equipRealtimeConfig.getDeviceIdMap());
-                if (!equipRealtime.getSelfCode().equals(ssn)) {
-                    continue;
-                }
-                targets.add(doParse(equipRealtime, object));
-            }
+            targets.add(doParse(equipRealtime, object));
         }
         return targets;
     }

@@ -12,10 +12,11 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class TcMqttEquipDataParser implements EquipDataParser {
+
+    public static final String CODE_KEY = "code";
 
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
@@ -24,38 +25,35 @@ public class TcMqttEquipDataParser implements EquipDataParser {
     private AlarmRuleProcessor alarmRuleProcessor;
 
     public List<EquipRealtime> parse(String gwId, String sourceData) {
-        Map<String, EquipRealtime> realtimeMap = equipRealtimeManager.getAll();
         List<EquipRealtime> targets = new ArrayList<>();
-
         JSONObject jsonObject = JSON.parseObject(sourceData);
         String sn = jsonObject.getString("SN");
         JSONArray devArray = jsonObject.getJSONArray("dev");
         JSONArray ywArray = jsonObject.getJSONArray("ai");
 
-        for (EquipRealtime equipRealtime : realtimeMap.values()) {
-            EquipRealtimeConfig equipRealtimeConfig = equipRealtime.getEquipRealtimeConfig();
-            if (equipRealtimeConfig == null) {
-                continue;
-            }
-            //采集方式不匹配
-            if (!gwId.equals(equipRealtimeConfig.getGwId())) {
-                continue;
-            }
-            if (devArray != null) {
-                for (JSONObject object : devArray.toArray(JSONObject.class)) {
-                    String devSn = object.getString(equipRealtimeConfig.getDeviceIdMap());
-                    String ssn = sn + "dev" + devSn;
-                    if (equipRealtime.getSelfCode().equals(ssn)) {
-                        targets.add(doParse(equipRealtime, object));
-                    }
+        if (devArray != null) {
+            for (JSONObject object : devArray.toArray(JSONObject.class)) {
+                String devSn = object.getString(CODE_KEY);
+                String ssn = sn + "dev" + devSn;
+                EquipRealtime equipRealtime = equipRealtimeManager.get(ssn);
+                if (equipRealtime == null || equipRealtime.getEquipRealtimeConfig() == null ||
+                        !gwId.equals(equipRealtime.getEquipRealtimeConfig().getGwId())) {
+                    continue;
                 }
-                for (JSONObject object : ywArray.toArray(JSONObject.class)) {
-                    String ywSn = object.getString(equipRealtimeConfig.getDeviceIdMap());
-                    String ssnn = sn + "yw" + ywSn;
-                    if (equipRealtime.getSelfCode().equals(ssnn)) {
-                        targets.add(doParse(equipRealtime, object));
-                    }
+                targets.add(doParse(equipRealtime, object));
+            }
+
+        }
+        if (ywArray != null) {
+            for (JSONObject object : ywArray.toArray(JSONObject.class)) {
+                String ywSn = object.getString(CODE_KEY);
+                String ssn = sn + "yw" + ywSn;
+                EquipRealtime equipRealtime = equipRealtimeManager.get(ssn);
+                if (equipRealtime == null || equipRealtime.getEquipRealtimeConfig() == null ||
+                        !gwId.equals(equipRealtime.getEquipRealtimeConfig().getGwId())) {
+                    continue;
                 }
+                targets.add(doParse(equipRealtime, object));
             }
         }
         return targets;
