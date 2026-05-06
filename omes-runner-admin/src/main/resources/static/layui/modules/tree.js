@@ -151,29 +151,29 @@ layui.define(['form','util'], function(exports){
 
     if(that.elem.find('.layui-tree-set').length == 0){
       return that.elem.append(that.elemNone);
-    };
+    }
 
     // 复选框渲染
     if(options.showCheckbox){
       that.renderForm('checkbox');
-    };
+    }
 
     that.elem.find('.layui-tree-set').each(function(){
       var othis = $(this);
       // 最外层
       if(!othis.parent('.layui-tree-pack')[0]){
         othis.addClass('layui-tree-setHide');
-      };
+      }
 
       // 没有下一个节点 上一层父级有延伸线
       if(!othis.next()[0] && othis.parents('.layui-tree-pack').eq(1).hasClass('layui-tree-lineExtend')){
         othis.addClass(ELEM_LINE_SHORT);
-      };
+      }
 
       // 没有下一个节点 外层最后一个
       if(!othis.next()[0] && !othis.parents('.layui-tree-set').eq(0).next()[0]){
         othis.addClass(ELEM_LINE_SHORT);
-      };
+      }
     });
 
     that.events();
@@ -205,10 +205,10 @@ layui.define(['form','util'], function(exports){
                   return '<span class="layui-tree-iconClick layui-tree-icon"><i class="layui-icon '+ (item.spread ? "layui-icon-subtraction" : "layui-icon-addition") +'"></i></span>';
                 }else{
                   return '<span class="layui-tree-iconClick"><i class="layui-icon layui-icon-file"></i></span>';
-                };
+                }
               }else{
                 return '<span class="layui-tree-iconClick"><i class="layui-tree-iconArrow '+ (hasChild ? "": HIDE) +'"></i></span>';
-              };
+              }
             }()
 
             // 复选框
@@ -253,19 +253,19 @@ layui.define(['form','util'], function(exports){
       if(hasChild){
         entryDiv.append(packDiv);
         that.tree(packDiv, item[customName.children]);
-      };
+      }
 
       elem.append(entryDiv);
 
       // 若有前置节点，前置节点加连接线
       if(entryDiv.prev('.'+ELEM_SET)[0]){
         entryDiv.prev().children('.layui-tree-pack').addClass('layui-tree-showLine');
-      };
+      }
 
       // 若无子节点，则父节点加延伸线
       if(!hasChild){
         entryDiv.parent('.layui-tree-pack').addClass('layui-tree-lineExtend');
-      };
+      }
 
       // 展开节点操作
       that.spread(entryDiv, item);
@@ -320,9 +320,9 @@ layui.define(['form','util'], function(exports){
             sibls.removeClass(ELEM_SPREAD);
             sibls.children('.'+ELEM_PACK).slideUp(200);
             sibls.find('.layui-tree-icon').children('.layui-icon').removeClass(ICON_SUB).addClass(ICON_ADD);
-          };
-        };
-      };
+          }
+        }
+      }
     });
 
     // 点击回调
@@ -472,10 +472,10 @@ layui.define(['form','util'], function(exports){
           // 若未开启连接线，显示箭头
           } else {
             elemMain.find('.layui-tree-iconArrow').removeClass(HIDE);
-          };
+          }
           // 节点添加子节点容器
           elem.append('<div class="layui-tree-pack"></div>');
-        };
+        }
 
         // 新增节点
         var key = options.operate && options.operate(returnObj);
@@ -497,7 +497,7 @@ layui.define(['form','util'], function(exports){
             layui.each(siblings, function(index, i){
               if(!$(i).children('.'+ELEM_PACK)[0]){
                 num = 0;
-              };
+              }
             });
 
             // 若兄弟节点都有子节点
@@ -512,12 +512,12 @@ layui.define(['form','util'], function(exports){
               parentPack.children('.'+ELEM_SET).last().children('.'+ELEM_PACK).children('.'+ELEM_SET).last().addClass(ELEM_LINE_SHORT);
             } else {
               elem.children('.'+ELEM_PACK).children('.'+ELEM_SET).addClass(ELEM_LINE_SHORT);
-            };
+            }
           } else {
             // 添加延伸线
             if(!packCont.hasClass(ELEM_EXTEND)){
               packCont.addClass(ELEM_EXTEND);
-            };
+            }
             // 子节点添加延伸线
             elem.find('.'+ELEM_PACK).each(function(){
               $(this).children('.'+ELEM_SET).last().addClass(ELEM_LINE_SHORT);
@@ -528,19 +528,19 @@ layui.define(['form','util'], function(exports){
             }else{
               // 若之前的没有，说明处于连接状态
               packCont.children('.'+ELEM_SET).last().removeClass(ELEM_LINE_SHORT);
-            };
+            }
             // 若是最外层，要始终保持相连的状态
             if(!elem.parent('.'+ELEM_PACK)[0] && elem.next()[0]){
               packCont.children('.'+ELEM_SET).last().removeClass(ELEM_LINE_SHORT);
-            };
-          };
-        };
+            }
+          }
+        }
         if(!options.showCheckbox) return;
         // 若开启复选框，同步新增节点状态
         if(elemMain.find('input[same="layuiTreeCheck"]')[0].checked){
           var packLast = elem.children('.'+ELEM_PACK).children('.'+ELEM_SET).last();
           packLast.find('input[same="layuiTreeCheck"]')[0].checked = true;
-        };
+        }
         that.renderForm('checkbox');
 
       // 修改
@@ -573,7 +573,7 @@ layui.define(['form','util'], function(exports){
           if(e.keyCode === 13){
             e.preventDefault();
             getVal($(this));
-          };
+          }
         });
 
       // 删除
@@ -589,7 +589,7 @@ layui.define(['form','util'], function(exports){
             elem.remove();
             that.elem.append(that.elemNone);
             return;
-          };
+          }
           // 若有兄弟节点
           if(elem.siblings('.'+ELEM_SET).children('.'+ELEM_ENTRY)[0]){
             // 若开启复选框
@@ -611,11 +611,11 @@ layui.define(['form','util'], function(exports){
                     var input = $(item1).find('input[same="layuiTreeCheck"]')[0]
                     if(input.checked == false && !input.disabled){
                       state = 0;
-                    };
+                    }
                     // 判断是否全为不可勾选框
                     if(!input.disabled){
                       num = 1;
-                    };
+                    }
                   });
                   // 若有可勾选选择框并且已勾选
                   if(state == 1 && num == 1){
@@ -624,11 +624,11 @@ layui.define(['form','util'], function(exports){
                     that.renderForm('checkbox');
                     // 向上遍历祖先节点
                     elemDel(parentTree.parent('.'+ELEM_SET));
-                  };
-                };
+                  }
+                }
               };
               elemDel(elem);
-            };
+            }
             // 若开启连接线
             if(options.showLine){
               // 遍历兄弟节点，判断兄弟节点是否有子节点
@@ -639,7 +639,7 @@ layui.define(['form','util'], function(exports){
               layui.each(siblings, function(index, i){
                 if(!$(i).children('.'+ELEM_PACK)[0]){
                   num = 0;
-                };
+                }
               });
               // 若兄弟节点都有子节点
               if(num == 1){
@@ -649,24 +649,24 @@ layui.define(['form','util'], function(exports){
                   parentPack.removeClass(ELEM_EXTEND);
                   siblings.children('.'+ELEM_PACK).addClass(ELEM_SHOW);
                   siblings.children('.'+ELEM_PACK).children('.'+ELEM_SET).removeClass(ELEM_LINE_SHORT);
-                };
+                }
                 // 若为最后一个节点
                 if(!elem.next()[0]){
                   elem.prev().children('.'+ELEM_PACK).children('.'+ELEM_SET).last().addClass(ELEM_LINE_SHORT);
                 }else{
                   parentPack.children('.'+ELEM_SET).last().children('.'+ELEM_PACK).children('.'+ELEM_SET).last().addClass(ELEM_LINE_SHORT);
-                };
+                }
                 // 若为最外层最后一个节点，去除前一个结点的连接线
                 if(!elem.next()[0] && !elem.parents('.'+ELEM_SET)[1] && !elem.parents('.'+ELEM_SET).eq(0).next()[0]){
                   elem.prev('.'+ELEM_SET).addClass(ELEM_LINE_SHORT);
-                };
+                }
               }else{
                 // 若为最后一个节点且有延伸线
                 if(!elem.next()[0] && elem.hasClass(ELEM_LINE_SHORT)){
                   elem.prev().addClass(ELEM_LINE_SHORT);
-                };
-              };
-            };
+                }
+              }
+            }
 
           } else {
             // 若无兄弟节点
@@ -686,17 +686,17 @@ layui.define(['form','util'], function(exports){
             }else{
             // 父节点隐藏箭头
               prevDiv.find('.layui-tree-iconArrow').addClass(HIDE);
-            };
+            }
             // 移除展开属性
             elem.parents('.'+ELEM_SET).eq(0).removeClass(ELEM_SPREAD);
             // 移除节点容器
             elem.parent('.'+ELEM_PACK).remove();
-          };
+          }
 
           elem.remove();
         });
 
-      };
+      }
     });
   };
 
@@ -728,10 +728,10 @@ layui.define(['form','util'], function(exports){
             // 向上父节点渲染
             if(div.parent('.'+ELEM_PACK)[0]){
               select(div.parent('.'+ELEM_PACK).parent('.'+ELEM_SET));
-            };
+            }
           };
           select(entry.parent('.'+ELEM_SET));
-        };
+        }
       });
 
       // 根据标志剔除
@@ -739,11 +739,11 @@ layui.define(['form','util'], function(exports){
         var parent = $(this).parent('.'+ELEM_SET);
         if(!parent.hasClass('layui-tree-searchShow')){
           parent.addClass(HIDE);
-        };
+        }
       });
       if(pack.find('.layui-tree-searchShow').length == 0){
         that.elem.append(that.elemNone);
-      };
+      }
 
       // 节点过滤的回调
       options.onsearch && options.onsearch({
@@ -817,9 +817,9 @@ layui.define(['form','util'], function(exports){
         if(thisId.toString() == checkedId.toString()){
           if(!input[0].checked){
             reInput.click();
-          };
+          }
           return false;
-        };
+        }
       }
       // 若返回数组
       else if(typeof checkedId === 'object'){
@@ -829,7 +829,7 @@ layui.define(['form','util'], function(exports){
             return true;
           }
         });
-      };
+      }
     });
   };
 

@@ -16,11 +16,11 @@ public enum MPSTFStatusEnum {
     STOP(3, 2, "${mpstf.status.stop}"),
     BREAK(4, 3, "${mpstf.status.break}");
 
-    private Integer code;
+    private final Integer code;
 
-    private Integer preCode;
+    private final Integer preCode;
 
-    private String name;
+    private final String name;
 
     MPSTFStatusEnum(Integer code, Integer preCode, String name) {
         this.code = code;

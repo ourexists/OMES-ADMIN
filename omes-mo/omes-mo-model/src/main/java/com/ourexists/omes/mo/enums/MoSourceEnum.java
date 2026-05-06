@@ -13,9 +13,9 @@ public enum MoSourceEnum {
     SYSTEM(0, "${mo.source.system}"),
     MSE(1, "MSE");
 
-    private Integer code;
+    private final Integer code;
 
-    private String name;
+    private final String name;
 
     MoSourceEnum(Integer code, String name) {
         this.code = code;

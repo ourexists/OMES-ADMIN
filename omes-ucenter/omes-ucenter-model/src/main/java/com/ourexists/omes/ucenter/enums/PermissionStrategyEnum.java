@@ -9,7 +9,7 @@ public enum PermissionStrategyEnum {
     NOT_ENABLE(2);
 
     @Getter
-    private Integer code;
+    private final Integer code;
 
     PermissionStrategyEnum(Integer code) {
         this.code = code;

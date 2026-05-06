@@ -126,7 +126,7 @@ layui.define(['lay', 'layer', 'util'], function(exports){
         } else { // 其它类型的表单
           itemElem.val(value);
         }
-      };
+      }
     });
 
     form.render(null, filter);

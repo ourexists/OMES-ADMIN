@@ -20,10 +20,10 @@ public class CaptchaAuthenticationToken extends EraAuthenticationToken {
 
     private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 
-    private String username;
+    private final String username;
 
-    private String password;
-    private String captcha;
+    private final String password;
+    private final String captcha;
 
     public CaptchaAuthenticationToken(String clientId, String username, String password, String captcha) {
         super(username, password, clientId);

@@ -8,8 +8,8 @@ public enum DeviceStatusEnum {
 
     enable(0, "${common.status.enabled}"),
     disable(1, "${common.status.disabled}");
-    private Integer code;
-    private String desc;
+    private final Integer code;
+    private final String desc;
 
     DeviceStatusEnum(int code, String desc) {
         this.code = code;
