@@ -82,6 +82,22 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 
 亦支持点分键名传参，例如：`omes.device.flink.enable-checkpointing`、`omes.device.flink.state-ttl-minutes.change-detect`。
 
+点分键与上表对应示例：
+
+- `omes.device.flink.change-detect-ingress-windowed` ← `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOWED`
+- `omes.device.flink.change-detect-ingress-window-ms` ← `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOW_MS`
+- `omes.device.flink.change-detect-ingress-slide-ms` ← `OMES_FLINK_CHANGE_DETECT_INGRESS_SLIDE_MS`
+
+### 变化检测入口（可选窗口）
+
+| 变量 | 说明 |
+|------|------|
+| `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOWED` | `true`：变化检测入口先经 **处理时间滑动窗口 + reduce** 再进 `EquipRealtimeChangeDetectProcessFunction`，可压低上游频率，代价是端到端延迟约可达一个 slide；默认 `false`：与离线检测 union 后逐条进入变化检测（与原先一致）。 |
+| `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOW_MS` | 窗口长度（毫秒），`windowed=true` 时必须为正。 |
+| `OMES_FLINK_CHANGE_DETECT_INGRESS_SLIDE_MS` | 滑动步长（毫秒），`windowed=true` 时必须为正且 **不大于** `WINDOW_MS`。 |
+
+在 `EquipRealtimeChangeDetectProcessFunction` 内：设备仍为报警中（`alarmState == 1`）但 **报警指纹**（`selfCode` + `alarmLevel` + 排序后的 `alarmTexts`）相对上一条状态发生变化时，也会将 `alarmChanged` 置为 `true`，以便下游 persist/notify 感知「报警内容变化」。
+
 ### 业务参数
 
 | 变量                                      | 说明                         |
