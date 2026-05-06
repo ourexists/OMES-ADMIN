@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ourexists.omes.device.mapper.EquipCollectMapper">
+
+    <!-- 与 JVM ZoneId.systemDefault() + LocalDateTime 分桶对齐：依赖 JDBC/PG 会话对 timestamp 的解释 -->
+    <sql id="bucketStartExpr">
+        <choose>
+            <when test="bucketMode == 'MIN30'">
+                (date_trunc('hour', c.time) + (interval '1 minute' * (floor(date_part('minute', c.time) / 30.0) * 30)::integer))
+            </when>
+            <when test="bucketMode == 'HOUR'">
+                date_trunc('hour', c.time)
+            </when>
+            <when test="bucketMode == 'DAY'">
+                date_trunc('day', c.time)
+            </when>
+            <when test="bucketMode == 'MONTH'">
+                date_trunc('month', c.time)
+            </when>
+            <otherwise>
+                date_trunc('hour', c.time)
+            </otherwise>
+        </choose>
+    </sql>
+
+    <resultMap id="EquipCollectBaseMap" type="com.ourexists.omes.device.pojo.EquipCollect" autoMapping="true">
+        <result column="data" property="data" jdbcType="OTHER"
+                typeHandler="com.ourexists.omes.device.typehandler.PgJsonbMapStringTypeHandler"/>
+    </resultMap>
+
+    <!-- 每桶保留该桶内 time 最大的一条（PostgreSQL DISTINCT ON） -->
+    <select id="selectLastPerBucket" resultMap="EquipCollectBaseMap">
+        SELECT
+            z.id,
+            z.sn,
+            z.data,
+            z.time,
+            z.tenant_id,
+            z.created_by,
+            z.created_id,
+            z.created_time,
+            z.updated_by,
+            z.updated_id,
+            z.updated_time
+        FROM (
+            SELECT DISTINCT ON (sub.bucket_start)
+                sub.id,
+                sub.sn,
+                sub.data,
+                sub.time,
+                sub.tenant_id,
+                sub.created_by,
+                sub.created_id,
+                sub.created_time,
+                sub.updated_by,
+                sub.updated_id,
+                sub.updated_time,
+                sub.bucket_start
+            FROM (
+                SELECT
+                    c.id,
+                    c.sn,
+                    c.data,
+                    c.time,
+                    c.tenant_id,
+                    c.created_by,
+                    c.created_id,
+                    c.created_time,
+                    c.updated_by,
+                    c.updated_id,
+                    c.updated_time,
+                    <include refid="bucketStartExpr"/> AS bucket_start
+                FROM t_equip_collect c
+                WHERE c.sn = #{sn}
+                  AND c.time BETWEEN #{startDate} AND #{endDate}
+            ) AS sub
+            ORDER BY sub.bucket_start, sub.time DESC
+        ) AS z
+        ORDER BY z.time ASC
+        <if test="limit != null">
+            LIMIT #{limit} OFFSET #{offset}
+        </if>
+    </select>
+
+    <!-- json 数值：number / 可解析为 numeric 的 string -->
+    <sql id="jsonNumericExpr">
+        CASE jsonb_typeof(kv.value)
+            WHEN 'number' THEN (kv.value #>> '{}')::double precision
+            WHEN 'string' THEN
+                CASE
+                    WHEN (kv.value #>> '{}') ~ '^[-+]?\d*\.?\d+([eE][-+]?\d+)?$'
+                        THEN (kv.value #>> '{}')::double precision
+                    ELSE NULL
+                END
+            ELSE NULL
+        END
+    </sql>
+
+    <select id="selectStatsAggregateFlat" resultType="com.ourexists.omes.device.jdbc.EquipCollectBucketStatRow">
+        SELECT
+            t.bucket_start AS bucketStart,
+            t.attr_key AS attrKey,
+            AVG(t.num_v) AS avgVal,
+            MIN(t.num_v) AS minVal,
+            MAX(t.num_v) AS maxVal,
+            COUNT(*) AS cnt
+        FROM (
+            SELECT
+                <include refid="bucketStartExpr"/> AS bucket_start,
+                kv.key AS attr_key,
+                (<include refid="jsonNumericExpr"/>) AS num_v
+            FROM t_equip_collect c
+            CROSS JOIN LATERAL jsonb_each(c.data::jsonb) AS kv(key, value)
+            WHERE c.sn = #{sn}
+              AND c.time BETWEEN #{startDate} AND #{endDate}
+              AND c.data IS NOT NULL
+        ) AS t
+        WHERE t.num_v IS NOT NULL
+        GROUP BY t.bucket_start, t.attr_key
+        ORDER BY t.bucket_start ASC, t.attr_key ASC
+    </select>
+
+</mapper>

@@ -15,7 +15,6 @@ public final class EquipRealtimeFlinkJobConfig {
     private final long snapshotIntervalMs;
     private final long attrFluctuationWindowMs;
     private final long attrFluctuationSlideMs;
-    private final int parallelism;
 
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
@@ -30,8 +29,7 @@ public final class EquipRealtimeFlinkJobConfig {
             long offlineTimeoutMs,
             long snapshotIntervalMs,
             long attrFluctuationWindowMs,
-            long attrFluctuationSlideMs,
-            int parallelism) {
+            long attrFluctuationSlideMs) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
         this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
@@ -45,7 +43,6 @@ public final class EquipRealtimeFlinkJobConfig {
         this.snapshotIntervalMs = snapshotIntervalMs;
         this.attrFluctuationWindowMs = attrFluctuationWindowMs;
         this.attrFluctuationSlideMs = attrFluctuationSlideMs;
-        this.parallelism = parallelism;
     }
 
     public String equipRealtimeRabbitQueue() {
@@ -98,9 +95,5 @@ public final class EquipRealtimeFlinkJobConfig {
 
     public long attrFluctuationSlideMs() {
         return attrFluctuationSlideMs;
-    }
-
-    public int parallelism() {
-        return parallelism;
     }
 }

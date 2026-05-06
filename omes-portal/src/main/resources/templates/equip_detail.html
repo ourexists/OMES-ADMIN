@@ -641,6 +641,21 @@
                             <div id="realtime-chart-container"></div>
                         </div>
                         <div class="layui-tab-item">
+                            <div class="layui-form realtime-table-toolbar" lay-filter="realtimeTableAggForm"
+                                 style="margin-bottom:10px;">
+                                <div class="layui-inline">
+                                    <label class="layui-form-label" style="width:auto;padding-left:0;padding-right:8px;">聚合</label>
+                                    <div class="layui-input-inline" style="width:140px;">
+                                        <select id="realtime-aggregate-interval" lay-filter="realtime-aggregate-interval">
+                                            <option value="">原始数据</option>
+                                            <option value="MIN30">每30分钟</option>
+                                            <option value="HOUR">每小时</option>
+                                            <option value="DAY">每天</option>
+                                            <option value="MONTH">每月</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                             <table class="layui-hide" id="realtime-tb-common"></table>
                         </div>
                     </div>
@@ -796,6 +811,10 @@
         form.on('submit(state-timeline-doSearch)', function () {
             loadStateTimelines();
             return false;
+        });
+
+        form.on('select(realtime-aggregate-interval)', function () {
+            if (realtime_table_inited) reloadRealtimeTbAll();
         });
 
         element.on('tab(stateReportTriTab)', function () {
@@ -1404,7 +1423,10 @@
             sn: sn,
             startDate: $('#realtime-startDate').val(),
             endDate: $('#realtime-endDate').val(),
-            requirePage: false
+            requirePage: false,
+            page: 1,
+            pageSize: 50000,
+            aggregateInterval: 'AUTO'
         }, function (res) {
             realtime_datalist = (res && Array.isArray(res)) ? res : [];
             realtime_tread_chart.setOption(generateRealtimeOption());
@@ -1476,28 +1498,46 @@
         });
         realtime_table_inited = true;
         reloadRealtimeTbAll();
+        try {
+            form.render('select', '.realtime-table-toolbar');
+        } catch (e) {
+        }
+    }
+
+    function realtimeCollectWhereExtra() {
+        var agg = ($('#realtime-aggregate-interval').val() || '').trim();
+        var o = {sn: sn, startDate: $('#realtime-startDate').val(), endDate: $('#realtime-endDate').val()};
+        if (agg) o.aggregateInterval = agg;
+        return o;
     }
 
     function reloadRealtimeTb() {
         table.reload('realtimeTbCommon', {
             url: initRequestUrl(router.equip_collect_page),
-            where: {sn: sn, startDate: $('#realtime-startDate').val(), endDate: $('#realtime-endDate').val()}
+            where: realtimeCollectWhereExtra()
         });
     }
 
     function reloadRealtimeTbAll() {
-        let col = [{field: 'time', title: i18np.prop('common.time'), fixed: 'left'}];
+        var agg = ($('#realtime-aggregate-interval').val() || '').trim();
+        let col = [{field: 'time', title: agg ? '时段开始' : i18np.prop('common.time'), fixed: 'left'}];
         realtime_config_data.forEach(function (e) {
             if (e.needCollect) col.push({
                 field: e.name, title: e.name, templet: function (d) {
-                    return d.data == null ? null : d.data[e.name];
+                    if (d.data == null) return '-';
+                    if (d.data[e.name + '_avg'] != null && d.data[e.name + '_avg'] !== '') {
+                        return '均值 ' + d.data[e.name + '_avg'] + ' | 最小 ' + d.data[e.name + '_min']
+                            + ' | 最大 ' + d.data[e.name + '_max'] + ' | 样本 ' + d.data[e.name + '_count'];
+                    }
+                    var v = d.data[e.name];
+                    return v == null ? '-' : v;
                 }
             });
         });
         table.reload('realtimeTbCommon', {
             cols: [col],
             url: initRequestUrl(router.equip_collect_page),
-            where: {sn: sn, startDate: $('#realtime-startDate').val(), endDate: $('#realtime-endDate').val()}
+            where: realtimeCollectWhereExtra()
         });
     }
 

@@ -25,9 +25,9 @@ public final class EquipRealtimeFlinkJob {
         RMQConnectionConfig rmq = EquipRealtimeFlinkRmqConfig.from(pt, cfg.flinkRmqPrefetch());
         StreamExecutionEnvironment env = EquipRealtimeFlinkGraph.createExecutionEnvironment();
         EquipRealtimeFlinkGraph.configureExecutionEnvironment(env, cfg);
-        log.info("Equip realtime Flink job starting (JAR / cluster mode), parallelism={}", cfg.parallelism());
         EquipRealtimeFlinkGraph.buildAndExecute(env, rmq, cfg);
     }
 
-    private EquipRealtimeFlinkJob() {}
+    private EquipRealtimeFlinkJob() {
+    }
 }

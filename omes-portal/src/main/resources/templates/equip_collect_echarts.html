@@ -119,6 +119,21 @@
                 <div id="chart-container"></div>
             </div>
             <div class="layui-tab-item">
+                <div class="layui-form collect-table-toolbar" lay-filter="collectTableAggForm"
+                     style="margin-bottom:10px;">
+                    <div class="layui-inline">
+                        <label class="layui-form-label" style="width:auto;padding-left:0;padding-right:8px;">聚合</label>
+                        <div class="layui-input-inline" style="width:140px;">
+                            <select id="collect-aggregate-interval" lay-filter="collect-aggregate-interval">
+                                <option value="">原始数据</option>
+                                <option value="MIN30">每30分钟</option>
+                                <option value="HOUR">每小时</option>
+                                <option value="DAY">每天</option>
+                                <option value="MONTH">每月</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <table class="layui-hide" id="tb-common"></table>
             </div>
         </div>
@@ -171,6 +186,10 @@
             return false; // 阻止默认 form 跳转
         });
 
+        form.on('select(collect-aggregate-interval)', function () {
+            reloadTbAll();
+        });
+
         setTimeout(() => {
             initTb();
             initRunCharts();
@@ -197,7 +216,10 @@
             sn,
             startDate: $('#startDate').val(),
             endDate: $('#endDate').val(),
-            requirePage: false
+            requirePage: false,
+            page: 1,
+            pageSize: 50000,
+            aggregateInterval: 'AUTO'
         }, function (res) {
             if (res === null) {
                 return;
@@ -269,6 +291,21 @@
             dropdown.close('dropdown-table-tool');
         });
         reloadTbAll();
+        try {
+            form.render('select', '.collect-table-toolbar');
+        } catch (e) {
+        }
+    }
+
+    function collectWhereExtra() {
+        var agg = ($('#collect-aggregate-interval').val() || '').trim();
+        var o = {
+            sn,
+            startDate: $('#startDate').val(),
+            endDate: $('#endDate').val(),
+        };
+        if (agg) o.aggregateInterval = agg;
+        return o;
     }
 
     function reloadTb() {
@@ -276,11 +313,7 @@
         table.reload('tb-common', {
             url: initRequestUrl(router.equip_collect_page),
             customTitleRow: title,
-            where: {
-                sn,
-                startDate: $('#startDate').val(),
-                endDate: $('#endDate').val(),
-            },
+            where: collectWhereExtra(),
         });
     }
 
@@ -304,17 +337,24 @@
     function reloadTbAll() {
         let tbCols = []
         let col = [];
+        var agg = ($('#collect-aggregate-interval').val() || '').trim();
         if (config_data.length > 0) {
             col.push({
                 field: 'time',
-                title: i18np.prop("common.time"),
+                title: agg ? '时段开始' : i18np.prop("common.time"),
                 fixed: 'left',
             })
             config_data.forEach(e => {
                 if (e.needCollect) {
                     let k = {
                         field: e.name, title: e.name, templet: function (d) {
-                            return d.data == null ? null : d.data[e.name]
+                            if (d.data == null) return '-';
+                            if (d.data[e.name + '_avg'] != null && d.data[e.name + '_avg'] !== '') {
+                                return '均值 ' + d.data[e.name + '_avg'] + ' | 最小 ' + d.data[e.name + '_min']
+                                    + ' | 最大 ' + d.data[e.name + '_max'] + ' | 样本 ' + d.data[e.name + '_count'];
+                            }
+                            var v = d.data[e.name];
+                            return v == null ? '-' : v;
                         }
                     }
                     col.push(k);
@@ -333,11 +373,7 @@
                 cols: tbCols,
                 customTitleRow: title,
                 url: initRequestUrl(router.equip_collect_page),
-                where: {
-                    sn,
-                    startDate: $('#startDate').val(),
-                    endDate: $('#endDate').val(),
-                },
+                where: collectWhereExtra(),
             })
         }
     }

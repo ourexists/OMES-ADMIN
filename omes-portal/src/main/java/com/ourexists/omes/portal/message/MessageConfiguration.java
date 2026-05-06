@@ -24,6 +24,7 @@ import org.springframework.integration.core.GenericHandler;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,7 +70,7 @@ public class MessageConfiguration {
                         if (!CollectionUtils.isEmpty(accVos)) {
                             accIds = accVos.stream().map(AccVo::getId).collect(Collectors.toList());
                         }
-                    } else if (MessageSourceEnum.Equip.name().equals(notifyMsg.getSource())) {
+                    } else if (MessageSourceEnum.Equip.name().equals(notifyMsg.getSource()) && StringUtils.hasText(notifyMsg.getSourceId())) {
                         List<WorkshopAssignDto> workshopAssignDtos =
                                 RemoteHandleUtils.getDataFormResponse(workshopFeign.selectWorkshopAssignByEquipId(notifyMsg.getSourceId()));
                         if (!CollectionUtils.isEmpty(workshopAssignDtos)) {
