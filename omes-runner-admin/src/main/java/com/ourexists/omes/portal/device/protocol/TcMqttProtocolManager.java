@@ -7,9 +7,11 @@ package com.ourexists.omes.portal.device.protocol;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
+import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtime;
 import com.ourexists.omes.portal.device.collect.JSONWorkshopDataParser;
 import com.ourexists.omes.portal.device.collect.TcMqttEquipDataParser;
 import com.ourexists.omes.portal.mq.EquipRealtimeStreamOutbound;
+import com.ourexists.omes.portal.mq.WorkshopRealtimeStreamOutbound;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,9 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
     @Autowired
     private EquipRealtimeStreamOutbound equipRealtimeStreamOutbound;
 
+    @Autowired
+    private WorkshopRealtimeStreamOutbound workshopRealtimeStreamOutbound;
+
     @Override
     public String protocol() {
         return "TC_MQTT";
@@ -54,7 +59,12 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
                     equipRealtimeStreamOutbound.send(target);
                 }
             }
-            dataParser.parse(gw.getId(), payload);
+            List<WorkshopRealtime> workshopRealtimes = dataParser.parse(gw.getId(), payload);
+            if (!CollectionUtils.isEmpty(workshopRealtimes)) {
+                for (WorkshopRealtime w : workshopRealtimes) {
+                    workshopRealtimeStreamOutbound.send(w);
+                }
+            }
         };
     }
 }

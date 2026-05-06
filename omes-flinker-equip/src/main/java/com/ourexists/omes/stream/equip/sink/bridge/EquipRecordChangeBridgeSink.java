@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
-import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +35,6 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
         if (!event.isAlarmChanged() && !event.isRunChanged() && !event.isOnlineChanged()) {
             return;
         }
-        Date start = new Date();
         ObjectNode root = objectMapper.createObjectNode();
         if (event.isAlarmChanged()) {
             String reason = CollectionUtils.isEmpty(target.getAlarmTexts())
@@ -45,7 +43,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             EquipRecordAlarmDto alarm = new EquipRecordAlarmDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getAlarmState())
-                    .setStartTime(start)
+                    .setStartTime(target.getAlarmChangeTime())
                     .setTenantId(source.getTenantId())
                     .setReason(reason)
                     .setLevel(target.getAlarmLevel())
@@ -57,7 +55,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             EquipRecordRunDto run = new EquipRecordRunDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getRunState())
-                    .setStartTime(start)
+                    .setStartTime(target.getRunChangeTime())
                     .setTenantId(source.getTenantId())
                     .setEventId(event.getRunSegmentEventId())
                     .setPrevEventId(event.getRunPrevSegmentEventId());
@@ -67,7 +65,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             EquipRecordOnlineDto online = new EquipRecordOnlineDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getOnlineState())
-                    .setStartTime(start)
+                    .setStartTime(target.getOnlineChangeTime())
                     .setTenantId(source.getTenantId())
                     .setEventId(event.getOnlineSegmentEventId())
                     .setPrevEventId(event.getOnlinePrevSegmentEventId());

@@ -70,6 +70,11 @@ final class EquipRealtimeFlinkJobProperties {
                         pt,
                         "omes.device.flink.state-ttl-minutes.collect-snapshot",
                         "OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT",
+                        -1L),
+                ttlMin(
+                        pt,
+                        "omes.device.flink.state-ttl-minutes.alarm-notify-dedupe",
+                        "OMES_FLINK_STATE_TTL_MINUTES_ALARM_NOTIFY_DEDUPE",
                         -1L));
     }
 

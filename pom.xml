@@ -40,6 +40,7 @@
         <module>omes-message</module>
         <module>omes-runner-admin</module>
         <module>omes-flinker-equip</module>
+        <module>omes-flinker-workshop</module>
         <module>omes-runner-control</module>
     </modules>
 
@@ -53,7 +54,6 @@
     <properties>
         <era-framework-dependencies.version>2024.0.1.0-SNAPSHOT</era-framework-dependencies.version>
     </properties>
-
 
     <dependencies>
         <dependency>

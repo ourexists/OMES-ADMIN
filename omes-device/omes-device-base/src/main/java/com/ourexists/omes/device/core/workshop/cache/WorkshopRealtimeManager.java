@@ -1,7 +1,6 @@
 package com.ourexists.omes.device.core.workshop.cache;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * 场景实时缓存管理器
@@ -29,8 +28,6 @@ public interface WorkshopRealtimeManager {
     void remove(String id);
 
     void clear();
-
-    Map<String, WorkshopRealtime> getAll();
 
     WorkshopRealtime get(String id);
 

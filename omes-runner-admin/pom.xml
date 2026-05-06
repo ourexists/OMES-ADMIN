@@ -10,11 +10,6 @@
 
     <artifactId>omes-runner-admin</artifactId>
 
-    <properties>
-        <era-framework.version>2024.0.1.0-SNAPSHOT</era-framework.version>
-        <era-framework-dependencies.version>2024.0.1.0-SNAPSHOT</era-framework-dependencies.version>
-    </properties>
-
     <dependencies>
         <!-- HttpClient5 核心库 -->
         <dependency>
@@ -221,10 +216,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
             </plugin>
             <plugin>
                 <!-- 跳过test -->
