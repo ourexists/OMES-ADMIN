@@ -76,7 +76,7 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 
 | 变量 | 说明 |
 |------|------|
-| `OMES_EQUIP_OFFLINE_TIMEOUT_MS` | 离线判定超时 |
+| `OMES_EQUIP_OFFLINE_TIMEOUT_MS` | 离线判定：无新设备数据入站的时长阈值（默认 90s，点分键 `omes.device.offline-timeout-ms`） |
 | `OMES_EQUIP_SNAPSHOT_INTERVAL_MS` | 快照周期 |
 | `OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS` | 属性波动窗口 |
 | `OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS` | 属性波动滑动步长 |

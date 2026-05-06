@@ -13,6 +13,7 @@ import com.ourexists.omes.stream.equip.sink.bridge.EquipRecordChangeBridgeSink;
 import com.ourexists.omes.stream.equip.sink.bridge.EquipStateSnapshotBridgeSink;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.configuration.Configuration;
@@ -21,7 +22,6 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
-import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
 
@@ -31,7 +31,8 @@ public final class EquipRealtimeFlinkGraph {
     private static final ReduceFunction<EquipRealtime> PICK_LATEST_EVENT_REDUCER =
             EquipRealtimeEventTimeUtil::pickLatestForWindowReduce;
 
-    private EquipRealtimeFlinkGraph() {}
+    private EquipRealtimeFlinkGraph() {
+    }
 
     public static StreamExecutionEnvironment createExecutionEnvironment() {
         Configuration flinkConfig = new Configuration();
@@ -40,7 +41,6 @@ public final class EquipRealtimeFlinkGraph {
     }
 
     public static void configureExecutionEnvironment(StreamExecutionEnvironment env, EquipRealtimeFlinkJobConfig cfg) {
-        env.setParallelism(cfg.parallelism());
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(10, org.apache.flink.api.common.time.Time.seconds(5)));
         if (cfg.flinkEnableCheckpointing()) {
             env.enableCheckpointing(cfg.flinkRmqCheckpointIntervalMs(), CheckpointingMode.AT_LEAST_ONCE);
@@ -76,7 +76,6 @@ public final class EquipRealtimeFlinkGraph {
 
         DataStream<EquipRealtime> source = env
                 .addSource(rmqSource)
-                .setParallelism(cfg.parallelism())
                 .name("equip-realtime-rmq-source");
         DataStream<EquipRealtime> validStream = source
                 .filter(e -> e != null && StringUtils.isNotBlank(e.getSelfCode()))
@@ -118,28 +117,22 @@ public final class EquipRealtimeFlinkGraph {
 
         changeStream
                 .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
-                .name("equip-realtime-change-persist-bridge-rmq-sink")
-                .setParallelism(1);
+                .name("equip-realtime-change-persist-bridge-rmq-sink");
         changeStream
                 .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
-                .name("equip-realtime-alarm-notify-sink")
-                .setParallelism(1);
+                .name("equip-realtime-alarm-notify-sink");
         fluctuationChangeStream
                 .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
-                .name("equip-attr-fluctuation-persist-bridge-rmq-sink")
-                .setParallelism(1);
+                .name("equip-attr-fluctuation-persist-bridge-rmq-sink");
         fluctuationChangeStream
                 .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
-                .name("equip-attr-fluctuation-alarm-notify-sink")
-                .setParallelism(1);
+                .name("equip-attr-fluctuation-alarm-notify-sink");
         snapshotStream
                 .addSink(new EquipStateSnapshotBridgeSink(rmq, cfg.equipStreamPersistStateQueue()))
-                .name("equip-realtime-snapshot-persist-bridge-rmq-sink")
-                .setParallelism(1);
+                .name("equip-realtime-snapshot-persist-bridge-rmq-sink");
         collectSnapshotStream
                 .addSink(new EquipCollectSnapshotBridgeSink(rmq, cfg.equipStreamPersistCollectQueue()))
-                .name("equip-collect-snapshot-persist-bridge-rmq-sink")
-                .setParallelism(1);
+                .name("equip-collect-snapshot-persist-bridge-rmq-sink");
         log.info(
                 "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} persistChange={} persistState={} persistCollect={}",
                 cfg.equipRealtimeRabbitQueue(),

@@ -1,11 +1,13 @@
 package com.ourexists.omes.device.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.ourexists.omes.device.jdbc.EquipCollectBucketStatRow;
 import com.ourexists.omes.device.pojo.EquipCollect;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 @Mapper
@@ -30,4 +32,19 @@ public interface EquipCollectMapper extends BaseMapper<EquipCollect> {
             "</foreach>" +
             "</script>")
     int insertBatchWithJsonb(@Param("list") List<EquipCollect> list);
+
+    /**
+     * 按时间桶取每桶内最后一条（PostgreSQL DISTINCT ON）。limit/offset 传 null 表示不分页。
+     */
+    List<EquipCollect> selectLastPerBucket(@Param("sn") String sn,
+                                           @Param("startDate") Date startDate,
+                                           @Param("endDate") Date endDate,
+                                           @Param("bucketMode") String bucketMode,
+                                           @Param("offset") Integer offset,
+                                           @Param("limit") Integer limit);
+
+    List<EquipCollectBucketStatRow> selectStatsAggregateFlat(@Param("sn") String sn,
+                                                             @Param("startDate") Date startDate,
+                                                             @Param("endDate") Date endDate,
+                                                             @Param("bucketMode") String bucketMode);
 }

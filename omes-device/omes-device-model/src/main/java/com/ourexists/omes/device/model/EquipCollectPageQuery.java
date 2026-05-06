@@ -26,5 +26,11 @@ public class EquipCollectPageQuery extends PageQuery {
 
     private Date endDate;
 
+    /**
+     * 数据表 / 查询聚合粒度：空或 RAW 为原始采集点；MIN30、HOUR、DAY、MONTH 为统计聚合（均值等）；
+     * AUTO 为趋势图专用：由起止时间跨度在后台自动选桶，且每桶取<strong>最后一个</strong>采样点。
+     */
+    @Schema(description = "采集数据聚合：RAW|MIN30|HOUR|DAY|MONTH|AUTO（AUTO=按跨度自动分桶+每桶末点）")
+    private String aggregateInterval;
 
 }
