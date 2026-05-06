@@ -635,6 +635,15 @@ function parseDate(dateformat) {
     return new Date(dateformat.replace(' ', 'T'));
 }
 
+/** 查询结束时间若晚于当前时刻则截断为当前时刻（趋势/甘特与后端 EquipRecordCountQuery 一致） */
+function capEndDateToNow(d) {
+    if (d == null || (d instanceof Date && isNaN(d.getTime()))) {
+        return d;
+    }
+    var n = new Date();
+    return d.getTime() > n.getTime() ? n : d;
+}
+
 function formatDate(date) {
     const Y = date.getFullYear();
     const M = String(date.getMonth() + 1).padStart(2, '0');

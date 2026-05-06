@@ -109,60 +109,57 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
 
     @Override
     public List<EquipRecordOnlineVo> countMerging(EquipRealtime equipRealtime, EquipRecordCountQuery query) {
-        List<EquipRecordOnlineVo> r = new ArrayList<>();
-        Date now = new Date();
-        //限制最大查询时间不能大于当前时间
-        if (query.getEndDate().after(now)) {
-            query.setEndDate(now);
-        }
+        List<EquipRecordOnlineVo> segments = new ArrayList<>();
+        query.capEndDateToNow();
+        Date queryWindowEnd = query.getEndDate();
         if (equipRealtime != null && equipRealtime.getOnlineChangeTime() != null
                 && !equipRealtime.getOnlineChangeTime().after(query.getStartDate())) {
             EquipRecordOnlineVo e = new EquipRecordOnlineVo();
             e.setSn(query.getSn());
             e.setStartTime(query.getStartDate());
-            e.setEndTime(query.getEndDate());
+            e.setEndTime(queryWindowEnd);
             e.setState(equipRealtime.getOnlineState());
             e.setTenantId(equipRealtime.getTenantId());
-            r.add(e);
+            segments.add(e);
         } else {
             Date queryEndDate;
             if (equipRealtime != null && equipRealtime.getOnlineChangeTime() != null &&
-                    equipRealtime.getOnlineChangeTime().before(query.getEndDate())) {
+                    equipRealtime.getOnlineChangeTime().before(queryWindowEnd)) {
                 EquipRecordOnlineVo e = new EquipRecordOnlineVo();
                 e.setSn(query.getSn());
                 e.setStartTime(equipRealtime.getOnlineChangeTime());
-                e.setEndTime(query.getEndDate());
-                e.setState(equipRealtime.getRunState());
+                e.setEndTime(queryWindowEnd);
+                e.setState(equipRealtime.getOnlineState());
                 e.setTenantId(equipRealtime.getTenantId());
-                r.add(e);
+                segments.add(e);
                 queryEndDate = equipRealtime.getOnlineChangeTime();
             } else {
-                queryEndDate = query.getEndDate();
+                queryEndDate = queryWindowEnd;
             }
+            // 先按查询时间范围拉取重叠的在线区间
             LambdaQueryWrapper<EquipRecordOnline> qw = new LambdaQueryWrapper<EquipRecordOnline>()
                     .eq(EquipRecordOnline::getSn, query.getSn())
                     .and(wrapper -> {
                         wrapper
-                                .between(EquipRecordOnline::getStartTime, query.getStartDate(), queryEndDate)
+                                .between(EquipRecordOnline::getStartTime, query.getStartDate(), queryWindowEnd)
                                 .or()
-                                .between(EquipRecordOnline::getEndTime, query.getStartDate(), queryEndDate);
+                                .between(EquipRecordOnline::getEndTime, query.getStartDate(), queryWindowEnd);
                     })
                     .orderByDesc(EquipRecordOnline::getId);
             List<EquipRecordOnlineVo> vos = EquipRecordOnline.covert(this.list(qw), EquipRecordOnlineVo.class);
             if (CollectionUtil.isNotBlank(vos)) {
+                // 尾部已由实时态合成时，去掉库中与该段重复的区间（起点不早于 onlineChangeTime）
+                if (queryEndDate.before(queryWindowEnd)) {
+                    vos.removeIf(vo -> vo.getStartTime() != null && !vo.getStartTime().before(queryEndDate));
+                }
                 for (EquipRecordOnlineVo vo : vos) {
-                    if (vo.getEndTime() == null) {
-                        vo.setEndTime(queryEndDate);
-                    }
-                    if (vo.getStartTime().before(queryEndDate)) {
-                        if (vo.getStartTime().before(query.getStartDate())) {
-                            vo.setStartTime(query.getStartDate());
-                        }
-                        r.add(vo);
+                    if (vo.getStartTime() != null && vo.getStartTime().before(queryWindowEnd)) {
+                        segments.add(vo);
                     }
                 }
             }
         }
-        return r;
+        EquipRecordGanttSupport.normalizeOnlineForGantt(segments, query.getStartDate(), queryWindowEnd);
+        return segments;
     }
 }

@@ -1110,7 +1110,7 @@
 
     function reloadRealtimeRunCharts() {
         if (!realtime_run_chart || !sn) return;
-        let startDate = parseDate($('#realtime-startDate').val()), endDate = parseDate($('#realtime-endDate').val());
+        let startDate = parseDate($('#realtime-startDate').val()), endDate = capEndDateToNow(parseDate($('#realtime-endDate').val()));
         let r = [], pending = 3;
 
         function done() {
@@ -1147,6 +1147,8 @@
             endDate: formatDate(endDate),
             requirePage: false
         }, function (res) {
+            // 报警轨：接口未覆盖的时段视为正常（state=0），先铺整窗底色再叠报警段
+            r.push([2, startDate, endDate, 0]);
             if (res && res.length > 0) res.forEach(function (item) {
                 r.push([2, parseDate(item.startTime), parseDate(item.endTime), item.state]);
             });
@@ -1154,13 +1156,16 @@
         }, done);
     }
 
-    function mergeRealtimeRecords(data) {
-        data.sort(function (a, b) {
-            return a[3] === b[3] ? a[1] - b[1] : a[3] - b[3];
+    /** 甘特 data: [type, start, end, state]，type=0在线/1运行/2报警。合并时须同轨(type)且同 state，否则会误把「在线+运行」的 state=1 合成一条。 */
+    function mergeGanttTrack(track) {
+        if (!track || track.length === 0) return [];
+        track.sort(function (a, b) {
+            if (a[3] !== b[3]) return a[3] - b[3];
+            return a[1] - b[1];
         });
         let merged = [];
-        for (let i = 0; i < data.length; i++) {
-            let cur = data[i];
+        for (let i = 0; i < track.length; i++) {
+            let cur = track[i];
             if (merged.length === 0) {
                 merged.push([].concat(cur));
                 continue;
@@ -1170,6 +1175,16 @@
             else merged.push([].concat(cur));
         }
         return merged;
+    }
+
+    function mergeRealtimeRecords(data) {
+        if (!data || data.length === 0) return [];
+        let byType = [[], [], []];
+        for (let i = 0; i < data.length; i++) {
+            let row = data[i], t = row[0];
+            if (t >= 0 && t <= 2) byType[t].push(row);
+        }
+        return [].concat(mergeGanttTrack(byType[0]), mergeGanttTrack(byType[1]), mergeGanttTrack(byType[2]));
     }
 
     function resizeStateReportTables() {

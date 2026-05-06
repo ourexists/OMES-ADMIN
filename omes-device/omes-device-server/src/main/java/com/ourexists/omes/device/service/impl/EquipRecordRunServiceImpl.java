@@ -114,62 +114,57 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
 
     @Override
     public List<EquipRecordRunVo> countMerging(EquipRecordCountQuery query) {
-        List<EquipRecordRunVo> r = new ArrayList<>();
+        List<EquipRecordRunVo> segments = new ArrayList<>();
         EquipRealtime equipRealtime = realtimeManager.get(query.getSn());
-        Date now = new Date();
-        //限制最大查询时间不能大于当前时间
-        if (query.getEndDate().after(now)) {
-            query.setEndDate(now);
-        }
+        query.capEndDateToNow();
+        Date queryWindowEnd = query.getEndDate();
         if (equipRealtime != null && equipRealtime.getRunChangeTime() != null
                 && !equipRealtime.getRunChangeTime().after(query.getStartDate())) {
             EquipRecordRunVo e = new EquipRecordRunVo();
             e.setSn(query.getSn());
             e.setStartTime(query.getStartDate());
-            e.setEndTime(query.getEndDate());
+            e.setEndTime(queryWindowEnd);
             e.setState(equipRealtime.getRunState());
             e.setTenantId(equipRealtime.getTenantId());
-            r.add(e);
+            segments.add(e);
         } else {
             Date queryEndDate;
             if (equipRealtime != null && equipRealtime.getRunChangeTime() != null &&
-                    equipRealtime.getRunChangeTime().before(query.getEndDate())) {
+                    equipRealtime.getRunChangeTime().before(queryWindowEnd)) {
                 EquipRecordRunVo e = new EquipRecordRunVo();
                 e.setSn(query.getSn());
                 e.setStartTime(equipRealtime.getRunChangeTime());
-                e.setEndTime(query.getEndDate());
+                e.setEndTime(queryWindowEnd);
                 e.setState(equipRealtime.getRunState());
                 e.setTenantId(equipRealtime.getTenantId());
-                r.add(e);
+                segments.add(e);
                 queryEndDate = equipRealtime.getRunChangeTime();
             } else {
-                queryEndDate = query.getEndDate();
+                queryEndDate = queryWindowEnd;
             }
             LambdaQueryWrapper<EquipRecordRun> qw = new LambdaQueryWrapper<EquipRecordRun>()
                     .eq(EquipRecordRun::getSn, query.getSn())
                     .and(wrapper -> {
                         wrapper
-                                .between(EquipRecordRun::getStartTime, query.getStartDate(), queryEndDate)
+                                .between(EquipRecordRun::getStartTime, query.getStartDate(), queryWindowEnd)
                                 .or()
-                                .between(EquipRecordRun::getEndTime, query.getStartDate(), queryEndDate);
+                                .between(EquipRecordRun::getEndTime, query.getStartDate(), queryWindowEnd);
                     })
                     .orderByDesc(EquipRecordRun::getId);
             List<EquipRecordRunVo> equipRecordRunVos = EquipRecordRun.covert(this.list(qw), EquipRecordRunVo.class);
             if (CollectionUtil.isNotBlank(equipRecordRunVos)) {
+                if (queryEndDate.before(queryWindowEnd)) {
+                    equipRecordRunVos.removeIf(vo -> vo.getStartTime() != null && !vo.getStartTime().before(queryEndDate));
+                }
                 for (EquipRecordRunVo equipRecordRunVo : equipRecordRunVos) {
-                    if (equipRecordRunVo.getEndTime() == null) {
-                        equipRecordRunVo.setEndTime(queryEndDate);
-                    }
-                    if (equipRecordRunVo.getStartTime().before(queryEndDate)) {
-                        if (equipRecordRunVo.getStartTime().before(query.getStartDate())) {
-                            equipRecordRunVo.setStartTime(query.getStartDate());
-                        }
-                        r.add(equipRecordRunVo);
+                    if (equipRecordRunVo.getStartTime() != null && equipRecordRunVo.getStartTime().before(queryWindowEnd)) {
+                        segments.add(equipRecordRunVo);
                     }
                 }
             }
         }
-        return r;
+        EquipRecordGanttSupport.normalizeRunForGantt(segments, query.getStartDate(), queryWindowEnd);
+        return segments;
     }
 
     @Override

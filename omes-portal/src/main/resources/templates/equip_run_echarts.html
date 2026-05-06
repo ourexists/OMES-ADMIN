@@ -148,37 +148,27 @@
         }, 100)
     });
 
+    /** [type, start, end, state]：合并须同轨 type 且同 state（在线/运行/报警在「开」时常均为 state=1） */
     function mergeRecords(data) {
-        // 先按照 type 和 startDate 排序
         data.sort((a, b) => {
-            if (a[3] === b[3]) {
-                return a[1] - b[1];  // 如果类型相同，按 startDate 排序
-            }
-            return a[3] - b[3];  // 否则按类型排序
+            if (a[0] !== b[0]) return a[0] - b[0];
+            if (a[3] !== b[3]) return a[3] - b[3];
+            return a[1] - b[1];
         });
-
         const mergedData = [];
-
         for (let i = 0; i < data.length; i++) {
             const current = data[i];
-
             if (mergedData.length === 0) {
                 mergedData.push(current);
                 continue;
             }
-
             const last = mergedData[mergedData.length - 1];
-
-            // 判断时间段是否重叠或相邻
-            if (last[3] === current[3] && last[2] >= current[1]) {
-                // 如果时间段重叠或相邻，合并
-                last[2] = last[2] > current[2] ? last[2] : current[2]; // 更新 endDate 为最晚的 endDate
+            if (last[0] === current[0] && last[3] === current[3] && last[2] >= current[1]) {
+                last[2] = last[2] > current[2] ? last[2] : current[2];
             } else {
-                // 否则将当前记录添加到结果中
                 mergedData.push(current);
             }
         }
-
         return mergedData;
     }
 
@@ -218,15 +208,18 @@
                 requirePage: false
             },
             function (res) {
+                if (type === 2) {
+                    r.push([type, startDate, endDate, 0]);
+                }
                 if (res === null) {
+                    if (type === 2) r = mergeRecords(r);
                     return;
                 }
-                if (res == null || res.length <= 0) {
-                    return;
+                if (res.length > 0) {
+                    res.forEach(item => {
+                        r.push([type, parseDate(item.startTime), parseDate(item.endTime), item.state]);
+                    });
                 }
-                res.forEach(item => {
-                    r.push([type, parseDate(item.startTime), parseDate(item.endTime), item.state]);
-                })
                 r = mergeRecords(r);
             }
         )
@@ -236,7 +229,7 @@
     function reloadTb() {
         let r = [];
         let startDate = parseDate($('#startDate').val());
-        let endDate = parseDate($('#endDate').val());
+        let endDate = capEndDateToNow(parseDate($('#endDate').val()));
         let r1 = calcRecord(1, startDate, endDate);
         let r0 = calcRecord(0, startDate, endDate);
         let r2 = calcRecord(2, startDate, endDate);
