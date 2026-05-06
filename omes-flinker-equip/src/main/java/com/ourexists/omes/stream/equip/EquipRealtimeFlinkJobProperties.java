@@ -46,6 +46,15 @@ final class EquipRealtimeFlinkJobProperties {
                 pt.getLong("omes.device.snapshot-interval-ms", pt.getLong("OMES_EQUIP_SNAPSHOT_INTERVAL_MS", 30_000L)),
                 pt.getLong("omes.device.attr-fluctuation-window-ms", pt.getLong("OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS", 90_000L)),
                 pt.getLong("omes.device.attr-fluctuation-slide-ms", pt.getLong("OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS", 5_000L)),
+                pt.getBoolean(
+                        "omes.device.flink.change-detect-ingress-windowed",
+                        pt.getBoolean("OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOWED", false)),
+                pt.getLong(
+                        "omes.device.flink.change-detect-ingress-window-ms",
+                        pt.getLong("OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOW_MS", 60_000L)),
+                pt.getLong(
+                        "omes.device.flink.change-detect-ingress-slide-ms",
+                        pt.getLong("OMES_FLINK_CHANGE_DETECT_INGRESS_SLIDE_MS", 60_000L)),
                 ttlMin(
                         pt,
                         "omes.device.flink.state-ttl-minutes.offline-detect",
@@ -70,11 +79,6 @@ final class EquipRealtimeFlinkJobProperties {
                         pt,
                         "omes.device.flink.state-ttl-minutes.collect-snapshot",
                         "OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT",
-                        -1L),
-                ttlMin(
-                        pt,
-                        "omes.device.flink.state-ttl-minutes.alarm-notify-dedupe",
-                        "OMES_FLINK_STATE_TTL_MINUTES_ALARM_NOTIFY_DEDUPE",
                         -1L));
     }
 

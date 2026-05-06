@@ -19,7 +19,6 @@ import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
@@ -96,12 +95,6 @@ public final class EquipRealtimeFlinkGraph {
                 .filter(e -> e != null && StringUtils.isNotBlank(e.getSelfCode()))
                 .name("equip-realtime-filter");
 
-        DataStream<EquipRealtime> windowStream = validStream
-                .keyBy(EquipRealtime::getSelfCode)
-                .window(SlidingProcessingTimeWindows.of(Duration.ofSeconds(30), Duration.ofSeconds(5)))
-                .reduce(PICK_LATEST_EVENT_REDUCER)
-                .name("equip-realtime-window-30s-5s");
-
         DataStream<EquipRealtime> offlineStream = validStream
                 .keyBy(EquipRealtime::getSelfCode)
                 .process(new EquipOfflineDetectProcessFunction(cfg.offlineTimeoutMs(), cfg.stateTtlMinutesOfflineDetect()))
@@ -115,7 +108,33 @@ public final class EquipRealtimeFlinkGraph {
                 .process(new EquipAttrFluctuationProcessFunction(cfg.stateTtlMinutesAttrFluctuation()))
                 .name("equip-realtime-attr-fluctuation");
 
-        DataStream<EquipRealtimeChangeEvent> changeStream = windowStream
+        DataStream<EquipRealtime> changeDetectIngress;
+        if (cfg.changeDetectIngressWindowed()) {
+            long winMs = cfg.changeDetectIngressWindowMs();
+            long slideMs = cfg.changeDetectIngressSlideMs();
+            if (winMs <= 0L || slideMs <= 0L) {
+                throw new IllegalArgumentException(
+                        "change-detect ingress window requires positive window-ms and slide-ms, was windowMs="
+                                + winMs
+                                + " slideMs="
+                                + slideMs);
+            }
+            if (slideMs > winMs) {
+                throw new IllegalArgumentException(
+                        "change-detect ingress slide-ms must not exceed window-ms, was windowMs="
+                                + winMs
+                                + " slideMs="
+                                + slideMs);
+            }
+            changeDetectIngress = validStream
+                    .keyBy(EquipRealtime::getSelfCode)
+                    .window(SlidingProcessingTimeWindows.of(Duration.ofMillis(winMs), Duration.ofMillis(slideMs)))
+                    .reduce(PICK_LATEST_EVENT_REDUCER)
+                    .name("equip-realtime-change-detect-ingress-window");
+        } else {
+            changeDetectIngress = validStream;
+        }
+        DataStream<EquipRealtimeChangeEvent> changeStream = changeDetectIngress
                 .union(offlineStream)
                 .keyBy(EquipRealtime::getSelfCode)
                 .process(new EquipRealtimeChangeDetectProcessFunction(cfg.stateTtlMinutesChangeDetect()))
@@ -142,14 +161,10 @@ public final class EquipRealtimeFlinkGraph {
                                 && e.getTarget() != null
                                 && StringUtils.isNotBlank(e.getTarget().getSelfCode()))
                 .name("equip-fluctuation-stream-valid");
-        SingleOutputStreamOperator<EquipRealtimeChangeEvent> changeAlarmDeduped = changeStreamValid
-                .keyBy(e -> e.getTarget().getSelfCode())
-                .process(new EquipAlarmChangeDedupeProcessFunction(cfg.stateTtlMinutesAlarmNotifyDedupe()))
-                .name("equip-alarm-fingerprint-dedupe");
-        changeAlarmDeduped
+        changeStreamValid
                 .addSink(new EquipRecordChangeBridgeSink(rmq, cfg.equipStreamPersistChangeQueue()))
                 .name("equip-persist-alarm-dedupe-bridge-rmq-sink");
-        changeAlarmDeduped
+        changeStreamValid
                 .addSink(new EquipAlarmNotifySink(rmq, cfg.equipNotifyCreateQueue()))
                 .name("equip-alarm-notify-sink");
         fluctuationValid
@@ -165,11 +180,14 @@ public final class EquipRealtimeFlinkGraph {
                 .addSink(new EquipCollectSnapshotBridgeSink(rmq, cfg.equipStreamPersistCollectQueue()))
                 .name("equip-collect-snapshot-persist-bridge-rmq-sink");
         log.info(
-                "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} persistChange={} persistState={} persistCollect={}",
+                "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} persistChange={} persistState={} persistCollect={} changeDetectIngressWindowed={} changeDetectIngressWindowMs={} changeDetectIngressSlideMs={}",
                 cfg.equipRealtimeRabbitQueue(),
                 cfg.equipStreamPersistChangeQueue(),
                 cfg.equipStreamPersistStateQueue(),
-                cfg.equipStreamPersistCollectQueue());
+                cfg.equipStreamPersistCollectQueue(),
+                cfg.changeDetectIngressWindowed(),
+                cfg.changeDetectIngressWindowMs(),
+                cfg.changeDetectIngressSlideMs());
         env.execute("equip-realtime-job");
     }
 }

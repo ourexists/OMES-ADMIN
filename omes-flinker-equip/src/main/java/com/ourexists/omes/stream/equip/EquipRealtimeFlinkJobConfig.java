@@ -23,6 +23,15 @@ public final class EquipRealtimeFlinkJobConfig {
     private final long attrFluctuationWindowMs;
     private final long attrFluctuationSlideMs;
     /**
+     * When true, change-detect ingests a processing-time sliding-window reduced stream (limits upstream rate; latency up
+     * to roughly one slide). When false (default), ingests every filtered realtime record plus offline timer emits.
+     */
+    private final boolean changeDetectIngressWindowed;
+    /** Sliding window length for {@link #changeDetectIngressWindowed}; must be positive when windowed. */
+    private final long changeDetectIngressWindowMs;
+    /** Slide interval for {@link #changeDetectIngressWindowed}; must be positive and not greater than window length. */
+    private final long changeDetectIngressSlideMs;
+    /**
      * Keyed state idle TTL in minutes per operator; {@code -1} means disable Flink State TTL (default). Positive enables
      * expiry.
      */
@@ -31,8 +40,6 @@ public final class EquipRealtimeFlinkJobConfig {
     private final long stateTtlMinutesAttrFluctuation;
     private final long stateTtlMinutesStateSnapshot;
     private final long stateTtlMinutesCollectSnapshot;
-    /** Keyed state TTL for alarm-notify dedupe; {@code -1} disables expiry. */
-    private final long stateTtlMinutesAlarmNotifyDedupe;
 
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
@@ -50,12 +57,14 @@ public final class EquipRealtimeFlinkJobConfig {
             long snapshotIntervalMs,
             long attrFluctuationWindowMs,
             long attrFluctuationSlideMs,
+            boolean changeDetectIngressWindowed,
+            long changeDetectIngressWindowMs,
+            long changeDetectIngressSlideMs,
             long stateTtlMinutesOfflineDetect,
             long stateTtlMinutesChangeDetect,
             long stateTtlMinutesAttrFluctuation,
             long stateTtlMinutesStateSnapshot,
-            long stateTtlMinutesCollectSnapshot,
-            long stateTtlMinutesAlarmNotifyDedupe) {
+            long stateTtlMinutesCollectSnapshot) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
         this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
@@ -71,12 +80,14 @@ public final class EquipRealtimeFlinkJobConfig {
         this.snapshotIntervalMs = snapshotIntervalMs;
         this.attrFluctuationWindowMs = attrFluctuationWindowMs;
         this.attrFluctuationSlideMs = attrFluctuationSlideMs;
+        this.changeDetectIngressWindowed = changeDetectIngressWindowed;
+        this.changeDetectIngressWindowMs = changeDetectIngressWindowMs;
+        this.changeDetectIngressSlideMs = changeDetectIngressSlideMs;
         this.stateTtlMinutesOfflineDetect = stateTtlMinutesOfflineDetect;
         this.stateTtlMinutesChangeDetect = stateTtlMinutesChangeDetect;
         this.stateTtlMinutesAttrFluctuation = stateTtlMinutesAttrFluctuation;
         this.stateTtlMinutesStateSnapshot = stateTtlMinutesStateSnapshot;
         this.stateTtlMinutesCollectSnapshot = stateTtlMinutesCollectSnapshot;
-        this.stateTtlMinutesAlarmNotifyDedupe = stateTtlMinutesAlarmNotifyDedupe;
     }
 
     public String equipRealtimeRabbitQueue() {
@@ -139,6 +150,18 @@ public final class EquipRealtimeFlinkJobConfig {
         return attrFluctuationSlideMs;
     }
 
+    public boolean changeDetectIngressWindowed() {
+        return changeDetectIngressWindowed;
+    }
+
+    public long changeDetectIngressWindowMs() {
+        return changeDetectIngressWindowMs;
+    }
+
+    public long changeDetectIngressSlideMs() {
+        return changeDetectIngressSlideMs;
+    }
+
     public long stateTtlMinutesOfflineDetect() {
         return stateTtlMinutesOfflineDetect;
     }
@@ -157,9 +180,5 @@ public final class EquipRealtimeFlinkJobConfig {
 
     public long stateTtlMinutesCollectSnapshot() {
         return stateTtlMinutesCollectSnapshot;
-    }
-
-    public long stateTtlMinutesAlarmNotifyDedupe() {
-        return stateTtlMinutesAlarmNotifyDedupe;
     }
 }

@@ -43,7 +43,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             EquipRecordAlarmDto alarm = new EquipRecordAlarmDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getAlarmState())
-                    .setStartTime(target.getAlarmChangeTime())
+                    .setStartTime(target.getTime())
                     .setTenantId(source.getTenantId())
                     .setReason(reason)
                     .setLevel(target.getAlarmLevel())
@@ -55,7 +55,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             EquipRecordRunDto run = new EquipRecordRunDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getRunState())
-                    .setStartTime(target.getRunChangeTime())
+                    .setStartTime(target.getTime())
                     .setTenantId(source.getTenantId())
                     .setEventId(event.getRunSegmentEventId())
                     .setPrevEventId(event.getRunPrevSegmentEventId());
@@ -65,7 +65,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             EquipRecordOnlineDto online = new EquipRecordOnlineDto()
                     .setSn(source.getSelfCode())
                     .setState(target.getOnlineState())
-                    .setStartTime(target.getOnlineChangeTime())
+                    .setStartTime(target.getTime())
                     .setTenantId(source.getTenantId())
                     .setEventId(event.getOnlineSegmentEventId())
                     .setPrevEventId(event.getOnlinePrevSegmentEventId());

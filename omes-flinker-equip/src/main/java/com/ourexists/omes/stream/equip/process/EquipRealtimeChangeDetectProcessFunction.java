@@ -1,6 +1,7 @@
 package com.ourexists.omes.stream.equip.process;
 
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
+import com.ourexists.omes.device.model.EquipAlarmFingerprint;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
 import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
@@ -113,7 +114,16 @@ public class EquipRealtimeChangeDetectProcessFunction extends KeyedProcessFuncti
         if (previous == null || current == null) {
             return false;
         }
-        return !Objects.equals(previous.getAlarmState(), current.getAlarmState());
+        boolean isChanged = !Objects.equals(previous.getAlarmState(), current.getAlarmState());
+        //判断报警指纹
+        if (!isChanged && current.getAlarmState() == 1) {
+            String sourceFinger = EquipAlarmFingerprint.of(previous.getSelfCode(), previous.getAlarmLevel(), previous.getAlarmTexts());
+            String currentFinger = EquipAlarmFingerprint.of(current.getSelfCode(), current.getAlarmLevel(), current.getAlarmTexts());
+            if (!sourceFinger.equals(currentFinger)) {
+                isChanged = true;
+            }
+        }
+        return isChanged;
     }
 
     private boolean isRunChanged(EquipRealtime previous, EquipRealtime current) {
