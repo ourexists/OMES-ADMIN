@@ -8,7 +8,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>omes-stream</artifactId>
+    <artifactId>omes-flinker-equip</artifactId>
 
     <properties>
         <flink.version>1.20.1</flink.version>

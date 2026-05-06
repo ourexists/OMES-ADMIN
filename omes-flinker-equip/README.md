@@ -7,7 +7,7 @@
 在仓库根目录执行（`omes-stream` 已内联原 `omes-device-base` / `omes-device-model` / `omes-message-model` 中与作业相关的类，**不再依赖**上述三个 JAR；若门户侧 DTO 变更，需手动同步本模块内对应源码）：
 
 ```bash
-mvn -pl omes-stream clean package -DskipTests
+mvn -pl omes-flinker-equip clean package -DskipTests
 ```
 
 产物：
@@ -24,7 +24,7 @@ RabbitMQ Connector 版本见属性 **`flink.connector.rabbitmq.version`**；若 
 若需要把 Flink 一并打进 JAR（例如本地 `java -jar` 试跑），使用：
 
 ```bash
-mvn -pl omes-stream clean package -DskipTests -Pflink-with-dependencies
+mvn -pl omes-flinker-equip clean package -DskipTests -Pflink-with-dependencies
 ```
 
 ## 提交作业
@@ -36,7 +36,7 @@ com.ourexists.omes.stream.equip.EquipRealtimeFlinkJob
 ```
 
 ```bash
-flink run -c com.ourexists.omes.stream.equip.EquipRealtimeFlinkJob /path/to/omes-stream-*-flink.jar
+flink run -c com.ourexists.omes.stream.equip.EquipRealtimeFlinkJob /path/to/omes-flinker-equip-*-flink.jar
 ```
 
 Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
