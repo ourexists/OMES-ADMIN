@@ -28,4 +28,17 @@ public class EquipRecordCountQuery {
 
     @NotBlank
     private String sn;
+
+    /**
+     * 若查询结束时间晚于当前时刻则截断为当前时刻，避免统计/甘特查询到未来区间。
+     */
+    public void capEndDateToNow() {
+        if (endDate == null) {
+            return;
+        }
+        Date now = new Date();
+        if (endDate.after(now)) {
+            this.endDate = now;
+        }
+    }
 }

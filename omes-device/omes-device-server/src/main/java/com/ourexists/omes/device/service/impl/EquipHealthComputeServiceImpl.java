@@ -75,6 +75,7 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
         countQuery.setSn(sn);
         countQuery.setStartDate(periodStart);
         countQuery.setEndDate(periodEnd);
+        countQuery.capEndDateToNow();
 
         // 报警：合并段，按等级统计并应用对应分值扣分
         List<EquipRecordAlarmVo> alarmList = equipRecordAlarmService.countMerging(countQuery);
@@ -117,7 +118,8 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
             }
         }
 
-        long periodMinutes = (periodEnd.getTime() - periodStart.getTime()) / (60 * 1000);
+        Date rangeEnd = countQuery.getEndDate();
+        long periodMinutes = (rangeEnd.getTime() - periodStart.getTime()) / (60 * 1000);
         if (periodMinutes <= 0) periodMinutes = 1;
 
         // 生命周期维度扣分（使用年限、累计运行小时、启停总次数，考虑设备老化）
@@ -137,9 +139,9 @@ public class EquipHealthComputeServiceImpl implements EquipHealthComputeService 
         dto.setEquipId(realtime.getId());
         dto.setSn(sn);
         dto.setTenantId(realtime.getTenantId());
-        dto.setStatTime(periodEnd);
+        dto.setStatTime(rangeEnd);
         dto.setPeriodStart(periodStart);
-        dto.setPeriodEnd(periodEnd);
+        dto.setPeriodEnd(rangeEnd);
         dto.setScore(score);
         dto.setHealthLevel(level.getCode());
         dto.setAlarmCount(alarmCount);

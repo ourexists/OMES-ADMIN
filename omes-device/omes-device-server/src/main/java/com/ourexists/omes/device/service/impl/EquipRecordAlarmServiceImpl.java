@@ -99,53 +99,54 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
 
     @Override
     public List<EquipRecordAlarmVo> countMerging(EquipRecordCountQuery query) {
-        List<EquipRecordAlarmVo> r = new ArrayList<>();
+        List<EquipRecordAlarmVo> segments = new ArrayList<>();
         EquipRealtime equipRealtime = realtimeManager.get(query.getSn());
-        Date now = new Date();
-        //限制最大查询时间不能大于当前时间
-        if (query.getEndDate().after(now)) {
-            query.setEndDate(now);
-        }
+        query.capEndDateToNow();
+        Date queryWindowEnd = query.getEndDate();
         if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null && !equipRealtime.getAlarmChangeTime().after(query.getStartDate())) {
             EquipRecordAlarmVo e = new EquipRecordAlarmVo();
             e.setSn(query.getSn());
             e.setStartTime(query.getStartDate());
-            e.setEndTime(query.getEndDate());
+            e.setEndTime(queryWindowEnd);
             e.setState(equipRealtime.getAlarmState());
             e.setTenantId(equipRealtime.getTenantId());
-            r.add(e);
+            segments.add(e);
         } else {
             Date queryEndDate;
-            if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null && equipRealtime.getAlarmChangeTime().before(query.getEndDate())) {
+            if (equipRealtime != null && equipRealtime.getAlarmChangeTime() != null && equipRealtime.getAlarmChangeTime().before(queryWindowEnd)) {
                 EquipRecordAlarmVo e = new EquipRecordAlarmVo();
                 e.setSn(query.getSn());
                 e.setStartTime(equipRealtime.getAlarmChangeTime());
-                e.setEndTime(query.getEndDate());
+                e.setEndTime(queryWindowEnd);
                 e.setState(equipRealtime.getAlarmState());
                 e.setTenantId(equipRealtime.getTenantId());
-                r.add(e);
+                segments.add(e);
                 queryEndDate = equipRealtime.getAlarmChangeTime();
             } else {
-                queryEndDate = query.getEndDate();
+                queryEndDate = queryWindowEnd;
             }
-            LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>().eq(EquipRecordAlarm::getSn, query.getSn()).and(wrapper -> {
-                wrapper.between(EquipRecordAlarm::getStartTime, query.getStartDate(), queryEndDate).or().between(EquipRecordAlarm::getEndTime, query.getStartDate(), queryEndDate);
-            }).orderByDesc(EquipRecordAlarm::getId);
+            LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
+                    .eq(EquipRecordAlarm::getSn, query.getSn())
+                    .and(wrapper -> {
+                        wrapper
+                                .between(EquipRecordAlarm::getStartTime, query.getStartDate(), queryWindowEnd)
+                                .or()
+                                .between(EquipRecordAlarm::getEndTime, query.getStartDate(), queryWindowEnd);
+                    })
+                    .orderByDesc(EquipRecordAlarm::getId);
             List<EquipRecordAlarmVo> vos = EquipRecordAlarm.covert(this.list(qw), EquipRecordAlarmVo.class);
             if (CollectionUtil.isNotBlank(vos)) {
+                if (queryEndDate.before(queryWindowEnd)) {
+                    vos.removeIf(vo -> vo.getStartTime() != null && !vo.getStartTime().before(queryEndDate));
+                }
                 for (EquipRecordAlarmVo vo : vos) {
-                    if (vo.getEndTime() == null) {
-                        vo.setEndTime(queryEndDate);
-                    }
-                    if (vo.getStartTime().before(queryEndDate)) {
-                        if (vo.getStartTime().before(query.getStartDate())) {
-                            vo.setStartTime(query.getStartDate());
-                        }
-                        r.add(vo);
+                    if (vo.getStartTime() != null && vo.getStartTime().before(queryWindowEnd)) {
+                        segments.add(vo);
                     }
                 }
             }
         }
-        return r;
+        EquipRecordGanttSupport.normalizeAlarmForGantt(segments, query.getStartDate(), queryWindowEnd);
+        return segments;
     }
 }
