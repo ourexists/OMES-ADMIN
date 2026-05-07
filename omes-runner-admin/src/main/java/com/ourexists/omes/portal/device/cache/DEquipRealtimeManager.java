@@ -1,17 +1,5 @@
 package com.ourexists.omes.portal.device.cache;
 
-/**
- * 设备实时态已迁移至 omes-device 模块 com.ourexists.omes.device.realtime.PgEquipRealtimeManager，
- * 数据库表脚本见 omes-device-server/src/main/resources/sql/t_equip_realtime.sql。
- * 下方整段注释为原 Redis + Spring Cache 实现，仅供参考，不再注册为 Bean。
- */
-@SuppressWarnings("unused")
-final class DEquipRealtimeManagerPlaceholder {
-    private DEquipRealtimeManagerPlaceholder() {
-    }
-}
-
-/*
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
@@ -21,6 +9,8 @@ import com.ourexists.omes.device.model.EquipDto;
 import com.ourexists.omes.device.model.EquipPageQuery;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,8 +21,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -168,26 +156,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     }
 
     @Override
-    public void clear() {
-        withEquipDataSyncMutation(() -> {
-            String tenantId = UserContext.getTenant().getTenantId();
-            try {
-                EquipRealtimeRedisLua.executeClearTenant(
-                        redisTemplate,
-                        equipRedisCacheName(tenantId) + "::*",
-                        idToSnIndexKey(tenantId),
-                        "{" + tenantId + "}omes:equip_rt:gw2sn:*",
-                        stateOnlineZsetKey(tenantId),
-                        stateRunZsetKey(tenantId),
-                        stateAlarmZsetKey(tenantId));
-            } catch (Exception ex) {
-                log.error("clear tenant equip realtime (lua) failed: tenantId={}", tenantId, ex);
-                throw new BusinessException("清空设备实时缓存失败");
-            }
-        });
-    }
-
-    @Override
     public EquipRealtime get(String sn) {
         Cache.ValueWrapper valueWrapper = tenantCache().get(sn);
         return valueWrapper == null ? null : cacheValueConverter.convert(valueWrapper.get(), EquipRealtime.class);
@@ -233,76 +201,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             }
         }
         return list;
-    }
-
-    @Override
-    public List<EquipRealtime> pageByOnlineState(int pageNum, int pageSize) {
-        return pageStateZset(stateOnlineZsetKey(UserContext.getTenant().getTenantId()), pageNum, pageSize);
-    }
-
-    @Override
-    public long countByOnlineState() {
-        return zsetCard(stateOnlineZsetKey(UserContext.getTenant().getTenantId()));
-    }
-
-    @Override
-    public List<EquipRealtime> pageByRunState(int pageNum, int pageSize) {
-        return pageStateZset(stateRunZsetKey(UserContext.getTenant().getTenantId()), pageNum, pageSize);
-    }
-
-    @Override
-    public long countByRunState() {
-        return zsetCard(stateRunZsetKey(UserContext.getTenant().getTenantId()));
-    }
-
-    @Override
-    public List<EquipRealtime> pageByAlarmState(int pageNum, int pageSize) {
-        return pageStateZset(stateAlarmZsetKey(UserContext.getTenant().getTenantId()), pageNum, pageSize);
-    }
-
-    @Override
-    public long countByAlarmState() {
-        return zsetCard(stateAlarmZsetKey(UserContext.getTenant().getTenantId()));
-    }
-
-    private List<EquipRealtime> pageStateZset(String zsetKey, int pageNum, int pageSize) {
-        if (pageSize <= 0) {
-            return Collections.emptyList();
-        }
-        int pn = Math.max(1, pageNum);
-        long start = (long) (pn - 1) * pageSize;
-        long end = start + pageSize - 1;
-        Set<String> sns;
-        try {
-            sns = stringRedisTemplate.opsForZSet().reverseRange(zsetKey, start, end);
-        } catch (Exception ex) {
-            log.error("pageStateZset reverseRange failed: key={}", zsetKey, ex);
-            return Collections.emptyList();
-        }
-        if (CollectionUtils.isEmpty(sns)) {
-            return Collections.emptyList();
-        }
-        List<EquipRealtime> list = new ArrayList<>(sns.size());
-        for (String sn : sns) {
-            if (!StringUtils.hasText(sn)) {
-                continue;
-            }
-            EquipRealtime rt = get(sn);
-            if (rt != null) {
-                list.add(rt);
-            }
-        }
-        return list;
-    }
-
-    private long zsetCard(String zsetKey) {
-        try {
-            Long n = stringRedisTemplate.opsForZSet().size(zsetKey);
-            return n == null ? 0L : n;
-        } catch (Exception ex) {
-            log.error("zsetCard failed: key={}", zsetKey, ex);
-            return 0L;
-        }
     }
 
     @Override
@@ -500,4 +398,3 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         }
     }
 }
-*/
