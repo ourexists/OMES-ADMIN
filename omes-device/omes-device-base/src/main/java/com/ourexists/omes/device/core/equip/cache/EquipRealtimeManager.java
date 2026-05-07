@@ -11,8 +11,6 @@ public interface EquipRealtimeManager {
 
     void remove(String sn);
 
-    void clear();
-
     EquipRealtime get(String sn);
 
     EquipRealtime getById(String id);

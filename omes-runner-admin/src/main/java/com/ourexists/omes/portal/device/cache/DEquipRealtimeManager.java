@@ -1,5 +1,17 @@
 package com.ourexists.omes.portal.device.cache;
 
+/**
+ * 设备实时态已迁移至 omes-device 模块 com.ourexists.omes.device.realtime.PgEquipRealtimeManager，
+ * 数据库表脚本见 omes-device-server/src/main/resources/sql/t_equip_realtime.sql。
+ * 下方整段注释为原 Redis + Spring Cache 实现，仅供参考，不再注册为 Bean。
+ */
+@SuppressWarnings("unused")
+final class DEquipRealtimeManagerPlaceholder {
+    private DEquipRealtimeManagerPlaceholder() {
+    }
+}
+
+/*
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
@@ -47,35 +59,43 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
     @Autowired
     private RedissonClient redissonClient;
 
-    /**
-     * 全集群单 key：串行化 {@link #reload}、{@link #addOrUpdate}、{@link #remove}、{@link #clear}，
-     * 避免全量 reload 与增量写/清空交错导致数据不一致。
-     */
     private static final String EQUIP_DATA_SYNC_LOCK_KEY = "omes:equip_rt:data_sync";
 
-    /** 与 reload 争锁时，增量写/清空最长等待秒数（看门狗续期，持锁期间自动续租） */
     @Value("${omes.device.equip-data-sync-lock-wait-seconds:30}")
     private long equipDataSyncLockWaitSeconds;
 
-    /**
-     * Spring {@link org.springframework.data.redis.cache.RedisCache} 的 cache 名，须与 {@link #equipCacheRedisKey} 前缀一致。
-     * 使用 {@code {tenantId}} hash tag，保证与 id 索引、gw Set 同一 slot，Redis Cluster 下多 key Lua 合法。
-     */
     private static String equipRedisCacheName(String tenantId) {
         return "{" + tenantId + "}equip_realtime_" + tenantId;
     }
 
-    /** 单次 reload 拉取条数，避免一次性加载百万设备导致 OOM / Feign 超时 */
     private static final int RELOAD_PAGE_SIZE = 500;
 
-    /** Redis Hash：field=设备主键 id，value=selfCode（与主缓存同 slot） */
     private static String idToSnIndexKey(String tenantId) {
         return "{" + tenantId + "}omes:equip_rt:id2sn";
     }
 
-    /** Redis Set：member=selfCode（与主缓存同 slot） */
     private static String gwToSnSetKey(String tenantId, String gwId) {
         return "{" + tenantId + "}omes:equip_rt:gw2sn:" + gwId;
+    }
+
+    private static String stateOnlineZsetKey(String tenantId) {
+        return "{" + tenantId + "}omes:equip_rt:z_online";
+    }
+
+    private static String stateRunZsetKey(String tenantId) {
+        return "{" + tenantId + "}omes:equip_rt:z_run";
+    }
+
+    private static String stateAlarmZsetKey(String tenantId) {
+        return "{" + tenantId + "}omes:equip_rt:z_alarm";
+    }
+
+    private static int stateFlag01(Integer state) {
+        return state != null && state == 1 ? 1 : 0;
+    }
+
+    private static long millisOrNow(Date d) {
+        return d != null ? d.getTime() : System.currentTimeMillis();
     }
 
     private Cache tenantCache() {
@@ -87,12 +107,10 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         return springCache;
     }
 
-    /** 与 Spring RedisCache 的 Redis 主键一致：{@code {tid}equip_realtime_{tid}::{sn}} */
     private static String equipCacheRedisKey(String tenantId, String selfCode) {
         return equipRedisCacheName(tenantId) + "::" + selfCode;
     }
 
-    /** 网关绑定关系在 EquipRealtimeConfig.gwId（与 EquipConfigDetail.gwId 对应） */
     private static String resolveGwId(EquipRealtime rt) {
         if (rt == null || rt.getEquipRealtimeConfig() == null) {
             return null;
@@ -136,7 +154,13 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             String gwKey = sremGw ? gwToSnSetKey(tenantId, gwId) : idHash;
             EquipRealtimeRedisLua.executeRemove(
                     redisTemplate,
-                    Arrays.asList(mainKey, idHash, gwKey),
+                    Arrays.asList(
+                            mainKey,
+                            idHash,
+                            gwKey,
+                            stateOnlineZsetKey(tenantId),
+                            stateRunZsetKey(tenantId),
+                            stateAlarmZsetKey(tenantId)),
                     er.getId(),
                     sn,
                     sremGw);
@@ -152,7 +176,10 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                         redisTemplate,
                         equipRedisCacheName(tenantId) + "::*",
                         idToSnIndexKey(tenantId),
-                        "{" + tenantId + "}omes:equip_rt:gw2sn:*");
+                        "{" + tenantId + "}omes:equip_rt:gw2sn:*",
+                        stateOnlineZsetKey(tenantId),
+                        stateRunZsetKey(tenantId),
+                        stateAlarmZsetKey(tenantId));
             } catch (Exception ex) {
                 log.error("clear tenant equip realtime (lua) failed: tenantId={}", tenantId, ex);
                 throw new BusinessException("清空设备实时缓存失败");
@@ -206,6 +233,76 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
             }
         }
         return list;
+    }
+
+    @Override
+    public List<EquipRealtime> pageByOnlineState(int pageNum, int pageSize) {
+        return pageStateZset(stateOnlineZsetKey(UserContext.getTenant().getTenantId()), pageNum, pageSize);
+    }
+
+    @Override
+    public long countByOnlineState() {
+        return zsetCard(stateOnlineZsetKey(UserContext.getTenant().getTenantId()));
+    }
+
+    @Override
+    public List<EquipRealtime> pageByRunState(int pageNum, int pageSize) {
+        return pageStateZset(stateRunZsetKey(UserContext.getTenant().getTenantId()), pageNum, pageSize);
+    }
+
+    @Override
+    public long countByRunState() {
+        return zsetCard(stateRunZsetKey(UserContext.getTenant().getTenantId()));
+    }
+
+    @Override
+    public List<EquipRealtime> pageByAlarmState(int pageNum, int pageSize) {
+        return pageStateZset(stateAlarmZsetKey(UserContext.getTenant().getTenantId()), pageNum, pageSize);
+    }
+
+    @Override
+    public long countByAlarmState() {
+        return zsetCard(stateAlarmZsetKey(UserContext.getTenant().getTenantId()));
+    }
+
+    private List<EquipRealtime> pageStateZset(String zsetKey, int pageNum, int pageSize) {
+        if (pageSize <= 0) {
+            return Collections.emptyList();
+        }
+        int pn = Math.max(1, pageNum);
+        long start = (long) (pn - 1) * pageSize;
+        long end = start + pageSize - 1;
+        Set<String> sns;
+        try {
+            sns = stringRedisTemplate.opsForZSet().reverseRange(zsetKey, start, end);
+        } catch (Exception ex) {
+            log.error("pageStateZset reverseRange failed: key={}", zsetKey, ex);
+            return Collections.emptyList();
+        }
+        if (CollectionUtils.isEmpty(sns)) {
+            return Collections.emptyList();
+        }
+        List<EquipRealtime> list = new ArrayList<>(sns.size());
+        for (String sn : sns) {
+            if (!StringUtils.hasText(sn)) {
+                continue;
+            }
+            EquipRealtime rt = get(sn);
+            if (rt != null) {
+                list.add(rt);
+            }
+        }
+        return list;
+    }
+
+    private long zsetCard(String zsetKey) {
+        try {
+            Long n = stringRedisTemplate.opsForZSet().size(zsetKey);
+            return n == null ? 0L : n;
+        } catch (Exception ex) {
+            log.error("zsetCard failed: key={}", zsetKey, ex);
+            return 0L;
+        }
     }
 
     @Override
@@ -265,7 +362,10 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                             redisTemplate,
                             equipRedisCacheName(tid) + "::*",
                             idToSnIndexKey(tid),
-                            "{" + tid + "}omes:equip_rt:gw2sn:*");
+                            "{" + tid + "}omes:equip_rt:gw2sn:*",
+                            stateOnlineZsetKey(tid),
+                            stateRunZsetKey(tid),
+                            stateAlarmZsetKey(tid));
                 } catch (Exception ex) {
                     log.error("reload: atomic clear tenant redis failed tid={}; stale equip/index may remain", tid, ex);
                 }
@@ -328,7 +428,6 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         }
     }
 
-    /** Lua：SET 主缓存 + HSET id 索引 + 条件更新 gw→sn Set（与网关变更时 SREM 旧 Set） */
     private void luaUpsertEquip(String tenantId, String sn, EquipRealtime rt, String oldGw, String newGw) {
         boolean sremOldGw = StringUtils.hasText(oldGw) && (!Objects.equals(oldGw, newGw) || !StringUtils.hasText(newGw));
         boolean saddNewGw = StringUtils.hasText(newGw);
@@ -336,38 +435,52 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         String kMain = equipCacheRedisKey(tenantId, sn);
         String kOldGw = sremOldGw ? gwToSnSetKey(tenantId, oldGw) : idHash;
         String kNewGw = saddNewGw ? gwToSnSetKey(tenantId, newGw) : idHash;
+        String kOnline = stateOnlineZsetKey(tenantId);
+        String kRun = stateRunZsetKey(tenantId);
+        String kAlarm = stateAlarmZsetKey(tenantId);
         EquipRealtimeRedisLua.executeUpsert(
                 redisTemplate,
-                Arrays.asList(kMain, idHash, kOldGw, kNewGw),
+                Arrays.asList(kMain, idHash, kOldGw, kNewGw, kOnline, kRun, kAlarm),
                 rt,
                 EquipRealtimeRedisLua.CACHE_TTL_SECONDS,
                 rt.getId(),
                 sn,
                 sremOldGw,
-                saddNewGw);
+                saddNewGw,
+                stateFlag01(rt.getOnlineState()),
+                millisOrNow(rt.getOnlineChangeTime()),
+                stateFlag01(rt.getRunState()),
+                millisOrNow(rt.getRunChangeTime()),
+                stateFlag01(rt.getAlarmState()),
+                millisOrNow(rt.getAlarmChangeTime()));
     }
 
-    /** reload 已在租户维度清空 gw Set，单行仅需 SADD 新网关（含 SET+HSET） */
     private void luaReloadUpsertEquip(String tenantId, String sn, EquipRealtime rt) {
         boolean saddNewGw = StringUtils.hasText(resolveGwId(rt));
         String idHash = idToSnIndexKey(tenantId);
         String kMain = equipCacheRedisKey(tenantId, sn);
         String newGw = resolveGwId(rt);
         String kNewGw = saddNewGw ? gwToSnSetKey(tenantId, newGw) : idHash;
+        String kOnline = stateOnlineZsetKey(tenantId);
+        String kRun = stateRunZsetKey(tenantId);
+        String kAlarm = stateAlarmZsetKey(tenantId);
         EquipRealtimeRedisLua.executeUpsert(
                 redisTemplate,
-                Arrays.asList(kMain, idHash, idHash, kNewGw),
+                Arrays.asList(kMain, idHash, idHash, kNewGw, kOnline, kRun, kAlarm),
                 rt,
                 EquipRealtimeRedisLua.CACHE_TTL_SECONDS,
                 rt.getId(),
                 sn,
                 false,
-                saddNewGw);
+                saddNewGw,
+                stateFlag01(rt.getOnlineState()),
+                millisOrNow(rt.getOnlineChangeTime()),
+                stateFlag01(rt.getRunState()),
+                millisOrNow(rt.getRunChangeTime()),
+                stateFlag01(rt.getAlarmState()),
+                millisOrNow(rt.getAlarmChangeTime()));
     }
 
-    /**
-     * 与 {@link #reload} 共用集群锁：等待至多 {@link #equipDataSyncLockWaitSeconds} 秒，避免与全量 reload 并行。
-     */
     private void withEquipDataSyncMutation(Runnable action) {
         RLock lock = redissonClient.getLock(EQUIP_DATA_SYNC_LOCK_KEY);
         try {
@@ -387,3 +500,4 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
         }
     }
 }
+*/
