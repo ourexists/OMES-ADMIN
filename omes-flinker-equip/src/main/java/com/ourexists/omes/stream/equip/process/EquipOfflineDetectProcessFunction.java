@@ -15,10 +15,11 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 设备离线：以「成功获取并采纳的设备实时数据」为一次刷新；若在连续 {@link #timeoutMs} 毫秒内没有任何新的采纳数据，则输出离线态。
+ * 设备离线：若在连续 {@link #timeoutMs} 毫秒内**链路上没有任何设备实时消息**（processing time），则输出离线态。
  * <p>
- * 「获取」指 Flink 作业从队列收到一条 {@link EquipRealtime} 且通过 {@link EquipRealtimeEventTimeUtil#isNewerOrSame} 判定为不比当前状态更旧
- * （避免补发/乱序旧包误刷新）。沉默窗口用作业处理时间度量，与 {@code omes.device.offline-timeout-ms}（默认 90s）一致。
+ * 状态快照仍只采纳 {@link EquipRealtimeEventTimeUtil#isNewerOrSame} 为较新的包（避免补发/乱序旧包覆盖状态），
+ * 但对「更旧」的包也必须刷新离线看门狗——否则设备持续上报心跳却因时间戳/序号未推进被丢弃时，会误判沉默并周期性离线。
+ * 沉默窗口用作业处理时间度量，与 {@code omes.device.offline-timeout-ms}（默认 90s）一致。
  */
 public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<String, EquipRealtime, EquipRealtime> {
 
@@ -30,7 +31,7 @@ public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<Stri
     /** 当前注册的 processing-time 定时触发时间戳（与 register 入参一致，供 delete 使用） */
     private transient ValueState<Long> timeoutTimerState;
 
-    /** 最近一次「采纳」的设备数据对应的处理时间，用于判断自上次获取起是否已满 timeoutMs */
+    /** 最近一次**收到**设备实时消息（含去重丢弃的包）时的处理时间，用于判断是否已满 {@link #timeoutMs} 沉默期 */
     private transient ValueState<Long> lastAcquireProcessingTimeState;
 
     public EquipOfflineDetectProcessFunction(long timeoutMs, long stateTtlMinutes) {
@@ -58,14 +59,22 @@ public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<Stri
 
     @Override
     public void processElement(EquipRealtime value, Context ctx, Collector<EquipRealtime> out) throws Exception {
+        long now = ctx.timerService().currentProcessingTime();
         EquipRealtime current = latestEventState.value();
+        // 不比当前状态新：不覆盖快照，但仍视为链路上有流量（并刷新 state TTL，避免仅 TTL 与去重叠加导致异常）
         if (current != null && !EquipRealtimeEventTimeUtil.isNewerOrSame(value, current)) {
+            latestEventState.update(current);
+            scheduleOfflineWatchdog(ctx, now);
             return;
         }
         latestEventState.update(value);
-        long now = ctx.timerService().currentProcessingTime();
-        lastAcquireProcessingTimeState.update(now);
-        long deadline = Math.addExact(now, timeoutMs);
+        scheduleOfflineWatchdog(ctx, now);
+    }
+
+    /** 收到任意实时包时调用：更新沉默计时起点并重注册 processing-time 定时器 */
+    private void scheduleOfflineWatchdog(Context ctx, long processingTimeNow) throws Exception {
+        lastAcquireProcessingTimeState.update(processingTimeNow);
+        long deadline = Math.addExact(processingTimeNow, timeoutMs);
         Long oldTimer = timeoutTimerState.value();
         if (oldTimer != null && oldTimer != deadline) {
             ctx.timerService().deleteProcessingTimeTimer(oldTimer);
