@@ -50,9 +50,11 @@ public class EquipDto extends BaseDto {
     /** 关联的健康规则模板ID，为空时使用默认模板 */
     private String healthTemplateId;
 
-    private Integer runState = 0;
+    /** 运行：-1 未知，0 停止，1 运行 */
+    private Integer runState = -1;
 
-    private Integer alarmState = 0;
+    /** 报警：-1 未知，0 正常，1 报警 */
+    private Integer alarmState = -1;
 
     private Integer onlineState = 0;
 

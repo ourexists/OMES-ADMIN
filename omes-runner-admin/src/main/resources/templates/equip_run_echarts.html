@@ -71,11 +71,7 @@
                         desc = '停止';
                     }
                 } else if (type === 2) {
-                    if (state === 1) {
-                        desc = '报警';
-                    } else {
-                        desc = '正常';
-                    }
+                    desc = '报警';
                 }
                 const start = formatDate(params.data[1]);
                 const end = formatDate(params.data[2]);
@@ -182,7 +178,7 @@
             return state === 1 ? '#52c41a' : '#FAAD14';
         }
         if (type === 2) {
-            return state === 1 ? '#ff4d4f' : '#bfbfbf';
+            return '#ff4d4f';
         }
     }
 
@@ -208,15 +204,14 @@
                 requirePage: false
             },
             function (res) {
-                if (type === 2) {
-                    r.push([type, startDate, endDate, 0]);
-                }
                 if (res === null) {
-                    if (type === 2) r = mergeRecords(r);
                     return;
                 }
                 if (res.length > 0) {
                     res.forEach(item => {
+                        if (type === 2 && item.state !== 1) {
+                            return;
+                        }
                         r.push([type, parseDate(item.startTime), parseDate(item.endTime), item.state]);
                     });
                 }

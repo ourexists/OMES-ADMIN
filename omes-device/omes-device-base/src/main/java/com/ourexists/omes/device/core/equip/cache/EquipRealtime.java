@@ -23,9 +23,11 @@ public class EquipRealtime {
 
     private Integer onlineState = 0;
 
-    private Integer runState = 0;
+    /** 运行：-1 未知，0 停止，1 运行 */
+    private Integer runState = -1;
 
-    private Integer alarmState = 0;
+    /** 报警：-1 未知，0 正常，1 报警 */
+    private Integer alarmState = -1;
 
     private List<EquipAttrRealtime> equipAttrRealtimes;
 
@@ -66,8 +68,12 @@ public class EquipRealtime {
                 this.equipAttrRealtimes = null;
             }
         }
-        if (this.alarmState != 0) {
-            this.alarmState = 0;
+        if (this.runState == null || this.runState != -1) {
+            this.runState = -1;
+            this.runChangeTime = new Date();
+        }
+        if (this.alarmState == null || this.alarmState != -1) {
+            this.alarmState = -1;
             this.alarmChangeTime = new Date();
             this.alarmTexts = new ArrayList<>();
         }

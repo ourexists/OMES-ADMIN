@@ -6,7 +6,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
 /**
- * Entry point for submitting this module to a Flink cluster ({@code flink run} or Web UI JAR upload).
+ * Entry point for submitting this module to a Flink cluster ({@code flink run} or Web UI JAR upload), or for local
+ * debugging via embedded mini-cluster ({@code omes.device.flink.local=true} / {@code --local true}; see README).
  * <p>
  * Configuration: Flink {@code ParameterTool} merges program args, {@code -D} system properties, and environment
  * variables (see module {@code README.md} for {@code OMES_*} / {@code RABBITMQ_*} and dotted property keys).
@@ -23,7 +24,7 @@ public final class EquipRealtimeFlinkJob {
                 .mergeWith(ParameterTool.fromMap(System.getenv()));
         EquipRealtimeFlinkJobConfig cfg = EquipRealtimeFlinkJobProperties.from(pt);
         RMQConnectionConfig rmq = EquipRealtimeFlinkRmqConfig.from(pt, cfg.flinkRmqPrefetch());
-        StreamExecutionEnvironment env = EquipRealtimeFlinkGraph.createExecutionEnvironment();
+        StreamExecutionEnvironment env = EquipRealtimeFlinkGraph.createExecutionEnvironment(cfg);
         EquipRealtimeFlinkGraph.configureExecutionEnvironment(env, cfg);
         EquipRealtimeFlinkGraph.buildAndExecute(env, rmq, cfg);
     }

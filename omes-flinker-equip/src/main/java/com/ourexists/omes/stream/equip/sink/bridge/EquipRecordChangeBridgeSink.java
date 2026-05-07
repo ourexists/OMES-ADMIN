@@ -27,9 +27,8 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
         if (event == null || objectMapper == null) {
             return;
         }
-        EquipRealtime source = event.getSource();
         EquipRealtime target = event.getTarget();
-        if (source == null || target == null) {
+        if (target == null) {
             return;
         }
         if (!event.isAlarmChanged() && !event.isRunChanged() && !event.isOnlineChanged()) {
@@ -41,10 +40,10 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
                     ? null
                     : target.getAlarmTexts().stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(","));
             EquipRecordAlarmDto alarm = new EquipRecordAlarmDto()
-                    .setSn(source.getSelfCode())
+                    .setSn(target.getSelfCode())
                     .setState(target.getAlarmState())
                     .setStartTime(target.getTime())
-                    .setTenantId(source.getTenantId())
+                    .setTenantId(target.getTenantId())
                     .setReason(reason)
                     .setLevel(target.getAlarmLevel())
                     .setEventId(event.getAlarmSegmentEventId())
@@ -53,20 +52,20 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
         }
         if (event.isRunChanged()) {
             EquipRecordRunDto run = new EquipRecordRunDto()
-                    .setSn(source.getSelfCode())
+                    .setSn(target.getSelfCode())
                     .setState(target.getRunState())
                     .setStartTime(target.getTime())
-                    .setTenantId(source.getTenantId())
+                    .setTenantId(target.getTenantId())
                     .setEventId(event.getRunSegmentEventId())
                     .setPrevEventId(event.getRunPrevSegmentEventId());
             root.set("run", objectMapper.valueToTree(run));
         }
         if (event.isOnlineChanged()) {
             EquipRecordOnlineDto online = new EquipRecordOnlineDto()
-                    .setSn(source.getSelfCode())
+                    .setSn(target.getSelfCode())
                     .setState(target.getOnlineState())
                     .setStartTime(target.getTime())
-                    .setTenantId(source.getTenantId())
+                    .setTenantId(target.getTenantId())
                     .setEventId(event.getOnlineSegmentEventId())
                     .setPrevEventId(event.getOnlinePrevSegmentEventId());
             root.set("online", objectMapper.valueToTree(online));

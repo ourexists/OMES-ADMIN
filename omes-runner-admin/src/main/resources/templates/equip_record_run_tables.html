@@ -88,6 +88,7 @@
         });
 
         var stateMap = {
+            "-1": i18np.prop("equip.unknown"),
             "0": i18np.prop("equip.stop"),
             "1": i18np.prop("equip.run")
         }
@@ -108,7 +109,7 @@
                 },
                 {
                     field: 'state', title: i18np.prop('equip.state'), templet(d) {
-                        return stateMap[d.state]
+                        return d.state == null ? '-' : (stateMap[String(d.state)] || '-');
                     }
                 },
                 {field: 'startTime', title: i18np.prop('equiprun.runStartTime')},

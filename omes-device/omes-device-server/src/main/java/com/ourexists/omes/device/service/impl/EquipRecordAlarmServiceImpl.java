@@ -27,9 +27,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<EquipRecordAlarmMapper, EquipRecordAlarm> implements EquipRecordAlarmService {
+
+    /** 与实时侧一致：仅 {@code alarmState == 1} 落库为新报警区间；解除报警等只闭合前段，不插入非报警行。 */
+    private static final int ALARM_STATE_ACTIVE = 1;
 
     @Autowired
     private EquipRealtimeManager realtimeManager;
@@ -53,13 +58,16 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
     public void add(EquipRecordAlarmDto dto) {
         dto.setId(null);
         EquipRecordAlarm current = EquipRecordAlarm.wrap(dto);
+        boolean insertNewSegment = Objects.equals(current.getState(), ALARM_STATE_ACTIVE);
         if (StringUtils.hasText(dto.getPrevEventId())) {
             EquipRecordAlarm toClose = this.getOne(new LambdaQueryWrapper<EquipRecordAlarm>().eq(EquipRecordAlarm::getEventId, dto.getPrevEventId()).eq(EquipRecordAlarm::getSn, dto.getSn()).last("limit 1"));
             if (toClose != null) {
                 if (!toClose.getState().equals(current.getState())) {
                     toClose.setEndTime(current.getStartTime());
                     this.updateById(toClose);
-                    this.save(current);
+                    if (insertNewSegment) {
+                        this.save(current);
+                    }
                 }
                 return;
             }
@@ -70,10 +78,14 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
             if (!last.getState().equals(current.getState())) {
                 last.setEndTime(current.getStartTime());
                 this.updateById(last);
-                this.save(current);
+                if (insertNewSegment) {
+                    this.save(current);
+                }
             }
         } else {
-            this.save(current);
+            if (insertNewSegment) {
+                this.save(current);
+            }
         }
     }
 
@@ -94,7 +106,12 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
         if (!closePatchBySnEvent.isEmpty()) {
             baseMapper.batchUpdateEndTimeByEventId(new ArrayList<>(closePatchBySnEvent.values()));
         }
-        this.saveBatch(EquipRecordAlarm.wrap(ordered));
+        List<EquipRecordAlarmDto> toInsert = ordered.stream()
+                .filter(d -> Objects.equals(d.getState(), ALARM_STATE_ACTIVE))
+                .collect(Collectors.toList());
+        if (!toInsert.isEmpty()) {
+            this.saveBatch(EquipRecordAlarm.wrap(toInsert));
+        }
     }
 
     @Override

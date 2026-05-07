@@ -107,10 +107,10 @@
                     <div class="card-status-dots">
                         <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}"
                               title="在线"></span>
-                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-stopped') : 'status-offline' }}"
-                              title="运行"></span>
-                        <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}"
-                              title="告警"></span>
+                        <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : (item.runState==-1 ? 'status-unknown' : 'status-stopped')) : 'status-offline' }}"
+                              title="{{ item.onlineState!=1 ? (i18np.prop('equip.offline')) : (item.runState==1 ? i18np.prop('equip.run') : (item.runState==-1 ? i18np.prop('equip.unknown') : i18np.prop('equip.stop'))) }}"></span>
+                        <span class="status-dot {{ item.onlineState==1 ? (item.alarmState==1 ? 'status-alarm' : (item.alarmState==-1 ? 'status-unknown' : 'status-offline')) : 'status-offline' }}"
+                              title="{{ item.onlineState!=1 ? (i18np.prop('equip.offline')) : (item.alarmState==1 ? i18np.prop('equip.alarm') : (item.alarmState==-1 ? i18np.prop('equip.unknown') : i18np.prop('equip.common'))) }}"></span>
                     </div>
                 </div>
                 {{# if(item.alarmTexts && item.alarmTexts.length > 0){ }}
@@ -186,8 +186,8 @@
             <span class="col-workshop">{{ item.workshop && item.workshop.name ? item.workshop.name : '-' }}</span>
             <span class="col-status">
                 <span class="status-dot {{ item.onlineState==1 ? 'status-online' : 'status-offline' }}" title="在线"></span>
-                <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : 'status-stopped') : 'status-offline' }}" title="运行"></span>
-                <span class="status-dot {{ item.onlineState==1 && item.alarmState==1 ? 'status-alarm' : 'status-offline' }}" title="告警"></span>
+                <span class="status-dot {{ item.onlineState==1 ? (item.runState==1 ? 'status-running' : (item.runState==-1 ? 'status-unknown' : 'status-stopped')) : 'status-offline' }}" title="{{ item.onlineState!=1 ? (i18np.prop('equip.offline')) : (item.runState==1 ? i18np.prop('equip.run') : (item.runState==-1 ? i18np.prop('equip.unknown') : i18np.prop('equip.stop'))) }}"></span>
+                <span class="status-dot {{ item.onlineState==1 ? (item.alarmState==1 ? 'status-alarm' : (item.alarmState==-1 ? 'status-unknown' : 'status-offline')) : 'status-offline' }}" title="{{ item.onlineState!=1 ? (i18np.prop('equip.offline')) : (item.alarmState==1 ? i18np.prop('equip.alarm') : (item.alarmState==-1 ? i18np.prop('equip.unknown') : i18np.prop('equip.common'))) }}"></span>
             </span>
             <span class="col-actions">
                 <button type="button" class="card-action-btn" onclick="event.stopPropagation(); openEdit('{{ item.id }}')" title="编辑">
@@ -318,7 +318,7 @@
             if (filterOnlineState === 'run') {
                 list = dataList.filter(function (item) { return item.onlineState === 1 && item.runState === 1; });
             } else if (filterOnlineState === 'stop') {
-                list = dataList.filter(function (item) { return item.onlineState === 1 && item.runState !== 1; });
+                list = dataList.filter(function (item) { return item.onlineState === 1 && item.runState === 0; });
             } else if (filterOnlineState === 'alarm') {
                 list = dataList.filter(function (item) { return item.onlineState === 1 && item.alarmState === 1; });
             } else {

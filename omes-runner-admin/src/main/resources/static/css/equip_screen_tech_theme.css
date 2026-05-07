@@ -28,6 +28,7 @@
     --color-status-alarm: #ff5a5a;
     --color-status-running: #41d57a;
     --color-status-stopped: var(--tech-gold);
+    --color-status-unknown: #9ca8b8;
 
     --color-area-online: rgba(0, 216, 255, 0.22);
     --color-area-running: rgba(65, 213, 122, 0.2);

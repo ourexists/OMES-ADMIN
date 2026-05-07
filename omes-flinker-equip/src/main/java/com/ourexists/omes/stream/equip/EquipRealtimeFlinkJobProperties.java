@@ -8,6 +8,7 @@ final class EquipRealtimeFlinkJobProperties {
     }
 
     static EquipRealtimeFlinkJobConfig from(ParameterTool pt) {
+        boolean flinkLocal = localMode(pt);
         return new EquipRealtimeFlinkJobConfig(
                 str(pt, "omes.device.rabbitmq.equip-realtime-queue", "OMES_EQUIP_REALTIME_QUEUE", "omes.equip.realtime"),
                 str(pt, "omes.device.rabbitmq.equip-notify-create-queue", "OMES_EQUIP_NOTIFY_CREATE_QUEUE", "omes.notify.create"),
@@ -79,7 +80,31 @@ final class EquipRealtimeFlinkJobProperties {
                         pt,
                         "omes.device.flink.state-ttl-minutes.collect-snapshot",
                         "OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT",
-                        -1L));
+                        -1L),
+                flinkLocal,
+                localParallelism(pt, flinkLocal),
+                pt.getBoolean(
+                        "omes.device.flink.local.webui",
+                        pt.getBoolean("OMES_FLINK_LOCAL_WEBUI", true)));
+    }
+
+    private static boolean localMode(ParameterTool pt) {
+        return pt.getBoolean(
+                "omes.device.flink.local",
+                pt.getBoolean("OMES_FLINK_LOCAL", pt.getBoolean("local", false)));
+    }
+
+    private static int localParallelism(ParameterTool pt, boolean flinkLocal) {
+        int p = pt.getInt(
+                "omes.device.flink.local.parallelism",
+                pt.getInt("OMES_FLINK_LOCAL_PARALLELISM", 1));
+        if (flinkLocal && p <= 0) {
+            throw new IllegalArgumentException(
+                    "local parallelism must be positive when local mode is on, was: "
+                            + p
+                            + " (omes.device.flink.local.parallelism / OMES_FLINK_LOCAL_PARALLELISM)");
+        }
+        return p;
     }
 
     /**

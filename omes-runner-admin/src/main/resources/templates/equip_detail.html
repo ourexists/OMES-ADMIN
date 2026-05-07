@@ -60,6 +60,10 @@
         background: linear-gradient(135deg, #fa8c16 0%, #ffa940 100%);
     }
 
+    .equip-icon.unknown {
+        background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+    }
+
     .equip-name-row {
         display: flex;
         align-items: center;
@@ -101,6 +105,12 @@
         background: #fff7e6;
         color: #fa8c16;
         border: 1px solid #ffd591;
+    }
+
+    .equip-status-tag.unknown {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
     }
 
     .equip-meta {
@@ -845,8 +855,12 @@
     function renderEquipInfo(d) {
         if (!d) return;
         let onlineText = d.onlineState === 1 ? i18np.prop('equip.online') : i18np.prop('equip.offline');
-        let runText = d.runState === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop');
-        let alarmText = d.alarmState === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common');
+        let runText = (d.runState === -1 || d.runState == null)
+            ? i18np.prop('equip.unknown')
+            : (d.runState === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop'));
+        let alarmText = (d.alarmState === -1 || d.alarmState == null)
+            ? i18np.prop('equip.unknown')
+            : (d.alarmState === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common'));
 
         var statusClass, statusText;
         if (d.alarmState === 1) {
@@ -855,6 +869,9 @@
         } else if (d.onlineState !== 1) {
             statusClass = 'offline';
             statusText = onlineText;
+        } else if (d.runState === -1 || d.runState == null || d.alarmState === -1 || d.alarmState == null) {
+            statusClass = 'unknown';
+            statusText = i18np.prop('equip.unknown');
         } else {
             statusClass = d.runState === 1 ? 'run' : 'stop';
             statusText = runText;
@@ -863,8 +880,8 @@
         $('#equipName').text(d.name || '-');
         $('#equipSn').text(d.selfCode || '-');
         $('#equipWorkshop').text(d.workshop ? d.workshop.name : '-');
-        $('#equipStatusTag').text(statusText).removeClass('offline alarm run stop').addClass(statusClass);
-        $('#equipIcon').removeClass('offline alarm run stop').addClass(statusClass);
+        $('#equipStatusTag').text(statusText).removeClass('offline alarm run stop unknown').addClass(statusClass);
+        $('#equipIcon').removeClass('offline alarm run stop unknown').addClass(statusClass);
 
         $('#infoName').text(d.name || '-');
         $('#infoSn').text(d.selfCode || '-');
@@ -1102,7 +1119,7 @@
                 confine: true,
                 formatter: function (params) {
                     let type = params.data[0], state = params.data[3];
-                    let desc = type === 0 ? (state === 1 ? '在线' : '离线') : (type === 1 ? (state === 1 ? '运行' : '停止') : (state === 1 ? '报警' : '正常'));
+                    let desc = type === 0 ? (state === 1 ? '在线' : '离线') : (type === 1 ? (state === 1 ? '运行' : '停止') : '报警');
                     return desc + '\r\n' + formatDate(params.data[1]) + '~' + formatDate(params.data[2]);
                 }
             },
@@ -1114,7 +1131,7 @@
                     let yIndex = api.value(0), start = api.coord([api.value(1), yIndex]),
                         end = api.coord([api.value(2), yIndex]);
                     let type = api.value(0), state = api.value(3);
-                    let fill = type === 0 ? (state === 1 ? '#1890ff' : '#bfbfbf') : (type === 1 ? (state === 1 ? '#52c41a' : '#FAAD14') : (state === 1 ? '#ff4d4f' : '#bfbfbf'));
+                    let fill = type === 0 ? (state === 1 ? '#1890ff' : '#bfbfbf') : (type === 1 ? (state === 1 ? '#52c41a' : '#FAAD14') : '#ff4d4f');
                     return {
                         type: 'rect',
                         shape: {x: start[0], y: start[1] - 10, width: end[0] - start[0], height: 20},
@@ -1166,9 +1183,8 @@
             endDate: formatDate(endDate),
             requirePage: false
         }, function (res) {
-            // 报警轨：接口未覆盖的时段视为正常（state=0），先铺整窗底色再叠报警段
-            r.push([2, startDate, endDate, 0]);
             if (res && res.length > 0) res.forEach(function (item) {
+                if (item.state !== 1) return;
                 r.push([2, parseDate(item.startTime), parseDate(item.endTime), item.state]);
             });
             done();
@@ -1263,7 +1279,9 @@
             {field: 'endTime', title: i18np.prop('equiprun.runEndTime'), minWidth: 168},
             {
                 field: 'state', title: i18np.prop('equip.state'), width: 96, templet: function (d) {
-                    return d.state === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop');
+                    var s = d.state;
+                    if (s === -1 || s === '-1') return i18np.prop('equip.unknown');
+                    return s === 1 ? i18np.prop('equip.run') : i18np.prop('equip.stop');
                 }
             },
             {field: 'powerStart', title: i18np.prop('equiprun.powerStart'), width: 110},
@@ -1292,7 +1310,9 @@
             {field: 'endTime', title: i18np.prop('equiprun.runEndTime'), minWidth: 160},
             {
                 field: 'state', title: i18np.prop('equip.state'), width: 88, templet: function (d) {
-                    return d.state === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common');
+                    var s = d.state;
+                    if (s === -1 || s === '-1') return i18np.prop('equip.unknown');
+                    return s === 1 ? i18np.prop('equip.alarm') : i18np.prop('equip.common');
                 }
             },
             {field: 'duration', title: i18np.prop('equiprun.duration'), width: 112},

@@ -1,7 +1,7 @@
 package com.ourexists.omes.stream.equip.process;
 
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
-import com.ourexists.omes.device.model.EquipAlarmFingerprint;
+import com.ourexists.omes.stream.equip.EquipAlarmFingerprint;
 import com.ourexists.omes.stream.equip.model.EquipRealtimeChangeEvent;
 import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
 import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
@@ -111,7 +111,10 @@ public class EquipRealtimeChangeDetectProcessFunction extends KeyedProcessFuncti
     }
 
     private boolean isAlarmChanged(EquipRealtime previous, EquipRealtime current) {
-        if (previous == null || current == null) {
+        if (previous == null) {
+            return true;
+        }
+        if (current == null) {
             return false;
         }
         boolean isChanged = !Objects.equals(previous.getAlarmState(), current.getAlarmState());
@@ -127,14 +130,20 @@ public class EquipRealtimeChangeDetectProcessFunction extends KeyedProcessFuncti
     }
 
     private boolean isRunChanged(EquipRealtime previous, EquipRealtime current) {
-        if (previous == null || current == null) {
+        if (previous == null) {
+            return true;
+        }
+        if (current == null) {
             return false;
         }
         return !Objects.equals(previous.getRunState(), current.getRunState());
     }
 
     private boolean isOnlineChanged(EquipRealtime previous, EquipRealtime current) {
-        if (previous == null || current == null) {
+        if (previous == null) {
+            return true;
+        }
+        if (current == null) {
             return false;
         }
         return !Objects.equals(previous.getOnlineState(), current.getOnlineState());

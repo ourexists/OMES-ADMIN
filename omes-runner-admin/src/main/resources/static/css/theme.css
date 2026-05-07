@@ -54,6 +54,8 @@
     --status-offline: #94a3b8;
     --status-offline-legacy: #94a3b8;
     --status-stopped: #f59e0b;
+    --status-unknown: #94a3b8;
+    --status-unknown-legacy: #94a3b8;
     --status-alarm-text: #dc2626;
 
     /* ========== 品牌/标签色（科技风） ========== */

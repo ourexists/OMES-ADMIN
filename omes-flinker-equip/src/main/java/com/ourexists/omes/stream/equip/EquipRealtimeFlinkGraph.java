@@ -34,10 +34,26 @@ public final class EquipRealtimeFlinkGraph {
     private EquipRealtimeFlinkGraph() {
     }
 
-    public static StreamExecutionEnvironment createExecutionEnvironment() {
+    public static StreamExecutionEnvironment createExecutionEnvironment(EquipRealtimeFlinkJobConfig cfg) {
         Configuration flinkConfig = new Configuration();
         flinkConfig.setString("classloader.resolve-order", "parent-first");
-        return StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
+        if (!cfg.flinkLocalMode()) {
+            return StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
+        }
+        int p = cfg.flinkLocalParallelism();
+        StreamExecutionEnvironment env;
+        if (cfg.flinkLocalWebUI()) {
+            env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(flinkConfig);
+            env.setParallelism(p);
+        } else {
+            env = StreamExecutionEnvironment.createLocalEnvironment(p, flinkConfig);
+        }
+        log.info(
+                "Flink local debug mode: parallelism={} webUI={} (checkpointing follows omes.device.flink.enable-checkpointing; "
+                        + "leave false for typical local runs)",
+                p,
+                cfg.flinkLocalWebUI());
+        return env;
     }
 
     public static void configureExecutionEnvironment(StreamExecutionEnvironment env, EquipRealtimeFlinkJobConfig cfg) {

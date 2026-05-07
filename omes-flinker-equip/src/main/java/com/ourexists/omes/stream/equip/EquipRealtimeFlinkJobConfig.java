@@ -40,6 +40,15 @@ public final class EquipRealtimeFlinkJobConfig {
     private final long stateTtlMinutesAttrFluctuation;
     private final long stateTtlMinutesStateSnapshot;
     private final long stateTtlMinutesCollectSnapshot;
+    /**
+     * When true, runs in an embedded local Flink mini-cluster (IDE / {@code java -jar} debug), not {@code flink run} /
+     * remote cluster.
+     */
+    private final boolean flinkLocalMode;
+    /** Operator parallelism for {@link #flinkLocalMode}; must be positive when local mode is on. */
+    private final int flinkLocalParallelism;
+    /** When {@link #flinkLocalMode} is true: start local Flink Web UI (dashboard) for debugging. */
+    private final boolean flinkLocalWebUI;
 
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
@@ -64,7 +73,10 @@ public final class EquipRealtimeFlinkJobConfig {
             long stateTtlMinutesChangeDetect,
             long stateTtlMinutesAttrFluctuation,
             long stateTtlMinutesStateSnapshot,
-            long stateTtlMinutesCollectSnapshot) {
+            long stateTtlMinutesCollectSnapshot,
+            boolean flinkLocalMode,
+            int flinkLocalParallelism,
+            boolean flinkLocalWebUI) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
         this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
@@ -88,6 +100,9 @@ public final class EquipRealtimeFlinkJobConfig {
         this.stateTtlMinutesAttrFluctuation = stateTtlMinutesAttrFluctuation;
         this.stateTtlMinutesStateSnapshot = stateTtlMinutesStateSnapshot;
         this.stateTtlMinutesCollectSnapshot = stateTtlMinutesCollectSnapshot;
+        this.flinkLocalMode = flinkLocalMode;
+        this.flinkLocalParallelism = flinkLocalParallelism;
+        this.flinkLocalWebUI = flinkLocalWebUI;
     }
 
     public String equipRealtimeRabbitQueue() {
@@ -180,5 +195,17 @@ public final class EquipRealtimeFlinkJobConfig {
 
     public long stateTtlMinutesCollectSnapshot() {
         return stateTtlMinutesCollectSnapshot;
+    }
+
+    public boolean flinkLocalMode() {
+        return flinkLocalMode;
+    }
+
+    public int flinkLocalParallelism() {
+        return flinkLocalParallelism;
+    }
+
+    public boolean flinkLocalWebUI() {
+        return flinkLocalWebUI;
     }
 }

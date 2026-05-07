@@ -207,6 +207,9 @@
         if (d.runState === 0) {
             return 'stop';
         }
+        if (d.runState === -1 || d.alarmState === -1) {
+            return 'unknown';
+        }
         if (d.onlineState === 1) {
             return 'online';
         }
@@ -218,8 +221,18 @@
         if (d.onlineState === 1) {
             if (d.runState === 1) {
                 runSpan = '<span class="status-dot-map status-running"></span>';
+            } else if (d.runState === -1) {
+                runSpan = '<span class="status-dot-map status-unknown"></span>';
             } else {
                 runSpan = '<span class="status-dot-map status-stopped"></span>';
+            }
+        }
+        let alarmSpan = '<span class="status-dot-map status-offline"></span>';
+        if (d.onlineState === 1) {
+            if (d.alarmState === 1) {
+                alarmSpan = '<span class="status-dot-map status-alarm"></span>';
+            } else if (d.alarmState === -1) {
+                alarmSpan = '<span class="status-dot-map status-unknown"></span>';
             }
         }
         let html =
@@ -227,7 +240,7 @@
             i18np.prop("equip.code") + `：${d.selfCode}<br/>` +
             i18np.prop("equip.onlineState") + `：${d.onlineState === 1 ? '<span class="status-dot-map status-online"></span>' : '<span class="status-dot-map status-offline"></span>'}<br/>` +
             i18np.prop("equip.runState") + `：` + runSpan + "<br/>" +
-            i18np.prop("equip.alarmState") + `：${d.alarmState === 1 ? '<span class="status-dot-map status-alarm"></span>' : '<span class="status-dot-map status-offline"></span>'}`;
+            i18np.prop("equip.alarmState") + `：` + alarmSpan;
 
         if (d.attrs != null) {
             d.attrs.forEach(function (t) {

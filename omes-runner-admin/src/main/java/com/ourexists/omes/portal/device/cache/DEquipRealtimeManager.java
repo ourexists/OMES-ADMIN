@@ -314,6 +314,9 @@ public class DEquipRealtimeManager implements EquipRealtimeManager {
                 equipRealtime.setRunChangeTime(currentDate);
                 equipRealtime.setOnlineChangeTime(currentDate);
             }
+            // 服务启动 reload：尚无实时数据，运行/报警均为未知
+            equipRealtime.setRunState(-1);
+            equipRealtime.setAlarmState(-1);
             r.put(equipDto.getSelfCode(), equipRealtime);
         }
         for (Map.Entry<String, Map<String, EquipRealtime>> entry : equipRealtimeMap.entrySet()) {

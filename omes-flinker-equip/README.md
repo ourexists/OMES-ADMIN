@@ -45,6 +45,52 @@ flink run -c com.ourexists.omes.stream.equip.EquipRealtimeFlinkJob /path/to/omes
 
 Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 
+## 本地调试（嵌入式 MiniCluster）
+
+用于 IDE 断点或本机 `java -jar` 试跑：开启 **本地模式** 后使用嵌入式 Flink，而不是连接 `flink run` 提交到的远程集群。
+
+1. 打包时带上 Flink 依赖（**不要**把该 profile 用于提交到生产集群的 fat JAR，以免与集群 Flink 重复打包核心类）：
+
+   ```bash
+   mvn -pl omes-flinker-equip clean package -DskipTests -Pflink-with-dependencies
+   ```
+
+2. 打开本地模式（任选其一）：
+
+   - 程序参数：`--local true` 或 `--omes.device.flink.local true`
+   - 环境变量：`OMES_FLINK_LOCAL=true`
+   - JVM：`-Domes.device.flink.local=true`
+
+3. 可选参数：
+
+   | 变量 / 点分键 | 说明 |
+   |---------------|------|
+   | `OMES_FLINK_LOCAL_PARALLELISM` / `omes.device.flink.local.parallelism` | 并行度，默认 `1` |
+   | `OMES_FLINK_LOCAL_WEBUI` / `omes.device.flink.local.webui` | 是否起本地 Flink Dashboard，默认 `true`；`false` 时用无 UI 的 `createLocalEnvironment` |
+
+4. **IntelliJ IDEA（Java 17）**：在运行配置的 **VM options** 里加入 `--add-opens`（与官方 Flink 脚本一致；缺省时 Kryo 序列化可能报 `InaccessibleObjectException: ... java.util.Arrays$ArrayList`）：
+
+   ```
+   --add-opens java.base/java.lang=ALL-UNNAMED
+   --add-opens java.base/java.lang.invoke=ALL-UNNAMED
+   --add-opens java.base/java.util=ALL-UNNAMED
+   --add-opens java.base/java.io=ALL-UNNAMED
+   --add-opens java.base/java.net=ALL-UNNAMED
+   --add-opens java.base/java.nio=ALL-UNNAMED
+   --add-opens java.base/java.text=ALL-UNNAMED
+   --add-opens java.base/java.time=ALL-UNNAMED
+   --add-opens java.base/java.util.concurrent=ALL-UNNAMED
+   --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED
+   --add-opens java.base/java.util.concurrent.locks=ALL-UNNAMED
+   --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+   ```
+
+   **Program arguments** 示例：`--local true`。Maven 侧勾选 profile **`flink-with-dependencies`**，使 Flink 依赖进入模块 classpath。
+
+5. **日志**：若出现 `log4j:WARN No appenders`，属于 Flink 直连 log4j 1.x；模块内已提供 `log4j.properties` 输出到控制台。应用侧 SLF4J 仍由 `logback.xml` 处理。
+
+6. 在 IDE 中 **Run/Debug** 主类 `EquipRealtimeFlinkJob`。本地调试建议保持 **`OMES_FLINK_ENABLE_CHECKPOINTING=false`**（默认），与 README 中 RMQ checkpoint 说明一致；仍需可连通的 RabbitMQ 与队列配置。
+
 ## 配置说明
 
 配置由 Flink `ParameterTool` 合并，优先级：**程序参数** → **JVM `-D` 系统属性** → **环境变量**。
@@ -56,7 +102,7 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 | `RABBITMQ_HOST`     | 主机   | `127.0.0.1`                                   |
 | `RABBITMQ_PORT`     | 端口   | `5672`                                        |
 | `RABBITMQ_USERNAME` | 用户名  | `admin`                                       |
-| `RABBITMQ_PASSWORD` | 密码   | （见 `EquipRealtimeFlinkRmqConfig` 内默认值，生产务必覆盖） |
+| `RABBITMQ_PASSWORD` | 密码   | （默认值，生产务必覆盖） |
 | `RABBITMQ_VHOST`    | 虚拟主机 | `/`                                           |
 
 ### 队列与 Flink
@@ -73,6 +119,9 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 | `OMES_FLINK_CHECKPOINT_TIMEOUT_MS`              | checkpoint 超时（毫秒）                                   |
 | `OMES_FLINK_UNALIGNED_CHECKPOINT`               | 非对齐 checkpoint（减轻 barrier 对齐在背压下的阻塞；默认 `true`）      |
 | `OMES_FLINK_ALIGNED_CHECKPOINT_TIMEOUT_MS`      | 先尝试对齐 barrier，超过该时间（毫秒）后切到非对齐；`0` 表示不设（默认 `30000`）  |
+| `OMES_FLINK_LOCAL`                              | `true`：嵌入式本地 Flink（调试）；见上文「本地调试」                    |
+| `OMES_FLINK_LOCAL_PARALLELISM`                  | 本地模式并行度（默认 `1`）                                      |
+| `OMES_FLINK_LOCAL_WEBUI`                        | 本地模式是否启用 Flink Web UI（默认 `true`）                    |
 | `OMES_FLINK_RMQ_PREFETCH`                       | RMQ prefetch                                        |
 | `OMES_FLINK_STATE_TTL_MINUTES_OFFLINE_DETECT`   | 离线检测算子 keyed state：`-1` 不启用 TTL（默认），正整数为空闲保留 **分钟** |
 | `OMES_FLINK_STATE_TTL_MINUTES_CHANGE_DETECT`    | 变更检测算子（同上）                                          |
@@ -96,7 +145,6 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 | `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOW_MS` | 窗口长度（毫秒），`windowed=true` 时必须为正。 |
 | `OMES_FLINK_CHANGE_DETECT_INGRESS_SLIDE_MS` | 滑动步长（毫秒），`windowed=true` 时必须为正且 **不大于** `WINDOW_MS`。 |
 
-在 `EquipRealtimeChangeDetectProcessFunction` 内：设备仍为报警中（`alarmState == 1`）但 **报警指纹**（`selfCode` + `alarmLevel` + 排序后的 `alarmTexts`）相对上一条状态发生变化时，也会将 `alarmChanged` 置为 `true`，以便下游 persist/notify 感知「报警内容变化」。
 
 ### 业务参数
 

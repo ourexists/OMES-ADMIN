@@ -212,6 +212,11 @@ html, body {
     box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
 }
 
+.status-unknown {
+    background: var(--status-unknown-legacy);
+    box-shadow: 0 0 4px rgba(148, 163, 184, 0.45);
+}
+
 .main-panel {
     position: absolute;
     display: flex;

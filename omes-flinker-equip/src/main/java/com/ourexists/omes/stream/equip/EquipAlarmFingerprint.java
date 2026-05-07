@@ -1,4 +1,4 @@
-package com.ourexists.omes.device.model;
+package com.ourexists.omes.stream.equip;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -528,7 +528,7 @@
         let state = api.value(3);
         if (type === 0) return state === 1 ? THEME.online : THEME.offline;
         if (type === 1) return state === 1 ? THEME.running : THEME.stopped;
-        if (type === 2) return state === 1 ? THEME.alarm : THEME.offline;
+        if (type === 2) return THEME.alarm;
     }
 
     function calcRecord(type,
@@ -552,15 +552,14 @@
                 endDate: formatDate(endDate)
             },
             function (res) {
-                if (type === 2) {
-                    r.push([type, startDate, endDate, 0]);
-                }
                 if (res === null) {
-                    if (type === 2) r = mergeRecords(r);
                     return;
                 }
                 if (res.length > 0) {
                     res.forEach(item => {
+                        if (type === 2 && item.state !== 1) {
+                            return;
+                        }
                         r.push([type, parseDate(item.startTime), parseDate(item.endTime), item.state]);
                     });
                 }
@@ -631,11 +630,7 @@
                             desc = '停止';
                         }
                     } else if (type === 2) {
-                        if (state === 1) {
-                            desc = '报警';
-                        } else {
-                            desc = '正常';
-                        }
+                        desc = '报警';
                     }
                     const start = formatDate(params.data[1]);
                     const end = formatDate(params.data[2]);
