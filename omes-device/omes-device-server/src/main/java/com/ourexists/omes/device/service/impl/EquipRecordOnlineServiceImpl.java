@@ -35,12 +35,11 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
         LambdaQueryWrapper<EquipRecordOnline> qw = new LambdaQueryWrapper<EquipRecordOnline>()
                 .eq(StringUtils.hasText(dto.getSn()), EquipRecordOnline::getSn, dto.getSn())
                 .eq(dto.getState() != null, EquipRecordOnline::getState, dto.getState())
-                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
-                    wrapper
-                            .between(EquipRecordOnline::getStartTime, dto.getStartDate(), dto.getEndDate())
-                            .or()
-                            .between(EquipRecordOnline::getEndTime, dto.getStartDate(), dto.getEndDate());
-                })
+                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> wrapper
+                        .le(EquipRecordOnline::getStartTime, dto.getEndDate())
+                        .and(w -> w.isNull(EquipRecordOnline::getEndTime)
+                                .or()
+                                .ge(EquipRecordOnline::getEndTime, dto.getStartDate())))
                 .orderByDesc(EquipRecordOnline::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
@@ -139,12 +138,11 @@ public class EquipRecordOnlineServiceImpl extends AbstractMyBatisPlusService<Equ
             // 先按查询时间范围拉取重叠的在线区间
             LambdaQueryWrapper<EquipRecordOnline> qw = new LambdaQueryWrapper<EquipRecordOnline>()
                     .eq(EquipRecordOnline::getSn, query.getSn())
-                    .and(wrapper -> {
-                        wrapper
-                                .between(EquipRecordOnline::getStartTime, query.getStartDate(), queryWindowEnd)
-                                .or()
-                                .between(EquipRecordOnline::getEndTime, query.getStartDate(), queryWindowEnd);
-                    })
+                    .and(wrapper -> wrapper
+                            .le(EquipRecordOnline::getStartTime, queryWindowEnd)
+                            .and(w -> w.isNull(EquipRecordOnline::getEndTime)
+                                    .or()
+                                    .ge(EquipRecordOnline::getEndTime, query.getStartDate())))
                     .orderByDesc(EquipRecordOnline::getId);
             List<EquipRecordOnlineVo> vos = EquipRecordOnline.covert(this.list(qw), EquipRecordOnlineVo.class);
             if (CollectionUtil.isNotBlank(vos)) {

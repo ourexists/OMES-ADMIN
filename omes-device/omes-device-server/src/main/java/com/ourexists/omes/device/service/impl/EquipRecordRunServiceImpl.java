@@ -40,12 +40,11 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
         LambdaQueryWrapper<EquipRecordRun> qw = new LambdaQueryWrapper<EquipRecordRun>()
                 .eq(StringUtils.hasText(dto.getSn()), EquipRecordRun::getSn, dto.getSn())
                 .eq(dto.getState() != null, EquipRecordRun::getState, dto.getState())
-                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
-                    wrapper
-                            .between(EquipRecordRun::getStartTime, dto.getStartDate(), dto.getEndDate())
-                            .or()
-                            .between(EquipRecordRun::getEndTime, dto.getStartDate(), dto.getEndDate());
-                })
+                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> wrapper
+                        .le(EquipRecordRun::getStartTime, dto.getEndDate())
+                        .and(w -> w.isNull(EquipRecordRun::getEndTime)
+                                .or()
+                                .ge(EquipRecordRun::getEndTime, dto.getStartDate())))
                 .orderByDesc(EquipRecordRun::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
@@ -144,12 +143,11 @@ public class EquipRecordRunServiceImpl extends AbstractMyBatisPlusService<EquipR
             }
             LambdaQueryWrapper<EquipRecordRun> qw = new LambdaQueryWrapper<EquipRecordRun>()
                     .eq(EquipRecordRun::getSn, query.getSn())
-                    .and(wrapper -> {
-                        wrapper
-                                .between(EquipRecordRun::getStartTime, query.getStartDate(), queryWindowEnd)
-                                .or()
-                                .between(EquipRecordRun::getEndTime, query.getStartDate(), queryWindowEnd);
-                    })
+                    .and(wrapper -> wrapper
+                            .le(EquipRecordRun::getStartTime, queryWindowEnd)
+                            .and(w -> w.isNull(EquipRecordRun::getEndTime)
+                                    .or()
+                                    .ge(EquipRecordRun::getEndTime, query.getStartDate())))
                     .orderByDesc(EquipRecordRun::getId);
             List<EquipRecordRunVo> equipRecordRunVos = EquipRecordRun.covert(this.list(qw), EquipRecordRunVo.class);
             if (CollectionUtil.isNotBlank(equipRecordRunVos)) {

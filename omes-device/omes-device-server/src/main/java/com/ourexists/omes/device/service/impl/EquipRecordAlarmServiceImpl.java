@@ -36,9 +36,15 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
 
     @Override
     public Page<EquipRecordAlarm> selectByPage(EquipRecordAlarmPageQuery dto) {
-        LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>().eq(StringUtils.hasText(dto.getSn()), EquipRecordAlarm::getSn, dto.getSn()).eq(dto.getState() != null, EquipRecordAlarm::getState, dto.getState()).and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> {
-            wrapper.between(EquipRecordAlarm::getStartTime, dto.getStartDate(), dto.getEndDate()).or().between(EquipRecordAlarm::getEndTime, dto.getStartDate(), dto.getEndDate());
-        }).orderByDesc(EquipRecordAlarm::getId);
+        LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
+                .eq(StringUtils.hasText(dto.getSn()), EquipRecordAlarm::getSn, dto.getSn())
+                .eq(dto.getState() != null, EquipRecordAlarm::getState, dto.getState())
+                .and(dto.getStartDate() != null && dto.getEndDate() != null, wrapper -> wrapper
+                        .le(EquipRecordAlarm::getStartTime, dto.getEndDate())
+                        .and(w -> w.isNull(EquipRecordAlarm::getEndTime)
+                                .or()
+                                .ge(EquipRecordAlarm::getEndTime, dto.getStartDate())))
+                .orderByDesc(EquipRecordAlarm::getId);
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
 
@@ -127,12 +133,11 @@ public class EquipRecordAlarmServiceImpl extends AbstractMyBatisPlusService<Equi
             }
             LambdaQueryWrapper<EquipRecordAlarm> qw = new LambdaQueryWrapper<EquipRecordAlarm>()
                     .eq(EquipRecordAlarm::getSn, query.getSn())
-                    .and(wrapper -> {
-                        wrapper
-                                .between(EquipRecordAlarm::getStartTime, query.getStartDate(), queryWindowEnd)
-                                .or()
-                                .between(EquipRecordAlarm::getEndTime, query.getStartDate(), queryWindowEnd);
-                    })
+                    .and(wrapper -> wrapper
+                            .le(EquipRecordAlarm::getStartTime, queryWindowEnd)
+                            .and(w -> w.isNull(EquipRecordAlarm::getEndTime)
+                                    .or()
+                                    .ge(EquipRecordAlarm::getEndTime, query.getStartDate())))
                     .orderByDesc(EquipRecordAlarm::getId);
             List<EquipRecordAlarmVo> vos = EquipRecordAlarm.covert(this.list(qw), EquipRecordAlarmVo.class);
             if (CollectionUtil.isNotBlank(vos)) {
