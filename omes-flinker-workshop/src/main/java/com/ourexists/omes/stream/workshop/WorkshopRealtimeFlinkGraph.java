@@ -22,10 +22,26 @@ public final class WorkshopRealtimeFlinkGraph {
 
     private WorkshopRealtimeFlinkGraph() {}
 
-    public static StreamExecutionEnvironment createExecutionEnvironment() {
+    public static StreamExecutionEnvironment createExecutionEnvironment(WorkshopRealtimeFlinkJobConfig cfg) {
         Configuration flinkConfig = new Configuration();
         flinkConfig.setString("classloader.resolve-order", "parent-first");
-        return StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
+        if (!cfg.flinkLocalMode()) {
+            return StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
+        }
+        int p = cfg.flinkLocalParallelism();
+        StreamExecutionEnvironment env;
+        if (cfg.flinkLocalWebUI()) {
+            env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(flinkConfig);
+            env.setParallelism(p);
+        } else {
+            env = StreamExecutionEnvironment.createLocalEnvironment(p, flinkConfig);
+        }
+        log.info(
+                "Workshop Flink local debug mode: parallelism={} webUI={} (checkpointing follows enable-checkpointing; "
+                        + "leave false for typical local runs)",
+                p,
+                cfg.flinkLocalWebUI());
+        return env;
     }
 
     public static void configureExecutionEnvironment(StreamExecutionEnvironment env, WorkshopRealtimeFlinkJobConfig cfg) {

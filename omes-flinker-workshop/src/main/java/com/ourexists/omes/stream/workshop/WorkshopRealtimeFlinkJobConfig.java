@@ -11,6 +11,12 @@ public final class WorkshopRealtimeFlinkJobConfig {
     private final int flinkRmqPrefetch;
     private final long snapshotIntervalMs;
     private final long stateTtlMinutesCollectSnapshot;
+    /** Embedded local mini-cluster (IDE / {@code java -jar}), not remote {@code flink run}. */
+    private final boolean flinkLocalMode;
+    /** Operator parallelism when {@link #flinkLocalMode} is true; must be positive. */
+    private final int flinkLocalParallelism;
+    /** When local mode: start Flink Web UI for debugging. */
+    private final boolean flinkLocalWebUI;
 
     public WorkshopRealtimeFlinkJobConfig(
             String workshopRealtimeRabbitQueue,
@@ -22,7 +28,10 @@ public final class WorkshopRealtimeFlinkJobConfig {
             long flinkAlignedCheckpointTimeoutMs,
             int flinkRmqPrefetch,
             long snapshotIntervalMs,
-            long stateTtlMinutesCollectSnapshot) {
+            long stateTtlMinutesCollectSnapshot,
+            boolean flinkLocalMode,
+            int flinkLocalParallelism,
+            boolean flinkLocalWebUI) {
         this.workshopRealtimeRabbitQueue = workshopRealtimeRabbitQueue;
         this.workshopStreamPersistCollectQueue = workshopStreamPersistCollectQueue;
         this.flinkCheckpointIntervalMs = flinkCheckpointIntervalMs;
@@ -33,6 +42,9 @@ public final class WorkshopRealtimeFlinkJobConfig {
         this.flinkRmqPrefetch = flinkRmqPrefetch;
         this.snapshotIntervalMs = snapshotIntervalMs;
         this.stateTtlMinutesCollectSnapshot = stateTtlMinutesCollectSnapshot;
+        this.flinkLocalMode = flinkLocalMode;
+        this.flinkLocalParallelism = flinkLocalParallelism;
+        this.flinkLocalWebUI = flinkLocalWebUI;
     }
 
     public String workshopRealtimeRabbitQueue() {
@@ -73,5 +85,17 @@ public final class WorkshopRealtimeFlinkJobConfig {
 
     public long stateTtlMinutesCollectSnapshot() {
         return stateTtlMinutesCollectSnapshot;
+    }
+
+    public boolean flinkLocalMode() {
+        return flinkLocalMode;
+    }
+
+    public int flinkLocalParallelism() {
+        return flinkLocalParallelism;
+    }
+
+    public boolean flinkLocalWebUI() {
+        return flinkLocalWebUI;
     }
 }

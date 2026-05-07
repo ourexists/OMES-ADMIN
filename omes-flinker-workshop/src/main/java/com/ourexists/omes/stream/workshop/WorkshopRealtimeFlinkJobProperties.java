@@ -7,6 +7,7 @@ final class WorkshopRealtimeFlinkJobProperties {
     private WorkshopRealtimeFlinkJobProperties() {}
 
     static WorkshopRealtimeFlinkJobConfig from(ParameterTool pt) {
+        boolean flinkLocal = localMode(pt);
         return new WorkshopRealtimeFlinkJobConfig(
                 str(pt, "omes.workshop.rabbitmq.workshop-realtime-queue", "OMES_WORKSHOP_REALTIME_QUEUE", "omes.workshop.realtime"),
                 str(
@@ -35,7 +36,31 @@ final class WorkshopRealtimeFlinkJobProperties {
                         pt,
                         "omes.workshop.flink.state-ttl-minutes.collect-snapshot",
                         "OMES_FLINK_STATE_TTL_MINUTES_WORKSHOP_COLLECT_SNAPSHOT",
-                        -1L));
+                        -1L),
+                flinkLocal,
+                localParallelism(pt, flinkLocal),
+                pt.getBoolean(
+                        "omes.workshop.flink.local.webui",
+                        pt.getBoolean("OMES_FLINK_LOCAL_WEBUI", true)));
+    }
+
+    private static boolean localMode(ParameterTool pt) {
+        return pt.getBoolean(
+                "omes.workshop.flink.local",
+                pt.getBoolean("OMES_FLINK_LOCAL", pt.getBoolean("local", false)));
+    }
+
+    private static int localParallelism(ParameterTool pt, boolean flinkLocal) {
+        int p = pt.getInt(
+                "omes.workshop.flink.local.parallelism",
+                pt.getInt("OMES_FLINK_LOCAL_PARALLELISM", 1));
+        if (flinkLocal && p <= 0) {
+            throw new IllegalArgumentException(
+                    "local parallelism must be positive when local mode is on, was: "
+                            + p
+                            + " (omes.workshop.flink.local.parallelism / OMES_FLINK_LOCAL_PARALLELISM)");
+        }
+        return p;
     }
 
     private static long ttlMin(ParameterTool pt, String dottedKey, String envKey, long defaultMinutes) {

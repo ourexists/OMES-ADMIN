@@ -5,8 +5,7 @@
 
 ## 构建
 
-在仓库根目录执行（`omes-stream` 已内联原 `omes-device-base` / `omes-device-model` / `omes-message-model` 中与作业相关的类，
-**不再依赖**上述三个 JAR；若门户侧 DTO 变更，需手动同步本模块内对应源码）：
+在仓库根目录执行（`omes-stream` 已内联原 `omes-device-base` / `omes-device-model` / `omes-message-model` 中与作业相关的类；若门户侧 DTO 变更，需手动同步本模块内对应源码）：
 
 ```bash
 mvn -pl omes-flinker-equip clean package -DskipTests
@@ -63,10 +62,10 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 
 3. 可选参数：
 
-   | 变量 / 点分键 | 说明 |
-   |---------------|------|
-   | `OMES_FLINK_LOCAL_PARALLELISM` / `omes.device.flink.local.parallelism` | 并行度，默认 `1` |
-   | `OMES_FLINK_LOCAL_WEBUI` / `omes.device.flink.local.webui` | 是否起本地 Flink Dashboard，默认 `true`；`false` 时用无 UI 的 `createLocalEnvironment` |
+   | 变量 / 点分键 | 说明 | 默认 |
+   |---------------|------|------|
+   | `OMES_FLINK_LOCAL_PARALLELISM` / `omes.device.flink.local.parallelism` | 并行度 | `1` |
+   | `OMES_FLINK_LOCAL_WEBUI` / `omes.device.flink.local.webui` | 是否起本地 Flink Dashboard；`false` 时用无 UI 的 `createLocalEnvironment` | `true` |
 
 4. **IntelliJ IDEA（Java 17）**：在运行配置的 **VM options** 里加入 `--add-opens`（与官方 Flink 脚本一致；缺省时 Kryo 序列化可能报 `InaccessibleObjectException: ... java.util.Arrays$ArrayList`）：
 
@@ -97,37 +96,37 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 
 ### RabbitMQ
 
-| 变量                  | 说明   | 默认（开发参考）                                      |
-|---------------------|------|-----------------------------------------------|
-| `RABBITMQ_HOST`     | 主机   | `127.0.0.1`                                   |
-| `RABBITMQ_PORT`     | 端口   | `5672`                                        |
-| `RABBITMQ_USERNAME` | 用户名  | `admin`                                       |
-| `RABBITMQ_PASSWORD` | 密码   | （默认值，生产务必覆盖） |
-| `RABBITMQ_VHOST`    | 虚拟主机 | `/`                                           |
+| 变量                  | 说明                         | 默认           |
+|---------------------|----------------------------|--------------|
+| `RABBITMQ_HOST`     | 主机                         | `127.0.0.1`  |
+| `RABBITMQ_PORT`     | 端口                         | `5672`       |
+| `RABBITMQ_USERNAME` | 用户名                        | `admin`      |
+| `RABBITMQ_PASSWORD` | 密码（生产务必覆盖）                 | `TyY6Df3bZe` |
+| `RABBITMQ_VHOST`    | 虚拟主机                       | `/`          |
 
 ### 队列与 Flink
 
-| 变量                                              | 说明                                                  |
-|-------------------------------------------------|-----------------------------------------------------|
-| `OMES_EQUIP_REALTIME_QUEUE`                     | 设备实时消费队列                                            |
-| `OMES_EQUIP_NOTIFY_CREATE_QUEUE`                | 告警通知队列（可空，空则告警 Sink 不发送）                            |
-| `OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE`        | 运行/报警/在线变更桥接队列                                      |
-| `OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE`         | 状态周期快照桥接队列                                          |
-| `OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE`       | 采集周期快照桥接队列                                          |
-| `OMES_FLINK_ENABLE_CHECKPOINTING`               | 是否开启 checkpoint（`true`/`false`）                     |
-| `OMES_FLINK_CHECKPOINT_MS`                      | checkpoint 间隔（毫秒）                                   |
-| `OMES_FLINK_CHECKPOINT_TIMEOUT_MS`              | checkpoint 超时（毫秒）                                   |
-| `OMES_FLINK_UNALIGNED_CHECKPOINT`               | 非对齐 checkpoint（减轻 barrier 对齐在背压下的阻塞；默认 `true`）      |
-| `OMES_FLINK_ALIGNED_CHECKPOINT_TIMEOUT_MS`      | 先尝试对齐 barrier，超过该时间（毫秒）后切到非对齐；`0` 表示不设（默认 `30000`）  |
-| `OMES_FLINK_LOCAL`                              | `true`：嵌入式本地 Flink（调试）；见上文「本地调试」                    |
-| `OMES_FLINK_LOCAL_PARALLELISM`                  | 本地模式并行度（默认 `1`）                                      |
-| `OMES_FLINK_LOCAL_WEBUI`                        | 本地模式是否启用 Flink Web UI（默认 `true`）                    |
-| `OMES_FLINK_RMQ_PREFETCH`                       | RMQ prefetch                                        |
-| `OMES_FLINK_STATE_TTL_MINUTES_OFFLINE_DETECT`   | 离线检测算子 keyed state：`-1` 不启用 TTL（默认），正整数为空闲保留 **分钟** |
-| `OMES_FLINK_STATE_TTL_MINUTES_CHANGE_DETECT`    | 变更检测算子（同上）                                          |
-| `OMES_FLINK_STATE_TTL_MINUTES_ATTR_FLUCTUATION` | 属性波动 MapState（同上）                                   |
-| `OMES_FLINK_STATE_TTL_MINUTES_STATE_SNAPSHOT`   | 状态周期快照算子（同上）                                        |
-| `OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT` | 采集周期快照算子（同上）                                        |
+| 变量                                              | 说明                                                                 | 默认 |
+|-------------------------------------------------|--------------------------------------------------------------------|------|
+| `OMES_EQUIP_REALTIME_QUEUE`                     | 设备实时消费队列                                                           | `omes.equip.realtime` |
+| `OMES_EQUIP_NOTIFY_CREATE_QUEUE`                | 告警通知队列；设为空字符串则告警 Sink 不发送                                        | `omes.notify.create` |
+| `OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE`        | 运行/报警/在线变更桥接队列                                                    | `omes.equip.stream.persist.change` |
+| `OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE`         | 状态周期快照桥接队列                                                         | `omes.equip.stream.persist.state` |
+| `OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE`       | 采集周期快照桥接队列                                                         | `omes.equip.stream.persist.collect` |
+| `OMES_FLINK_ENABLE_CHECKPOINTING`               | 是否开启 checkpoint（`true`/`false`）                                    | `false` |
+| `OMES_FLINK_CHECKPOINT_MS`                      | checkpoint 间隔（毫秒）                                                  | `10000` |
+| `OMES_FLINK_CHECKPOINT_TIMEOUT_MS`              | checkpoint 超时（毫秒）                                                  | `120000` |
+| `OMES_FLINK_UNALIGNED_CHECKPOINT`               | 非对齐 checkpoint（减轻 barrier 对齐在背压下的阻塞）                             | `true` |
+| `OMES_FLINK_ALIGNED_CHECKPOINT_TIMEOUT_MS`      | 先尝试对齐 barrier，超过该时间（毫秒）后切到非对齐；`0` 表示不设                         | `30000` |
+| `OMES_FLINK_LOCAL`                              | `true`：嵌入式本地 Flink（调试）；见上文「本地调试」                                 | `false` |
+| `OMES_FLINK_LOCAL_PARALLELISM`                  | 本地模式并行度                                                            | `1` |
+| `OMES_FLINK_LOCAL_WEBUI`                        | 本地模式是否启用 Flink Web UI                                             | `true` |
+| `OMES_FLINK_RMQ_PREFETCH`                       | RMQ prefetch                                                       | `100` |
+| `OMES_FLINK_STATE_TTL_MINUTES_OFFLINE_DETECT`   | 离线检测算子 keyed state TTL：`-1` 不启用，正整数为空闲保留 **分钟**                  | `-1` |
+| `OMES_FLINK_STATE_TTL_MINUTES_CHANGE_DETECT`    | 变更检测算子（同上）                                                        | `-1` |
+| `OMES_FLINK_STATE_TTL_MINUTES_ATTR_FLUCTUATION` | 属性波动 MapState（同上）                                                  | `-1` |
+| `OMES_FLINK_STATE_TTL_MINUTES_STATE_SNAPSHOT`   | 状态周期快照算子（同上）                                                      | `-1` |
+| `OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT` | 采集周期快照算子（同上）                                                      | `-1` |
 
 亦支持点分键名传参，例如：`omes.device.flink.enable-checkpointing`、`omes.device.flink.state-ttl-minutes.change-detect`。
 
@@ -139,25 +138,22 @@ Flink Web UI：上传 `*-flink.jar`，Main Class 填上述全限定名。
 
 ### 变化检测入口（可选窗口）
 
-| 变量 | 说明 |
-|------|------|
-| `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOWED` | `true`：变化检测入口先经 **处理时间滑动窗口 + reduce** 再进 `EquipRealtimeChangeDetectProcessFunction`，可压低上游频率，代价是端到端延迟约可达一个 slide；默认 `false`：与离线检测 union 后逐条进入变化检测（与原先一致）。 |
-| `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOW_MS` | 窗口长度（毫秒），`windowed=true` 时必须为正。 |
-| `OMES_FLINK_CHANGE_DETECT_INGRESS_SLIDE_MS` | 滑动步长（毫秒），`windowed=true` 时必须为正且 **不大于** `WINDOW_MS`。 |
+| 变量 | 说明 | 默认 |
+|------|------|------|
+| `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOWED` | `true`：变化检测入口先经 **处理时间滑动窗口 + reduce** 再进 `EquipRealtimeChangeDetectProcessFunction`，可压低上游频率，代价是端到端延迟约可达一个 slide；`false`：与离线检测 union 后逐条进入变化检测（与原先一致） | `false` |
+| `OMES_FLINK_CHANGE_DETECT_INGRESS_WINDOW_MS` | 窗口长度（毫秒），`windowed=true` 时必须为正 | `60000` |
+| `OMES_FLINK_CHANGE_DETECT_INGRESS_SLIDE_MS` | 滑动步长（毫秒），`windowed=true` 时必须为正且 **不大于** `WINDOW_MS` | `60000` |
 
 
 ### 业务参数
 
-| 变量                                      | 说明                         |
-|-----------------------------------------|----------------------------|
-| `OMES_EQUIP_OFFLINE_TIMEOUT_MS`         | 离线判定：无新设备数据入站的时长阈值（默认 90s） |
-| `OMES_EQUIP_SNAPSHOT_INTERVAL_MS`       | 快照周期                       |
-| `OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS` | 属性波动窗口                     |
-| `OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS`  | 属性波动滑动步长                   |
+| 变量                                      | 说明                    | 默认 |
+|-----------------------------------------|-----------------------|------|
+| `OMES_EQUIP_OFFLINE_TIMEOUT_MS`         | 离线判定：无新设备数据入站的时长阈值（毫秒） | `90000` |
+| `OMES_EQUIP_SNAPSHOT_INTERVAL_MS`       | 快照周期（毫秒）              | `30000` |
+| `OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS` | 属性波动窗口（毫秒）            | `90000` |
+| `OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS`  | 属性波动滑动步长（毫秒）          | `5000` |
 
-## 日志
-
-使用 classpath 下 `logback.xml`（控制台）。
 
 ## 常见问题
 
