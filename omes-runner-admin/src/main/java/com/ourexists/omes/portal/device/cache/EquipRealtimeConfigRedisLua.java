@@ -7,9 +7,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * 设备实时缓存与 id→sn 索引的一次性原子写入（Redis Lua）；不含 gw / 三态 ZSET（由 {@link EquipRealtimeConfigRedisLua} 维护 gw 索引）。
+ * 设备配置 Spring RedisCache 主键、gw→sn Set、equipId→selfCode Hash 的一次性原子写入（Redis Lua）。
  */
-final class EquipRealtimeRedisLua {
+final class EquipRealtimeConfigRedisLua {
 
     private static final DefaultRedisScript<Long> UPSERT_SCRIPT = new DefaultRedisScript<>();
     private static final DefaultRedisScript<Long> REMOVE_SCRIPT = new DefaultRedisScript<>();
@@ -18,8 +18,17 @@ final class EquipRealtimeRedisLua {
     static {
         UPSERT_SCRIPT.setScriptText("""
                 redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[2]))
-                if ARGV[3] ~= '' then
-                  redis.call('HSET', KEYS[2], ARGV[3], ARGV[4])
+                if ARGV[3] == '1' then
+                  redis.call('SREM', KEYS[2], ARGV[4])
+                end
+                if ARGV[5] == '1' then
+                  redis.call('SADD', KEYS[3], ARGV[4])
+                end
+                if ARGV[6] ~= '' then
+                  redis.call('HSET', KEYS[4], ARGV[6], ARGV[4])
+                end
+                if ARGV[7] ~= '' then
+                  redis.call('HDEL', KEYS[4], ARGV[7])
                 end
                 return 1
                 """);
@@ -27,8 +36,11 @@ final class EquipRealtimeRedisLua {
 
         REMOVE_SCRIPT.setScriptText("""
                 redis.call('DEL', KEYS[1])
-                if ARGV[1] ~= '' then
-                  redis.call('HDEL', KEYS[2], ARGV[1])
+                if ARGV[1] == '1' then
+                  redis.call('SREM', KEYS[2], ARGV[2])
+                end
+                if ARGV[3] ~= '' then
+                  redis.call('HDEL', KEYS[3], ARGV[3])
                 end
                 return 1
                 """);
@@ -47,56 +59,66 @@ final class EquipRealtimeRedisLua {
                   until cursor == '0'
                 end
                 del_by_pattern(ARGV[1])
+                del_by_pattern(ARGV[2])
                 redis.call('DEL', KEYS[1])
                 return 1
                 """);
         CLEAR_TENANT_SCRIPT.setResultType(Long.class);
     }
 
-    /** 与 CacheConfig 中 equip RedisCache 默认 TTL 一致（分钟） */
-    static final int CACHE_TTL_SECONDS = 30 * 60;
+    static final int CACHE_TTL_SECONDS = EquipRealtimeRedisLua.CACHE_TTL_SECONDS;
 
-    private EquipRealtimeRedisLua() {
+    private EquipRealtimeConfigRedisLua() {
     }
 
     static void executeUpsert(
             RedisTemplate<String, Object> redisTemplate,
             List<String> keys,
-            Object equipSerializedPayload,
+            Object configSerializedPayload,
             int ttlSeconds,
-            String equipId,
-            String selfCode) {
+            String selfCode,
+            boolean sremOldGw,
+            boolean saddNewGw,
+            String newEquipId,
+            String oldEquipIdToHdel) {
         redisTemplate.execute(
                 UPSERT_SCRIPT,
                 keys,
-                equipSerializedPayload,
+                configSerializedPayload,
                 ttlSeconds,
-                equipId == null ? "" : equipId,
-                selfCode);
+                sremOldGw ? "1" : "0",
+                selfCode,
+                saddNewGw ? "1" : "0",
+                newEquipId == null ? "" : newEquipId,
+                oldEquipIdToHdel == null ? "" : oldEquipIdToHdel);
     }
 
     static void executeRemove(
             RedisTemplate<String, Object> redisTemplate,
             List<String> keys,
-            String equipId,
-            String selfCode) {
+            String selfCode,
+            boolean sremGw,
+            String equipIdForHdel) {
         redisTemplate.execute(
                 REMOVE_SCRIPT,
                 keys,
-                equipId == null ? "" : equipId,
-                selfCode);
+                sremGw ? "1" : "0",
+                selfCode,
+                equipIdForHdel == null ? "" : equipIdForHdel);
     }
 
     /**
-     * 原子清空当前租户：Spring 设备主缓存键、id→sn Hash。
+     * @param idToSnHashKey 与配置缓存同 hash tag 的 equipId→selfCode Hash；脚本结束时 DEL 以清空索引
      */
-    static void executeClearTenant(
+    static void executeClearTenantConfigKeys(
             RedisTemplate<String, Object> redisTemplate,
-            String equipRealtimeKeyPattern,
-            String idToSnHashKey) {
+            String idToSnHashKey,
+            String equipConfigKeyPattern,
+            String gwToSnKeyPattern) {
         redisTemplate.execute(
                 CLEAR_TENANT_SCRIPT,
                 Collections.singletonList(idToSnHashKey),
-                equipRealtimeKeyPattern);
+                equipConfigKeyPattern,
+                gwToSnKeyPattern);
     }
 }

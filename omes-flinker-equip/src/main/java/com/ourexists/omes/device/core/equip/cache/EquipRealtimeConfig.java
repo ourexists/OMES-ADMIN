@@ -11,6 +11,8 @@ import java.util.List;
 @Accessors(chain = true)
 public class EquipRealtimeConfig {
 
+    private String equipId;
+
     private String gwId;
 
     private String deviceIdMap;

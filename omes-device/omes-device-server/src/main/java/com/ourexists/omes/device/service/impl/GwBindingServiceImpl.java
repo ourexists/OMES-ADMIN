@@ -31,6 +31,9 @@ public class GwBindingServiceImpl extends AbstractMyBatisPlusService<GwBindingMa
     @Autowired
     private EquipRealtimeManager equipRealtimeManager;
 
+    @Autowired(required = false)
+    private EquipRealtimeConfigManager equipRealtimeConfigManager;
+
     @Override
     public Page<GwBinding> selectByPage(EquipAttrPageQuery dto) {
         LambdaQueryWrapper<GwBinding> qw = new LambdaQueryWrapper<GwBinding>().eq(StringUtils.hasText(dto.getEquipId()), GwBinding::getEquipId, dto.getEquipId()).orderByAsc(GwBinding::getEquipId);
@@ -72,10 +75,17 @@ public class GwBindingServiceImpl extends AbstractMyBatisPlusService<GwBindingMa
                 });
                 equipRealtimeConfig.setControls(controls);
             }
+            if (StringUtils.hasText(dto.getEquipId())) {
+                equipRealtimeConfig.setEquipId(dto.getEquipId());
+            }
             equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
             equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
             equipRealtime.setEquipControlRealtimes(equipRealtimeConfig.getControls());
             equipRealtimeManager.addOrUpdate(equipRealtime);
+            if (equipRealtimeConfigManager != null && StringUtils.hasText(equipRealtime.getTenantId())) {
+                equipRealtimeConfigManager.addOrUpdate(
+                        equipRealtime.getTenantId(), equipRealtime.getSelfCode(), equipRealtimeConfig);
+            }
         }
     }
 

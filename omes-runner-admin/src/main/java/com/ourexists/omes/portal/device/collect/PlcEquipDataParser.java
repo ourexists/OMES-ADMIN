@@ -1,6 +1,7 @@
 package com.ourexists.omes.portal.device.collect;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.omes.device.core.equip.cache.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +20,25 @@ public class PlcEquipDataParser implements EquipDataParser {
     private EquipRealtimeManager equipRealtimeManager;
 
     @Autowired
+    private EquipRealtimeConfigManager equipRealtimeConfigManager;
+
+    @Autowired
     private AlarmRuleProcessor alarmRuleProcessor;
 
     @Override
     public List<EquipRealtime> parse(String gwId, String sourceData) {
-        List<EquipRealtime> realtimeList = equipRealtimeManager.listByGwId(gwId);
+        String tenantId = UserContext.getTenant().getTenantId();
+        List<String> sns = equipRealtimeConfigManager.listSelfCodeByGwId(tenantId, gwId);
         List<EquipRealtime> targets = new ArrayList<>();
         JSONObject jo = JSONObject.parseObject(sourceData);
-        for (EquipRealtime equipRealtime : realtimeList) {
+        for (String sn : sns) {
+            if (!StringUtils.hasText(sn)) {
+                continue;
+            }
+            EquipRealtime equipRealtime = equipRealtimeManager.get(sn);
+            if (equipRealtime == null) {
+                continue;
+            }
             EquipRealtimeConfig equipRealtimeConfig = equipRealtime.getEquipRealtimeConfig();
             if (equipRealtimeConfig == null) {
                 continue;

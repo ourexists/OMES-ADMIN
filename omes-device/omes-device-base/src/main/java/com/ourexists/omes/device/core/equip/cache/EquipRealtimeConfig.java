@@ -11,6 +11,9 @@ import java.util.List;
 @Accessors(chain = true)
 public class EquipRealtimeConfig {
 
+    /** 设备主键，用于配置侧 id→selfCode 索引（与实时缓存 id 索引语义一致） */
+    private String equipId;
+
     private String gwId;
 
     private String runMap;
