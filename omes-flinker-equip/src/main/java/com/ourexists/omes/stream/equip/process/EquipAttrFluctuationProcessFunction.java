@@ -15,11 +15,7 @@ import org.apache.flink.streaming.api.functions.windowing.RichProcessWindowFunct
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 滑动窗口内按属性计算波动是否超阈值，并在同一算子内维护“连续超阈值窗口数”，达标时输出 {@link EquipRealtimeChangeEvent}，
@@ -123,7 +119,7 @@ public class EquipAttrFluctuationProcessFunction
             }
             mergedAlarmTexts.add("【" + attrName + "】数据波动异常，请及时排查");
             alarmRealtime.setAlarmTexts(mergedAlarmTexts);
-            alarmRealtime.alarm();
+            alarmRealtime.setAlarmState(1);
             String alarmSegmentId = UUID.randomUUID().toString();
             out.collect(
                     new EquipRealtimeChangeEvent(

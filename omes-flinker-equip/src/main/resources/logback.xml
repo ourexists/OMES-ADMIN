@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Console logging for EquipRealtimeFlinkJob (Flink cluster / local run). -->
+<!-- Console logging for omes-flinker-equip (Spring Boot + embedded Flink). -->
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

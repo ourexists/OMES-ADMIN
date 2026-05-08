@@ -8,7 +8,6 @@ final class EquipRealtimeFlinkJobProperties {
     }
 
     static EquipRealtimeFlinkJobConfig from(ParameterTool pt) {
-        boolean flinkLocal = localMode(pt);
         return new EquipRealtimeFlinkJobConfig(
                 str(pt, "omes.device.rabbitmq.equip-realtime-queue", "OMES_EQUIP_REALTIME_QUEUE", "omes.equip.realtime"),
                 str(pt, "omes.device.rabbitmq.equip-notify-create-queue", "OMES_EQUIP_NOTIFY_CREATE_QUEUE", "omes.notify.create"),
@@ -43,7 +42,7 @@ final class EquipRealtimeFlinkJobProperties {
                         "omes.device.flink.aligned-checkpoint-timeout-ms",
                         pt.getLong("OMES_FLINK_ALIGNED_CHECKPOINT_TIMEOUT_MS", 30_000L)),
                 pt.getInt("omes.device.flink.rmq-prefetch", pt.getInt("OMES_FLINK_RMQ_PREFETCH", 100)),
-                pt.getLong("omes.device.offline-timeout-ms", pt.getLong("OMES_EQUIP_OFFLINE_TIMEOUT_MS", 90_000L)),
+                pt.getLong("omes.device.offline-timeout-ms", pt.getLong("OMES_EQUIP_OFFLINE_TIMEOUT_MS", 160_000L)),
                 pt.getLong("omes.device.snapshot-interval-ms", pt.getLong("OMES_EQUIP_SNAPSHOT_INTERVAL_MS", 30_000L)),
                 pt.getLong("omes.device.attr-fluctuation-window-ms", pt.getLong("OMES_EQUIP_ATTR_FLUCTUATION_WINDOW_MS", 90_000L)),
                 pt.getLong("omes.device.attr-fluctuation-slide-ms", pt.getLong("OMES_EQUIP_ATTR_FLUCTUATION_SLIDE_MS", 5_000L)),
@@ -81,28 +80,16 @@ final class EquipRealtimeFlinkJobProperties {
                         "omes.device.flink.state-ttl-minutes.collect-snapshot",
                         "OMES_FLINK_STATE_TTL_MINUTES_COLLECT_SNAPSHOT",
                         -1L),
-                flinkLocal,
-                localParallelism(pt, flinkLocal),
-                pt.getBoolean(
-                        "omes.device.flink.local.webui",
-                        pt.getBoolean("OMES_FLINK_LOCAL_WEBUI", true)));
+                flinkParallelism(pt));
     }
 
-    private static boolean localMode(ParameterTool pt) {
-        return pt.getBoolean(
-                "omes.device.flink.local",
-                pt.getBoolean("OMES_FLINK_LOCAL", pt.getBoolean("local", false)));
-    }
-
-    private static int localParallelism(ParameterTool pt, boolean flinkLocal) {
-        int p = pt.getInt(
-                "omes.device.flink.local.parallelism",
-                pt.getInt("OMES_FLINK_LOCAL_PARALLELISM", 1));
-        if (flinkLocal && p <= 0) {
+    private static int flinkParallelism(ParameterTool pt) {
+        int p = pt.getInt("omes.device.flink.parallelism", pt.getInt("OMES_FLINK_PARALLELISM", 1));
+        if (p <= 0) {
             throw new IllegalArgumentException(
-                    "local parallelism must be positive when local mode is on, was: "
+                    "Flink parallelism must be positive, was: "
                             + p
-                            + " (omes.device.flink.local.parallelism / OMES_FLINK_LOCAL_PARALLELISM)");
+                            + " (omes.device.flink.parallelism / OMES_FLINK_PARALLELISM)");
         }
         return p;
     }

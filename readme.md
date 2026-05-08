@@ -23,7 +23,7 @@ OMES 工业设备管理平台
 
 * **omes-runner-control**：设备控制侧进程（默认端口 `10015`，应用名 `OMES-CONTROL`）。
 
-* **omes-flinker-equip**：Flink 设备实时流作业流，消费 RabbitMQ 并与管理端队列协同。
+* **omes-flinker-equip**：设备实时流（Spring Boot 内嵌 Flink），消费 RabbitMQ 并与管理端队列协同。
 
 * **omes-ai / omes-ai-web**：AI 相关能力与前端（详见各子目录说明）。
 
@@ -111,9 +111,7 @@ mvn -pl omes-runner-admin spring-boot:run
 
 ### 5. Flink 实时作业（可选）
 
-设备实时流由 **`omes-flinker-equip`** 打包为 Flink 作业提交运行，与 RabbitMQ、管理端配置的队列名需一致。构建、提交方式与环境变量说明见：
-
-- **`omes-flinker-equip/README.md`**
+设备实时流由 **`omes-flinker-equip`** 以 Spring Boot 可执行 JAR 运行（内嵌 Flink），与 RabbitMQ、管理端配置的队列名需一致。详见 **`omes-flinker-equip/README.md`**。
 
 ---
 

@@ -15,28 +15,26 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 设备离线：若在连续 {@link #timeoutMs} 毫秒内**链路上没有任何设备实时消息**（processing time），则输出离线态。
- * <p>
- * 状态快照仍只采纳 {@link EquipRealtimeEventTimeUtil#isNewerOrSame} 为较新的包（避免补发/乱序旧包覆盖状态），
- * 但对「更旧」的包也必须刷新离线看门狗——否则设备持续上报心跳却因时间戳/序号未推进被丢弃时，会误判沉默并周期性离线。
- * 沉默窗口用作业处理时间度量，与 {@code omes.device.offline-timeout-ms}（默认 90s）一致。
+ * 工业级设备离线检测（Processing Time）
+ *
+ * 核心机制：
+ * 1. 仅记录 lastSeenProcessingTime
+ * 2. 每次有效数据 → 重新注册 timer(lastSeen + timeout)
+ * 3. timer 触发时只做“是否仍为最新 deadline”判断
+ * 4. 不允许旧数据刷新在线状态（防“续命”）
  */
-public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<String, EquipRealtime, EquipRealtime> {
+public class EquipOfflineDetectProcessFunction
+        extends KeyedProcessFunction<String, EquipRealtime, EquipRealtime> {
 
     private final long timeoutMs;
     private final long stateTtlMinutes;
 
-    private transient ValueState<EquipRealtime> latestEventState;
-
-    /** 当前注册的 processing-time 定时触发时间戳（与 register 入参一致，供 delete 使用） */
-    private transient ValueState<Long> timeoutTimerState;
-
-    /** 最近一次**收到**设备实时消息（含去重丢弃的包）时的处理时间，用于判断是否已满 {@link #timeoutMs} 沉默期 */
-    private transient ValueState<Long> lastAcquireProcessingTimeState;
+    private transient ValueState<EquipRealtime> latestState;
+    private transient ValueState<Long> lastSeenProcessingTime;
 
     public EquipOfflineDetectProcessFunction(long timeoutMs, long stateTtlMinutes) {
-        if (timeoutMs <= 0L) {
-            throw new IllegalArgumentException("offlineTimeoutMs must be positive, was: " + timeoutMs);
+        if (timeoutMs <= 0) {
+            throw new IllegalArgumentException("timeoutMs must be positive");
         }
         EquipStreamStateTtl.validateMinutesOption(stateTtlMinutes);
         this.timeoutMs = timeoutMs;
@@ -45,120 +43,111 @@ public class EquipOfflineDetectProcessFunction extends KeyedProcessFunction<Stri
 
     @Override
     public void open(Configuration parameters) {
-        ValueStateDescriptor<EquipRealtime> latestDesc = new ValueStateDescriptor<>("latest-event-state", EquipRealtime.class);
+        ValueStateDescriptor<EquipRealtime> latestDesc =
+                new ValueStateDescriptor<>("latest-state", EquipRealtime.class);
         EquipStreamStateTtl.enableIfConfigured(latestDesc, stateTtlMinutes);
-        ValueStateDescriptor<Long> timerDesc = new ValueStateDescriptor<>("timeout-timer-state", Long.class);
-        EquipStreamStateTtl.enableIfConfigured(timerDesc, stateTtlMinutes);
-        ValueStateDescriptor<Long> acquireDesc =
-                new ValueStateDescriptor<>("offline-last-accepted-processing-time", Long.class);
-        EquipStreamStateTtl.enableIfConfigured(acquireDesc, stateTtlMinutes);
-        latestEventState = getRuntimeContext().getState(latestDesc);
-        timeoutTimerState = getRuntimeContext().getState(timerDesc);
-        lastAcquireProcessingTimeState = getRuntimeContext().getState(acquireDesc);
+
+        ValueStateDescriptor<Long> seenDesc =
+                new ValueStateDescriptor<>("last-seen-time", Long.class);
+        EquipStreamStateTtl.enableIfConfigured(seenDesc, stateTtlMinutes);
+
+        latestState = getRuntimeContext().getState(latestDesc);
+        lastSeenProcessingTime = getRuntimeContext().getState(seenDesc);
     }
 
     @Override
-    public void processElement(EquipRealtime value, Context ctx, Collector<EquipRealtime> out) throws Exception {
+    public void processElement(EquipRealtime value,
+                               Context ctx,
+                               Collector<EquipRealtime> out) throws Exception {
+
         long now = ctx.timerService().currentProcessingTime();
-        EquipRealtime current = latestEventState.value();
-        // 不比当前状态新：不覆盖快照，但仍视为链路上有流量（并刷新 state TTL，避免仅 TTL 与去重叠加导致异常）
+
+        EquipRealtime current = latestState.value();
+
+        // ❗ 关键1：只接受“新数据”，旧数据直接丢弃（不刷新在线）
         if (current != null && !EquipRealtimeEventTimeUtil.isNewerOrSame(value, current)) {
-            latestEventState.update(current);
-            scheduleOfflineWatchdog(ctx, now);
             return;
         }
-        latestEventState.update(value);
-        scheduleOfflineWatchdog(ctx, now);
-    }
 
-    /** 收到任意实时包时调用：更新沉默计时起点并重注册 processing-time 定时器 */
-    private void scheduleOfflineWatchdog(Context ctx, long processingTimeNow) throws Exception {
-        lastAcquireProcessingTimeState.update(processingTimeNow);
-        long deadline = Math.addExact(processingTimeNow, timeoutMs);
-        Long oldTimer = timeoutTimerState.value();
-        if (oldTimer != null && oldTimer != deadline) {
-            ctx.timerService().deleteProcessingTimeTimer(oldTimer);
-        }
-        if (oldTimer == null || oldTimer != deadline) {
-            ctx.timerService().registerProcessingTimeTimer(deadline);
-        }
-        timeoutTimerState.update(deadline);
+        // 更新最新状态
+        latestState.update(value);
+
+        // 更新最后一次“有效接收时间”
+        lastSeenProcessingTime.update(now);
+
+        // 注册新的离线检测 timer
+        ctx.timerService().registerProcessingTimeTimer(now + timeoutMs);
     }
 
     @Override
-    public void onTimer(long timestamp, OnTimerContext ctx, Collector<EquipRealtime> out) throws Exception {
-        EquipRealtime latestEvent = latestEventState.value();
-        if (latestEvent == null) {
-            ctx.timerService().deleteProcessingTimeTimer(timestamp);
-            return;
-        }
-        long now = ctx.timerService().currentProcessingTime();
-        Long lastAcquire = lastAcquireProcessingTimeState.value();
-        if (lastAcquire == null) {
-            lastAcquireProcessingTimeState.update(now);
-            rescheduleOfflineTimer(Math.addExact(now, timeoutMs), ctx);
-            return;
-        }
-        if (now - lastAcquire < timeoutMs) {
-            rescheduleOfflineTimer(Math.addExact(lastAcquire, timeoutMs), ctx);
-            return;
-        }
-        Long timer = timeoutTimerState.value();
-        if (timer == null || timestamp < timer) {
-            return;
-        }
-        String currentKey = ctx.getCurrentKey();
-        if (StringUtils.isBlank(currentKey)) {
-            return;
-        }
-        EquipRealtime offlineTarget = copyStateSnapshotForEmit(latestEvent);
-        offlineTarget.setSelfCode(currentKey);
-        offlineTarget.offline();
-        offlineTarget.setTime(new Date(timestamp));
-        out.collect(offlineTarget);
-        timeoutTimerState.clear();
-    }
+    public void onTimer(long timestamp,
+                        OnTimerContext ctx,
+                        Collector<EquipRealtime> out) throws Exception {
 
-    private void rescheduleOfflineTimer(long deadline, Context ctx) throws Exception {
-        Long cur = timeoutTimerState.value();
-        if (cur != null && cur != deadline) {
-            ctx.timerService().deleteProcessingTimeTimer(cur);
+        EquipRealtime latest = latestState.value();
+        Long lastSeen = lastSeenProcessingTime.value();
+
+        if (latest == null || lastSeen == null) {
+            return;
         }
-        if (cur == null || cur != deadline) {
-            ctx.timerService().registerProcessingTimeTimer(deadline);
+
+        // ❗ 关键2：防止旧 timer 或重复 timer 误触发
+        if (timestamp != lastSeen + timeoutMs) {
+            return;
         }
-        timeoutTimerState.update(deadline);
+
+        long now = ctx.timerService().currentProcessingTime();
+
+        // 二次校验（防极端乱序/延迟）
+        if (now - lastSeen < timeoutMs) {
+            return;
+        }
+
+        String key = ctx.getCurrentKey();
+        if (StringUtils.isBlank(key)) {
+            return;
+        }
+
+        EquipRealtime offline = copy(latest);
+        offline.setSelfCode(key);
+        offline.offline();
+        offline.setTime(new Date(now));
+
+        out.collect(offline);
     }
 
     /**
-     * 与状态中对象分离：列表单独 new，避免 {@link EquipRealtime#offline()} 或下游改写集合时污染 {@link #latestEventState}。
+     * 深拷贝，避免状态污染
      */
-    private static EquipRealtime copyStateSnapshotForEmit(EquipRealtime src) {
+    private static EquipRealtime copy(EquipRealtime src) {
         EquipRealtime dst = new EquipRealtime();
+
         dst.setId(src.getId());
         dst.setName(src.getName());
         dst.setSelfCode(src.getSelfCode());
+
         dst.setEquipRealtimeConfig(src.getEquipRealtimeConfig());
         dst.setOnlineState(src.getOnlineState());
         dst.setRunState(src.getRunState());
         dst.setAlarmState(src.getAlarmState());
+
         dst.setEquipAttrRealtimes(copyList(src.getEquipAttrRealtimes()));
         dst.setEquipControlRealtimes(copyList(src.getEquipControlRealtimes()));
         dst.setAlarmTexts(copyList(src.getAlarmTexts()));
+
         dst.setAlarmLevel(src.getAlarmLevel());
         dst.setTenantId(src.getTenantId());
         dst.setWorkshopCode(src.getWorkshopCode());
+
         dst.setTime(src.getTime());
         dst.setOnlineChangeTime(src.getOnlineChangeTime());
         dst.setRunChangeTime(src.getRunChangeTime());
         dst.setAlarmChangeTime(src.getAlarmChangeTime());
+
         return dst;
     }
 
     private static <T> List<T> copyList(List<T> src) {
-        if (src == null) {
-            return null;
-        }
-        return new ArrayList<>(src);
+        return src == null ? null : new ArrayList<>(src);
     }
 }

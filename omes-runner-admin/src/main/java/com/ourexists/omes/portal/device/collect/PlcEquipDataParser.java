@@ -40,17 +40,17 @@ public class PlcEquipDataParser implements EquipDataParser {
         EquipRealtime target = new EquipRealtime();
         BeanUtils.copyProperties(equipRealtime, target);
         target.setTime(new Date());
-        target.online();
+        target.setOnlineState(1);
 
         if (StringUtils.hasText(equipRealtime.getEquipRealtimeConfig().getRunMap())) {
             Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
             if (runVal != null && runVal == 1) {
-                target.run();
+                target.setRunState(1);
             } else {
-                target.stop();
+                target.setRunState(0);
             }
         } else {
-            target.run();
+            target.setRunState(1);
         }
 
         if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
@@ -83,11 +83,7 @@ public class PlcEquipDataParser implements EquipDataParser {
             }
             target.setAlarmTexts(alarms);
         }
-        if (alarm == 1) {
-            target.alarm();
-        } else {
-            target.resetAlarm();
-        }
+        target.setAlarmState(alarm);
         return target;
     }
 

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -55,14 +56,19 @@ public class JSONEquipDataParser implements EquipDataParser {
     protected EquipRealtime doParse(EquipRealtime equipRealtime, JSONObject parsedObj) {
         EquipRealtime target = new EquipRealtime();
         BeanUtils.copyProperties(equipRealtime, target);
-        target.setTime(new Date());
-        target.online();
+        String timeStr = parsedObj.getString("time");
+        Date date = Date.from(
+                OffsetDateTime.parse(timeStr)
+                        .toInstant()
+        );
+        target.setTime(date);
+        target.setOnlineState(1);
 
         Integer runVal = getIntegerByPath(parsedObj, equipRealtime.getEquipRealtimeConfig().getRunMap());
         if (runVal != null && runVal == 1) {
-            target.run();
+            target.setRunState(1);
         } else {
-            target.stop();
+            target.setRunState(0);
         }
         if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
             for (EquipAttrRealtime attr : target.getEquipAttrRealtimes()) {
@@ -89,11 +95,7 @@ public class JSONEquipDataParser implements EquipDataParser {
             }
             target.setAlarmTexts(alarms);
         }
-        if (alarm == 1) {
-            target.alarm();
-        } else {
-            target.resetAlarm();
-        }
+        target.setAlarmState(alarm);
         return target;
     }
 

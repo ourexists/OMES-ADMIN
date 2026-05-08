@@ -37,22 +37,11 @@ public final class EquipRealtimeFlinkGraph {
     public static StreamExecutionEnvironment createExecutionEnvironment(EquipRealtimeFlinkJobConfig cfg) {
         Configuration flinkConfig = new Configuration();
         flinkConfig.setString("classloader.resolve-order", "parent-first");
-        if (!cfg.flinkLocalMode()) {
-            return StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
-        }
-        int p = cfg.flinkLocalParallelism();
-        StreamExecutionEnvironment env;
-        if (cfg.flinkLocalWebUI()) {
-            env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(flinkConfig);
-            env.setParallelism(p);
-        } else {
-            env = StreamExecutionEnvironment.createLocalEnvironment(p, flinkConfig);
-        }
+        int p = cfg.flinkParallelism();
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(p, flinkConfig);
         log.info(
-                "Flink local debug mode: parallelism={} webUI={} (checkpointing follows omes.device.flink.enable-checkpointing; "
-                        + "leave false for typical local runs)",
-                p,
-                cfg.flinkLocalWebUI());
+                "Flink embedded mini-cluster: parallelism={} (checkpointing follows omes.device.flink.enable-checkpointing)",
+                p);
         return env;
     }
 
@@ -84,7 +73,7 @@ public final class EquipRealtimeFlinkGraph {
         } else {
             log.warn(
                     "Flink checkpoint OFF for RMQSource — RabbitMQ uses auto-ack; queue backlog clears without waiting for checkpoint. "
-                            + "Set omes.device.flink.enable-checkpointing=true only when running in a proper Flink cluster with working checkpoints.");
+                            + "Enable omes.device.flink.enable-checkpointing only when checkpoint backend is configured.");
         }
     }
 

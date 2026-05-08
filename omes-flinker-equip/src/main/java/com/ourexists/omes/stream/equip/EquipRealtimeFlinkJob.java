@@ -5,23 +5,32 @@ import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
+import java.util.Map;
+
 /**
- * Entry point for submitting this module to a Flink cluster ({@code flink run} or Web UI JAR upload), or for local
- * debugging via embedded mini-cluster ({@code omes.device.flink.local=true} / {@code --local true}; see README).
+ * Flink 实时管道组装与执行：仅由 {@link EquipFlinkBootApplication} / {@link EquipFlinkJobRunner} 在进程内启动。
  * <p>
- * Configuration: Flink {@code ParameterTool} merges program args, {@code -D} system properties, and environment
- * variables (see module {@code README.md} for {@code OMES_*} / {@code RABBITMQ_*} and dotted property keys).
+ * Configuration: Flink {@code ParameterTool} merges Spring {@code application.yml}（最低优先级）、program args、{@code -D}
+ * 与 environment（见 {@code README.md}）。
  * <p>
- *  messaging 仍为 Flink 连接器 + RabbitMQ Java 客户端：Flink 非 Spring 容器，无法直接使用 Spring Cloud Stream；
- *  与门户侧的 Stream 拓扑通过共用队列名、vhost（及实时队列上并行绑定 TopicExchange）对齐。
+ * messaging 仍为 Flink 连接器 + RabbitMQ Java 客户端；与门户侧通过共用队列名、vhost 等对齐。
  */
 @Slf4j
 public final class EquipRealtimeFlinkJob {
 
-    public static void main(String[] args) throws Exception {
-        ParameterTool pt = ParameterTool.fromArgs(args)
+    /**
+     * Merged keys (lowest precedence first): {@code springDefaults} &lt; program args &lt; JVM system properties &lt;
+     * OS environment variables.
+     */
+    public static ParameterTool parameterTool(String[] args, Map<String, String> springDefaults) {
+        Map<String, String> base = springDefaults != null ? springDefaults : Map.of();
+        return ParameterTool.fromMap(base)
+                .mergeWith(ParameterTool.fromArgs(args))
                 .mergeWith(ParameterTool.fromSystemProperties())
                 .mergeWith(ParameterTool.fromMap(System.getenv()));
+    }
+
+    public static void run(ParameterTool pt) throws Exception {
         EquipRealtimeFlinkJobConfig cfg = EquipRealtimeFlinkJobProperties.from(pt);
         RMQConnectionConfig rmq = EquipRealtimeFlinkRmqConfig.from(pt, cfg.flinkRmqPrefetch());
         StreamExecutionEnvironment env = EquipRealtimeFlinkGraph.createExecutionEnvironment(cfg);

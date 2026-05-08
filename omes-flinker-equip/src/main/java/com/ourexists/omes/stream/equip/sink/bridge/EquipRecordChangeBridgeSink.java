@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
+import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +40,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             String reason = CollectionUtils.isEmpty(target.getAlarmTexts())
                     ? null
                     : target.getAlarmTexts().stream().filter(StringUtils::isNotBlank).collect(Collectors.joining(","));
+            target.setAlarmChangeTime(target.getTime());
             EquipRecordAlarmDto alarm = new EquipRecordAlarmDto()
                     .setSn(target.getSelfCode())
                     .setState(target.getAlarmState())
@@ -51,6 +53,7 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             root.set("alarm", objectMapper.valueToTree(alarm));
         }
         if (event.isRunChanged()) {
+            target.setRunChangeTime(target.getTime());
             EquipRecordRunDto run = new EquipRecordRunDto()
                     .setSn(target.getSelfCode())
                     .setState(target.getRunState())
@@ -61,10 +64,11 @@ public class EquipRecordChangeBridgeSink extends AbstractEquipStreamPersistRmqSi
             root.set("run", objectMapper.valueToTree(run));
         }
         if (event.isOnlineChanged()) {
+            target.setOnlineChangeTime(new Date());
             EquipRecordOnlineDto online = new EquipRecordOnlineDto()
                     .setSn(target.getSelfCode())
                     .setState(target.getOnlineState())
-                    .setStartTime(target.getTime())
+                    .setStartTime(target.getOnlineChangeTime())
                     .setTenantId(target.getTenantId())
                     .setEventId(event.getOnlineSegmentEventId())
                     .setPrevEventId(event.getOnlinePrevSegmentEventId());

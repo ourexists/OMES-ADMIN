@@ -1,6 +1,6 @@
 package com.ourexists.omes.stream.equip;
 
-/** Configuration for the equip realtime Flink job ({@code flink run} / cluster). */
+/** Configuration for the equip realtime Flink job (Spring Boot–hosted embedded mini-cluster). */
 public final class EquipRealtimeFlinkJobConfig {
     private final String equipRealtimeRabbitQueue;
     private final String equipNotifyCreateQueue;
@@ -40,15 +40,8 @@ public final class EquipRealtimeFlinkJobConfig {
     private final long stateTtlMinutesAttrFluctuation;
     private final long stateTtlMinutesStateSnapshot;
     private final long stateTtlMinutesCollectSnapshot;
-    /**
-     * When true, runs in an embedded local Flink mini-cluster (IDE / {@code java -jar} debug), not {@code flink run} /
-     * remote cluster.
-     */
-    private final boolean flinkLocalMode;
-    /** Operator parallelism for {@link #flinkLocalMode}; must be positive when local mode is on. */
-    private final int flinkLocalParallelism;
-    /** When {@link #flinkLocalMode} is true: start local Flink Web UI (dashboard) for debugging. */
-    private final boolean flinkLocalWebUI;
+    /** Embedded mini-cluster default parallelism; must be positive. */
+    private final int flinkParallelism;
 
     public EquipRealtimeFlinkJobConfig(
             String equipRealtimeRabbitQueue,
@@ -74,9 +67,7 @@ public final class EquipRealtimeFlinkJobConfig {
             long stateTtlMinutesAttrFluctuation,
             long stateTtlMinutesStateSnapshot,
             long stateTtlMinutesCollectSnapshot,
-            boolean flinkLocalMode,
-            int flinkLocalParallelism,
-            boolean flinkLocalWebUI) {
+            int flinkParallelism) {
         this.equipRealtimeRabbitQueue = equipRealtimeRabbitQueue;
         this.equipNotifyCreateQueue = equipNotifyCreateQueue;
         this.equipStreamPersistChangeQueue = equipStreamPersistChangeQueue;
@@ -100,9 +91,7 @@ public final class EquipRealtimeFlinkJobConfig {
         this.stateTtlMinutesAttrFluctuation = stateTtlMinutesAttrFluctuation;
         this.stateTtlMinutesStateSnapshot = stateTtlMinutesStateSnapshot;
         this.stateTtlMinutesCollectSnapshot = stateTtlMinutesCollectSnapshot;
-        this.flinkLocalMode = flinkLocalMode;
-        this.flinkLocalParallelism = flinkLocalParallelism;
-        this.flinkLocalWebUI = flinkLocalWebUI;
+        this.flinkParallelism = flinkParallelism;
     }
 
     public String equipRealtimeRabbitQueue() {
@@ -197,15 +186,7 @@ public final class EquipRealtimeFlinkJobConfig {
         return stateTtlMinutesCollectSnapshot;
     }
 
-    public boolean flinkLocalMode() {
-        return flinkLocalMode;
-    }
-
-    public int flinkLocalParallelism() {
-        return flinkLocalParallelism;
-    }
-
-    public boolean flinkLocalWebUI() {
-        return flinkLocalWebUI;
+    public int flinkParallelism() {
+        return flinkParallelism;
     }
 }
