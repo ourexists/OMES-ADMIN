@@ -55,17 +55,11 @@ public class EquipRealtime {
      */
     private Long streamIngressSeq;
 
-    public void online() {
-        if (this.onlineState != 1) {
-            this.onlineChangeTime = new Date();
-            this.onlineState = 1;
-        }
-    }
-
     public void offline() {
+        Date now = new Date();
         if (this.onlineState != 0) {
             this.onlineState = 0;
-            this.onlineChangeTime = new Date();
+            this.onlineChangeTime = now;
             if (this.equipRealtimeConfig != null) {
                 this.equipAttrRealtimes = this.equipRealtimeConfig.getAttrs();
             } else {
@@ -74,40 +68,12 @@ public class EquipRealtime {
         }
         if (this.runState == null || this.runState != -1) {
             this.runState = -1;
-            this.runChangeTime = new Date();
+            this.runChangeTime = now;
         }
         if (this.alarmState == null || this.alarmState != -1) {
             this.alarmState = -1;
-            this.alarmChangeTime = new Date();
+            this.alarmChangeTime = now;
             this.alarmTexts = new ArrayList<>();
-        }
-    }
-
-    public void run() {
-        if (this.runState != 1) {
-            this.runState = 1;
-            this.runChangeTime = new Date();
-        }
-    }
-
-    public void stop() {
-        if (this.runState != 0) {
-            this.runState = 0;
-            this.runChangeTime = new Date();
-        }
-    }
-
-    public void alarm() {
-        if (this.alarmState != 1) {
-            this.alarmState = 1;
-            this.alarmChangeTime = new Date();
-        }
-    }
-
-    public void resetAlarm() {
-        if (this.alarmState != 0) {
-            this.alarmState = 0;
-            this.alarmChangeTime = new Date();
         }
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +31,11 @@ public class TcMqttEquipDataParser implements EquipDataParser {
         String sn = jsonObject.getString("SN");
         JSONArray devArray = jsonObject.getJSONArray("dev");
         JSONArray ywArray = jsonObject.getJSONArray("ai");
+        String timeStr = jsonObject.getString("time");
+        Date time = Date.from(
+                OffsetDateTime.parse(timeStr)
+                        .toInstant()
+        );
 
         if (devArray != null) {
             for (JSONObject object : devArray.toArray(JSONObject.class)) {
@@ -40,7 +46,7 @@ public class TcMqttEquipDataParser implements EquipDataParser {
                         !gwId.equals(equipRealtime.getEquipRealtimeConfig().getGwId())) {
                     continue;
                 }
-                targets.add(doParse(equipRealtime, object));
+                targets.add(doParse(equipRealtime, object, time));
             }
 
         }
@@ -53,25 +59,24 @@ public class TcMqttEquipDataParser implements EquipDataParser {
                         !gwId.equals(equipRealtime.getEquipRealtimeConfig().getGwId())) {
                     continue;
                 }
-                targets.add(doParse(equipRealtime, object));
+                targets.add(doParse(equipRealtime, object, time));
             }
         }
         return targets;
     }
 
-    public EquipRealtime doParse(EquipRealtime equipRealtime, JSONObject parsedObj) {
+    public EquipRealtime doParse(EquipRealtime equipRealtime, JSONObject parsedObj, Date time) {
         EquipRealtime target = new EquipRealtime();
         BeanUtils.copyProperties(equipRealtime, target);
-
-        target.setTime(new Date());
-        target.online();
-        target.run();
+        target.setTime(time);
+        target.setOnlineState(1);
+        target.setRunState(1);
 
         Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
         if (runVal == null || runVal == 1) {
-            target.run();
+            target.setRunState(1);
         } else {
-            target.stop();
+            target.setRunState(0);
         }
 
         if (!CollectionUtils.isEmpty(target.getEquipAttrRealtimes())) {
@@ -104,12 +109,7 @@ public class TcMqttEquipDataParser implements EquipDataParser {
             target.setAlarmTexts(alarms);
             target.setAlarmLevel(level);
         }
-        if (alarm == 1) {
-            target.alarm();
-        } else {
-            target.resetAlarm();
-        }
+        target.setAlarmState(alarm);
         return target;
     }
-
 }
