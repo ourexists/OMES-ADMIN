@@ -1,9 +1,7 @@
 package com.ourexists.omes.stream.equip.process;
 
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
-import com.ourexists.omes.stream.equip.support.EquipRealtimeEventTimeUtil;
 import com.ourexists.omes.stream.equip.support.EquipStreamStateTtl;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
@@ -29,8 +27,9 @@ public class EquipOfflineDetectProcessFunction
     private final long timeoutMs;
     private final long stateTtlMinutes;
 
+    private transient ValueState<Long> activeTimer;
+
     private transient ValueState<EquipRealtime> latestState;
-    private transient ValueState<Long> lastSeenProcessingTime;
 
     public EquipOfflineDetectProcessFunction(long timeoutMs, long stateTtlMinutes) {
         if (timeoutMs <= 0) {
@@ -47,12 +46,11 @@ public class EquipOfflineDetectProcessFunction
                 new ValueStateDescriptor<>("latest-state", EquipRealtime.class);
         EquipStreamStateTtl.enableIfConfigured(latestDesc, stateTtlMinutes);
 
-        ValueStateDescriptor<Long> seenDesc =
-                new ValueStateDescriptor<>("last-seen-time", Long.class);
-        EquipStreamStateTtl.enableIfConfigured(seenDesc, stateTtlMinutes);
+        ValueStateDescriptor<Long> activeDesc =
+                new ValueStateDescriptor<>("active-time", Long.class);
 
         latestState = getRuntimeContext().getState(latestDesc);
-        lastSeenProcessingTime = getRuntimeContext().getState(seenDesc);
+        activeTimer = getRuntimeContext().getState(activeDesc);
     }
 
     @Override
@@ -62,56 +60,41 @@ public class EquipOfflineDetectProcessFunction
 
         long now = ctx.timerService().currentProcessingTime();
 
-        EquipRealtime current = latestState.value();
+        Long oldTimer = activeTimer.value();
 
-        // ❗ 关键1：只接受“新数据”，旧数据直接丢弃（不刷新在线）
-        if (current != null && !EquipRealtimeEventTimeUtil.isNewerOrSame(value, current)) {
-            return;
+        // ❗ 删除旧 timer（必须成功依赖 state）
+        if (oldTimer != null) {
+            ctx.timerService().deleteProcessingTimeTimer(oldTimer);
         }
 
-        // 更新最新状态
+        long newTimer = now + timeoutMs;
+
+        ctx.timerService().registerProcessingTimeTimer(newTimer);
+
+        activeTimer.update(newTimer);
+
         latestState.update(value);
-
-        // 更新最后一次“有效接收时间”
-        lastSeenProcessingTime.update(now);
-
-        // 注册新的离线检测 timer
-        ctx.timerService().registerProcessingTimeTimer(now + timeoutMs);
     }
 
     @Override
     public void onTimer(long timestamp,
                         OnTimerContext ctx,
                         Collector<EquipRealtime> out) throws Exception {
+        Long t = activeTimer.value();
+
+        // ❗ 非当前 timer 直接忽略
+        if (t == null || t != timestamp) {
+            return;
+        }
 
         EquipRealtime latest = latestState.value();
-        Long lastSeen = lastSeenProcessingTime.value();
-
-        if (latest == null || lastSeen == null) {
-            return;
-        }
-
-        // ❗ 关键2：防止旧 timer 或重复 timer 误触发
-        if (timestamp != lastSeen + timeoutMs) {
-            return;
-        }
-
-        long now = ctx.timerService().currentProcessingTime();
-
-        // 二次校验（防极端乱序/延迟）
-        if (now - lastSeen < timeoutMs) {
-            return;
-        }
-
-        String key = ctx.getCurrentKey();
-        if (StringUtils.isBlank(key)) {
+        if (latest == null) {
             return;
         }
 
         EquipRealtime offline = copy(latest);
-        offline.setSelfCode(key);
         offline.offline();
-        offline.setTime(new Date(now));
+        offline.setTime(new Date(ctx.timerService().currentProcessingTime()));
 
         out.collect(offline);
     }

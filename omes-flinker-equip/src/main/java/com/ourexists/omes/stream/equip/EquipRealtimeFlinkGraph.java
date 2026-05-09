@@ -17,13 +17,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.CoreOptions;
+import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.core.execution.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 
+import java.net.URLClassLoader;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public final class EquipRealtimeFlinkGraph {
@@ -36,7 +42,26 @@ public final class EquipRealtimeFlinkGraph {
 
     public static StreamExecutionEnvironment createExecutionEnvironment(EquipRealtimeFlinkJobConfig cfg) {
         Configuration flinkConfig = new Configuration();
-        flinkConfig.setString("classloader.resolve-order", "parent-first");
+        /* Fat-jar 下子 ClassLoader 才有 BOOT-INF/lib；child-first 便于解析 Flink 与用户类。 */
+        flinkConfig.setString("classloader.resolve-order", "child-first");
+        /*
+         RMQ 连接器与用户 Sink 共用 amqp-client：ChildFirst 再从用户 classpath 加载会与 LaunchedClassLoader
+         已加载的 com.rabbitmq.client.* 冲突（LinkageError）。强制 Rabbit 包 parent-first，与 Spring Boot 侧一致。
+         */
+        flinkConfig.set(CoreOptions.ALWAYS_PARENT_FIRST_LOADER_PATTERNS_ADDITIONAL, List.of("com.rabbitmq."));
+        /*
+         Spring Boot 可执行 JAR：JobGraph 若不携带 classpath，MiniCluster JobMaster 反序列化 SerializedExecutionConfig
+         时只能用 AppClassLoader，看不到 BOOT-INF/lib（IDE 为扁平 classpath 故无此问题）。将 LaunchedURLClassLoader
+         的 URL 写入 pipeline.classpaths，与 flink LocalExecutor / PipelineExecutorUtils 行为对齐。
+         */
+        ClassLoader appLoader = EquipRealtimeFlinkGraph.class.getClassLoader();
+        if (appLoader instanceof URLClassLoader urlClassLoader) {
+            flinkConfig.set(
+                    PipelineOptions.CLASSPATHS,
+                    Arrays.stream(urlClassLoader.getURLs())
+                            .map(u -> u.toExternalForm())
+                            .collect(Collectors.toList()));
+        }
         int p = cfg.flinkParallelism();
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(p, flinkConfig);
         log.info(
@@ -185,8 +210,9 @@ public final class EquipRealtimeFlinkGraph {
                 .addSink(new EquipCollectSnapshotBridgeSink(rmq, cfg.equipStreamPersistCollectQueue()))
                 .name("equip-collect-snapshot-persist-bridge-rmq-sink");
         log.info(
-                "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} persistChange={} persistState={} persistCollect={} changeDetectIngressWindowed={} changeDetectIngressWindowMs={} changeDetectIngressSlideMs={}",
+                "Submitting Flink job equip-realtime-job (blocking in env.execute); queue={} offlineTimeoutMs={} persistChange={} persistState={} persistCollect={} changeDetectIngressWindowed={} changeDetectIngressWindowMs={} changeDetectIngressSlideMs={}",
                 cfg.equipRealtimeRabbitQueue(),
+                cfg.offlineTimeoutMs(),
                 cfg.equipStreamPersistChangeQueue(),
                 cfg.equipStreamPersistStateQueue(),
                 cfg.equipStreamPersistCollectQueue(),

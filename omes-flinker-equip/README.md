@@ -1,6 +1,12 @@
 # omes-flinker-equip
 
-设备实时流处理：在 **Spring Boot** 进程内启动 **嵌入式 Flink MiniCluster**，消费 RabbitMQ 设备实时队列，完成离线检测、变化检测、快照与属性波动告警，并回写 RabbitMQ。**不提供** `flink run` / 独立 Flink 集群提交入口。
+设备实时流处理：在 **Spring Boot** 进程内启动 **嵌入式 Flink 本地执行环境**（`createLocalEnvironment`），消费 RabbitMQ 设备实时队列，完成离线检测、变化检测、快照与属性波动告警，并回写 RabbitMQ。**不提供** `flink run` / 向独立 Flink 集群提交作业。
+
+### 单 JAR 部署（无需单独安装 Flink）
+
+- **只需要** 本模块 `mvn package` 打出的 **一个** Spring Boot Fat JAR；用 `java -jar`（或本目录 `run-jar.cmd` / `run-jar.sh`）启动即可。
+- **不需要** 在操作系统上安装 Apache Flink 发行版、**不需要** 配置 `FLINK_HOME`、**不需要** 在服务器上再部署一份 Flink 的 `lib`；Flink 及 RabbitMQ 连接器已作为普通 Maven 依赖打入 Fat JAR 的 `BOOT-INF/lib`，由 Spring Boot 启动器加载，与业务代码同进程运行。
+- **仍需要**：**JDK 21**、可连通的 **RabbitMQ**（及与管理端一致的队列 / vhost），以及下文建议的 `--add-opens` JVM 参数（避免模块系统 / Kryo 问题）。
 
 本模块 `maven.compiler.release` 为 **21**（运行时请使用 JDK 21；Flink 1.20 支持 Java 21）。构建产物为 **单个可执行 Spring Boot JAR**。
 
@@ -38,8 +44,7 @@ mvn -pl omes-flinker-equip clean package -DskipTests
 Fat JAR 不会自带 JVM 参数；直接 `java -jar` 若遇 Kryo `InaccessibleObjectException`，请先设置与上文相同的 opens，例如：
 
 ```bash
-export JAVA_TOOL_OPTIONS="--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/java.util.concurrent.locks=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED"
-java -jar omes-flinker-equip/target/omes-flinker-equip-*.jar
+java -jar --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/java.util.concurrent.locks=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED target/omes-flinker-equip-1.0.0-SNAPSHOT.jar
 ```
 
 （Windows CMD：`set JAVA_TOOL_OPTIONS=...` 后执行 `java -jar`。）

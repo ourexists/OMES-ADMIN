@@ -143,7 +143,6 @@
         </filter>
     </appender>
 
-
     <root level="${logLevel}">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="all"/>

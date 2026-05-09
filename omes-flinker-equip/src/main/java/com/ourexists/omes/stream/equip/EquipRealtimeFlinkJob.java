@@ -31,6 +31,7 @@ public final class EquipRealtimeFlinkJob {
     }
 
     public static void run(ParameterTool pt) throws Exception {
+        Thread.currentThread().setContextClassLoader(EquipRealtimeFlinkJob.class.getClassLoader());
         EquipRealtimeFlinkJobConfig cfg = EquipRealtimeFlinkJobProperties.from(pt);
         RMQConnectionConfig rmq = EquipRealtimeFlinkRmqConfig.from(pt, cfg.flinkRmqPrefetch());
         StreamExecutionEnvironment env = EquipRealtimeFlinkGraph.createExecutionEnvironment(cfg);

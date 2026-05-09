@@ -53,7 +53,18 @@ public class TcMqttProtocolManager extends AbstractMqttProtocolManager {
             if (payload == null) {
                 return;
             }
-            List<EquipRealtime> realtimes = tcMqttEquipDataParser.parse(gw.getId(), payload);
+            List<EquipRealtime> realtimes;
+            try {
+                realtimes = tcMqttEquipDataParser.parse(gw.getId(), payload);
+            } catch (Exception e) {
+                log.error(
+                        "TC_MQTT equip parse unexpected error gwId={} topic={} payloadChars={}",
+                        gw.getId(),
+                        topic,
+                        payload.length(),
+                        e);
+                return;
+            }
             if (!CollectionUtils.isEmpty(realtimes)) {
                 for (EquipRealtime target : realtimes) {
                     equipRealtimeStreamOutbound.send(target);

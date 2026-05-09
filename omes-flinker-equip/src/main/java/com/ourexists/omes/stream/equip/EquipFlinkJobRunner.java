@@ -39,6 +39,8 @@ class EquipFlinkJobRunner implements ApplicationRunner {
     }
 
     private void runJob(ApplicationArguments args) {
+        /* Spring Boot fat-jar：异步 / RPC 反序列化若沿用 AppClassLoader 会找不到 BOOT-INF/lib 下的 Flink。 */
+        Thread.currentThread().setContextClassLoader(EquipFlinkJobRunner.class.getClassLoader());
         try {
             Map<String, String> spring = EquipFlinkSpringDefaults.flatten(environment);
             ParameterTool pt = EquipRealtimeFlinkJob.parameterTool(args.getSourceArgs(), spring);
