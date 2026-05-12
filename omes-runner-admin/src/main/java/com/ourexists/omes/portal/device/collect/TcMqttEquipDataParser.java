@@ -104,6 +104,11 @@ public class TcMqttEquipDataParser implements EquipDataParser {
         target.setOnlineState(1);
         target.setRunState(1);
 
+        if (equipRealtime.getOnlineState() == 0) {
+            target.setOnlineChangeTime(new Date());
+            target.setOnlineChange(true);
+        }
+
         Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
         if (runVal == null || runVal == 1) {
             target.setRunState(1);

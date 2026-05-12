@@ -47,4 +47,6 @@ public class EquipRealtime {
     private Date runChangeTime;
 
     private Date alarmChangeTime;
+
+    private Boolean onlineChange = false;
 }

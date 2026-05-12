@@ -146,6 +146,11 @@ public class EquipRealtimeChangeDetectProcessFunction extends KeyedProcessFuncti
         if (current == null) {
             return false;
         }
-        return !Objects.equals(previous.getOnlineState(), current.getOnlineState());
+        if (!Objects.equals(previous.getOnlineState(), current.getOnlineState())) {
+            return true;
+        } else {
+            return current.getOnlineChange();
+        }
+
     }
 }
