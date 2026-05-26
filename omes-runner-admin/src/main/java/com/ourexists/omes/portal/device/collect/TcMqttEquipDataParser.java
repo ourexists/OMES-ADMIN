@@ -100,14 +100,15 @@ public class TcMqttEquipDataParser implements EquipDataParser {
     public EquipRealtime doParse(EquipRealtime equipRealtime, JSONObject parsedObj, Date time) {
         EquipRealtime target = new EquipRealtime();
         BeanUtils.copyProperties(equipRealtime, target);
+        if (equipRealtime.getOnlineState() != 1) {
+            target.setOnlineChange(true);
+        } else {
+            target.setOnlineChange(false);
+        }
         target.setTime(time);
         target.setOnlineState(1);
         target.setRunState(1);
 
-        if (equipRealtime.getOnlineState() == 0) {
-            target.setOnlineChangeTime(new Date());
-            target.setOnlineChange(true);
-        }
 
         Integer runVal = parsedObj.getInteger(equipRealtime.getEquipRealtimeConfig().getRunMap());
         if (runVal == null || runVal == 1) {
