@@ -46,7 +46,7 @@ era:
         - /files/**
         - /bridge/resolve
   token:
-    store-type: redis
+    store-type: Redis
 
 ai:
   llm:

@@ -74,9 +74,17 @@ let client = {
     platform: 'mes-edge'
 }
 
+function sasApiPath(path) {
+    var base = (typeof window !== 'undefined' && window.OMES_SAS_BASE) ? window.OMES_SAS_BASE : '';
+    if (!base) {
+        return path;
+    }
+    return base.replace(/\/$/, '') + path;
+}
+
 let router = {
-    "captcha": "/open/captcha",
-    "auth_token": "/oauth2/token",
+    "captcha": sasApiPath("/open/captcha"),
+    "auth_token": sasApiPath("/oauth2/token"),
     "current_user": "/acc/currentUser",
     "mat_page": "/mat/selectByPage",
     "mat_edit": "/mat/addOrUpdate",
@@ -332,12 +340,12 @@ function auth(url, param, successFunc, failFuc) {
         dataType: "json",
         headers: {
             "Authorization": `Basic ${basicAuth}`,
-            "Content-Type": "application/x-www-form-urlencoded",
             'x-era-platform': client.platform,
             'x-route-tenant': 0
         },
         async: false,
-        contentType: "application/json",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        processData: true,
         success: function (data) {
             if (data.code == null) {
                 if (successFunc != null) {

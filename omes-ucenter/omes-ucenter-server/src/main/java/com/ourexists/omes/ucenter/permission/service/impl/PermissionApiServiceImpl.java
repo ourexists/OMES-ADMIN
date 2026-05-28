@@ -10,7 +10,9 @@ import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusSe
 import com.ourexists.omes.ucenter.permission.PermissionApiDetailDto;
 import com.ourexists.omes.ucenter.permission.mapper.PermissionApiMapper;
 import com.ourexists.omes.ucenter.permission.pojo.PermissionApi;
+import com.ourexists.omes.ucenter.permission.service.ApiPermissionCacheService;
 import com.ourexists.omes.ucenter.permission.service.PermissionApiService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,8 @@ import java.util.List;
 public class PermissionApiServiceImpl extends AbstractMyBatisPlusService<PermissionApiMapper, PermissionApi>
         implements PermissionApiService {
 
+    @Autowired
+    private ApiPermissionCacheService apiPermissionCacheService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -41,6 +45,7 @@ public class PermissionApiServiceImpl extends AbstractMyBatisPlusService<Permiss
             }
             this.saveBatch(permissionApis);
         }
+        apiPermissionCacheService.refresh();
     }
 
     @Override
@@ -51,5 +56,8 @@ public class PermissionApiServiceImpl extends AbstractMyBatisPlusService<Permiss
     @Override
     public void clearApiPermission(String permissionId, boolean isResetCache) {
         this.remove(new LambdaQueryWrapper<PermissionApi>().eq(PermissionApi::getPermissionId, permissionId));
+        if (isResetCache) {
+            apiPermissionCacheService.refresh();
+        }
     }
 }

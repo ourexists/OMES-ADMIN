@@ -142,6 +142,10 @@ ribbon:
   okhttp:
     enabled: true
 era:
+  authorization:
+    server:
+      # 业务 Admin 仅校验 JWT，OAuth2 签发在 OMES-SAS
+      enabled: false
   log:
     level: info
     file:
@@ -154,6 +158,7 @@ era:
         - /templates/**
         - /view/**
         - /files/**
+        - /authentication/**
       #        - /workshop/**
       api_check:
         - /expose/**
@@ -161,9 +166,11 @@ era:
         - /templates/**
         - /view/**
         - /files/**
+        - /authentication/**
   #        - /workshop/**
   token:
-    store-type: redis
+    # 与 ERA TokenStoreType 一致（Redis/Db/InMemory），大小写不敏感
+    store-type: Redis
 feign:
   client:
     config:

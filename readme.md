@@ -21,6 +21,8 @@ OMES 工业设备管理平台
 
 * **omes-runner-admin**：Web 管理端（Spring Boot，应用名 `OMES-ADMIN`），聚合各业务域服务。
 
+* **omes-sas**（Git 子模块）：独立认证服务（默认端口 `10012`，应用名 `OMES-SAS`），OAuth2 发 token、验证码登录与账户认证 API；详见 `omes-sas/README.md`。
+
 * **omes-runner-control**：设备控制侧进程（默认端口 `10015`，应用名 `OMES-CONTROL`）。
 
 * **omes-flinker-equip**：设备实时流（Spring Boot 内嵌 Flink），消费 RabbitMQ 并与管理端队列协同。
@@ -57,7 +59,21 @@ OMES 工业设备管理平台
 
 - **RabbitMQ**（设备实时流、Spring Cloud Stream 与 Flink 侧需同一套连接与 vhost）。
 
-### 2. 本地配置
+### 2. 克隆与子模块
+
+首次克隆主仓库后需初始化子模块（含 **omes-sas** 认证服务）：
+
+```bash
+git clone https://gitee.com/ourexists/mes-edgev2.git
+cd mes-edgev2
+git submodule update --init --recursive
+```
+
+或一步克隆：`git clone --recurse-submodules https://gitee.com/ourexists/mes-edgev2.git`
+
+`omes-sas` 独立仓库地址：`https://gitee.com/ourexists/omes-sas.git`（需在 Gitee 创建并 `git push` 后，他人方可通过子模块 URL 拉取）。
+
+### 3. 本地配置
 
 仓库根目录下的 **`config/config.properties`** 会被启动类加载（`@PropertySource("file:config/config.properties")`
 ），用于数据库等关键变量，例如：
@@ -68,7 +84,7 @@ OMES 工业设备管理平台
 
 **运行时的当前工作目录**需能解析到上述 `config` 路径（一般在仓库根目录启动，或将 `config` 目录拷到与进程一致的位置）。
 
-### 3. 构建
+### 4. 构建
 
 在仓库根目录执行（需能解析父 POM 与 **Era** 等依赖；若缺少私有制品仓库会构建失败）：
 
@@ -80,7 +96,7 @@ mvn clean package -DskipTests
 
 管理端可执行包路径：`omes-runner-admin/target/omes-runner-admin-*.jar`（具体文件名以构建输出为准）。
 
-### 4. 启动管理端（omes-runner-admin）
+### 5. 启动管理端（omes-runner-admin）
 
 - **默认端口**：`10010`（可通过 `-Dserver.port=` 或环境变量覆盖）。
 
@@ -109,7 +125,7 @@ mvn -pl omes-runner-admin spring-boot:run
 
 访问：**http://127.0.0.1:10010/**（端口以实际为准）。
 
-### 5. Flink 实时作业（可选）
+### 6. Flink 实时作业（可选）
 
 设备实时流由 **`omes-flinker-equip`** 以 Spring Boot 可执行 JAR 运行（内嵌 Flink），与 RabbitMQ、管理端配置的队列名需一致。详见 **`omes-flinker-equip/README.md`**。
 

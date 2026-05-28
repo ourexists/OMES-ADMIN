@@ -42,6 +42,7 @@
         <module>omes-flinker-equip</module>
         <module>omes-flinker-workshop</module>
         <module>omes-runner-control</module>
+        <module>omes-runner-sas</module>
     </modules>
 
     <parent>
