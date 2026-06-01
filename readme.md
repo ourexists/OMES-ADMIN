@@ -3,7 +3,7 @@ OMES 工业设备管理平台
 
 [![AUR](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)]()
 [![](https://img.shields.io/badge/Author-ourexists-orange.svg)]()
-[![](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)]()
+[![](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)]()
 
 介绍
 -----------------------------------
@@ -40,7 +40,7 @@ OMES 工业设备管理平台
 
 | OMES Version     | 变更内容 | Era Framework Version | Layui Version | Spring Boot Version | JAVA Version |
 |:-----------------|:---------|:----------------------|:--------------|:--------------------|:-------------|
-| 1.0.0-SNAPSHOT   |          | 2024.0.1              | 2.9.27        | 3.4.5               | 21           |
+| 1.0.1-SNAPSHOT   |          | 2024.0.2.0-SNAPSHOT   | 2.9.27        | 3.4.5               | 21           |
 
 ![img.png](架构图.png)
 
@@ -111,7 +111,7 @@ mvn clean package -DskipTests
 
 ```bash
 
-java -jar omes-runner-admin/target/omes-runner-admin-1.0.0-SNAPSHOT.jar
+java -jar omes-runner-admin/target/omes-runner-admin-1.0.1-SNAPSHOT.jar
 
 ```
 

@@ -44,7 +44,7 @@ mvn -pl omes-flinker-equip clean package -DskipTests
 Fat JAR 不会自带 JVM 参数；直接 `java -jar` 若遇 Kryo `InaccessibleObjectException`，请先设置与上文相同的 opens，例如：
 
 ```bash
-java -jar --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/java.util.concurrent.locks=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED target/omes-flinker-equip-1.0.0-SNAPSHOT.jar
+java -jar --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.invoke=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens java.base/java.util.concurrent.locks=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED target/omes-flinker-equip-1.0.1-SNAPSHOT.jar
 ```
 
 （Windows CMD：`set JAVA_TOOL_OPTIONS=...` 后执行 `java -jar`。）

@@ -1,0 +1,15 @@
+# Copy to era-token.yml and replace keys before production deployment.
+# Generate new RSA key pair:
+#   openssl genrsa -out jwt-private.pem 2048
+#   openssl rsa -in jwt-private.pem -pubout -outform PEM -out jwt-public.pem
+#   # jwt-publicKey: base64 body of X509 public key (strip PEM headers)
+#
+# Or set environment variables ERA_JWT_PRIVATE_KEY / ERA_JWT_PUBLIC_KEY.
+
+era:
+  token:
+    jwt-privateKey: |
+      -----BEGIN PRIVATE KEY-----
+      REPLACE_ME
+      -----END PRIVATE KEY-----
+    jwt-publicKey: REPLACE_ME_BASE64_X509_PUBLIC_KEY

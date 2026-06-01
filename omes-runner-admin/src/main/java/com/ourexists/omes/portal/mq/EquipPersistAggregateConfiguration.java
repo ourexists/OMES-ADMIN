@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.idempotent.DuplicateRequestException;
 import com.ourexists.era.framework.idempotent.IdempotentSupport;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtime;
 import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
@@ -155,16 +156,15 @@ public class EquipPersistAggregateConfiguration {
         }
         try {
             Optional<String> idOpt = idempotentSupport.readIdempotentId(evt, IDEMPOTENT_FIELD);
-            EquipPersistMqEvent out = idempotentSupport.executeIfIdPresent(
+            return idempotentSupport.executeIfIdPresent(
                     namespace,
                     idOpt.orElse(null),
                     ttlHours,
                     TimeUnit.HOURS,
                     () -> evt);
-            if (out == null && idOpt.isPresent()) {
-                log.debug("Equip stream persist dedup: skip duplicate namespace={} eventId={}", namespace, idOpt.get());
-            }
-            return out;
+        } catch (DuplicateRequestException e) {
+            log.debug("Equip stream persist dedup: skip duplicate namespace={} eventId={}", namespace, e.getIdempotentId());
+            return null;
         } catch (Throwable t) {
             log.error("Equip stream persist dedup failed namespace={}", namespace, t);
             return null;

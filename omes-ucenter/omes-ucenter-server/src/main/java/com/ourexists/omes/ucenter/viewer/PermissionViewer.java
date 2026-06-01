@@ -100,7 +100,7 @@ public class PermissionViewer implements PermissionFeign {
 //    @Operation(summary = "系统当前用户的权限树")
 //    @GetMapping("/currentAccPermissionTree")
     public JsonResponseEntity<List<PermissionTreeNode>> currentAccPermissionTree() {
-        if (UserContext.getTenant().getRole().equals(OAuth2Role.ADMIN.name())) {
+        if (OAuth2Role.ADMIN.name().equals(UserContext.getTenant().getRole())) {
             List<Permission> permissionList = permissionService.selectPermissionWhichTenantHold(
                     UserContext.getTenant().getTenantId(),
                     UserContext.getPlatForm());

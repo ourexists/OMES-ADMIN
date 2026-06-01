@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.era.framework.idempotent.DuplicateRequestException;
 import com.ourexists.era.framework.idempotent.IdempotentSupport;
 import com.ourexists.omes.message.feign.NotifyFeign;
 import com.ourexists.omes.message.model.NotifyDto;
@@ -38,7 +39,7 @@ public class EquipStreamInputBindings {
                 UserContext.defaultTenant();
                 NotifyDto dto = objectMapper.readValue(body, NotifyDto.class);
                 Optional<String> idOpt = idempotentSupport.readIdempotentId(dto, EQUIP_NOTIFY_CREATE_IDEMPOTENT_FIELD);
-                Object executed = idempotentSupport.executeIfIdPresent(
+                idempotentSupport.executeIfIdPresent(
                         EQUIP_NOTIFY_CREATE_IDEMPOTENT_NS,
                         idOpt.orElse(null),
                         idempotentTtlHours,
@@ -47,9 +48,8 @@ public class EquipStreamInputBindings {
                             RemoteHandleUtils.getDataFormResponse(notifyFeign.createAndStart(dto));
                             return Boolean.TRUE;
                         });
-                if (executed == null && idOpt.isPresent()) {
-                    log.debug("Equip alarm notify MQ: skip duplicate eventId={}", idOpt.get());
-                }
+            } catch (DuplicateRequestException e) {
+                log.debug("Equip alarm notify MQ: skip duplicate eventId={}", e.getIdempotentId());
             } catch (Throwable e) {
                 log.error("Equip alarm notify MQ: createAndStart failed, payload={}", body, e);
             }

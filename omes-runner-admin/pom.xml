@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.ourexists.omes</groupId>
         <artifactId>omes</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>omes-runner-admin</artifactId>
@@ -24,17 +24,17 @@
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-sync-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-line-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-mo-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -44,38 +44,38 @@
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-mat-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-mps-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-ucenter-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-task-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-device-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-inspection-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.ourexists.omes</groupId>
             <artifactId>omes-message-server</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -105,7 +105,6 @@
         <dependency>
             <groupId>com.ourexists.era</groupId>
             <artifactId>era-framework-txflow</artifactId>
-            <version>1.1.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -123,7 +122,6 @@
         <dependency>
             <groupId>com.ourexists.era</groupId>
             <artifactId>era-framework-idempotent</artifactId>
-            <version>${era-framework-dependencies.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

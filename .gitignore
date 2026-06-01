@@ -102,6 +102,9 @@ build
 
 file/
 
+# Local JWT keys (copy from era-token.yml.example)
+config/era-token.yml
+
 ## Frontend (Node.js / Vite / Webpack)
 **/node_modules/
 **/dist/

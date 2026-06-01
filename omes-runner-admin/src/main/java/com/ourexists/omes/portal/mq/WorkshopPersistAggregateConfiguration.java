@@ -2,6 +2,7 @@ package com.ourexists.omes.portal.mq;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ourexists.era.framework.core.user.UserContext;
+import com.ourexists.era.framework.idempotent.DuplicateRequestException;
 import com.ourexists.era.framework.idempotent.IdempotentSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -65,16 +66,15 @@ public class WorkshopPersistAggregateConfiguration {
         }
         try {
             Optional<String> idOpt = idempotentSupport.readIdempotentId(evt, IDEMPOTENT_FIELD);
-            WorkshopPersistMqEvent out = idempotentSupport.executeIfIdPresent(
+            return idempotentSupport.executeIfIdPresent(
                     namespace,
                     idOpt.orElse(null),
                     ttlHours,
                     TimeUnit.HOURS,
                     () -> evt);
-            if (out == null && idOpt.isPresent()) {
-                log.debug("Workshop stream persist dedup: skip duplicate namespace={} eventId={}", namespace, idOpt.get());
-            }
-            return out;
+        } catch (DuplicateRequestException e) {
+            log.debug("Workshop stream persist dedup: skip duplicate namespace={} eventId={}", namespace, e.getIdempotentId());
+            return null;
         } catch (Throwable t) {
             log.error("Workshop stream persist dedup failed namespace={}", namespace, t);
             return null;
