@@ -18,7 +18,7 @@ import com.ourexists.omes.ucenter.account.pojo.Account;
 import com.ourexists.omes.ucenter.account.service.AccountService;
 import com.ourexists.omes.ucenter.enums.AccRoleEnum;
 import com.ourexists.omes.ucenter.enums.AccStatusEnum;
-import com.ourexists.omes.ucenter.permission.pojo.PermissionApi;
+import com.ourexists.omes.ucenter.permission.pojo.Permission;
 import com.ourexists.omes.ucenter.permission.service.PermissionService;
 import com.ourexists.omes.ucenter.tenant.TenantAccDto;
 import com.ourexists.omes.ucenter.tenant.service.TenantAccService;
@@ -34,7 +34,9 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author pengcheng
@@ -267,7 +269,16 @@ public class AccountServiceImpl extends AbstractMyBatisPlusService<AccountMapper
 
     public AccVo extraInfo(AccVo accVo) {
         accVo.setTenantVos(tenantService.availableTenantRoleWhichTheAccBelong(accVo.getId()));
-        accVo.setPermissionApiDetailDtos(PermissionApi.covert(permissionService.selectAccPermissionApiGroupByTenant(accVo.getId())));
+        List<Permission> permissions = permissionService.selectPermissionWhichAccHold(accVo.getId(), accVo.getPlatform());
+        Set<String> scopes = new LinkedHashSet<>();
+        if (permissions != null) {
+            for (Permission permission : permissions) {
+                if (StringUtils.hasText(permission.getCode())) {
+                    scopes.add(permission.getCode().trim());
+                }
+            }
+        }
+        accVo.setOauthScopes(scopes);
         return accVo;
     }
 

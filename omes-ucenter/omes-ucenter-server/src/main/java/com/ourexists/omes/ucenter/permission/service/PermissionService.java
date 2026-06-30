@@ -10,10 +10,8 @@ import com.ourexists.omes.ucenter.permission.PermissionDto;
 import com.ourexists.omes.ucenter.permission.PermissionModifyDto;
 import com.ourexists.omes.ucenter.permission.PermissionTreeNode;
 import com.ourexists.omes.ucenter.permission.pojo.Permission;
-import com.ourexists.omes.ucenter.permission.pojo.PermissionApi;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author pengcheng
@@ -112,13 +110,4 @@ public interface PermissionService extends IMyBatisPlusService<Permission> {
      * @return
      */
     List<Permission> selectPermissionWhichRoleHold(String roleId, String platform);
-
-    /**
-     * 查询出账户所有的权限
-     *
-     * @param accId
-     * @return
-     */
-    Map<String, List<PermissionApi>> selectAccPermissionApiGroupByTenant(String accId);
-
 }

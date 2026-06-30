@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Collections;
 import java.util.List;
 
 //@Tag(name = "配方管理")
@@ -80,6 +81,9 @@ public class WorkshopViewer implements WorkshopFeign {
     @Operation(summary = "查询分配的树", description = "查询分配的树")
     @PostMapping("selectAssignTrees")
     public JsonResponseEntity<List<WorkshopTreeNode>> selectAssignTrees(@RequestBody List<String> assignIds, Boolean needFold) {
+        if (CollectionUtil.isBlank(assignIds)) {
+            return JsonResponseEntity.success(Collections.emptyList());
+        }
         List<WorkshopAssign> workshopAssigns = assignService.list(new LambdaQueryWrapper<WorkshopAssign>()
                 .in(WorkshopAssign::getAssignId, assignIds));
         List<String> workshopCodes = workshopAssigns.stream().map(WorkshopAssign::getWorkshopCode).toList();

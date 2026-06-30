@@ -5,7 +5,6 @@ package com.ourexists.omes.line.model;
 
 import com.ourexists.era.framework.core.model.dto.BaseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -24,7 +23,6 @@ public class TFEdgeSaveDto extends BaseDto {
     private String lineId;
 
     @Schema(description = "边集合")
-    @NotEmpty(message = "${valid.tf_edge.edges.empty}")
     private List<TFEdgeDto> edges;
 }
 

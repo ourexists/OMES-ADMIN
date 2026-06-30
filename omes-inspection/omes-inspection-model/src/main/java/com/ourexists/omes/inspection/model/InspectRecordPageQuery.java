@@ -11,7 +11,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * 巡检记录分页查询
@@ -39,7 +38,4 @@ public class InspectRecordPageQuery extends PageQuery {
 
     @Schema(description = "记录时间结束")
     private Date recordTimeEnd;
-
-    @Schema(description = "任务ID列表")
-    private List<String> taskIds;
 }

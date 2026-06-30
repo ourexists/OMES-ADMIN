@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -35,6 +37,14 @@ public class AiBridgeController {
     public AiBridgeController(StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
+    }
+
+    @PostConstruct
+    void requireInternalKey() {
+        if (!StringUtils.hasText(internalKey)) {
+            throw new IllegalStateException(
+                    "Missing ai.bridge.internal-key. Configure AI_BRIDGE_INTERNAL_KEY before using AI bridge.");
+        }
     }
 
     @Operation(summary = "签发 AI Bridge Ticket")

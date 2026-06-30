@@ -78,16 +78,6 @@ public class InspectRecordController {
         return resp;
     }
 
-    @Operation(summary = "按任务ID查询记录列表")
-    @GetMapping("listByTaskId")
-    public JsonResponseEntity<List<InspectRecordDto>> listByTaskId(@RequestParam String taskId) {
-        JsonResponseEntity<List<InspectRecordDto>> resp = feign.listByTaskId(taskId);
-        if (resp != null && !CollectionUtils.isEmpty(resp.getData())) {
-            fillEquipNames(resp.getData());
-        }
-        return resp;
-    }
-
     @Operation(summary = "巡检结果枚举")
     @GetMapping("resultTypes")
     public JsonResponseEntity<Map<Integer, String>> resultTypes() {

@@ -27,6 +27,12 @@ public class LocalFileController {
 
     private final LocalFileStorageService storageService;
 
+    @Operation(summary = "浏览目录（文件与子目录）")
+    @GetMapping("/browse")
+    public JsonResponseEntity<List<LocalFileEntryVo>> browse(@RequestParam(value = "dir", required = false) String dir) throws IOException {
+        return JsonResponseEntity.success(storageService.browse(dir));
+    }
+
     @Operation(summary = "上传文件")
     @PostMapping("/upload")
     public JsonResponseEntity<String> upload(@RequestParam("file") MultipartFile file,
@@ -66,7 +72,21 @@ public class LocalFileController {
         return JsonResponseEntity.success(storageService.list(dir));
     }
 
-    @Operation(summary = "删除文件")
+    @Operation(summary = "新建目录")
+    @PostMapping("/mkdir")
+    public JsonResponseEntity<String> mkdir(@RequestParam(value = "dir", required = false) String dir,
+                                            @RequestParam("name") String name) throws IOException {
+        return JsonResponseEntity.success(storageService.mkdir(dir, name));
+    }
+
+    @Operation(summary = "重命名文件或目录")
+    @PostMapping("/rename")
+    public JsonResponseEntity<String> rename(@RequestParam("path") String path,
+                                             @RequestParam("newName") String newName) throws IOException {
+        return JsonResponseEntity.success(storageService.rename(path, newName));
+    }
+
+    @Operation(summary = "删除文件或目录")
     @PostMapping("/delete")
     public JsonResponseEntity<Boolean> delete(@RequestParam("path") String path) throws IOException {
         storageService.delete(path);

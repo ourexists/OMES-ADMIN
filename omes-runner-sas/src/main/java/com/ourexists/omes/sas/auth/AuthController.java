@@ -33,19 +33,6 @@ public class AuthController {
     @Autowired
     private RemoteAccountAuthClient accountAuthClient;
 
-    @Operation(summary = "通过用户名查询（密码未脱敏）")
-    @GetMapping("/selectByAccname")
-    public JsonResponseEntity<AccVo> selectByAccname(@RequestParam String accname) {
-        return accountAuthClient.selectByAccname(accname, UserContext.getPlatForm());
-    }
-
-
-    @Operation(summary = "通过手机号查询（密码未脱敏）")
-    @GetMapping("/selectByMobile")
-    public JsonResponseEntity<AccVo> selectByMobile(@RequestParam String mobile) {
-        return accountAuthClient.selectByMobile(mobile, UserContext.getPlatForm());
-    }
-
     @Operation(summary = "账户注册")
     @PostMapping("/register")
     public JsonResponseEntity<String> register(@RequestBody @Valid AccRegisterDto accDto) {

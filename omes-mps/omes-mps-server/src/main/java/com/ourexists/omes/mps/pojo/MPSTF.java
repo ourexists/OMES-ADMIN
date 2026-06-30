@@ -32,14 +32,6 @@ public class MPSTF extends MainEntity {
 
     private Integer status;
 
-    private String mapDb;
-
-    private String mapOffset;
-
-    private String property;
-
-    private Long duration;
-
     private String pre;
 
     private String nex;
@@ -52,11 +44,7 @@ public class MPSTF extends MainEntity {
 
     private Double endTemperature;
 
-    private Double temperature;
-
     private String moCode;
-
-    private Integer type;
 
     public static MPSTFVo covert(MPSTF source) {
         if (source == null) {

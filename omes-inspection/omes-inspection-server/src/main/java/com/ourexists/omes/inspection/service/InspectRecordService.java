@@ -17,8 +17,6 @@ public interface InspectRecordService extends IMyBatisPlusService<InspectRecord>
 
     Page<InspectRecord> selectByPage(InspectRecordPageQuery query);
 
-    List<InspectRecord> listByTaskId(String taskId);
-
     /**
      * 按设备ID与记录时间范围查询巡检记录（用于设备健康分巡检维度统计）
      */

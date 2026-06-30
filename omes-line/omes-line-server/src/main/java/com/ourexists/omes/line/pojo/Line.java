@@ -30,6 +30,16 @@ public class Line extends EraEntity {
 
     private String name;
 
+    private String productCode;
+
+    private String productName;
+
+    private String materialCode;
+
+    private String materialName;
+
+    private String versionNo;
+
     private BigDecimal throughput;
 
     private Integer stepInterval;

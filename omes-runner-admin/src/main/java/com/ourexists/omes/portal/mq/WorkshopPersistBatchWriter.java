@@ -33,6 +33,7 @@ public class WorkshopPersistBatchWriter {
         }
         Map<String, List<WorkshopCollectDto>> byTenant = new LinkedHashMap<>();
         try {
+            UserContext.defaultTenant();
             for (Object o : payloads) {
                 JsonNode root = unwrapPersistRoot(o);
                 if (root == null || !root.hasNonNull(FIELD_COLLECT)) {
@@ -47,13 +48,14 @@ public class WorkshopPersistBatchWriter {
                         : UserContext.getTenant().getTenantId();
                 byTenant.computeIfAbsent(tid, k -> new ArrayList<>()).add(dto);
             }
-            UserContext.defaultTenant();
             for (Map.Entry<String, List<WorkshopCollectDto>> e : byTenant.entrySet()) {
                 UserContext.getTenant().setTenantId(e.getKey());
                 RemoteHandleUtils.getDataFormResponse(workshopCollectFeign.addBatch(e.getValue()));
             }
         } catch (Exception ex) {
             log.error("Workshop stream persist: collect snapshot batch write failed, messageCount={}", payloads.size(), ex);
+        } finally {
+            UserContext.remove();
         }
     }
 

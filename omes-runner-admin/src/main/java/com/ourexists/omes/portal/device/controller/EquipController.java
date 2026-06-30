@@ -73,6 +73,9 @@ public class EquipController {
                         roleFeign.selectRoleWhichAccHoldOnly(UserContext.getUser().getId())
                 );
                 List<String> roleIds = roleDtos.stream().map(RoleDto::getId).toList();
+                if (CollectionUtil.isBlank(roleIds)) {
+                    return JsonResponseEntity.success(Collections.emptyList());
+                }
                 List<WorkshopTreeNode> workshopTreeNodes =
                         RemoteHandleUtils.getDataFormResponse(workshopFeign.selectAssignTrees(roleIds, false));
                 if (CollectionUtil.isBlank(workshopTreeNodes)) {
@@ -151,6 +154,9 @@ public class EquipController {
                         roleFeign.selectRoleWhichAccHoldOnly(UserContext.getUser().getId())
                 );
                 List<String> roleIds = roleDtos.stream().map(RoleDto::getId).toList();
+                if (CollectionUtil.isBlank(roleIds)) {
+                    return JsonResponseEntity.success(r);
+                }
                 List<WorkshopTreeNode> workshopTreeNodes =
                         RemoteHandleUtils.getDataFormResponse(workshopFeign.selectAssignTrees(roleIds, false));
                 if (CollectionUtil.isBlank(workshopTreeNodes)) {

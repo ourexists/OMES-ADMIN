@@ -20,8 +20,13 @@ import com.ourexists.omes.mo.model.query.MOPageQuery;
 import com.ourexists.omes.mps.enums.MPSStatusEnum;
 import com.ourexists.omes.mps.feign.MPSFeign;
 import com.ourexists.omes.mps.model.ChangePriorityDto;
+import com.ourexists.omes.mps.model.MPSBoardDto;
 import com.ourexists.omes.mps.model.MPSDto;
 import com.ourexists.omes.mps.model.MPSQueueOperateDto;
+import com.ourexists.omes.mps.model.query.MPSBoardQuery;
+import com.ourexists.omes.mps.model.query.MPSPageQuery;
+import com.ourexists.omes.portal.mps.model.MPSBoardViewQuery;
+import com.ourexists.omes.portal.mps.model.MPSBoardVo;
 import com.ourexists.omes.portal.mps.model.MPSViewPageQuery;
 import com.ourexists.omes.portal.mps.model.MPSVo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +37,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Tag(name = "生产计划")
@@ -49,68 +58,55 @@ public class MPSController {
     @Autowired
     private LineFeign lineFeign;
 
+    @Operation(summary = "看板聚合查询", description = "一次返回待排产、执行队列、执行中、已完成四列数据")
+    @PostMapping("selectBoard")
+    public JsonResponseEntity<MPSBoardVo> selectBoard(@RequestBody MPSBoardViewQuery query) {
+        MPSBoardQuery boardQuery = new MPSBoardQuery()
+                .setMoCode(query.getMoCode())
+                .setLimitPerColumn(query.getLimitPerColumn());
+        applyProductFilter(query.getProductName(), query.getProductCode(), boardQuery);
+        if (boardQuery.getMoCodes() != null && boardQuery.getMoCodes().isEmpty()) {
+            return JsonResponseEntity.success(new MPSBoardVo());
+        }
+
+        MPSBoardDto board;
+        try {
+            board = RemoteHandleUtils.getDataFormResponse(mpsFeign.selectBoard(boardQuery));
+        } catch (EraCommonException e) {
+            throw new BusinessException(e.getMessage());
+        }
+        if (board == null) {
+            return JsonResponseEntity.success(new MPSBoardVo());
+        }
+
+        MPSBoardVo result = new MPSBoardVo()
+                .setWaitQue(MPSVo.wrap(board.getWaitQue()))
+                .setWaitExec(MPSVo.wrap(board.getWaitExec()))
+                .setExecing(MPSVo.wrap(board.getExecing()))
+                .setComplete(MPSVo.wrap(board.getComplete()));
+
+        List<MPSVo> all = new ArrayList<>();
+        all.addAll(result.getWaitQue());
+        all.addAll(result.getWaitExec());
+        all.addAll(result.getExecing());
+        all.addAll(result.getComplete());
+        enrichMpsVoList(all, query.getQueryMO(), query.getQueryLine());
+        return JsonResponseEntity.success(result);
+    }
+
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<MPSVo>> selectByPage(@RequestBody MPSViewPageQuery dto) {
-        if (StringUtils.isNotEmpty(dto.getProductName()) || StringUtils.isNotEmpty(dto.getProductCode())) {
-            MOPageQuery query = new MOPageQuery()
-                    .setProductCode(dto.getProductCode())
-                    .setProductName(dto.getProductName());
-            query.setRequirePage(false);
-            List<MODto> mos;
-            try {
-                mos = RemoteHandleUtils.getDataFormResponse(moFeign.selectByPage(query));
-            } catch (EraCommonException e) {
-                throw new BusinessException(e.getMessage());
-            }
-            if (CollectionUtil.isBlank(mos)) {
-                return JsonResponseEntity.success(new ArrayList<>(), new Pagination(0, dto.getPage(), dto.getPageSize()));
-            }
-            List<String> mocodes = mos.stream().map(MODto::getSelfCode).collect(Collectors.toList());
-            dto.setMoCodes(mocodes);
+        applyProductFilter(dto.getProductName(), dto.getProductCode(), dto);
+        if (dto.getMoCodes() != null && dto.getMoCodes().isEmpty()) {
+            return JsonResponseEntity.success(new ArrayList<>(), new Pagination(0, dto.getPage(), dto.getPageSize()));
         }
         JsonResponseEntity<List<MPSDto>> page = mpsFeign.selectByPage(dto);
         List<MPSVo> r = MPSVo.wrap(page.getData());
         if (CollectionUtil.isBlank(r)) {
             return JsonResponseEntity.success(r, page.getPagination());
         }
-
-        List<MODto> mos = null;
-        List<LineVo> lines = null;
-        if (dto.getQueryMO()) {
-            List<String> moCodes = r.stream().map(MPSDto::getMoCode).collect(Collectors.toList());
-            try {
-                mos = RemoteHandleUtils.getDataFormResponse(moFeign.selectByCodes(moCodes));
-            } catch (EraCommonException e) {
-                throw new BusinessException(e.getMessage());
-            }
-        }
-        if (dto.getQueryLine()) {
-            List<String> lineCodes = r.stream().map(MPSDto::getLine).collect(Collectors.toList());
-            try {
-                lines = RemoteHandleUtils.getDataFormResponse(lineFeign.selectByCodes(lineCodes));
-            } catch (EraCommonException e) {
-                throw new BusinessException(e.getMessage());
-            }
-        }
-        for (MPSVo mpsDto : r) {
-            if (CollectionUtil.isNotBlank(mos)) {
-                for (MODto mo : mos) {
-                    if (mpsDto.getMoCode().equals(mo.getSelfCode())) {
-                        mpsDto.setMoDto(mo);
-                        break;
-                    }
-                }
-            }
-            if (CollectionUtil.isNotBlank(lines)) {
-                for (LineVo line : lines) {
-                    if (mpsDto.getLine().equals(line.getSelfCode())) {
-                        mpsDto.setLineVo(line);
-                        break;
-                    }
-                }
-            }
-        }
+        enrichMpsVoList(r, dto.getQueryMO(), dto.getQueryLine());
         return JsonResponseEntity.success(r, page.getPagination());
     }
 
@@ -192,5 +188,106 @@ public class MPSController {
             r.add(new MapDto().setId(value.getCode().toString()).setName(value.getName()));
         }
         return JsonResponseEntity.success(r);
+    }
+
+    private void applyProductFilter(String productName, String productCode, MPSPageQuery dto) {
+        if (StringUtils.isEmpty(productName) && StringUtils.isEmpty(productCode)) {
+            return;
+        }
+        MOPageQuery query = new MOPageQuery()
+                .setProductCode(productCode)
+                .setProductName(productName);
+        query.setRequirePage(false);
+        List<MODto> mos;
+        try {
+            mos = RemoteHandleUtils.getDataFormResponse(moFeign.selectByPage(query));
+        } catch (EraCommonException e) {
+            throw new BusinessException(e.getMessage());
+        }
+        if (CollectionUtil.isBlank(mos)) {
+            dto.setMoCodes(Collections.emptyList());
+            return;
+        }
+        dto.setMoCodes(mos.stream().map(MODto::getSelfCode).distinct().collect(Collectors.toList()));
+    }
+
+    private void applyProductFilter(String productName, String productCode, MPSBoardQuery query) {
+        if (StringUtils.isEmpty(productName) && StringUtils.isEmpty(productCode)) {
+            return;
+        }
+        MOPageQuery moQuery = new MOPageQuery()
+                .setProductCode(productCode)
+                .setProductName(productName);
+        moQuery.setRequirePage(false);
+        List<MODto> mos;
+        try {
+            mos = RemoteHandleUtils.getDataFormResponse(moFeign.selectByPage(moQuery));
+        } catch (EraCommonException e) {
+            throw new BusinessException(e.getMessage());
+        }
+        if (CollectionUtil.isBlank(mos)) {
+            query.setMoCodes(Collections.emptyList());
+            return;
+        }
+        query.setMoCodes(mos.stream().map(MODto::getSelfCode).distinct().collect(Collectors.toList()));
+    }
+
+    private void enrichMpsVoList(List<MPSVo> records, Boolean queryMO, Boolean queryLine) {
+        if (CollectionUtil.isBlank(records)) {
+            return;
+        }
+        Map<String, MODto> moMap = null;
+        Map<String, LineVo> lineMap = null;
+        if (Boolean.TRUE.equals(queryMO)) {
+            List<String> moCodes = records.stream()
+                    .map(MPSDto::getMoCode)
+                    .filter(StringUtils::isNotEmpty)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtil.isNotBlank(moCodes)) {
+                try {
+                    List<MODto> mos = RemoteHandleUtils.getDataFormResponse(moFeign.selectByCodes(moCodes));
+                    moMap = toMap(mos, MODto::getSelfCode);
+                } catch (EraCommonException e) {
+                    throw new BusinessException(e.getMessage());
+                }
+            }
+        }
+        if (Boolean.TRUE.equals(queryLine)) {
+            List<String> lineCodes = records.stream()
+                    .map(MPSDto::getLine)
+                    .filter(StringUtils::isNotEmpty)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtil.isNotBlank(lineCodes)) {
+                try {
+                    List<LineVo> lines = RemoteHandleUtils.getDataFormResponse(lineFeign.selectByCodes(lineCodes));
+                    lineMap = toMap(lines, LineVo::getSelfCode);
+                } catch (EraCommonException e) {
+                    throw new BusinessException(e.getMessage());
+                }
+            }
+        }
+        for (MPSVo record : records) {
+            if (moMap != null && StringUtils.isNotEmpty(record.getMoCode())) {
+                record.setMoDto(moMap.get(record.getMoCode()));
+            }
+            if (lineMap != null && StringUtils.isNotEmpty(record.getLine())) {
+                record.setLineVo(lineMap.get(record.getLine()));
+            }
+            if (record.getStatus() != null) {
+                record.setStatusDesc(MPSStatusEnum.valueOf(record.getStatus()).getName());
+            }
+        }
+    }
+
+    private <T> Map<String, T> toMap(List<T> list, Function<T, String> keyExtractor) {
+        if (CollectionUtil.isBlank(list)) {
+            return Collections.emptyMap();
+        }
+        return list.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StringUtils.isNotEmpty(keyExtractor.apply(item)))
+                .collect(Collectors.toMap(keyExtractor, Function.identity(), (left, right) -> left));
     }
 }

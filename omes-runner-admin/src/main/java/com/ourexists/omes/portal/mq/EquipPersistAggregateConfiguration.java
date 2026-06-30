@@ -135,10 +135,11 @@ public class EquipPersistAggregateConfiguration {
         try {
             if (jsonNode.hasNonNull("realtime")) {
                 EquipRealtime rt = objectMapper.treeToValue(jsonNode.get("realtime"), EquipRealtime.class);
+                UserContext.defaultTenant();
                 UserContext.getTenant().setTenantId(rt.getTenantId());
                 equipRealtimeManager.addOrUpdate(rt);
             }
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
             //nothing
         }

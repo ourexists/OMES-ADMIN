@@ -10,6 +10,8 @@ spring:
   application:
     name: OMES-AI
   config:
+    import:
+      - optional:file:config/era-token.yml
     location: classpath:/,file:config/
   profiles:
     include: db-postgres
@@ -35,6 +37,9 @@ spring:
           min-idle: ${REDIS_POOL_MIN_IDLE:5}
           max-wait: ${REDIS_POOL_MAX_WAIT:2s}
 era:
+  authorization:
+    server:
+      enabled: false
   permission:
     ignore:
       auth_check:
@@ -47,6 +52,7 @@ era:
         - /bridge/resolve
   token:
     store-type: Redis
+    # jwt-publicKey 见 config/era-token.yml（资源服务校验 JWT）
 
 ai:
   llm:

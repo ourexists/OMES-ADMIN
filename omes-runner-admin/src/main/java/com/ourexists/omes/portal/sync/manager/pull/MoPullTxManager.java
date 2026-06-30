@@ -194,51 +194,38 @@ public class MoPullTxManager extends TxManager {
                         throw new BusinessException(e.getMessage());
                     }
 
-                    if (CollectionUtil.isNotBlank(tfs)) {
-                        if (CollectionUtil.isNotBlank(tfEdges)) {
-                            // 边关系存在：按边计算前置集合（并行：等待所有前置完成）
-                            java.util.Map<String, String> idToSelfCode = new java.util.HashMap<>();
-                            for (TFVo tf : tfs) {
-                                idToSelfCode.put(tf.getId(), tf.getSelfCode());
-                            }
-                            java.util.Map<String, java.util.List<String>> toPreCodes = new java.util.HashMap<>();
-                            for (TFEdgeVo edge : tfEdges) {
-                                if (edge == null) continue;
-                                String fromCode = idToSelfCode.get(edge.getFromTfId());
-                                if (fromCode == null) continue;
-                                String toTfId = edge.getToTfId();
-                                if (toTfId == null) continue;
-                                toPreCodes.computeIfAbsent(toTfId, k -> new java.util.ArrayList<>()).add(fromCode);
-                            }
-                            for (TFVo tf : tfs) {
-                                java.util.List<String> preCodes = toPreCodes.get(tf.getId());
-                                if (CollectionUtil.isNotBlank(preCodes)) {
-                                    tf.setPre(String.join(",", preCodes));
-                                }
-                            }
-                        } else {
-                            // 兼容旧数据：关系表为空时，按优先级线性顺序生成前置（与旧 rowDrag 语义保持一致）
-                            if (!tfs.isEmpty()) {
-                                tfs.get(0).setPre(null);
-                            }
-                            for (int i = 1; i < tfs.size(); i++) {
-                                TFVo cur = tfs.get(i);
-                                TFVo pre = tfs.get(i - 1);
-                                if (cur != null && pre != null) {
-                                    cur.setPre(pre.getSelfCode());
-                                }
-                            }
+                    java.util.Map<String, java.util.List<String>> toPreCodes = new java.util.HashMap<>();
+                    if (CollectionUtil.isNotBlank(tfs) && CollectionUtil.isNotBlank(tfEdges)) {
+                        java.util.Map<String, String> idToSelfCode = new java.util.HashMap<>();
+                        for (TFVo tf : tfs) {
+                            idToSelfCode.put(tf.getId(), tf.getSelfCode());
+                        }
+                        for (TFEdgeVo edge : tfEdges) {
+                            if (edge == null) continue;
+                            String fromCode = idToSelfCode.get(edge.getFromTfId());
+                            if (fromCode == null) continue;
+                            String toTfId = edge.getToTfId();
+                            if (toTfId == null) continue;
+                            toPreCodes.computeIfAbsent(toTfId, k -> new java.util.ArrayList<>()).add(fromCode);
                         }
                     }
                     List<MOTFDto> tfDtoList = new ArrayList<>();
                     List<MPSTFDto> mpstfDtos = new ArrayList<>();
-                    for (TFVo tf : tfs) {
-                        MOTFDto tfDto = new MOTFDto();
-                        MPSTFDto mpsDto = new MPSTFDto();
-                        BeanUtils.copyProperties(tf, tfDto);
-                        BeanUtils.copyProperties(tf, mpsDto);
-                        tfDtoList.add(tfDto);
-                        mpstfDtos.add(mpsDto);
+                    if (CollectionUtil.isNotBlank(tfs)) {
+                        for (TFVo tf : tfs) {
+                            MOTFDto tfDto = new MOTFDto();
+                            MPSTFDto mpsDto = new MPSTFDto();
+                            BeanUtils.copyProperties(tf, tfDto);
+                            BeanUtils.copyProperties(tf, mpsDto);
+                            java.util.List<String> preCodes = toPreCodes.get(tf.getId());
+                            if (CollectionUtil.isNotBlank(preCodes)) {
+                                String pre = String.join(",", preCodes);
+                                tfDto.setPre(pre);
+                                mpsDto.setPre(pre);
+                            }
+                            tfDtoList.add(tfDto);
+                            mpstfDtos.add(mpsDto);
+                        }
                     }
                     List<MODetailDto> detailDtoList = new ArrayList<>();
                     for (String s : order.getBarCodeList()) {

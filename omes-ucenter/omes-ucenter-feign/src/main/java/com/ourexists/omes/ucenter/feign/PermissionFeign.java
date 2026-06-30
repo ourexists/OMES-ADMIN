@@ -28,10 +28,6 @@ public interface PermissionFeign {
 //    @PostMapping("/assignToRolePermissionTree")
     JsonResponseEntity<Boolean> assignToRolePermissionTree(@RequestBody @Validated PermissionAssignDto assignDto);
 
-//    @Operation(summary = "分配api给权限")
-//    @PostMapping("/assignApiToPermission")
-    JsonResponseEntity<Boolean> assignApiToPermission(@RequestBody @Validated PermissionApiDto assignDto);
-
 //    @Operation(summary = "新增权限")
 //    @PostMapping("/add")
     JsonResponseEntity<Boolean> add(@RequestBody @Validated PermissionDto dto);
@@ -81,12 +77,4 @@ public interface PermissionFeign {
 //    @Operation(summary = "查询角色权限树")
 //    @GetMapping("/selectRolePermissionTree")
     JsonResponseEntity<List<PermissionTreeNode>> selectRolePermissionTree(@RequestParam String roleId);
-
-//    @Operation(summary = "查询接口权限")
-//    @GetMapping("/selectPermissionApi")
-    JsonResponseEntity<List<PermissionApiDetailDto>> selectPermissionApi(@RequestParam String permissionId);
-
-//    @Operation(summary = "查询接口权限")
-//    @GetMapping("/selectAll")
-    JsonResponseEntity<List<PermissionApiDetailDto>> selectAll();
 }

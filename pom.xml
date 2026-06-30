@@ -38,6 +38,7 @@
         <module>omes-task</module>
         <module>omes-ucenter</module>
         <module>omes-message</module>
+        <module>omes-process</module>
         <module>omes-runner-admin</module>
         <module>omes-flinker-equip</module>
         <module>omes-flinker-workshop</module>

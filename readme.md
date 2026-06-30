@@ -19,9 +19,11 @@ OMES 工业设备管理平台
 平台生态
 -----------------------------------
 
-* **omes-runner-admin**：Web 管理端（Spring Boot，应用名 `OMES-ADMIN`），聚合各业务域服务。
+* **omes-runner-sas（OMES-SAS）**：统一 API 网关 + OAuth2 认证（默认端口 `9400`）。`/oauth2/**`、`/open/**` 由 SAS 本地处理，其余 API 转发至 Admin；**不托管前端静态资源**。
 
-* **omes-sas**（Git 子模块）：独立认证服务（默认端口 `10012`，应用名 `OMES-SAS`），OAuth2 发 token、验证码登录与账户认证 API；详见 `omes-sas/README.md`。
+* **omes-runner-admin**：管理端 API 服务（Spring Boot，应用名 `OMES-ADMIN`，默认内网端口 `10010`），聚合各业务域服务；生产环境建议仅内网暴露。
+
+* **omes-web-admin**：管理端 Vue 前端，独立构建部署（Nginx 等），经 `VITE_SAS_BASE_URL` 访问 SAS 网关。
 
 * **omes-runner-control**：设备控制侧进程（默认端口 `10015`，应用名 `OMES-CONTROL`）。
 
@@ -84,6 +86,33 @@ git submodule update --init --recursive
 
 **运行时的当前工作目录**需能解析到上述 `config` 路径（一般在仓库根目录启动，或将 `config` 目录拷到与进程一致的位置）。
 
+**认证安全（升级后必做）**：
+
+1. 配置 `config/config.properties`（数据库等）与 `config/era-token.yml`（见 `era-token.yml.example`）。
+2. **管理端前端**：在 `omes-web-admin` 执行 `npm run build`，将 `dist/` 部署到 Nginx 等静态服务器；`.env.production` 中配置 `VITE_SAS_BASE_URL` 指向 SAS 网关（如 `http://127.0.0.1:9400`）。
+3. 设置环境变量（生产环境请使用强随机值）：
+   - `OMES_INTERNAL_SERVICE_KEY` — Admin 与 SAS 内部服务调用密钥（一致）
+   - `AI_BRIDGE_INTERNAL_KEY` — AI Bridge 解析密钥
+4. 执行 OAuth2 公开客户端迁移（移除前端 `client_secret` 依赖）：
+
+```bash
+psql -h <host> -U <user> -d omes -f omes/scripts/oauth2-mes-public-client.sql
+```
+
+5. **统一网关（推荐）**：对外仅暴露 **OMES-SAS** 端口（默认 `9400`），Admin 保持内网 `10010`：
+
+```bash
+# SAS 网关 + 认证
+OMES_GATEWAY_PORT=9400
+OMES_ADMIN_URL=http://127.0.0.1:10010
+java -jar omes-runner-sas/target/omes-runner-sas-*.jar
+
+# Admin（内网，不对外）
+java -jar omes-runner-admin/target/omes-runner-admin-*.jar
+```
+
+浏览器访问管理端：**前端静态站点**（Nginx 等）；API 网关：**http://127.0.0.1:9400**。关闭网关转发：`OMES_GATEWAY_ENABLED=false`（SAS 仅认证、Admin 直连）。
+
 ### 4. 构建
 
 在仓库根目录执行（需能解析父 POM 与 **Era** 等依赖；若缺少私有制品仓库会构建失败）：
@@ -100,11 +129,9 @@ mvn clean package -DskipTests
 
 - **默认端口**：`10010`（可通过 `-Dserver.port=` 或环境变量覆盖）。
 
-- **主类**：`com.ourexists.omes.App`。
+- **主类**：`com.ourexists.omes.AdminApp`。
 
-  启动前会检测本机该端口是否已有实例：若已有则尝试打开浏览器并退出，避免重复启动。
-
-**IDEA**：运行配置中 Main class 填 `com.ourexists.omes.App`，**Working directory** 设为**仓库根目录**（保证
+**IDEA**：运行配置中 Main class 填 `com.ourexists.omes.AdminApp`，**Working directory** 设为**仓库根目录**（保证
 `config/config.properties` 可读）。
 
 **命令行示例**（在仓库根目录，保证 `./config` 存在）：
@@ -123,7 +150,7 @@ mvn -pl omes-runner-admin spring-boot:run
 
 ```
 
-访问：**http://127.0.0.1:10010/**（端口以实际为准）。
+管理端页面由 **omes-web-admin** 独立部署；API 网关 **http://127.0.0.1:9400**；Admin API 内网调试 **http://127.0.0.1:10010**。
 
 ### 6. Flink 实时作业（可选）
 

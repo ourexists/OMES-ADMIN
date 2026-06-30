@@ -52,6 +52,10 @@
         </dependency>
         <dependency>
             <groupId>com.ourexists.era</groupId>
+            <artifactId>era-framework-webserver-resource</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ourexists.era</groupId>
             <artifactId>era-framework-orm-mybatis</artifactId>
             <exclusions>
                 <exclusion>

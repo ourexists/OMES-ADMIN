@@ -3,7 +3,6 @@
  */
 package com.ourexists.omes.line.model;
 
-import com.ourexists.omes.line.enums.TFTypeEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,11 +26,4 @@ public class TFVo extends TFDto {
     private String updatedId;
 
     private Date updatedTime;
-
-    @Schema(description = "类型描述")
-    private String typeDesc;
-
-    public String getTypeDesc() {
-        return TFTypeEnum.valueOf(type).getName();
-    }
 }

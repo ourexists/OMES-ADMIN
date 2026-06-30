@@ -28,6 +28,4 @@ public interface InspectRecordFeign {
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
     JsonResponseEntity<InspectRecordDto> selectById(@RequestParam String id);
-
-    JsonResponseEntity<List<InspectRecordDto>> listByTaskId(@RequestParam String taskId);
 }

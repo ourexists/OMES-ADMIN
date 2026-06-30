@@ -51,15 +51,6 @@ public class OpcUaContext {
             if (StringUtils.isNotBlank(suffix)) {
                 endPointUrl += suffix;
             }
-//            KeyPair keyPair;
-//            X509Certificate x509Certificate;
-//            try {
-//                keyPair = CertificateReader.loadKeyPair("config/client_private.pem", "config/client_cert.pem");
-//                x509Certificate = CertificateReader.loadCertificate("config/PLC-1OPCUA-1-4.cer");
-//            } catch (Exception e) {
-//                log.error(e.getMessage(), e);
-//                throw new BusinessException("key pair load error");
-//            }
             Path securityTempDir = Paths.get(System.getProperty("java.io.tmpdir"), "client", "security");
             Files.createDirectories(securityTempDir);
             if (!Files.exists(securityTempDir)) {

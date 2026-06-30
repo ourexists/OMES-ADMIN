@@ -7,14 +7,12 @@ package com.ourexists.omes.sas.auth;
 import com.ourexists.era.framework.core.user.TenantInfo;
 import com.ourexists.era.framework.core.user.UserInfo;
 import com.ourexists.era.oauth2.core.EraUser;
-import com.ourexists.era.oauth2.core.authority.ApiPermission;
-import com.ourexists.era.oauth2.core.authority.DefaultApiPermission;
 import com.ourexists.omes.ucenter.account.AccVo;
 import com.ourexists.omes.ucenter.enums.AccStatusEnum;
-import com.ourexists.omes.ucenter.permission.PermissionApiDetailDto;
 import com.ourexists.omes.ucenter.tenant.TenantUVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -25,19 +23,17 @@ import java.util.*;
  */
 public abstract class CommonUserDetailService {
 
-//    @Autowired
-//    private EraEventCollector eraEventCollector;
-
-    protected Collection<? extends ApiPermission> apiPermissions(AccVo accVo) {
-        List<ApiPermission> apiPermissions = new ArrayList<>();
-        List<PermissionApiDetailDto> permissionApis = accVo.getPermissionApiDetailDtos();
-        if (!CollectionUtils.isEmpty(permissionApis)) {
-            for (PermissionApiDetailDto permissionApi : permissionApis) {
-                apiPermissions.add(new DefaultApiPermission(permissionApi.getServerName(), permissionApi.getPath()));
+    protected Set<String> scopes(AccVo accVo) {
+        if (accVo.getOauthScopes() == null || accVo.getOauthScopes().isEmpty()) {
+            return Set.of();
+        }
+        Set<String> scopes = new LinkedHashSet<>();
+        for (String scope : accVo.getOauthScopes()) {
+            if (StringUtils.hasText(scope)) {
+                scopes.add(scope.trim());
             }
         }
-        //查询
-        return apiPermissions;
+        return scopes;
     }
 
     protected UserInfo userInfo(AccVo account, String detail) {
@@ -79,13 +75,6 @@ public abstract class CommonUserDetailService {
                         .setTenantId(tenantVo.getTenantCode())
                         .setRole(tenantVo.getRole())
                         .setManagementControl(tenantVo.getManagement());
-//                if (tenantVo.getManagement().equals(ManagementControlEnum.SERVER.getCode())) {
-//                    TenantDataAuth tenantDataAuth = new TenantDataAuth();
-//                    tenantDataAuth.addLowControlPower(OperatorModel.QUERY);
-//                    tenantDataAuth.addLowControlPower(OperatorModel.DELETE);
-//                    tenantDataAuth.addLowControlPower(OperatorModel.UPDATE);
-//                    tenantInfo.setTenantDataAuth(tenantDataAuth);
-//                }
                 tenantInfoMap.put(tenantVo.getTenantCode(), tenantInfo);
             }
         }
@@ -93,22 +82,13 @@ public abstract class CommonUserDetailService {
         UserInfo userInfo = userInfo(account, detail);
         EraUser eraUser = new EraUser(userInfo, account.getPassword(), enabled,
                 accountNonExpired, credentialsNonExpired, accountNonLocked, tenantInfoMap,
-                apiPermissions(account),
+                scopes(account),
                 new ArrayList<>());
         postProcessor(eraUser);
         return eraUser;
     }
 
     protected void postProcessor(EraUser eraUser) {
-//        if (eraUser.isEnabled() && eraUser.isAccountNonExpired() && eraUser.isCredentialsNonExpired()
-//                && eraUser.isAccountNonLocked()) {
-//            eraEventCollector.doCollect(
-//                    new Event()
-//                            .setEventCode(this.getClass().getSimpleName().replace("DetailsServiceImpl", ""))
-//                            .setEventTypeEnum(EventTypeEnum.LOGIN)
-//                            .setCreateBy(eraUser.getUserInfo().getUsername())
-//            );
-//        }
     }
 
     protected EraUser eraUser(AccVo account) {

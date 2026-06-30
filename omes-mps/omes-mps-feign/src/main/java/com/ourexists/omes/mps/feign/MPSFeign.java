@@ -8,8 +8,10 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.omes.mps.enums.MPSStatusEnum;
 import com.ourexists.omes.mps.model.ChangePriorityDto;
+import com.ourexists.omes.mps.model.MPSBoardDto;
 import com.ourexists.omes.mps.model.MPSDto;
 import com.ourexists.omes.mps.model.MPSQueueOperateDto;
+import com.ourexists.omes.mps.model.query.MPSBoardQuery;
 import com.ourexists.omes.mps.model.query.MPSPageQuery;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
@@ -26,6 +28,8 @@ public interface MPSFeign {
     //    @Operation(summary = "分页查询", description = "分页查询")
 //    @PostMapping("selectByPage")
     JsonResponseEntity<List<MPSDto>> selectByPage(@RequestBody MPSPageQuery dto);
+
+    JsonResponseEntity<MPSBoardDto> selectBoard(@RequestBody MPSBoardQuery query);
 
     //    @Operation(summary = "id查詢", description = "id查詢")
 //    @GetMapping("selectById")

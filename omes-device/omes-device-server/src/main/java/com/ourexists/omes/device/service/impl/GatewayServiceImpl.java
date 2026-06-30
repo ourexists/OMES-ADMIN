@@ -8,14 +8,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
-import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
-import com.ourexists.omes.device.core.equip.protocol.ProtocolExecutor;
 import com.ourexists.omes.device.mapper.GatewayMapper;
 import com.ourexists.omes.device.model.GatewayPageQuery;
 import com.ourexists.omes.device.pojo.Gateway;
 import com.ourexists.omes.device.service.GatewayService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,9 +20,6 @@ import java.util.List;
 
 @Service
 public class GatewayServiceImpl extends AbstractMyBatisPlusService<GatewayMapper, Gateway> implements GatewayService {
-
-    @Autowired
-    private ProtocolExecutor protocolExecutor;
 
     @Override
     public List<Gateway> getConnectByProtocol(String protocol) {
@@ -59,9 +52,6 @@ public class GatewayServiceImpl extends AbstractMyBatisPlusService<GatewayMapper
                 .set(Gateway::getEnabled, true)
                 .eq(Gateway::getId, id)
         );
-        ProtocolConnect connect = new ProtocolConnect();
-        BeanUtils.copyProperties(gateway, connect);
-        protocolExecutor.start(connect);
     }
 
     @Override
@@ -75,6 +65,5 @@ public class GatewayServiceImpl extends AbstractMyBatisPlusService<GatewayMapper
                 .set(Gateway::getEnabled, false)
                 .eq(Gateway::getId, id)
         );
-        protocolExecutor.stop(gateway.getProtocol(), id);
     }
 }

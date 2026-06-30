@@ -217,15 +217,8 @@ public class InspectRecordServiceImpl extends AbstractMyBatisPlusService<Inspect
                 .like(StringUtils.hasText(query.getEquipName()), InspectRecord::getEquipName, query.getEquipName())
                 .ge(query.getRecordTimeStart() != null, InspectRecord::getRecordTime, query.getRecordTimeStart())
                 .le(query.getRecordTimeEnd() != null, InspectRecord::getRecordTime, query.getRecordTimeEnd())
-                .in(!CollectionUtils.isEmpty(query.getTaskIds()), InspectRecord::getTaskId, query.getTaskIds())
                 .orderByDesc(InspectRecord::getRecordTime);
         return page(new Page<>(query.getPage(), query.getPageSize()), qw);
-    }
-
-    @Override
-    public List<InspectRecord> listByTaskId(String taskId) {
-        if (taskId == null || taskId.isEmpty()) return new ArrayList<>();
-        return list(new LambdaQueryWrapper<InspectRecord>().eq(InspectRecord::getTaskId, taskId).orderByAsc(InspectRecord::getRecordTime));
     }
 
     @Override

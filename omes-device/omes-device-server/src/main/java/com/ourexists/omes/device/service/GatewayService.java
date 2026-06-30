@@ -24,7 +24,9 @@ public interface GatewayService extends IMyBatisPlusService<Gateway> {
 
     Page<Gateway> selectByPage(GatewayPageQuery query);
 
+    /** 仅更新 enabled 状态；协议连接启停由 Admin {@code GatewayRuntimeService} 负责。 */
     void start(String id);
 
+    /** 仅更新 enabled 状态；协议连接启停由 Admin {@code GatewayRuntimeService} 负责。 */
     void stop(String id);
 }

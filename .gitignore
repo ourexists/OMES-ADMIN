@@ -104,6 +104,8 @@ file/
 
 # Local JWT keys (copy from era-token.yml.example)
 config/era-token.yml
+# Local runtime secrets (copy from config.properties.example)
+config/config.properties
 
 ## Frontend (Node.js / Vite / Webpack)
 **/node_modules/
@@ -124,3 +126,6 @@ config/era-token.yml
 **/.env.development.local
 **/.env.test.local
 **/.env.production.local
+
+# SAS 不再内嵌 Vue 构建产物
+omes-runner-sas/src/main/resources/static/vue/

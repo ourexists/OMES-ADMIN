@@ -6,6 +6,7 @@ package com.ourexists.omes.sas.auth;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
+import cn.hutool.core.util.RandomUtil;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -56,5 +58,36 @@ public class OpenController {
         captcha.write(baos);  // 将验证码图片写入输出流
         String base64Img = Base64.getEncoder().encodeToString(baos.toByteArray());
         return JsonResponseEntity.success("data:image/png;base64," + base64Img);
+    }
+
+    @Operation(summary = "滑块验证码初始化")
+    @GetMapping("/captchaSlider")
+    public JsonResponseEntity<Boolean> captchaSlider(@RequestParam String uuid) {
+        String code = RandomUtil.randomString(RandomUtil.BASE_CHAR_NUMBER_LOWER, 6);
+        authValidRuleCache.setCaptcha(uuid, code);
+        return JsonResponseEntity.success(true);
+    }
+
+    @Operation(summary = "滑块验证码校验")
+    @PostMapping("/captchaSlider/verify")
+    public JsonResponseEntity<String> verifyCaptchaSlider(@RequestParam String uuid,
+                                                          @RequestParam int offset,
+                                                          @RequestParam int trackWidth) {
+        String code = authValidRuleCache.getCaptcha(uuid);
+        if (code == null) {
+            throw new BusinessException("验证码失效，请刷新后重试");
+        }
+        if (trackWidth <= 0) {
+            authValidRuleCache.removeCaptcha(uuid);
+            throw new BusinessException("滑动验证失败");
+        }
+        int thumbWidth = 44;
+        int maxOffset = Math.max(0, trackWidth - thumbWidth);
+        double passRatio = 0.92;
+        if (offset < maxOffset * passRatio) {
+            authValidRuleCache.removeCaptcha(uuid);
+            throw new BusinessException("滑动验证失败，请重试");
+        }
+        return JsonResponseEntity.success(code);
     }
 }

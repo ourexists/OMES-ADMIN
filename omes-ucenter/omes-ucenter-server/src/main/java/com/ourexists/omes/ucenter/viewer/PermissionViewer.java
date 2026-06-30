@@ -11,8 +11,6 @@ import com.ourexists.era.oauth2.core.OAuth2Role;
 import com.ourexists.omes.ucenter.feign.PermissionFeign;
 import com.ourexists.omes.ucenter.permission.*;
 import com.ourexists.omes.ucenter.permission.pojo.Permission;
-import com.ourexists.omes.ucenter.permission.pojo.PermissionApi;
-import com.ourexists.omes.ucenter.permission.service.PermissionApiService;
 import com.ourexists.omes.ucenter.permission.service.PermissionService;
 import com.ourexists.omes.ucenter.permission.service.RolePermissionService;
 import com.ourexists.omes.ucenter.permission.service.TenantPermissionService;
@@ -40,9 +38,6 @@ public class PermissionViewer implements PermissionFeign {
     private PermissionService permissionService;
 
     @Autowired
-    private PermissionApiService permissionApiService;
-
-    @Autowired
     private TenantPermissionService tenantPermissionService;
 
     @Autowired
@@ -59,13 +54,6 @@ public class PermissionViewer implements PermissionFeign {
 //    @PostMapping("/assignToRolePermissionTree")
     public JsonResponseEntity<Boolean> assignToRolePermissionTree(@RequestBody @Validated PermissionAssignDto assignDto) {
         rolePermissionService.establishRelation(assignDto.getId(), assignDto.getPermissionIds());
-        return JsonResponseEntity.success(true);
-    }
-
-//    @Operation(summary = "分配api给权限")
-//    @PostMapping("/assignApiToPermission")
-    public JsonResponseEntity<Boolean> assignApiToPermission(@RequestBody @Validated PermissionApiDto assignDto) {
-        permissionApiService.assignApiToPermission(assignDto.getPermissionId(), assignDto.getDetailDtos());
         return JsonResponseEntity.success(true);
     }
 
@@ -164,17 +152,5 @@ public class PermissionViewer implements PermissionFeign {
     public JsonResponseEntity<List<PermissionTreeNode>> selectRolePermissionTree(@RequestParam String roleId) {
         List<PermissionTreeNode> allTreeNodes = Permission.covert(permissionService.selectPermissionWhichRoleHold(roleId));
         return JsonResponseEntity.success(TreeUtil.foldRootTree(allTreeNodes));
-    }
-
-//    @Operation(summary = "查询接口权限")
-//    @GetMapping("/selectPermissionApi")
-    public JsonResponseEntity<List<PermissionApiDetailDto>> selectPermissionApi(@RequestParam String permissionId) {
-        return JsonResponseEntity.success(PermissionApi.covert(permissionApiService.selectByPermissionId(permissionId)));
-    }
-
-//    @Operation(summary = "查询接口权限")
-//    @GetMapping("/selectAll")
-    public JsonResponseEntity<List<PermissionApiDetailDto>> selectAll() {
-        return JsonResponseEntity.success(PermissionApi.covert(permissionApiService.list()));
     }
 }

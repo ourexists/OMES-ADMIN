@@ -5,7 +5,6 @@ package com.ourexists.omes.ucenter.account;
 
 import com.ourexists.era.framework.core.model.vo.BaseVo;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
-import com.ourexists.omes.ucenter.permission.PermissionApiDetailDto;
 import com.ourexists.omes.ucenter.tenant.TenantUVo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -15,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author pengcheng
@@ -35,8 +35,8 @@ public class AccVo extends BaseVo {
     @Schema(description = "账户所有租户角色")
     private Map<String, String> tenantRoles;
 
-    @Schema(description = "账户所有api权限")
-    private List<PermissionApiDetailDto> permissionApiDetailDtos;
+    @Schema(description = "OAuth2 scopes granted to the account (permission codes)")
+    private Set<String> oauthScopes;
 
     @Schema(description = "账户名")
     private String accName;

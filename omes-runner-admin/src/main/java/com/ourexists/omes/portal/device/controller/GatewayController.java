@@ -15,11 +15,13 @@ import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.device.model.GatewayPageQuery;
+import com.ourexists.omes.portal.device.gateway.GatewayRuntimeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -38,6 +40,9 @@ public class GatewayController {
     @Autowired
     private List<ProtocolManager> protocolManagers;
 
+    @Autowired
+    private GatewayRuntimeService gatewayRuntimeService;
+
     @Operation(summary = "分页查询", description = "连接分页列表")
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<GatewayDto>> selectByPage(@RequestBody GatewayPageQuery query) {
@@ -53,12 +58,49 @@ public class GatewayController {
     @Operation(summary = "新增或修改", description = "根据id判断新增或更新")
     @PostMapping("addOrUpdate")
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody GatewayDto dto) {
-        return gatewayFeign.addOrUpdate(dto);
+        boolean restartAfterSave = false;
+        GatewayDto before = null;
+        if (dto.getId() != null) {
+            try {
+                before = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectById(dto.getId()));
+                restartAfterSave = before != null && Boolean.TRUE.equals(before.getEnabled());
+                if (restartAfterSave) {
+                    gatewayRuntimeService.stop(before);
+                }
+            } catch (EraCommonException e) {
+                throw new BusinessException(e.getMessage());
+            }
+        }
+        JsonResponseEntity<Boolean> response = gatewayFeign.addOrUpdate(dto);
+        if (restartAfterSave && dto.getId() != null) {
+            try {
+                GatewayDto after = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectById(dto.getId()));
+                if (after != null && Boolean.TRUE.equals(after.getEnabled())) {
+                    gatewayRuntimeService.start(after);
+                }
+            } catch (EraCommonException e) {
+                throw new BusinessException(e.getMessage());
+            }
+        }
+        return response;
     }
 
     @Operation(summary = "删除", description = "按id列表删除")
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
+        if (idsDto != null && !CollectionUtils.isEmpty(idsDto.getIds())) {
+            for (String id : idsDto.getIds()) {
+                try {
+                    GatewayDto gateway = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectById(id));
+                    if (gateway != null && Boolean.TRUE.equals(gateway.getEnabled())) {
+                        gatewayRuntimeService.stop(gateway);
+                        gatewayFeign.stop(id);
+                    }
+                } catch (EraCommonException e) {
+                    throw new BusinessException(e.getMessage());
+                }
+            }
+        }
         return gatewayFeign.delete(idsDto);
     }
 
@@ -105,12 +147,25 @@ public class GatewayController {
     @Operation(summary = "启用", description = "启用")
     @GetMapping("start")
     public JsonResponseEntity<Boolean> start(@RequestParam String id) {
-        return gatewayFeign.start(id);
+        JsonResponseEntity<Boolean> response = gatewayFeign.start(id);
+        try {
+            GatewayDto gateway = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectById(id));
+            gatewayRuntimeService.start(gateway);
+        } catch (EraCommonException e) {
+            throw new BusinessException(e.getMessage());
+        }
+        return response;
     }
 
     @Operation(summary = "停用", description = "停用")
     @GetMapping("stop")
     public JsonResponseEntity<Boolean> stop(@RequestParam String id) {
+        try {
+            GatewayDto gateway = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectById(id));
+            gatewayRuntimeService.stop(gateway);
+        } catch (EraCommonException e) {
+            throw new BusinessException(e.getMessage());
+        }
         return gatewayFeign.stop(id);
     }
 }

@@ -27,6 +27,21 @@ public class LineDto extends BaseDto {
     @NotBlank(message = "${valid.name.empty}")
     protected String name;
 
+    @Schema(description = "加工对象编号")
+    protected String productCode;
+
+    @Schema(description = "加工对象名称")
+    protected String productName;
+
+    @Schema(description = "原材料编号")
+    protected String materialCode;
+
+    @Schema(description = "原材料名称")
+    protected String materialName;
+
+    @Schema(description = "版本号")
+    protected String versionNo;
+
     protected BigDecimal throughput;
 
     protected Integer stepInterval;

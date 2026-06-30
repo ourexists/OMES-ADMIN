@@ -13,7 +13,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 @FeignClient(
         name = "omes-admin",
         url = "${omes.remote.admin-url:http://127.0.0.1:10010}",
-        configuration = EraFeignConfiguration.class
+        configuration = {EraFeignConfiguration.class, SasInternalFeignConfiguration.class}
 )
 public interface RemoteAccountAuthClient extends AccountAuthFeign {
 }

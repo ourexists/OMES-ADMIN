@@ -14,8 +14,6 @@ import com.ourexists.omes.ucenter.permission.PermissionModifyDto;
 import com.ourexists.omes.ucenter.permission.PermissionTreeNode;
 import com.ourexists.omes.ucenter.permission.mapper.PermissionMapper;
 import com.ourexists.omes.ucenter.permission.pojo.Permission;
-import com.ourexists.omes.ucenter.permission.pojo.PermissionApi;
-import com.ourexists.omes.ucenter.permission.service.PermissionApiService;
 import com.ourexists.omes.ucenter.permission.service.PermissionService;
 import com.ourexists.omes.ucenter.role.pojo.Role;
 import com.ourexists.omes.ucenter.role.service.RoleService;
@@ -39,9 +37,6 @@ public class PermissionServiceImpl extends AbstractMyBatisPlusService<Permission
 
     @Autowired
     private RoleService roleService;
-
-    @Autowired
-    private PermissionApiService permissionApiService;
 
     @Override
     public void add(PermissionDto dto) {
@@ -94,7 +89,6 @@ public class PermissionServiceImpl extends AbstractMyBatisPlusService<Permission
             throw new BusinessException("该用户组存在下级用户组,无法删除!");
         }
         super.removeById(id);
-        this.permissionApiService.clearApiPermission(id, true);
     }
 
     @Override
@@ -166,35 +160,5 @@ public class PermissionServiceImpl extends AbstractMyBatisPlusService<Permission
     @Override
     public List<Permission> selectPermissionWhichRoleHold(String roleId, String platform) {
         return this.baseMapper.selectPermissionWhichRolesHold(Collections.singletonList(roleId), null, platform);
-    }
-
-
-    @Override
-    public Map<String, List<PermissionApi>> selectAccPermissionApiGroupByTenant(String accId) {
-        List<Role> roles = roleService.selectRoleWhichAccHold(accId, true);
-        if (CollectionUtils.isEmpty(roles)) {
-            return null;
-        }
-        Map<String, List<String>> roleidmap = new HashMap<>(16);
-        for (Role role : roles) {
-            List<String> roleids = roleidmap.get(role.getTenantId());
-            if (roleids == null) {
-                roleids = new ArrayList<>();
-            }
-            roleids.add(role.getId());
-            roleidmap.put(role.getTenantId(), roleids);
-        }
-        Map<String, List<PermissionApi>> res = new HashMap<>(roleidmap.size());
-        for (Map.Entry<String, List<String>> entry : roleidmap.entrySet()) {
-            List<Permission> permissions = this.baseMapper.selectPermissionWhichRolesHold(entry.getValue(), null, null);
-            List<String> permissionIds = permissions.stream().map(Permission::getId).collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(permissionIds)) {
-                res.put(entry.getKey(),
-                        this.permissionApiService.list(
-                                new LambdaQueryWrapper<PermissionApi>()
-                                        .in(PermissionApi::getPermissionId, permissionIds)));
-            }
-        }
-        return res;
     }
 }

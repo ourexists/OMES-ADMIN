@@ -1,1 +1,0 @@
-import{i as e,n as t,r as n,t as r}from"./index-ClaiYa6l.js";var i=n({__name:`mo_form_add`,setup(n){return(n,i)=>(e(),t(r,{src:`/view/mo_form_add`}))}});export{i as default};

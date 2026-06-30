@@ -79,6 +79,8 @@ public class CaptchaAuthenticationProvider extends EraAuthenticationProvider {
             }
             throw new BadCredentialsException("账户名密码错误！");
         }
+        authValidRuleCache.removeCaptcha(uuid);
+        authValidRuleCache.clearWrongNum(username);
         if (!eraUser.isEnabled()) {
             throw new UsernameNotFoundException("该账户不存在！");
         }

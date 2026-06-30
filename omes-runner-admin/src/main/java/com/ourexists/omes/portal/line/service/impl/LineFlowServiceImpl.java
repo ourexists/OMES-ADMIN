@@ -4,18 +4,15 @@
 
 package com.ourexists.omes.portal.line.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.omes.device.feign.GatewayFeign;
+import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.line.feign.LineFeign;
 import com.ourexists.omes.line.model.ResetLineTFDto;
 import com.ourexists.omes.mps.feign.MPSFeign;
 import com.ourexists.omes.portal.line.service.LineFlowService;
-import com.ourexists.omes.portal.sync.manager.push.LinePushTxManager;
-import com.ourexists.omes.portal.s7.ocpua.OpcUaContext;
-import com.ourexists.omes.device.feign.GatewayFeign;
-import com.ourexists.omes.device.model.GatewayDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,13 +26,7 @@ public class LineFlowServiceImpl implements LineFlowService {
     private MPSFeign mpsFeign;
 
     @Autowired
-    private OpcUaContext opcUaContext;
-
-    @Autowired
     private GatewayFeign gatewayFeign;
-
-    @Autowired
-    private LinePushTxManager linePushSyncManager;
 
     @Autowired
     private LineFeign lineFeign;
@@ -56,23 +47,15 @@ public class LineFlowServiceImpl implements LineFlowService {
 
     @Override
     public void downloadS7(String lineId, String serverName) {
-        GatewayDto connect = null;
         try {
-            connect = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByName(serverName));
+            GatewayDto connect = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectConnectByName(serverName));
+            if (connect == null) {
+                throw new BusinessException("PLC 网关不存在: " + serverName);
+            }
         } catch (EraCommonException e) {
             throw new BusinessException(e.getMessage());
         }
-        if (connect == null) {
-        }
-//        try {
-//            opcUaContext.createClient(connect.getServerName(), connect.getHost(), connect.getPort(), connect.getSuffix());
-//        } catch (Exception e) {
-//            log.error(e.getMessage(), e);
-//            throw new BusinessException("create OPCUA CLIENT ERROR");
-//        }
-//        JSONObject jo = new JSONObject();
-//        jo.put("lineId", lineId);
-//        jo.put("serverName", serverName);
-//        linePushSyncManager.execute(jo.toJSONString());
+        // S7/OPC UA 下发逻辑待接入规则引擎参数后恢复
+        log.debug("downloadS7 skipped: lineId={}, serverName={}", lineId, serverName);
     }
 }

@@ -14,15 +14,11 @@ spring:
     password: ${RABBITMQ_PASSWORD:TyY6Df3bZe}
     # 必须带引号，否则 YAML 会把 `/` 误解析；需与 omes-stream（Flink RMQSource）使用同一 vhost
     virtual-host: "${RABBITMQ_VHOST:/}"
-  messages:
-    basename: i18n/messages
-  thymeleaf:
-    cache: false
-  mvc:
-    static-path-pattern: static/**
   application:
     name: OMES-ADMIN
   config:
+    import:
+      - optional:file:config/era-token.yml
     location: classpath:/,file:config/
   profiles:
     include: db-postgres
@@ -30,6 +26,9 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     default-property-inclusion: ALWAYS
     time-zone: GMT+8
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
   cloud:
     loadbalancer:
       retry:
@@ -40,8 +39,6 @@ spring:
     # 设备侧 RabbitMQ 走 Spring Cloud Stream + rabbit binder；换 Kafka 等 broker 时可改 binder 与中继拓扑（Flink omes-stream 仍为独立 AMQP 客户端）
     stream:
       default-binder: rabbit
-      # 站内通知经 StreamBridge 出站，再由 notifyMessageDispatch 消费（与 equipRealtime-out 同源模式）
-      source: notifyMessageSource
       bindings:
         equipRealtime-out-0:
           destination: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
@@ -135,17 +132,16 @@ management:
       exposure:
         include:
           - "health"
-          - "shutdown"
-ribbon:
-  restclient:
-    enabled: true
-  okhttp:
-    enabled: true
 era:
   authorization:
     server:
       # 业务 Admin 仅校验 JWT，OAuth2 签发在 OMES-SAS
       enabled: false
+  resource:
+    # 用户/权限由 SAS 网关解析后通过内部头传递，Admin 不再读 OAuth2 授权 Redis
+    identity-source: gateway
+    gateway:
+      internal-service-key: ${OMES_INTERNAL_SERVICE_KEY:dev-internal-change-me}
   log:
     level: info
     file:
@@ -154,23 +150,12 @@ era:
     ignore:
       auth_check:
         - /expose/**
-        - /
-        - /templates/**
-        - /view/**
         - /files/**
         - /authentication/**
-      #        - /workshop/**
       api_check:
         - /expose/**
-        - /
-        - /templates/**
-        - /view/**
         - /files/**
         - /authentication/**
-  #        - /workshop/**
-  token:
-    # 与 ERA TokenStoreType 一致（Redis/Db/InMemory），大小写不敏感
-    store-type: Redis
 feign:
   client:
     config:
@@ -178,27 +163,38 @@ feign:
         connectTimeout: 20000
         readTimeout: 10000
 
-#logging:
-#  level:
-#    org:
-#      springframework:
-#        ws: TRACE
 logging:
   level:
     org:
       springframework:
-        security: DEBUG
+        security: INFO
 springdoc:
   api-docs:
-    enabled: true
+    enabled: ${SPRINGDOC_ENABLED:false}
   swagger-ui:
-    enabled: true
+    enabled: ${SPRINGDOC_ENABLED:false}
 
-ai:
-  proxy:
-    base-url: ${AI_APP_BASE_URL:http://127.0.0.1:10011}
+file:
+  storage:
+    root-path: ${FILE_STORAGE_ROOT:file}
+    url-prefix: /localFile/download?path=
+
+liteflow:
+  print-execution-log: false
+  when-max-wait-seconds: 0
+
+process:
+  engine:
+    config-source: file
+  condition:
+    none: "true"
+    time: "elapsed(phaseKey) >= ${durationMs}"
+    manual-confirm: "manualConfirmed(phaseKey)"
+    auto-next: "true"
 
 omes:
+  internal:
+    service-key: ${OMES_INTERNAL_SERVICE_KEY:dev-internal-change-me}
   equip:
     # change 消息聚合成批再调 device 批量接口：条数阈值与最大等待（毫秒，防抖）
     stream-persist-batch-size: ${OMES_EQUIP_STREAM_PERSIST_BATCH_SIZE:32}

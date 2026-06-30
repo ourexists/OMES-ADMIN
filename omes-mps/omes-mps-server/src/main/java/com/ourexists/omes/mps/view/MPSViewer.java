@@ -15,9 +15,11 @@ import com.ourexists.omes.mps.enums.MPSStatusEnum;
 import com.ourexists.omes.mps.enums.MPSTFStatusEnum;
 import com.ourexists.omes.mps.feign.MPSFeign;
 import com.ourexists.omes.mps.model.ChangePriorityDto;
+import com.ourexists.omes.mps.model.MPSBoardDto;
 import com.ourexists.omes.mps.model.MPSDetailDto;
 import com.ourexists.omes.mps.model.MPSDto;
 import com.ourexists.omes.mps.model.MPSQueueOperateDto;
+import com.ourexists.omes.mps.model.query.MPSBoardQuery;
 import com.ourexists.omes.mps.model.query.MPSPageQuery;
 import com.ourexists.omes.mps.pojo.MPS;
 import com.ourexists.omes.mps.pojo.MPSDetail;
@@ -33,7 +35,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 //@Tag(name = "生产计划")
@@ -69,7 +73,7 @@ public class MPSViewer implements MPSFeign {
             if (CollectionUtil.isNotBlank(details)) {
                 List<MPSDetailDto> dtos = new ArrayList<>();
                 for (MPSDetail detail : details) {
-                    if (mpsDto.getId().equals(detail.getId())) {
+                    if (mpsDto.getId().equals(detail.getMid())) {
                         dtos.add(MPSDetail.covert(detail));
                     }
                 }
@@ -77,6 +81,38 @@ public class MPSViewer implements MPSFeign {
             }
         }
         return JsonResponseEntity.success(r, OrmUtils.extraPagination(page));
+    }
+
+    @Override
+    public JsonResponseEntity<MPSBoardDto> selectBoard(MPSBoardQuery query) {
+        int limit = query.getLimitPerColumn() == null || query.getLimitPerColumn() <= 0
+                ? 300
+                : query.getLimitPerColumn();
+        List<MPS> all = service.selectBoardList(query);
+        if (CollectionUtil.isBlank(all)) {
+            return JsonResponseEntity.success(new MPSBoardDto());
+        }
+
+        Comparator<MPS> idDesc = Comparator.comparing(MPS::getId, Comparator.nullsLast(Comparator.reverseOrder()));
+        Comparator<MPS> priorityAsc = Comparator.comparing(
+                MPS::getPriority,
+                Comparator.nullsLast(Comparator.naturalOrder())
+        ).thenComparing(MPS::getId, Comparator.nullsLast(Comparator.reverseOrder()));
+
+        Map<Integer, List<MPS>> grouped = all.stream().collect(Collectors.groupingBy(MPS::getStatus));
+        MPSBoardDto board = new MPSBoardDto();
+        board.setWaitQue(limitList(grouped.get(MPSStatusEnum.WAIT_QUE.getCode()), idDesc, limit));
+        board.setWaitExec(limitList(grouped.get(MPSStatusEnum.WAIT_EXEC.getCode()), priorityAsc, limit));
+        board.setExecing(limitList(grouped.get(MPSStatusEnum.EXECING.getCode()), idDesc, limit));
+        board.setComplete(limitList(grouped.get(MPSStatusEnum.COMPLETE.getCode()), idDesc, limit));
+        return JsonResponseEntity.success(board);
+    }
+
+    private List<MPSDto> limitList(List<MPS> source, Comparator<MPS> comparator, int limit) {
+        if (CollectionUtil.isBlank(source)) {
+            return new ArrayList<>();
+        }
+        return MPS.covert(source.stream().sorted(comparator).limit(limit).collect(Collectors.toList()));
     }
 
     //    @Operation(summary = "id查詢", description = "id查詢")

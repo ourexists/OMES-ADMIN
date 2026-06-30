@@ -37,5 +37,8 @@ public class EquipStateSnapshotCountQuery extends PageQuery {
     @Schema(description = "是否需要场景级联查询")
     private Boolean needWorkshopCascade = false;
 
+    @Schema(description = "是否限制用户场景")
+    private Boolean limitUserWorkshop = false;
+
     private List<String> workshopCodes;
 }

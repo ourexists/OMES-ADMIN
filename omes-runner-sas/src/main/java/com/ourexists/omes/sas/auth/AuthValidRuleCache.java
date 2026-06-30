@@ -4,18 +4,11 @@
 
 package com.ourexists.omes.sas.auth;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author pengcheng
- * @version 1.0.0
- * @date 2023/4/14 15:26
- * @since 1.0.0
- */
 @Component
 public class AuthValidRuleCache {
 
@@ -23,41 +16,54 @@ public class AuthValidRuleCache {
 
     public static final Integer CAPTCHA_EXPIRE_MINUTES = 3;
 
-    private final Cache<String, String> captchaCache;
+    private static final String CAPTCHA_PREFIX = "omes:sas:captcha:";
 
-    private final Cache<String, Long> wrongCache;
+    private static final String WRONG_PREFIX = "omes:sas:login-wrong:";
 
+    private final StringRedisTemplate redisTemplate;
 
-    public AuthValidRuleCache() {
-        captchaCache = CacheBuilder.newBuilder().expireAfterWrite(CAPTCHA_EXPIRE_MINUTES, TimeUnit.MINUTES).build();
-        wrongCache = CacheBuilder.newBuilder().expireAfterWrite(ACCOUNT_WRONG_LOCK_DURATION_HOUR, TimeUnit.HOURS).build();
+    public AuthValidRuleCache(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
     }
 
     public void setCaptcha(String uuid, String code) {
-        captchaCache.put(uuid, code);
+        redisTemplate.opsForValue().set(
+                CAPTCHA_PREFIX + uuid,
+                code,
+                CAPTCHA_EXPIRE_MINUTES,
+                TimeUnit.MINUTES);
     }
 
     public String getCaptcha(String uuid) {
-        return captchaCache.getIfPresent(uuid);
+        return redisTemplate.opsForValue().get(CAPTCHA_PREFIX + uuid);
     }
 
     public void removeCaptcha(String uuid) {
-        captchaCache.invalidate(uuid);
+        redisTemplate.delete(CAPTCHA_PREFIX + uuid);
     }
 
     public long accumulatesError(String accname) {
-        Long count = wrongCache.getIfPresent(accname);
-        if (count == null) {
-            count = 0L;
+        String key = WRONG_PREFIX + accname;
+        Long count = redisTemplate.opsForValue().increment(key);
+        if (count != null && count == 1L) {
+            redisTemplate.expire(key, ACCOUNT_WRONG_LOCK_DURATION_HOUR, TimeUnit.HOURS);
         }
-        wrongCache.put(accname, count++);
-        return count;
-    }
-
-    public long wrongNum(String accname) {
-        Long count = wrongCache.getIfPresent(accname);
         return count == null ? 0L : count;
     }
 
+    public long wrongNum(String accname) {
+        String value = redisTemplate.opsForValue().get(WRONG_PREFIX + accname);
+        if (value == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ex) {
+            return 0L;
+        }
+    }
 
+    public void clearWrongNum(String accname) {
+        redisTemplate.delete(WRONG_PREFIX + accname);
+    }
 }

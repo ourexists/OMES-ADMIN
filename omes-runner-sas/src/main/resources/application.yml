@@ -1,5 +1,5 @@
 server:
-  port: ${OMES_SAS_PORT:10012}
+  port: ${OMES_GATEWAY_PORT:${OMES_SAS_PORT:9400}}
   servlet:
     context-path: /
 
@@ -12,6 +12,8 @@ spring:
   profiles:
     include: db-postgres
   config:
+    import:
+      - optional:file:config/era-token.yml
     location: classpath:/,file:config/
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
@@ -51,7 +53,6 @@ management:
       exposure:
         include:
           - "health"
-          - "shutdown"
 
 era:
   log:
@@ -66,6 +67,7 @@ era:
         - /authentication/**
         - /oauth2/**
         - /.well-known/**
+        - /message/ws
       api_check:
         - /expose/**
         - /open/**
@@ -77,20 +79,31 @@ era:
 
 springdoc:
   api-docs:
-    enabled: true
+    enabled: ${SPRINGDOC_ENABLED:false}
   swagger-ui:
-    enabled: true
+    enabled: ${SPRINGDOC_ENABLED:false}
 
 omes:
   remote:
-    # SAS 调 Admin 拉账户数据；与 Admin 同机部署时用本机地址，勿固定 127.0.0.1
+    # SAS Feign 调 Admin；网关 upstream 默认同一地址
     admin-url: ${OMES_ADMIN_URL:http://127.0.0.1:10010}
+  gateway:
+    enabled: ${OMES_GATEWAY_ENABLED:true}
+    admin-url: ${OMES_ADMIN_URL:http://127.0.0.1:10010}
+  internal:
+    service-key: ${OMES_INTERNAL_SERVICE_KEY:dev-internal-change-me}
+  auth-rate-limit:
+    captcha-per-minute: ${OMES_AUTH_CAPTCHA_RATE:60}
+    token-per-minute: ${OMES_AUTH_TOKEN_RATE:30}
+    register-per-minute: ${OMES_AUTH_REGISTER_RATE:10}
   cors:
     allowed-origin-patterns:
+      - "*"
       - http://127.0.0.1:*
       - http://localhost:*
-      - http://*:*
-      - https://*:*
+      - http://192.168.*.*:*
+      - http://10.*.*.*:*
+      - http://172.*.*.*:*
 
 feign:
   client:
@@ -102,7 +115,7 @@ feign:
 ai:
   bridge:
     ticket-ttl-seconds: ${AI_BRIDGE_TICKET_TTL_SECONDS:120}
-    internal-key: ${AI_BRIDGE_INTERNAL_KEY:omes-bridge-internal}
+    internal-key: ${AI_BRIDGE_INTERNAL_KEY:dev-bridge-change-me}
 
 logging:
   level:

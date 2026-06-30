@@ -11,6 +11,7 @@ import com.ourexists.omes.message.core.NotifyMsg;
 import com.ourexists.omes.message.enums.MessageSourceEnum;
 import com.ourexists.omes.message.feign.MessageFeign;
 import com.ourexists.omes.message.model.MessageDto;
+import com.ourexists.omes.message.model.MessageVo;
 import com.ourexists.omes.ucenter.account.AccPageQuery;
 import com.ourexists.omes.ucenter.account.AccVo;
 import com.ourexists.omes.ucenter.feign.AccountFeign;
@@ -36,8 +37,8 @@ public class MessageConfiguration {
     @Autowired
     private MessageFeign messageFeign;
 
-//    @Autowired
-//    private SinkManager sinkManager;
+    @Autowired
+    private MessageRealtimeHub messageRealtimeHub;
 
     @Autowired
     private AccountFeign accountFeign;
@@ -82,14 +83,15 @@ public class MessageConfiguration {
                         }
                     }
                     dto.setSendAccounts(accIds);
-                    RemoteHandleUtils.getDataFormResponse(messageFeign.produce(dto));
-//                    if (messageVo == null) {
-//                        return null;
-//                    }
-//                    sinkManager.sendToClient(notifyMsg.getPlatform(), JSON.toJSONString(messageVo));
+                    MessageVo produced = RemoteHandleUtils.getDataFormResponse(messageFeign.produce(dto));
+                    if (produced != null && !CollectionUtils.isEmpty(accIds)) {
+                        messageRealtimeHub.pushNewMessage(dto.getPlatform(), accIds, produced);
+                    }
                 } catch (EraCommonException e) {
                     log.error(e.getMessage(), e);
                     return null;
+                } finally {
+                    UserContext.remove();
                 }
             }
             return null;

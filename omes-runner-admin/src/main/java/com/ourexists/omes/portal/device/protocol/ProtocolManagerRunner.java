@@ -7,15 +7,14 @@ package com.ourexists.omes.portal.device.protocol;
 import com.ourexists.era.framework.core.exceptions.EraCommonException;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
-import com.ourexists.omes.device.core.equip.protocol.ProtocolConnect;
 import com.ourexists.omes.device.core.equip.protocol.ProtocolManager;
 import com.ourexists.omes.device.feign.GatewayFeign;
 import com.ourexists.omes.device.model.GatewayDto;
 import com.ourexists.omes.device.model.GatewayPageQuery;
+import com.ourexists.omes.portal.device.gateway.GatewayRuntimeService;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -26,7 +25,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 
 /**
- * 应用启动时自动启动所有的协议管理器
+ * 应用启动时自动拉起已启用的设备网关协议连接。
  */
 @Slf4j
 @Component
@@ -36,6 +35,9 @@ public class ProtocolManagerRunner implements ApplicationRunner {
     @Autowired
     private GatewayFeign gatewayFeign;
 
+    @Autowired
+    private GatewayRuntimeService gatewayRuntimeService;
+
     @Getter
     private volatile boolean running = false;
 
@@ -44,9 +46,9 @@ public class ProtocolManagerRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        log.info("Auto-starting MQTT subscription manager");
+        log.info("Auto-starting enabled device gateway connections");
         if (running) {
-            log.warn("MQTT subscription manager already running");
+            log.warn("Device gateway protocol runner already running");
             return;
         }
         UserContext.defaultTenant();
@@ -57,21 +59,18 @@ public class ProtocolManagerRunner implements ApplicationRunner {
             query.setEnabled(true);
             gateways = RemoteHandleUtils.getDataFormResponse(gatewayFeign.selectByPage(query));
         } catch (EraCommonException e) {
-            log.error("Failed to load MQTT gateways: {}", e.getMessage(), e);
+            log.error("Failed to load enabled gateways: {}", e.getMessage(), e);
             return;
         }
         if (CollectionUtils.isEmpty(gateways)) {
-            log.info("No MQTT gateway config found, skip starting");
+            log.info("No enabled gateway config found, skip starting");
             return;
         }
         for (GatewayDto gw : gateways) {
-            ProtocolManager protocolManager = getProtocolManager(gw.getProtocol());
-            if (protocolManager == null) {
+            if (gatewayRuntimeService.protocolManager(gw.getProtocol()) == null) {
                 continue;
             }
-            ProtocolConnect connect = new ProtocolConnect();
-            BeanUtils.copyProperties(gw, connect);
-            protocolManager.start(connect);
+            gatewayRuntimeService.start(gw);
         }
         running = true;
     }
@@ -79,22 +78,17 @@ public class ProtocolManagerRunner implements ApplicationRunner {
     @PreDestroy
     public void destroy() {
         if (!running) {
-            log.warn("MQTT subscription manager not running");
+            log.warn("Device gateway protocol runner not running");
             return;
         }
         for (ProtocolManager protocolManager : protocolManagers) {
             protocolManager.stopAll();
         }
         running = false;
-        log.info("MQTT subscription manager stopped");
+        log.info("Device gateway protocol runner stopped");
     }
 
     public ProtocolManager getProtocolManager(String protocol) {
-        for (ProtocolManager protocolManager : protocolManagers) {
-            if (protocolManager.protocol().equals(protocol)) {
-                return protocolManager;
-            }
-        }
-        return null;
+        return gatewayRuntimeService.protocolManager(protocol);
     }
 }

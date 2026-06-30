@@ -99,16 +99,6 @@ public class InspectRecordViewer implements InspectRecordFeign {
     }
 
     @Override
-    @Operation(summary = "按任务ID查询记录列表")
-    @GetMapping("listByTaskId")
-    public JsonResponseEntity<List<InspectRecordDto>> listByTaskId(@RequestParam String taskId) {
-        List<InspectRecord> records = service.listByTaskId(taskId);
-        List<InspectRecordDto> list = InspectRecord.covert(records);
-        fillItems(list);
-        return JsonResponseEntity.success(list);
-    }
-
-    @Override
     @Operation(summary = "按设备ID与统计周期查询巡检记录（设备健康分巡检维度）")
     @PostMapping("listByEquipIdAndPeriod")
     public JsonResponseEntity<List<InspectRecordDto>> listByEquipIdAndPeriod(@RequestBody InspectRecordListByEquipPeriodQuery query) {

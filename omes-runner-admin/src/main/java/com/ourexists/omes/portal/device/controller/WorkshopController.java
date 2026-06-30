@@ -10,6 +10,7 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.user.UserContext;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtime;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeCollect;
 import com.ourexists.omes.device.core.workshop.cache.WorkshopRealtimeConfig;
@@ -29,6 +30,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -88,6 +90,9 @@ public class WorkshopController {
                     roleFeign.selectRoleWhichAccHoldOnly(UserContext.getUser().getId())
             );
             List<String> roleIds = roleDtos.stream().map(RoleDto::getId).toList();
+            if (CollectionUtil.isBlank(roleIds)) {
+                return JsonResponseEntity.success(Collections.emptyList());
+            }
             return workshopFeign.selectAssignTrees(roleIds, true);
         } catch (EraCommonException e) {
             throw new RuntimeException(e);

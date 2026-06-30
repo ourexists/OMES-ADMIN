@@ -46,12 +46,6 @@ public class PermissionController {
         return permissionFeign.assignToRolePermissionTree(assignDto);
     }
 
-    @Operation(summary = "分配api给权限")
-    @PostMapping("/assignApiToPermission")
-    public JsonResponseEntity<Boolean> assignApiToPermission(@RequestBody @Validated PermissionApiDto assignDto) {
-        return permissionFeign.assignApiToPermission(assignDto);
-    }
-
     @Operation(summary = "新增权限")
     @PostMapping("/add")
     public JsonResponseEntity<Boolean> add(@RequestBody @Validated PermissionDto dto) {
@@ -124,18 +118,6 @@ public class PermissionController {
     @GetMapping("/selectRolePermissionTree")
     public JsonResponseEntity<List<PermissionTreeNode>> selectRolePermissionTree(@RequestParam String roleId) {
         return permissionFeign.selectRolePermissionTree(roleId);
-    }
-
-    @Operation(summary = "查询接口权限")
-    @GetMapping("/selectPermissionApi")
-    public JsonResponseEntity<List<PermissionApiDetailDto>> selectPermissionApi(@RequestParam String permissionId) {
-        return permissionFeign.selectPermissionApi(permissionId);
-    }
-
-    @Operation(summary = "查询接口权限")
-    @GetMapping("/selectAll")
-    public JsonResponseEntity<List<PermissionApiDetailDto>> selectAll() {
-        return permissionFeign.selectAll();
     }
 
     @Operation(summary = "所有权限类型")

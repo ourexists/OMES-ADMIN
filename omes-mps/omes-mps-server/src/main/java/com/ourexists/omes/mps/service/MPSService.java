@@ -11,6 +11,7 @@ import com.ourexists.omes.mps.model.MPSDto;
 import com.ourexists.omes.mps.model.MPSQueueOperateDto;
 import com.ourexists.omes.mps.enums.MPSStatusEnum;
 import com.ourexists.omes.mps.pojo.MPS;
+import com.ourexists.omes.mps.model.query.MPSBoardQuery;
 import com.ourexists.omes.mps.model.query.MPSPageQuery;
 
 import java.util.Collection;
@@ -24,6 +25,8 @@ import java.util.List;
 public interface MPSService extends IMyBatisPlusService<MPS> {
 
     Page<MPS> selectByPage(MPSPageQuery dto);
+
+    List<MPS> selectBoardList(MPSBoardQuery query);
 
     <T extends MPSDto> void addBatch(List<T> dtos);
 

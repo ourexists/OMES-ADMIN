@@ -16,6 +16,7 @@ import com.ourexists.omes.mps.mapper.MPSMapper;
 import com.ourexists.omes.mps.model.ChangePriorityDto;
 import com.ourexists.omes.mps.model.MPSDto;
 import com.ourexists.omes.mps.model.MPSQueueOperateDto;
+import com.ourexists.omes.mps.model.query.MPSBoardQuery;
 import com.ourexists.omes.mps.model.query.MPSPageQuery;
 import com.ourexists.omes.mps.pojo.MPS;
 import com.ourexists.omes.mps.pojo.MPSDetail;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -59,6 +61,20 @@ public class MPSServiceImpl extends AbstractMyBatisPlusService<MPSMapper, MPS> i
         return this.page(new Page<>(dto.getPage(), dto.getPageSize()), qw);
     }
 
+    @Override
+    public List<MPS> selectBoardList(MPSBoardQuery query) {
+        LambdaQueryWrapper<MPS> qw = new LambdaQueryWrapper<MPS>()
+                .in(MPS::getStatus, Arrays.asList(
+                        MPSStatusEnum.WAIT_QUE.getCode(),
+                        MPSStatusEnum.WAIT_EXEC.getCode(),
+                        MPSStatusEnum.EXECING.getCode(),
+                        MPSStatusEnum.COMPLETE.getCode()))
+                .eq(StringUtils.isNotEmpty(query.getMoCode()), MPS::getMoCode, query.getMoCode())
+                .in(CollectionUtil.isNotBlank(query.getMoCodes()), MPS::getMoCode, query.getMoCodes())
+                .ge(query.getExecStartTime() != null, MPS::getExecTime, query.getExecStartTime())
+                .le(query.getExecEndTime() != null, MPS::getExecTime, query.getExecEndTime());
+        return this.list(qw);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

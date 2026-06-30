@@ -65,6 +65,8 @@ public class EquipPersistBatchWriter {
             }
         } catch (Exception e) {
             log.error("Equip stream persist: aggregated batch write failed, messageCount={}", payloads.size(), e);
+        } finally {
+            UserContext.remove();
         }
     }
 
@@ -113,6 +115,8 @@ public class EquipPersistBatchWriter {
             }
         } catch (Exception e) {
             log.error("Equip stream persist: state snapshot batch write failed, messageCount={}", payloads.size(), e);
+        } finally {
+            UserContext.remove();
         }
     }
 
@@ -137,6 +141,8 @@ public class EquipPersistBatchWriter {
             }
         } catch (Exception e) {
             log.error("Equip stream persist: collect snapshot batch write failed, messageCount={}", payloads.size(), e);
+        } finally {
+            UserContext.remove();
         }
     }
 

@@ -95,6 +95,9 @@ public class LinePushTxManager extends TxManager {
                 }
                 String serverName = jo.getString("serverName");
                 List<TFVo> tfs = lineVo.getTfs();
+                if (CollectionUtil.isBlank(tfs)) {
+                    return;
+                }
                 Short[] fs = new Short[tfs.size()];
                 for (int i = 0; i < tfs.size(); i++) {
                     fs[i] = Short.parseShort(tfs.get(i).getSelfCode());
@@ -110,7 +113,7 @@ public class LinePushTxManager extends TxManager {
         r.add(new AbstractTxBranchFlow(txStore) {
             @Override
             public String point() {
-                return "write_flow";
+                return "prepare_push_time";
             }
 
             @Override
@@ -122,28 +125,9 @@ public class LinePushTxManager extends TxManager {
             public void doExec(TxTransfer txTransfer) {
                 JSONObject jo = JSON.parseObject(txTransfer.getJsonData());
                 LineVo lineVo = jo.getObject("lineVo", LineVo.class);
-                String serverName = jo.getString("serverName");
-                txTransfer.setJsonData(lineVo.getId());
-                List<TFVo> tfs = lineVo.getTfs();
-                if (CollectionUtil.isBlank(tfs)) {
-                    return;
+                if (lineVo != null && StringUtils.isNotBlank(lineVo.getId())) {
+                    txTransfer.setJsonData(lineVo.getId());
                 }
-                for (TFVo tf : tfs) {
-                    if (tf.getMapDb() == null || tf.getMapDb() == -1 || StringUtils.isBlank(tf.getMapOffset())) {
-                        continue;
-                    }
-                    long min = tf.getDuration() / 60;
-                    long sec = tf.getDuration() % 60;
-                    try {
-                        opcUaContext.writeNodeValue(serverName, tf.getMapDb(), tf.getMapOffset() + ".\"minSet\"", (short) min);
-                        opcUaContext.writeNodeValue(serverName, tf.getMapDb(), tf.getMapOffset() + ".\"secSet\"", (short) sec);
-                        opcUaContext.writeNodeValue(serverName, tf.getMapDb(), tf.getMapOffset() + ".\"tempSet\"", tf.getTemperature().floatValue());
-                    } catch (Exception e) {
-                        log.error("write_flow exception", e);
-                        throw new BusinessException("write [" + tf.getName() + "] error");
-                    }
-                }
-
             }
         });
         r.add(new AbstractTxBranchFlow(txStore) {
