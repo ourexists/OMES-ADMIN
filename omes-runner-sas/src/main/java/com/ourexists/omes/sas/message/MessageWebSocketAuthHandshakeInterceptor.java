@@ -108,7 +108,18 @@ public class MessageWebSocketAuthHandshakeInterceptor implements HandshakeInterc
                 token = authorization.substring(7).trim();
             }
         }
-        return token;
+        return stripBearerPrefix(token);
+    }
+
+    private static String stripBearerPrefix(String token) {
+        if (!StringUtils.hasText(token)) {
+            return token;
+        }
+        String trimmed = token.trim();
+        if (trimmed.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return trimmed.substring(7).trim();
+        }
+        return trimmed;
     }
 
     private static String queryParam(ServerHttpRequest request, String name) {
