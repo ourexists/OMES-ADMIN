@@ -50,10 +50,10 @@ public class MPSDetailDto extends BaseDto {
     @Schema(description = "设备名")
     private String devName;
 
-    @Schema(description = "设备工艺编号")
+    @Schema(description = "设备能力编号")
     private String dgCode;
 
-    @Schema(description = "设备工艺名")
+    @Schema(description = "设备能力名")
     private String dgName;
 
     @Schema(description = "组份性质, 0=主料，1=预混料（添加剂）,2=回机料,3=油,4=水")

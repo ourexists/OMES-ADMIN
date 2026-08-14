@@ -10,7 +10,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * 产线工序规则引擎：复用工艺卡片工序的 stepScript / stepEngineConfig 编译链路。
+ * 产线工序规则引擎：编译 stepScript / stepEngineConfig。
  */
 @Service
 @RequiredArgsConstructor

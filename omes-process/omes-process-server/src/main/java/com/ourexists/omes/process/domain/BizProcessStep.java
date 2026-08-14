@@ -1,6 +1,5 @@
 package com.ourexists.omes.process.domain;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -10,14 +9,13 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("r_biz_process_step")
-@Schema(description = "工艺工序")
+@Schema(description = "工序（引擎编译入参）")
 public class BizProcessStep extends EraEntity {
 
     @Schema(description = "工艺ID")
     private String processId;
 
-    @Schema(description = "工序号（工艺卡片上的序号，如 5、10、15）")
+    @Schema(description = "工序号（如 5、10、15）")
     private Integer stepNo;
 
     @Schema(description = "工序编码（Route Step，如 MIXING、FORMING）")
@@ -26,7 +24,7 @@ public class BizProcessStep extends EraEntity {
     @Schema(description = "工序名称")
     private String stepName;
 
-    @Schema(description = "工序内容（工艺卡片文本）")
+    @Schema(description = "工序内容")
     private String stepContent;
 
     @Schema(description = "工序执行脚本 JSON（单步 type/mode，与 stepContent 分离）")

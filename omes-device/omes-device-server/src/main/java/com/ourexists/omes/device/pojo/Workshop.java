@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.beans.BeanUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,14 @@ public class Workshop extends MainEntity {
     private String code;
 
     private String pcode;
+
+    /** GIS 定位经度，建议标注在最后一级场景 */
+    private BigDecimal lng;
+
+    /** GIS 定位纬度，建议标注在最后一级场景 */
+    private BigDecimal lat;
+
+    private String address;
 
     public static WorkshopTreeNode covert(Workshop source) {
         if (source == null) {

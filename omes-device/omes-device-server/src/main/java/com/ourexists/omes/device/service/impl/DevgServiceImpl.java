@@ -12,9 +12,8 @@ import com.ourexists.omes.device.mapper.DevgMapper;
 import com.ourexists.omes.device.model.DevgDto;
 import com.ourexists.omes.device.model.DevgPageQuery;
 import com.ourexists.omes.device.pojo.Devg;
-import com.ourexists.omes.device.pojo.Device;
 import com.ourexists.omes.device.service.DevgService;
-import com.ourexists.omes.device.service.DeviceService;
+import com.ourexists.omes.device.service.EquipProcessService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ import java.util.List;
 public class DevgServiceImpl extends AbstractMyBatisPlusService<DevgMapper, Devg> implements DevgService {
 
     @Autowired
-    private DeviceService deviceService;
+    private EquipProcessService equipProcessService;
 
     @Override
     public Page<Devg> selectByPage(DevgPageQuery dto) {
@@ -48,6 +47,6 @@ public class DevgServiceImpl extends AbstractMyBatisPlusService<DevgMapper, Devg
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
         this.removeBatchByIds(ids);
-        deviceService.remove(new LambdaQueryWrapper<Device>().in(Device::getDgId, ids));
+        equipProcessService.unbindByDgIds(ids);
     }
 }

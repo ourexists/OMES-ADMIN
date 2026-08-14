@@ -15,17 +15,14 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class DeviceTreeNode {
+public class EquipMatDto {
 
-    private String id;
-
-    private String name;
-
-    private String selfCode;
-
-    private String dgId;
-
-    private BigDecimal maxCapacity;
-
+    @Schema(description = "原料编号")
     private String matCode;
+
+    @Schema(description = "原料名称（查询时回填）")
+    private String matName;
+
+    @Schema(description = "该原料在本能力方案下的容量")
+    private BigDecimal maxCapacity;
 }

@@ -9,7 +9,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.beans.BeanUtils;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,12 +27,6 @@ public class Equip extends EraEntity {
     private String type;
 
     private String workshopCode;
-
-    private BigDecimal lng;
-
-    private BigDecimal lat;
-
-    private String address;
 
     /** 启用日期，用于健康分使用年限计算，为空时用创建时间 */
     private Date enableDate;
@@ -62,7 +55,7 @@ public class Equip extends EraEntity {
 
     public static <T extends EquipDto> Equip wrap(T source) {
         Equip target = new Equip();
-        BeanUtils.copyProperties(source, target);
+        BeanUtils.copyProperties(source, target, "processMaterials");
         return target;
     }
 

@@ -14,9 +14,6 @@
     <properties>
         <liteflow.version>2.12.4.5</liteflow.version>
         <aviator.version>5.4.3</aviator.version>
-        <jlatexmath.version>1.0.7</jlatexmath.version>
-        <pdfbox.version>3.0.3</pdfbox.version>
-        <xdocreport.version>2.1.0</xdocreport.version>
     </properties>
 
     <dependencies>
@@ -54,26 +51,6 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>5.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>${pdfbox.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>fr.opensagres.xdocreport</groupId>
-            <artifactId>fr.opensagres.poi.xwpf.converter.pdf</artifactId>
-            <version>${xdocreport.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scilab.forge</groupId>
-            <artifactId>jlatexmath</artifactId>
-            <version>${jlatexmath.version}</version>
         </dependency>
         <dependency>
             <groupId>com.yomahub</groupId>

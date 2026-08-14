@@ -8,8 +8,12 @@ import com.ourexists.era.framework.core.model.dto.IdsDto;
 import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.omes.device.model.DevgDto;
 import com.ourexists.omes.device.model.DevgPageQuery;
+import com.ourexists.omes.device.model.DgEquipBindDto;
+import com.ourexists.omes.device.model.DgEquipProcessDto;
+import com.ourexists.omes.device.model.EquipDto;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -29,4 +33,12 @@ public interface DevgFeign {
     JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto);
 
     JsonResponseEntity<List<DevgDto>> selectByCodes(@RequestBody IdsDto idsDto);
+
+    JsonResponseEntity<List<EquipDto>> listEquips(@RequestParam String dgId);
+
+    JsonResponseEntity<Boolean> bindEquips(@Validated @RequestBody DgEquipBindDto dto);
+
+    JsonResponseEntity<Boolean> unbindEquips(@Validated @RequestBody DgEquipBindDto dto);
+
+    JsonResponseEntity<Boolean> saveEquipProcess(@Validated @RequestBody DgEquipProcessDto dto);
 }

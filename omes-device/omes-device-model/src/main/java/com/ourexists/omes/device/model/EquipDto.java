@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -38,17 +37,14 @@ public class EquipDto extends BaseDto {
 
     private String workshopCode;
 
-    private BigDecimal lng;
-
-    private BigDecimal lat;
-
-    private String address;
-
     /** 启用日期，用于健康分使用年限计算 */
     private Date enableDate;
 
     /** 关联的健康规则模板ID，为空时使用默认模板 */
     private String healthTemplateId;
+
+    /** 本能力方案下加工原料及容量（设备能力绑定回填，非设备档案字段） */
+    private List<EquipMatDto> processMaterials;
 
     /** 运行：-1 未知，0 停止，1 运行 */
     private Integer runState = -1;

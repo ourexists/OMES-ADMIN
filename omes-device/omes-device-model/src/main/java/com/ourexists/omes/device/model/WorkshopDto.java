@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
+
 @Schema
 @Getter
 @Setter
@@ -25,4 +27,13 @@ public class WorkshopDto {
     private String code;
 
     private String pcode;
+
+    @Schema(description = "经度，建议标注在最后一级场景")
+    private BigDecimal lng;
+
+    @Schema(description = "纬度，建议标注在最后一级场景")
+    private BigDecimal lat;
+
+    @Schema(description = "地址")
+    private String address;
 }

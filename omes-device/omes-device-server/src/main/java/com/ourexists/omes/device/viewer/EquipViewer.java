@@ -19,6 +19,7 @@ import com.ourexists.omes.device.pojo.Equip;
 import com.ourexists.omes.device.pojo.GwBinding;
 import com.ourexists.omes.device.pojo.Product;
 import com.ourexists.omes.device.pojo.Workshop;
+import com.ourexists.omes.device.service.EquipProcessService;
 import com.ourexists.omes.device.service.EquipService;
 import com.ourexists.omes.device.service.GwBindingService;
 import com.ourexists.omes.device.service.ProductService;
@@ -27,6 +28,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,6 +58,9 @@ public class EquipViewer implements EquipFeign {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private EquipProcessService equipProcessService;
 
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
@@ -141,6 +146,7 @@ public class EquipViewer implements EquipFeign {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     @Operation(summary = "新增或修改根据id", description = "新增或修改根据id")
     @PostMapping("addOrUpdate")
     public JsonResponseEntity<Boolean> addOrUpdate(@Validated @RequestBody EquipDto dto) {
@@ -156,9 +162,11 @@ public class EquipViewer implements EquipFeign {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     @Operation(summary = "删除", description = "删除")
     @PostMapping("delete")
     public JsonResponseEntity<Boolean> delete(@Validated @RequestBody IdsDto idsDto) {
+        equipProcessService.removeByEquipIds(idsDto.getIds());
         service.removeByIds(idsDto.getIds());
         equipRealtimeManager.reload();
         return JsonResponseEntity.success(true);

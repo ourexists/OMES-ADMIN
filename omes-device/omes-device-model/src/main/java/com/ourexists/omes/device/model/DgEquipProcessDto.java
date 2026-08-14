@@ -9,23 +9,20 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Schema
 @Getter
 @Setter
 @Accessors(chain = true)
-public class DeviceTreeNode {
+public class DgEquipProcessDto {
 
-    private String id;
-
-    private String name;
-
-    private String selfCode;
-
+    @Schema(description = "设备能力id")
     private String dgId;
 
-    private BigDecimal maxCapacity;
+    @Schema(description = "设备id")
+    private String equipId;
 
-    private String matCode;
+    @Schema(description = "本能力方案下该设备可加工的原料及对应容量")
+    private List<EquipMatDto> processMaterials;
 }

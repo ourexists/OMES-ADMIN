@@ -11,7 +11,6 @@ import com.ourexists.era.framework.core.model.vo.JsonResponseEntity;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.core.utils.RemoteHandleUtils;
 import com.ourexists.omes.device.feign.DeviceFeign;
-import com.ourexists.omes.device.service.DeviceService;
 import com.ourexists.omes.mat.feign.MATFeign;
 import com.ourexists.omes.mat.model.MaterialDto;
 import com.ourexists.omes.mat.model.query.MaterialPageQuery;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.rmi.Remote;
 import java.util.List;
 import java.util.stream.Collectors;
 

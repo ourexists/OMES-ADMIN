@@ -82,12 +82,14 @@ public class WorkshopServiceImpl extends AbstractMyBatisPlusService<WorkshopMapp
     public List<Workshop> queryChildBySelfCode(String workshopCode) {
         Workshop parent = this.getOne(new LambdaQueryWrapper<Workshop>()
                 .eq(Workshop::getSelfCode, workshopCode)
-                .select(Workshop::getCode)
+                .select(Workshop::getId, Workshop::getCode)
                 .last("limit 1"));
-        if (parent == null) {
+        if (parent == null || parent.getCode() == null || parent.getCode().isEmpty()) {
             return List.of();
         }
-        return this.list(new LambdaQueryWrapper<Workshop>().eq(Workshop::getPcode, parent.getCode()));
+        return this.list(new LambdaQueryWrapper<Workshop>()
+                .likeRight(Workshop::getCode, parent.getCode())
+                .ne(Workshop::getId, parent.getId()));
     }
 
     @Override

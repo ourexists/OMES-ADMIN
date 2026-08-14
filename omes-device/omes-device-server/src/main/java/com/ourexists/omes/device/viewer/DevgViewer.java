@@ -12,14 +12,20 @@ import com.ourexists.era.framework.orm.mybatisplus.OrmUtils;
 import com.ourexists.omes.device.feign.DevgFeign;
 import com.ourexists.omes.device.model.DevgDto;
 import com.ourexists.omes.device.model.DevgPageQuery;
+import com.ourexists.omes.device.model.DgEquipBindDto;
+import com.ourexists.omes.device.model.DgEquipProcessDto;
+import com.ourexists.omes.device.model.EquipDto;
 import com.ourexists.omes.device.pojo.Devg;
 import com.ourexists.omes.device.service.DevgService;
+import com.ourexists.omes.device.service.EquipProcessService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -31,6 +37,9 @@ public class DevgViewer implements DevgFeign {
 
     @Autowired
     private DevgService service;
+
+    @Autowired
+    private EquipProcessService equipProcessService;
 
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
@@ -59,5 +68,38 @@ public class DevgViewer implements DevgFeign {
     public JsonResponseEntity<List<DevgDto>> selectByCodes(@Validated @RequestBody IdsDto idsDto) {
         List<Devg> devgs = service.list(new LambdaQueryWrapper<Devg>().in(Devg::getSelfCode, idsDto.getIds()));
         return JsonResponseEntity.success(Devg.covert(devgs));
+    }
+
+    @Override
+    @GetMapping("listEquips")
+    public JsonResponseEntity<List<EquipDto>> listEquips(@RequestParam String dgId) {
+        return JsonResponseEntity.success(equipProcessService.listBoundEquips(dgId));
+    }
+
+    @Override
+    @PostMapping("bindEquips")
+    public JsonResponseEntity<Boolean> bindEquips(@Validated @RequestBody DgEquipBindDto dto) {
+        if (dto == null) {
+            return JsonResponseEntity.success(true);
+        }
+        equipProcessService.bindEquips(dto.getDgId(), dto.getEquipIds());
+        return JsonResponseEntity.success(true);
+    }
+
+    @Override
+    @PostMapping("unbindEquips")
+    public JsonResponseEntity<Boolean> unbindEquips(@Validated @RequestBody DgEquipBindDto dto) {
+        if (dto == null) {
+            return JsonResponseEntity.success(true);
+        }
+        equipProcessService.unbindEquips(dto.getDgId(), dto.getEquipIds());
+        return JsonResponseEntity.success(true);
+    }
+
+    @Override
+    @PostMapping("saveEquipProcess")
+    public JsonResponseEntity<Boolean> saveEquipProcess(@Validated @RequestBody DgEquipProcessDto dto) {
+        equipProcessService.saveProcess(dto);
+        return JsonResponseEntity.success(true);
     }
 }

@@ -1,9 +1,6 @@
 package com.ourexists.omes.process.service;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ourexists.era.framework.core.exceptions.BusinessException;
-import com.ourexists.omes.process.domain.BizProcess;
-import com.ourexists.omes.process.domain.BizProcessStep;
 import com.ourexists.omes.process.model.*;
 import com.ourexists.omes.process.engine.ProcessSequenceRunner;
 import com.ourexists.omes.process.engine.ProcessStepScriptCodec;
@@ -12,14 +9,11 @@ import com.ourexists.omes.process.engine.model.ProcessStepScript;
 import com.ourexists.omes.process.engine.model.ProcessStepSimulationSession;
 import com.ourexists.omes.process.engine.model.ProcessStepTickResult;
 import com.ourexists.omes.process.engine.spi.InMemoryProcessSignalProvider;
-import com.ourexists.omes.process.mapper.BizProcessMapper;
-import com.ourexists.omes.process.mapper.BizProcessStepMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,35 +26,24 @@ public class ProcessStepSimulationService {
 
     private final ProcessStepScriptCodec scriptCodec;
     private final ProcessSequenceRunner sequenceRunner;
-    private final BizProcessMapper processMapper;
-    private final BizProcessStepMapper stepMapper;
     private final ProcessStepExecutionService executionService;
     private final ProcessRecipeService recipeService;
 
     private final Map<String, ProcessStepSimulationSession> sessions = new ConcurrentHashMap<>();
 
     public ProcessStepSimulationStartVO start(ProcessStepSimulationStartRequest request) {
-        boolean hasProcessId = StringUtils.hasText(request.getProcessId());
         boolean hasScript = StringUtils.hasText(request.getScriptJson());
         boolean hasRecipe = StringUtils.hasText(request.getRecipeId());
-        int modeCount = (hasProcessId ? 1 : 0) + (hasScript ? 1 : 0) + (hasRecipe ? 1 : 0);
-        if (modeCount != 1) {
-            throw new BusinessException("请指定 processId、scriptJson 或 recipeId 其中之一");
+        if (hasScript == hasRecipe) {
+            throw new BusinessException("请指定 scriptJson 或 recipeId 其中之一");
         }
         if (sessions.size() >= MAX_SESSIONS) {
             throw new BusinessException("仿真会话已达上限，请先停止无用会话");
         }
 
-        ProcessStepScript script;
-        String processId = hasProcessId ? request.getProcessId().trim() : null;
-        if (hasRecipe) {
-            script = recipeService.buildScript(request.getRecipeId().trim(), request.getEquipmentCode());
-        } else if (hasScript) {
-            script = scriptCodec.parseScript(request.getScriptJson());
-        } else {
-            requireProcess(processId);
-            script = scriptCodec.buildScriptFromSteps(loadOrderedSteps(processId));
-        }
+        ProcessStepScript script = hasRecipe
+                ? recipeService.buildScript(request.getRecipeId().trim(), request.getEquipmentCode())
+                : scriptCodec.parseScript(request.getScriptJson());
 
         InMemoryProcessSignalProvider signals = new InMemoryProcessSignalProvider();
         applySignals(signals, request.getInitialTemperature(), request.getInitialStates(), null);
@@ -68,7 +51,7 @@ public class ProcessStepSimulationService {
         ProcessSequenceRunner.RunningSequence sequence = sequenceRunner.start(script, signals);
         String sessionId = UUID.randomUUID().toString().replace("-", "");
         ProcessStepSimulationSession session = new ProcessStepSimulationSession(
-                sessionId, processId, script, signals, sequence);
+                sessionId, null, script, signals, sequence);
         sessions.put(sessionId, session);
         return toStartVO(session);
     }
@@ -109,20 +92,6 @@ public class ProcessStepSimulationService {
             throw new BusinessException(404, "仿真会话不存在或已结束");
         }
         return session;
-    }
-
-    private List<BizProcessStep> loadOrderedSteps(String processId) {
-        return stepMapper.selectList(new LambdaQueryWrapper<BizProcessStep>()
-                .eq(BizProcessStep::getProcessId, processId)
-                .orderByAsc(BizProcessStep::getSortOrder)
-                .orderByAsc(BizProcessStep::getStepNo));
-    }
-
-    private void requireProcess(String processId) {
-        BizProcess process = processMapper.selectById(processId);
-        if (process == null) {
-            throw new BusinessException(404, "工艺不存在");
-        }
     }
 
     private void applySignals(InMemoryProcessSignalProvider signals,

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
+
 @Schema
 @Getter
 @Setter
@@ -18,4 +20,13 @@ public class WorkshopTreeNode extends TreeNode<WorkshopTreeNode> {
 
     @Schema(description = "编号")
     private String selfCode;
+
+    @Schema(description = "经度")
+    private BigDecimal lng;
+
+    @Schema(description = "纬度")
+    private BigDecimal lat;
+
+    @Schema(description = "地址")
+    private String address;
 }
