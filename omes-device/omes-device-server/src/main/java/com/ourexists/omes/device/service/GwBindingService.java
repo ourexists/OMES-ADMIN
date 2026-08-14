@@ -21,13 +21,15 @@ public interface GwBindingService extends IMyBatisPlusService<GwBinding> {
 
     Page<GwBinding> selectByPage(EquipAttrPageQuery dto);
 
-    void addOrUpdate(GwBindingDto dto);
+    /** 仅持久化设备与网关绑定，属性映射以型号为准 */
+    void saveGatewayBinding(String equipId, String gwId);
+
+    /** 将已组装的产品模板+型号映射写入实时缓存 */
+    void applyAssembledConfig(GwBindingDto dto);
 
     void delete(List<String> ids);
 
     List<GwBinding> queryByEquip(List<String> equipIds);
 
     GwBinding queryByEquip(String equipId);
-
-//    List<EquipConfig> queryEquipConfigBySn(String equipSn);
 }

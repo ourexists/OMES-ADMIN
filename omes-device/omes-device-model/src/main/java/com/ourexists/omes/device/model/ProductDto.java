@@ -30,4 +30,7 @@ public class ProductDto extends BaseDto {
 
     @Schema(description = "产品图片地址")
     private String imageUrl;
+
+    @Schema(description = "产品属性模板，设备按名称映射采集点")
+    private ProductAttrConfig attrConfig;
 }

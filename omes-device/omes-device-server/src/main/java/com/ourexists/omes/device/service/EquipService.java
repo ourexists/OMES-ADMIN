@@ -25,4 +25,10 @@ public interface EquipService extends IMyBatisPlusService<Equip> {
 
     /** 查询关联了指定健康模板的所有设备 */
     List<Equip> listByHealthTemplateId(String healthTemplateId);
+
+    /** 查询关联了指定型号的设备 */
+    List<Equip> listByModelIds(List<String> modelIds);
+
+    /** 查询关联了指定产品编号的设备 */
+    List<Equip> listByProductCodes(List<String> productCodes);
 }

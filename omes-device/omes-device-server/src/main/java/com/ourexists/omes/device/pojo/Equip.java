@@ -26,6 +26,9 @@ public class Equip extends EraEntity {
     /** 所属产品编号（关联 t_product.code），type 存产品 code */
     private String type;
 
+    /** 所属产品型号 ID（t_product_model.id） */
+    private String modelId;
+
     private String workshopCode;
 
     /** 启用日期，用于健康分使用年限计算，为空时用创建时间 */

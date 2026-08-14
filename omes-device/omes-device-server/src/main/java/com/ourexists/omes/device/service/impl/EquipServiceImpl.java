@@ -83,4 +83,20 @@ public class EquipServiceImpl extends AbstractMyBatisPlusService<EquipMapper, Eq
         if (healthTemplateId == null || healthTemplateId.isEmpty()) return new ArrayList<>();
         return list(new LambdaQueryWrapper<Equip>().eq(Equip::getHealthTemplateId, healthTemplateId));
     }
+
+    @Override
+    public List<Equip> listByModelIds(List<String> modelIds) {
+        if (CollectionUtils.isEmpty(modelIds)) {
+            return new ArrayList<>();
+        }
+        return list(new LambdaQueryWrapper<Equip>().in(Equip::getModelId, modelIds));
+    }
+
+    @Override
+    public List<Equip> listByProductCodes(List<String> productCodes) {
+        if (CollectionUtils.isEmpty(productCodes)) {
+            return new ArrayList<>();
+        }
+        return list(new LambdaQueryWrapper<Equip>().in(Equip::getType, productCodes));
+    }
 }

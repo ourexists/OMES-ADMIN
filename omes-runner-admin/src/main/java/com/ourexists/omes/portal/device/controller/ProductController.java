@@ -37,6 +37,12 @@ public class ProductController {
         return productFeign.selectById(id);
     }
 
+    @Operation(summary = "根据产品编号查询")
+    @GetMapping("selectByCode")
+    public JsonResponseEntity<ProductDto> selectByCode(@RequestParam String code) {
+        return productFeign.selectByCode(code);
+    }
+
     @Operation(summary = "查询全部（用于下拉）")
     @GetMapping("listAll")
     public JsonResponseEntity<List<ProductDto>> listAll() {

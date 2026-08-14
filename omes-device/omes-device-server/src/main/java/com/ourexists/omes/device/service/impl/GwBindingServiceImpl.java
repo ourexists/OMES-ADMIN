@@ -38,45 +38,56 @@ public class GwBindingServiceImpl extends AbstractMyBatisPlusService<GwBindingMa
     }
 
     @Override
-    public void addOrUpdate(GwBindingDto dto) {
-        dto.getConfig().setGwId(dto.getGwId());
-        this.baseMapper.upsertByEquipId(GwBinding.wrap(dto));
-        EquipRealtime equipRealtime = equipRealtimeManager.getById(dto.getEquipId());
-        if (equipRealtime != null) {
-            EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();
-            BeanUtils.copyProperties(dto.getConfig(), equipRealtimeConfig);
-            if (!CollectionUtils.isEmpty(dto.getConfig().getAttrs())) {
-                List<EquipAttrRealtime> attrs = new ArrayList<>();
-                dto.getConfig().getAttrs().forEach(attr -> {
-                    EquipAttrRealtime equipAttrRealtime = new EquipAttrRealtime();
-                    BeanUtils.copyProperties(attr, equipAttrRealtime);
-                    attrs.add(equipAttrRealtime);
-                });
-                equipRealtimeConfig.setAttrs(attrs);
-            }
-            if (!CollectionUtils.isEmpty(dto.getConfig().getAlarms())) {
-                List<EquipAlarmRealtime> alarms = new ArrayList<>();
-                dto.getConfig().getAlarms().forEach(attr -> {
-                    EquipAlarmRealtime equipAlarmRealtime = new EquipAlarmRealtime();
-                    BeanUtils.copyProperties(attr, equipAlarmRealtime);
-                    alarms.add(equipAlarmRealtime);
-                });
-                equipRealtimeConfig.setAlarms(alarms);
-            }
-            if (!CollectionUtils.isEmpty(dto.getConfig().getControls())) {
-                List<EquipControlRealtime> controls = new ArrayList<>();
-                dto.getConfig().getControls().forEach(ctrl -> {
-                    EquipControlRealtime equipControlRealtime = new EquipControlRealtime();
-                    BeanUtils.copyProperties(ctrl, equipControlRealtime);
-                    controls.add(equipControlRealtime);
-                });
-                equipRealtimeConfig.setControls(controls);
-            }
-            equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
-            equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
-            equipRealtime.setEquipControlRealtimes(equipRealtimeConfig.getControls());
-            equipRealtimeManager.addOrUpdate(equipRealtime);
+    public void saveGatewayBinding(String equipId, String gwId) {
+        GwBinding binding = new GwBinding();
+        binding.setEquipId(equipId);
+        binding.setGwId(gwId);
+        this.baseMapper.upsertByEquipId(binding);
+    }
+
+    @Override
+    public void applyAssembledConfig(GwBindingDto dto) {
+        if (dto == null || dto.getConfig() == null) {
+            return;
         }
+        dto.getConfig().setGwId(dto.getGwId());
+        EquipRealtime equipRealtime = equipRealtimeManager.getById(dto.getEquipId());
+        if (equipRealtime == null) {
+            return;
+        }
+        EquipRealtimeConfig equipRealtimeConfig = new EquipRealtimeConfig();
+        BeanUtils.copyProperties(dto.getConfig(), equipRealtimeConfig);
+        if (!CollectionUtils.isEmpty(dto.getConfig().getAttrs())) {
+            List<EquipAttrRealtime> attrs = new ArrayList<>();
+            dto.getConfig().getAttrs().forEach(attr -> {
+                EquipAttrRealtime equipAttrRealtime = new EquipAttrRealtime();
+                BeanUtils.copyProperties(attr, equipAttrRealtime);
+                attrs.add(equipAttrRealtime);
+            });
+            equipRealtimeConfig.setAttrs(attrs);
+        }
+        if (!CollectionUtils.isEmpty(dto.getConfig().getAlarms())) {
+            List<EquipAlarmRealtime> alarms = new ArrayList<>();
+            dto.getConfig().getAlarms().forEach(attr -> {
+                EquipAlarmRealtime equipAlarmRealtime = new EquipAlarmRealtime();
+                BeanUtils.copyProperties(attr, equipAlarmRealtime);
+                alarms.add(equipAlarmRealtime);
+            });
+            equipRealtimeConfig.setAlarms(alarms);
+        }
+        if (!CollectionUtils.isEmpty(dto.getConfig().getControls())) {
+            List<EquipControlRealtime> controls = new ArrayList<>();
+            dto.getConfig().getControls().forEach(ctrl -> {
+                EquipControlRealtime equipControlRealtime = new EquipControlRealtime();
+                BeanUtils.copyProperties(ctrl, equipControlRealtime);
+                controls.add(equipControlRealtime);
+            });
+            equipRealtimeConfig.setControls(controls);
+        }
+        equipRealtime.setEquipRealtimeConfig(equipRealtimeConfig);
+        equipRealtime.setEquipAttrRealtimes(equipRealtimeConfig.getAttrs());
+        equipRealtime.setEquipControlRealtimes(equipRealtimeConfig.getControls());
+        equipRealtimeManager.addOrUpdate(equipRealtime);
     }
 
     @Override

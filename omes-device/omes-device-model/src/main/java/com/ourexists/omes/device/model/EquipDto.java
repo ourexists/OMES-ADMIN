@@ -32,6 +32,12 @@ public class EquipDto extends BaseDto {
     /** 所属产品名称（由后端按 type 查产品回填） */
     private String typeDesc;
 
+    /** 所属产品型号 ID */
+    private String modelId;
+
+    /** 所属产品型号名称（由后端按 modelId 回填） */
+    private String modelName;
+
     /** 所属产品图片地址（由后端按 type 查产品回填，用于设备列表/详情展示） */
     private String productImage;
 

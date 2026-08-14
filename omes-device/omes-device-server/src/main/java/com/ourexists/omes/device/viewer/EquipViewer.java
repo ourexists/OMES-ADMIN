@@ -16,9 +16,10 @@ import com.ourexists.omes.device.core.equip.cache.EquipRealtimeManager;
 import com.ourexists.omes.device.feign.EquipFeign;
 import com.ourexists.omes.device.model.*;
 import com.ourexists.omes.device.pojo.Equip;
-import com.ourexists.omes.device.pojo.GwBinding;
 import com.ourexists.omes.device.pojo.Product;
+import com.ourexists.omes.device.pojo.ProductModel;
 import com.ourexists.omes.device.pojo.Workshop;
+import com.ourexists.omes.device.service.EquipConfigRefreshService;
 import com.ourexists.omes.device.service.EquipProcessService;
 import com.ourexists.omes.device.service.EquipService;
 import com.ourexists.omes.device.service.GwBindingService;
@@ -62,12 +63,16 @@ public class EquipViewer implements EquipFeign {
     @Autowired
     private EquipProcessService equipProcessService;
 
+    @Autowired
+    private EquipConfigRefreshService equipConfigRefreshService;
+
     @Override
     @Operation(summary = "分页查询", description = "分页查询")
     @PostMapping("selectByPage")
     public JsonResponseEntity<List<EquipDto>> selectByPage(@RequestBody EquipPageQuery dto) {
         Page<Equip> page = service.selectByPage(dto);
-        List<EquipDto> r = Equip.covert(page.getRecords());
+        List<Equip> records = page.getRecords();
+        List<EquipDto> r = Equip.covert(records);
         if (!CollectionUtils.isEmpty(r)) {
             List<String> productCodes = r.stream().map(EquipDto::getType).filter(code -> code != null && !code.isEmpty()).distinct().toList();
             Map<String, String> codeToName = new HashMap<>();
@@ -81,34 +86,34 @@ public class EquipViewer implements EquipFeign {
                     }
                 }
             }
+            List<String> modelIds = r.stream().map(EquipDto::getModelId).filter(id -> id != null && !id.isEmpty()).distinct().toList();
+            Map<String, ProductModel> modelById = equipConfigRefreshService.mapByIds(modelIds);
             for (EquipDto equipDto : r) {
                 if (equipDto.getType() != null) {
                     equipDto.setTypeDesc(codeToName.get(equipDto.getType()));
                     equipDto.setProductImage(codeToImageUrl.get(equipDto.getType()));
                 }
+                if (equipDto.getModelId() != null) {
+                    ProductModel model = modelById.get(equipDto.getModelId());
+                    if (model != null) {
+                        equipDto.setModelName(model.getName());
+                    }
+                }
             }
             List<WorkshopTreeNode> workshopDtos = null;
-            List<GwBindingDto> equipConfigs = null;
+            Map<String, GwBindingDto> configByEquipId = null;
             if (dto.getQueryWorkshop()) {
                 List<String> codes = r.stream().map(EquipDto::getWorkshopCode).toList();
                 workshopDtos = Workshop.covert(workshopService.queryByCodes(codes));
             }
             if (dto.getQueryConfig()) {
-                List<String> ids = r.stream().map(EquipDto::getId).toList();
-                equipConfigs = GwBinding.covert(gwBindingService.queryByEquip(ids));
+                configByEquipId = equipConfigRefreshService.assembleAll(records);
             }
             Map<String, WorkshopTreeNode> workshopByCode = null;
             if (!CollectionUtils.isEmpty(workshopDtos)) {
                 workshopByCode = new HashMap<>(workshopDtos.size() * 4 / 3 + 1);
                 for (WorkshopTreeNode w : workshopDtos) {
                     workshopByCode.put(w.getSelfCode(), w);
-                }
-            }
-            Map<String, GwBindingDto> configByEquipId = null;
-            if (!CollectionUtils.isEmpty(equipConfigs)) {
-                configByEquipId = new HashMap<>(equipConfigs.size() * 4 / 3 + 1);
-                for (GwBindingDto g : equipConfigs) {
-                    configByEquipId.put(g.getEquipId(), g);
                 }
             }
             for (EquipDto equipDto : r) {
@@ -158,6 +163,7 @@ public class EquipViewer implements EquipFeign {
         }
         BeanUtils.copyProperties(e, equipRealtime);
         equipRealtimeManager.addOrUpdate(equipRealtime);
+        equipConfigRefreshService.refresh(e);
         return JsonResponseEntity.success(true);
     }
 
@@ -187,6 +193,12 @@ public class EquipViewer implements EquipFeign {
                 if (p.getImageUrl() != null && !p.getImageUrl().isEmpty()) {
                     equipDto.setProductImage(p.getImageUrl());
                 }
+            }
+        }
+        if (equipDto.getModelId() != null && !equipDto.getModelId().isEmpty()) {
+            ProductModel model = equipConfigRefreshService.mapByIds(List.of(equipDto.getModelId())).get(equipDto.getModelId());
+            if (model != null) {
+                equipDto.setModelName(model.getName());
             }
         }
         equipDto.setWorkshop(Workshop.covert(workshopService.queryByCode(equipDto.getWorkshopCode())));
@@ -219,17 +231,18 @@ public class EquipViewer implements EquipFeign {
     }
 
     @Override
-    @Operation(summary = "查询设备配置", description = "查询设备配置")
+    @Operation(summary = "查询设备配置", description = "查询设备配置：网关来自绑定，属性映射来自产品模板+型号")
     @GetMapping("queryEquipConfig")
     public JsonResponseEntity<GwBindingDto> queryEquipConfig(@RequestParam String equipId) {
-        return JsonResponseEntity.success(GwBinding.covert(gwBindingService.queryByEquip(equipId)));
+        return JsonResponseEntity.success(equipConfigRefreshService.assemble(service.getById(equipId)));
     }
 
     @Override
-    @Operation(summary = "设置设备配置", description = "设置设备配置")
+    @Operation(summary = "设置设备配置", description = "仅保存关联网关，属性映射以型号为准")
     @GetMapping("setEquipConfig")
     public JsonResponseEntity<Boolean> setEquipConfig(@Validated @RequestBody GwBindingDto gwBindingDto) {
-        gwBindingService.addOrUpdate(gwBindingDto);
+        gwBindingService.saveGatewayBinding(gwBindingDto.getEquipId(), gwBindingDto.getGwId());
+        equipConfigRefreshService.refresh(service.getById(gwBindingDto.getEquipId()));
         return JsonResponseEntity.success(true);
     }
 
@@ -239,7 +252,7 @@ public class EquipViewer implements EquipFeign {
         if (equip == null) {
             return JsonResponseEntity.success(null);
         }
-        return JsonResponseEntity.success(GwBinding.covert(gwBindingService.queryByEquip(equip.getId())));
+        return JsonResponseEntity.success(equipConfigRefreshService.assemble(equip));
     }
 
     @Override

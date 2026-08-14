@@ -431,8 +431,7 @@ COMMENT ON TABLE "public"."r_dg_equip_mat" IS '设备能力加工原料及容量
 DROP TABLE IF EXISTS "public"."r_gw_binding";
 CREATE TABLE "public"."r_gw_binding" (
   "equip_id" varchar(20) COLLATE "pg_catalog"."default" NOT NULL,
-  "gw_id" varchar(20) COLLATE "pg_catalog"."default",
-  "config" jsonb
+  "gw_id" varchar(20) COLLATE "pg_catalog"."default"
 )
 ;
 COMMENT ON COLUMN "public"."r_gw_binding"."equip_id" IS '设备id';

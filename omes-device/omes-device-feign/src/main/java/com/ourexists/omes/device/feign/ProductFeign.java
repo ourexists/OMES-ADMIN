@@ -24,6 +24,9 @@ public interface ProductFeign {
     @GetMapping("selectById")
     JsonResponseEntity<ProductDto> selectById(@RequestParam String id);
 
+    @GetMapping("selectByCode")
+    JsonResponseEntity<ProductDto> selectByCode(@RequestParam String code);
+
     @GetMapping("listAll")
     JsonResponseEntity<List<ProductDto>> listAll();
 

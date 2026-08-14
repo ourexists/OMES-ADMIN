@@ -10,6 +10,9 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class EquipAlarm {
 
+    /** 报警名称（产品模板身份，设备按此映射） */
+    private String name;
+
     /** 映射字段 */
     private String map;
     /** 比较类型: 0=相等, 1=大于, 2=大于等于, 3=小于, 4=小于等于, 5=范围 */

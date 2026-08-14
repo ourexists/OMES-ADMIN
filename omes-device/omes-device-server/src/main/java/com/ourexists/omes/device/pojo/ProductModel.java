@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
- */
-
 package com.ourexists.omes.device.pojo;
 
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
@@ -9,9 +5,9 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ourexists.era.framework.core.utils.CollectionUtil;
 import com.ourexists.era.framework.orm.mybatisplus.EraEntity;
-import com.ourexists.omes.device.model.ProductAttrConfig;
-import com.ourexists.omes.device.model.ProductDto;
-import com.ourexists.omes.device.typehandler.PgJsonbProductAttrConfigTypeHandler;
+import com.ourexists.omes.device.model.EquipConfigDetail;
+import com.ourexists.omes.device.model.ProductModelDto;
+import com.ourexists.omes.device.typehandler.PgJsonbEquipConfigTypeHandler;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -24,45 +20,43 @@ import java.util.List;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName(value = "t_product", autoResultMap = true)
-public class Product extends EraEntity {
+@TableName(value = "t_product_model", autoResultMap = true)
+public class ProductModel extends EraEntity {
+
+    private String productCode;
 
     private String name;
 
     private String code;
 
-    /** 产品图片地址 */
-    private String imageUrl;
-
-    /** 产品属性模板（attrs/alarms/controls），型号按名称填写采集映射 */
-    @TableField(value = "attr_config", typeHandler = PgJsonbProductAttrConfigTypeHandler.class, jdbcType = JdbcType.OTHER,
+    @TableField(value = "attr_config", typeHandler = PgJsonbEquipConfigTypeHandler.class, jdbcType = JdbcType.OTHER,
             updateStrategy = FieldStrategy.NOT_NULL)
-    private ProductAttrConfig attrConfig;
+    private EquipConfigDetail attrConfig;
 
-    public static ProductDto covert(Product source) {
+    public static ProductModelDto covert(ProductModel source) {
         if (source == null) {
             return null;
         }
-        ProductDto target = new ProductDto();
+        ProductModelDto target = new ProductModelDto();
         BeanUtils.copyProperties(source, target);
         return target;
     }
 
-    public static List<ProductDto> covert(List<Product> sources) {
-        List<ProductDto> targets = new ArrayList<>();
+    public static List<ProductModelDto> covert(List<ProductModel> sources) {
+        List<ProductModelDto> targets = new ArrayList<>();
         if (CollectionUtil.isNotBlank(sources)) {
-            for (Product source : sources) {
+            for (ProductModel source : sources) {
                 targets.add(covert(source));
             }
         }
         return targets;
     }
 
-    public static Product wrap(ProductDto source) {
+    public static ProductModel wrap(ProductModelDto source) {
         if (source == null) {
             return null;
         }
-        Product target = new Product();
+        ProductModel target = new ProductModel();
         BeanUtils.copyProperties(source, target);
         return target;
     }
