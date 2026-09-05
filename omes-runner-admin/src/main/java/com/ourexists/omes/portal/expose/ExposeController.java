@@ -15,17 +15,22 @@ import com.ourexists.omes.mps.model.MPSDto;
 import com.ourexists.omes.mps.model.MPSTFVo;
 import com.ourexists.omes.portal.expose.model.MPSTFQuery;
 import com.ourexists.omes.portal.line.service.LineFlowService;
+import com.ourexists.omes.ucenter.feign.SystemConfigFeign;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "对外暴露接口")
 @RestController
@@ -37,6 +42,24 @@ public class ExposeController {
 
     @Autowired
     private LineFlowService lineFlowService;
+
+    @Autowired
+    private SystemConfigFeign systemConfigFeign;
+
+    @Operation(summary = "前端公开配置", description = "供网关/前端启动时读取（含百度地图 AK）")
+    @GetMapping("frontendConfig")
+    public JsonResponseEntity<Map<String, Object>> frontendConfig() {
+        Map<String, Object> data = new LinkedHashMap<>();
+        try {
+            String ak = RemoteHandleUtils.getDataFormResponse(systemConfigFeign.getBaiduMapAk());
+            if (StringUtils.hasText(ak)) {
+                data.put("baiduMapAk", ak.trim());
+            }
+        } catch (EraCommonException e) {
+            // 配置缺失时不阻断启动
+        }
+        return JsonResponseEntity.success(data);
+    }
 
     @Operation(summary = "查询计划执行流程", description = "查询计划流程")
     @PostMapping("queryMPSFlow")

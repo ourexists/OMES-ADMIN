@@ -1132,6 +1132,29 @@ COMMENT ON COLUMN "public"."t_equip_state_snapshot"."online_state" IS '在线状
 COMMENT ON TABLE "public"."t_equip_state_snapshot" IS '设备状态快照';
 
 -- ----------------------------
+-- Table structure for t_system_config
+-- ----------------------------
+DROP TABLE IF EXISTS "public"."t_system_config";
+CREATE TABLE "public"."t_system_config" (
+  "id" varchar(20) COLLATE "pg_catalog"."default" NOT NULL,
+  "revision" int4,
+  "created_by" varchar(64) COLLATE "pg_catalog"."default",
+  "created_id" varchar(20) COLLATE "pg_catalog"."default",
+  "created_time" timestamp(6),
+  "updated_by" varchar(64) COLLATE "pg_catalog"."default",
+  "updated_id" varchar(20) COLLATE "pg_catalog"."default",
+  "updated_time" timestamp(6),
+  "config_key" varchar(64) COLLATE "pg_catalog"."default" NOT NULL,
+  "config" text COLLATE "pg_catalog"."default",
+  CONSTRAINT "t_system_config_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "uk_t_system_config_key" UNIQUE ("config_key")
+)
+;
+COMMENT ON COLUMN "public"."t_system_config"."config_key" IS '配置键，如 app';
+COMMENT ON COLUMN "public"."t_system_config"."config" IS '配置内容 JSON';
+COMMENT ON TABLE "public"."t_system_config" IS '系统配置';
+
+-- ----------------------------
 -- Table structure for t_gateway
 -- ----------------------------
 DROP TABLE IF EXISTS "public"."t_gateway";

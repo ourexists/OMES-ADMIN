@@ -3,10 +3,12 @@
  */
 package com.ourexists.omes.sas.gateway;
 
+import com.ourexists.era.oauth2.core.gateway.GatewayIdentityHeaders;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +31,7 @@ import java.util.Set;
 
 /**
  * Proxies non-SAS HTTP requests to OMES-ADMIN so SAS acts as unified API gateway entry.
+ * Always injects the internal service key so Admin can trust the hop.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
@@ -40,7 +43,8 @@ public class AdminUpstreamProxyFilter extends OncePerRequestFilter {
     );
 
     private static final Set<String> STRIPPED_ON_PROXY = Set.of(
-            "authorization"
+            "authorization",
+            GatewayIdentityHeaders.INTERNAL_SERVICE_KEY.toLowerCase()
     );
 
     /** 由 SAS 网关统一输出 CORS，避免与 Admin 上游重复导致浏览器拒绝 */
@@ -48,11 +52,15 @@ public class AdminUpstreamProxyFilter extends OncePerRequestFilter {
 
     private final OmesGatewayProperties properties;
     private final GatewayLocalPathMatcher localPathMatcher;
+    private final String internalServiceKey;
     private final HttpClient httpClient;
 
-    public AdminUpstreamProxyFilter(OmesGatewayProperties properties, GatewayLocalPathMatcher localPathMatcher) {
+    public AdminUpstreamProxyFilter(OmesGatewayProperties properties,
+                                    GatewayLocalPathMatcher localPathMatcher,
+                                    @Value("${omes.internal.service-key:dev-internal-change-me}") String internalServiceKey) {
         this.properties = properties;
         this.localPathMatcher = localPathMatcher;
+        this.internalServiceKey = internalServiceKey == null ? "" : internalServiceKey.trim();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NEVER)
@@ -81,6 +89,10 @@ public class AdminUpstreamProxyFilter extends OncePerRequestFilter {
                 .method(request.getMethod(), bodyPublisher(request));
 
         copyRequestHeaders(request, builder);
+        if (StringUtils.hasText(internalServiceKey)) {
+            // 网关出口统一盖章，避免依赖上游身份包装链路偶然丢头
+            builder.setHeader(GatewayIdentityHeaders.INTERNAL_SERVICE_KEY, internalServiceKey);
+        }
 
         HttpResponse<InputStream> upstream;
         try {
