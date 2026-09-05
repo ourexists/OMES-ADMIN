@@ -107,6 +107,9 @@ config/era-token.yml
 # Local runtime secrets (copy from config.properties.example)
 config/config.properties
 
+# Docker local env (copy from docker/.env.example)
+docker/.env
+
 ## Frontend (Node.js / Vite / Webpack)
 **/node_modules/
 **/dist/

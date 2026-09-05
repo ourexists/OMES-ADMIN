@@ -156,6 +156,35 @@ mvn -pl omes-runner-admin spring-boot:run
 
 设备实时流由 **`omes-flinker-equip`** 以 Spring Boot 可执行 JAR 运行（内嵌 Flink），与 RabbitMQ、管理端配置的队列名需一致。详见 **`omes-flinker-equip/README.md`**。
 
+### 7. Docker 部署
+
+统一入口：`docker/omes.ps1` / `docker/omes.sh`。Compose：`docker-compose.yml`。
+
+**IDEA Docker 插件（推荐日常调试）**
+
+1. 先起中间件：运行配置 **Compose: omes-infra**（或 `.\docker\omes.ps1 up infra`）
+2. 打开 `omes-runner-admin/Dockerfile` 或 `omes-runner-sas/Dockerfile` → 右键 **Run**  
+   （已提供 `.run/Dockerfile omes-admin|sas`：自动 Maven package，并挂载 `$PROJECT_DIR$/config` → `/app/config`）
+3. 单独跑容器时默认通过 `host.docker.internal` 访问宿主机 Postgres/Redis/RabbitMQ/Admin
+
+**命令行**
+
+```powershell
+.\docker\omes.ps1 build
+.\docker\omes.ps1 up             # 或 up infra
+.\docker\omes.ps1 logs admin
+.\docker\omes.ps1 down
+```
+
+| 服务 | 默认地址 |
+|:-----|:---------|
+| Web | http://127.0.0.1:8080 |
+| SAS | http://127.0.0.1:9400 |
+| Admin（内网） | http://127.0.0.1:10010 |
+| RabbitMQ 管理台 | http://127.0.0.1:15672 |
+
+修改 `docker/.env` 中 `VITE_SAS_BASE_URL` 后需重新构建 Web 镜像。
+
 ---
 
 

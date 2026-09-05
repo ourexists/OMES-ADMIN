@@ -1,0 +1,10 @@
+.git
+.idea
+**/.settings/
+**/node_modules/
+**/dist/
+log/
+file/
+*.md
+*.iml
+*.log
