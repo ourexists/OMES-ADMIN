@@ -1,5 +1,5 @@
 # OMES stack: postgres / redis / rabbitmq (+ admin / sas / web via profile "app")
-# Prefer: docker/omes.ps1 | docker/omes.sh  (build | up | down | logs | ps)
+# .\docker.ps1 | ./docker.sh   →  build | up [infra] | down
 
 name: omes
 
@@ -69,24 +69,24 @@ services:
     image: omes-admin:${OMES_IMAGE_TAG:-latest}
     container_name: omes-admin
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      rabbitmq:
+#        condition: service_healthy
     environment:
       TZ: Asia/Shanghai
       JAVA_OPTS: ${ADMIN_JAVA_OPTS:--Xms512m -Xmx1024m}
-      db_host: postgres:5432
+      db_host: host.docker.internal:5432
       db_schema: ${POSTGRES_DB:-omes}
       db_username: ${POSTGRES_USER:-postgres}
       db_password: ${POSTGRES_PASSWORD:-postgres}
-      REDIS_HOST: redis
+      REDIS_HOST: host.docker.internal
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-waqwertyuiop!}
-      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_HOST: host.docker.internal
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-admin}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-TyY6Df3bZe}
@@ -111,10 +111,10 @@ services:
     container_name: omes-sas
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
       admin:
         condition: service_healthy
     environment:
@@ -123,11 +123,11 @@ services:
       OMES_GATEWAY_PORT: 9400
       OMES_ADMIN_URL: http://admin:10010
       OMES_GATEWAY_ENABLED: ${OMES_GATEWAY_ENABLED:-true}
-      db_host: postgres:5432
+      db_host: host.docker.internal:5432
       db_schema: ${POSTGRES_DB:-omes}
       db_username: ${POSTGRES_USER:-postgres}
       db_password: ${POSTGRES_PASSWORD:-postgres}
-      REDIS_HOST: redis
+      REDIS_HOST: host.docker.internal
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-waqwertyuiop!}
       OMES_INTERNAL_SERVICE_KEY: ${OMES_INTERNAL_SERVICE_KEY:-dev-internal-change-me}
@@ -146,16 +146,14 @@ services:
     build:
       context: ../omes-web-admin
       dockerfile: Dockerfile
-      args:
-        VITE_SAS_BASE_URL: ${VITE_SAS_BASE_URL:-http://127.0.0.1:9400}
-        VITE_APP_TITLE: ${VITE_APP_TITLE:-OMES ADMIN}
-        VITE_GATEWAY_PORT: ${SAS_PORT:-9400}
     image: omes-web:${OMES_IMAGE_TAG:-latest}
     container_name: omes-web
     restart: unless-stopped
     depends_on:
       sas:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${WEB_PORT:-8080}:80"
     networks:

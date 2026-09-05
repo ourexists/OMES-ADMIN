@@ -158,32 +158,21 @@ mvn -pl omes-runner-admin spring-boot:run
 
 ### 7. Docker 部署
 
-统一入口：`docker/omes.ps1` / `docker/omes.sh`。Compose：`docker-compose.yml`。
-
-**IDEA Docker 插件（推荐日常调试）**
-
-1. 先起中间件：运行配置 **Compose: omes-infra**（或 `.\docker\omes.ps1 up infra`）
-2. 打开 `omes-runner-admin/Dockerfile` 或 `omes-runner-sas/Dockerfile` → 右键 **Run**  
-   （已提供 `.run/Dockerfile omes-admin|sas`：自动 Maven package，并挂载 `$PROJECT_DIR$/config` → `/app/config`）
-3. 单独跑容器时默认通过 `host.docker.internal` 访问宿主机 Postgres/Redis/RabbitMQ/Admin
-
-**命令行**
-
 ```powershell
-.\docker\omes.ps1 build
-.\docker\omes.ps1 up             # 或 up infra
-.\docker\omes.ps1 logs admin
-.\docker\omes.ps1 down
+.\docker.ps1 build        # jar + dist + 镜像（-SkipMaven / -SkipWeb）
+.\docker.ps1 up           # 全量；仅中间件：up infra
+.\docker.ps1 down
 ```
 
-| 服务 | 默认地址 |
-|:-----|:---------|
+IDEA：先跑 **Compose: omes-infra**，再对模块 `Dockerfile` 右键 Run（admin/sas 挂载 `config/`；web 需先 `npm run build:dist`）。
+
+| 服务 | 地址 |
+|:-----|:-----|
 | Web | http://127.0.0.1:8080 |
 | SAS | http://127.0.0.1:9400 |
-| Admin（内网） | http://127.0.0.1:10010 |
-| RabbitMQ 管理台 | http://127.0.0.1:15672 |
+| Admin | http://127.0.0.1:10010 |
 
-修改 `docker/.env` 中 `VITE_SAS_BASE_URL` 后需重新构建 Web 镜像。
+Web 镜像只拷贝 `dist/`，由 Nginx 同源反代 SAS。
 
 ---
 

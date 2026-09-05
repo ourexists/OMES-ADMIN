@@ -2,7 +2,7 @@
   <configuration default="false" name="Compose: omes-infra" type="docker-deploy" factoryName="docker-compose.yml" server-name="Docker">
     <deployment type="docker-compose.yml">
       <settings>
-        <option name="envFilePath" value="docker/.env" />
+        <option name="envFilePath" value=".env" />
         <option name="services">
           <list>
             <option value="postgres" />
