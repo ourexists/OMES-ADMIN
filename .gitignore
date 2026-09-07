@@ -132,3 +132,41 @@ config/config.properties
 
 # SAS 不再内嵌 Vue 构建产物
 omes-iomp-runner-sas/src/main/resources/static/vue/
+
+# Java compiled files and JVM crash dumps
+*.class
+hs_err_pid*
+replay_pid*
+*.hprof
+
+# Additional Maven release artifacts
+pom.xml.versionsBackup
+pom.xml.tag
+pom.xml.next
+pom.xml.bak
+pom.xml.branch
+dependency-reduced-pom.xml
+
+# Runtime logs (including rotated/compressed logs)
+log/
+logs/
+*.log.*
+
+# Local environment overrides; keep configuration examples versioned
+.env.*.local
+
+# Frontend package-manager caches and server-side build output
+.npm/
+.pnpm-store/
+dist-ssr/
+.stylelintcache
+
+# Operating-system metadata and temporary files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+._*
+*.tmp
+*.temp
+.tmp/
+.temp/
