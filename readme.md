@@ -1,6 +1,6 @@
 # OMES IOMP 工业设备管理平台
 
-面向工业设备管理，提供设备接入、实时采集、点检、生产计划、工艺管理和 AI 辅助能力。采用 AGPL-3.0 许可证，见 [LICENSE](LICENSE)。
+面向工业设备管理，提供设备接入、实时采集、点检、生产计划、工艺管理和 AI 辅助能力。采用 Apache-2.0 许可证，见 [LICENSE](LICENSE)。
 
 ![平台架构](架构图.png)
 
@@ -98,6 +98,15 @@ Control、AI 和两个 Flink 作业按业务需要启动。设备与场景 Flink
 
 Linux / macOS 使用 `bash docker/docker.sh` 和相同子命令。脚本读取根目录 `.env`，首次使用从 [docker/.env.example](docker/.env.example) 生成；后端运行配置仍放在根目录 `config/`。网络要求、单独构建命令和目录说明见 [部署文档](docker/README.md)。
 
+## 开源协议
+
+本项目自有代码、文档和配置采用 [Apache License 2.0](LICENSE)（SPDX：`Apache-2.0`）。版权归属见 [NOTICE](NOTICE) 和各文件中的原始声明；第三方依赖、内置组件及另有声明的文件遵循各自许可证。
+
+- 允许在遵守协议的前提下使用、修改、分发和商业使用。
+- 分发本项目或其衍生作品时，应附带许可证副本、保留适用的版权和归属声明，并按协议要求保留 NOTICE 中的适用声明；修改过的文件应明确标注变更。
+- 软件按现状提供，不附带担保；商标使用与专利授权的范围以许可证正文为准。
+
+第三方组件说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，提交贡献前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。本节仅作说明，具体条款以 [LICENSE](LICENSE) 为准。
 ## 交流与支持
 
 - 微信：m15026681077
