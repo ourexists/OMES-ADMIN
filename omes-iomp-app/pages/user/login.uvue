@@ -1,0 +1,68 @@
+<template>
+  <cl-page>
+    <cl-topbar safe-area-top background-color="transparent"></cl-topbar>
+
+    <view class="px-10">
+      <!-- Logo -->
+      <view class="flex flex-col items-center justify-center py-20">
+        <view>
+          <cl-image
+              src="/static/logo.png"
+              mode="widthFix"
+              :width="120"
+              :height="120"
+          ></cl-image>
+        </view>
+        <cl-text :pt="{ className: 'text-xl font-bold mt-3' }">{{ config.name }}</cl-text>
+      </view>
+
+      <!-- 账户登录 -->
+      <login-account :form="form" @success="toLogin"></login-account>
+    </view>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import {config} from "@/config";
+import {router, useUi} from "@/uni_modules/cool-unix";
+import {type Token, useStore} from "@/core/store";
+import {reactive} from "vue";
+import {type LoginTokenResponse} from "@/core/service";
+import type {LoginForm} from "@/pages/user/types";
+import LoginAccount from "@/pages/user/login/account.uvue";
+
+const {user} = useStore();
+const ui = useUi();
+
+
+// 表单
+const form = reactive<LoginForm>({
+  username: "",
+  password: "",
+  captcha: ""
+});
+
+// 登录成功
+async function toLogin(res: LoginTokenResponse) {
+  let token = {
+    token: res.token_type + " " + res.access_token,
+    expire: res.expires_in,
+    refreshToken: "",
+    refreshExpire: 0
+  } as Token;
+  user.setToken(token!);
+  user.get().then(r => {
+    router.nextLogin();
+  });
+}
+</script>
+
+<style lang="scss" scoped>
+.login-item {
+  @apply mx-2 p-2 flex items-center justify-center rounded-full bg-white border border-solid border-surface-100;
+
+  &.is-dark {
+    @apply border-surface-600 bg-surface-700;
+  }
+}
+</style>

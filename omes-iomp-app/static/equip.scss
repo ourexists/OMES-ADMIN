@@ -1,0 +1,36 @@
+/* 运行状态 */
+.run {
+  background: #52c41a;
+}
+
+.stopped {
+  background: #FAAD14;
+}
+
+.online {
+  background: #1890ff;
+}
+
+.alarm {
+  background: #ff4d4f;
+}
+
+.offline {
+  background: #bfbfbf;
+}
+
+.alarm.shadow {
+  box-shadow: 0 0 6px rgba(255, 77, 79, 0.8);
+}
+
+.run.shadow {
+  box-shadow: 0 0 6px rgba(82, 196, 26, 0.6);
+}
+
+.stopped.shadow {
+  box-shadow: 0 0 6px rgba(250, 173, 20, 0.6);
+}
+
+.online.shadow {
+  box-shadow: 0 0 6px rgba(24, 144, 255, 0.6);
+}

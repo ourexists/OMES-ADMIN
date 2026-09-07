@@ -1,0 +1,278 @@
+<template>
+  <view class="count-card ">
+    <view class="w-full echart-equip">
+      <l-echart ref="chartRef" @finished="init"></l-echart>
+    </view>
+    <view class="count-status-group">
+      <view class="count-status">
+        <text class="count-title total ">{{ t('设备总计') }}</text>
+        <text class="count-num">{{ equipCount.total }}</text>
+      </view>
+
+      <view class="count-status">
+        <text class="count-title alarm">{{ t('报警设备') }}</text>
+        <text class="count-num">{{ equipCount.alarm }}</text>
+      </view>
+    </view>
+    <view class="count-status-group">
+      <view class="count-status items-center">
+        <text class="count-title online">{{ t('在线设备') }}</text>
+        <text class="count-num">{{ equipCount.online }}</text>
+      </view>
+      <view class="count-status">
+        <text class="count-title offline">{{ t('离线设备') }}</text>
+        <text class="count-num">{{ equipCount.offline }}</text>
+      </view>
+      <view class="count-status">
+        <text class="count-title run">{{ t('运行设备') }}</text>
+        <text class="count-num">{{ equipCount.run }}</text>
+      </view>
+      <view class="count-status">
+        <text class="count-title stopped ">{{ t('停止设备') }}</text>
+        <text class="count-num">{{ equipCount.stopped }}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import {t} from "@/locale";
+import type {EquipCount} from "@/core/types";
+import {onMounted, onUnmounted, ref, watch} from "vue";
+import {useRefs, useUi} from "@/uni_modules/cool-unix";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {parseData} from "@/core/utils/parse";
+import type {LEchartComponentPublicInstance} from "@/uni_modules/lime-echart/components/l-echart/l-echart.uvue";
+import {config} from "@/config";
+import {workshopTree} from "@/components/workshop";
+
+defineOptions({
+  name: "chart-equip-runtime"
+});
+
+const ui = useUi();
+const refs = useRefs();
+
+const chartRef = ref<LEchartComponentPublicInstance | null>(null);
+
+const loading = ref<boolean>(false);
+
+const equipCount = ref<EquipCount>({
+  total: 0,
+  alarm: 0,
+  online: 0,
+  offline: 0,
+  run: 0,
+  stopped: 0
+});
+
+let timer: number | null = null;
+
+const init = async () => {
+  if (chartRef.value == null) return
+  const chart = await chartRef.value!.init(null)
+
+  chart.setOption({
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      orient: 'vertical', // 竖直排列
+      right: '5%',
+      top: '15%'
+    },
+    color: [
+      '#bfbfbf',
+      '#1890ff',
+      '#FAAD14',
+      '#52c41a'
+    ],
+    series: [
+      {
+        name: t('设备在线统计'),
+        type: 'pie',
+        radius: ['30%', '45%'],
+        center: ['25%', '50%'],
+        itemStyle: {
+          borderColor: '#fff',
+          borderWidth: 1
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0,0,0,0.3)'
+          }
+        },
+        label: {
+          show: true,
+          formatter: '{d}%',       // 显示百分比
+          position: 'inside'      // 内部显示
+        },
+        data: [
+          {value: equipCount.value.offline, name: t('离线')},
+          {value: equipCount.value.online, name: t('在线')},
+        ]
+      },
+      {
+        name: t('设备运行状态'),
+        type: 'pie',
+        radius: ['30%', '45%'],
+        center: ['55%', '50%'],
+        itemStyle: {
+          borderColor: '#fff',
+          borderWidth: 1
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0,0,0,0.3)'
+          }
+        },
+        label: {
+          show: true,
+          formatter: '{d}%',      // 显示百分比
+          position: 'inside'      // 内部显示
+        },
+        data: [
+          {value: equipCount.value.stopped, name: t('停止')},
+          {value: equipCount.value.run, name: t('运行')},
+        ],
+      }
+    ]
+  })
+}
+
+function reloadEChart() {
+  chartRef.value!.setOption({
+    series: [
+      {
+        data: [
+          {value: equipCount.value.offline, name: t('离线')},
+          {value: equipCount.value.online, name: t('在线')},
+        ]
+      },
+      {
+        data: [
+          {value: equipCount.value.stopped, name: t('停止')},
+          {value: equipCount.value.run, name: t('运行')},
+        ],
+      }
+    ]
+  })
+}
+
+async function reloadData() {
+  if (loading.value) {
+    return;
+  }
+  loading.value = true;
+  try {
+    const res = await request({
+      url: apiPath.equip_count as string,
+      method: "POST",
+      data: {
+        needWorkshopCascade: true,
+        limitUserWorkshop: true,
+        workshopCode: workshopTree.selectNode.value.id == -1 ? null : workshopTree.selectNode.value.id,
+      }
+    });
+    if (res !== null) {
+      const parsed = parseData<EquipCount>(res);
+      if (parsed !== null) {
+        equipCount.value = parsed;
+      }
+    }
+  } catch (_err) {
+    // 网络失败由 core/service 打 OMES-HTTP；此处避免 Unhandled Promise Rejection
+  } finally {
+    loading.value = false;
+  }
+}
+
+
+watch(equipCount, () => {
+  reloadEChart();
+}, {deep: true});
+
+onMounted(() => {
+  timer = setInterval(() => {
+    reloadData();
+  }, config.equipRefreshTime); // 每10秒刷新
+});
+
+onUnmounted(() => {
+  if (timer != null) {
+    clearInterval(timer as number); // 清除定时器
+    timer = null;
+  }
+})
+
+onShow(() => {
+  setTimeout(() => {
+    reloadData();
+  }, 500)
+})
+
+onHide(() => {
+  if (timer != null) {
+    clearInterval(timer as number); // 清除定时器
+    timer = null;
+  }
+})
+
+</script>
+
+
+<style scoped lang="scss">
+.count-card {
+  height: 720rpx;
+
+  @apply flex mt-2 w-full items-center bg-white rounded-3xl border border-gray-100 border-solid;
+
+  .echart-equip {
+    @apply h-1/2
+  }
+}
+
+.count-status {
+  @apply flex flex-col w-24 p-1 items-center justify-between
+}
+
+.count-title {
+  @apply text-sm p-2 font-medium rounded text-white
+}
+
+.count-num {
+  @apply text-lg font-light mt-3
+}
+
+.count-status-group {
+  @apply flex flex-row w-full p-2 items-center justify-center
+}
+
+.count-title.total {
+  background-color: #858484;
+}
+
+.count-title.online {
+  @apply bg-blue-500
+}
+
+.count-title.offline {
+  background: #bfbfbf;
+}
+
+.count-title.alarm {
+  @apply bg-red-500
+}
+
+.count-title.run {
+  @apply bg-green-500
+}
+
+.count-title.stopped {
+  @apply bg-yellow-500
+}
+
+</style>

@@ -1,0 +1,114 @@
+import { get, post, postPage } from '@/api/request'
+import type { IdsPayload } from '@/types/api'
+
+export interface ProtocolOption {
+  id: string
+  name: string
+}
+
+export interface GatewayRecord {
+  id?: string
+  serverName?: string
+  uri?: string
+  topic?: string
+  protocol?: string
+  params?: string | Record<string, unknown>
+  enabled?: boolean
+  collectCron?: string
+  username?: string
+  password?: string
+  validType?: number
+}
+
+export interface GatewayPageQuery {
+  requirePage?: boolean
+  protocol?: string
+  serverName?: string
+  enabled?: boolean
+}
+
+export interface PollingParams {
+  timeout?: number
+  remoteRack?: number
+  remoteSlot?: number
+}
+
+export function fetchGatewayProtocols() {
+  return get<ProtocolOption[]>('/gateway/protocols')
+}
+
+export async function fetchGatewayList(query: GatewayPageQuery = {}) {
+  const result = await postPage<GatewayRecord>('/gateway/selectByPage', {
+    requirePage: false,
+    page: 1,
+    pageSize: 10,
+    ...query,
+  })
+  return result?.records ?? []
+}
+
+export function fetchGatewayById(id: string) {
+  return get<GatewayRecord>('/gateway/selectById', { id })
+}
+
+export function saveGateway(data: GatewayRecord) {
+  return post<boolean>('/gateway/addOrUpdate', data)
+}
+
+export function deleteGateways(ids: string[]) {
+  return post<boolean>('/gateway/delete', { ids } satisfies IdsPayload)
+}
+
+export function startGateway(id: string) {
+  return get<boolean>('/gateway/start', { id })
+}
+
+export function stopGateway(id: string) {
+  return get<boolean>('/gateway/stop', { id })
+}
+
+export function normalizeProtocol(protocol?: string): string {
+  return (protocol || '').trim().toLowerCase()
+}
+
+export function isMqttProtocol(protocol?: string): boolean {
+  const p = normalizeProtocol(protocol)
+  return p === 'mqtt' || p === 'tc_mqtt'
+}
+
+export function isPollingProtocol(protocol?: string): boolean {
+  const p = normalizeProtocol(protocol)
+  return p === 's7' || p === 'modbus tcp' || p === 'opc ua'
+}
+
+export function needsGatewayAuth(protocol?: string): boolean {
+  const p = normalizeProtocol(protocol)
+  return isMqttProtocol(protocol) || p === 'rest' || p === 'wincc'
+}
+
+export function parsePollingParams(
+  params?: string | Record<string, unknown> | null,
+): PollingParams {
+  if (!params) {
+    return { timeout: 5000, remoteRack: 0, remoteSlot: 1 }
+  }
+  try {
+    const raw = typeof params === 'string' ? JSON.parse(params) : params
+    return {
+      timeout: Number(raw.timeout) || 5000,
+      remoteRack: Number(raw.remoteRack) || 0,
+      remoteSlot: Number(raw.remoteSlot) || 1,
+    }
+  } catch {
+    return { timeout: 5000, remoteRack: 0, remoteSlot: 1 }
+  }
+}
+
+export function buildPollingParams(protocol: string, polling: PollingParams): string {
+  const params: PollingParams = { timeout: polling.timeout ?? 5000 }
+  if (normalizeProtocol(protocol) === 's7') {
+    params.remoteRack = polling.remoteRack ?? 0
+    params.remoteSlot = polling.remoteSlot ?? 1
+  }
+  return JSON.stringify(params)
+}

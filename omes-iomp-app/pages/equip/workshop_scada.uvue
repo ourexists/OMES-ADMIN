@@ -1,0 +1,82 @@
+<template>
+  <cl-page>
+    <web-view :src="iframeUrl" style="flex:1"/>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import {ref} from 'vue';
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {parseData} from "@/core/utils/parse";
+import type {WorkshopScada} from "@/core/types";
+
+const currentWorkshop = ref<string | number | null>(null);
+const iframeUrl = ref<string | null>(null);
+let timer: number | null = null;
+const timerInterval = ref<number>(0);
+
+function loadIframeUrl(workshopCode: string | number | null) {
+  if (workshopCode == null || workshopCode == '-1' || workshopCode == -1) {
+    iframeUrl.value = null;
+    timerInterval.value = 0;
+    return
+  }
+  request({
+    url: apiPath.workshop_scada as string,
+    method: "GET",
+    data: {
+      workshopCode: workshopCode,
+      platform: 2
+    }
+  })
+      .then((res) => {
+        if (res === null) {
+          iframeUrl.value = null;
+          timerInterval.value = 0;
+          return;
+        }
+        const r = parseData<WorkshopScada>(res);
+        if (r == null || r.url == null || r.url == "") {
+          iframeUrl.value = null;
+          timerInterval.value = 0;
+          return
+        }
+        iframeUrl.value = r.url;
+        if (r.interval == null) {
+          timerInterval.value = 0;
+        } else {
+          timerInterval.value = r.interval as number;
+        }
+      });
+}
+
+onLoad((query) => {
+  currentWorkshop.value = query.workshopCode;
+  loadIframeUrl(currentWorkshop.value)
+});
+
+onShow(() => {
+  if (timer != null) {
+    clearInterval(timer as number)
+  }
+  if (timerInterval.value > 0) {
+    timer = setInterval(() => {
+      loadIframeUrl(currentWorkshop.value)
+    }, timerInterval.value * 60000)
+  }
+})
+
+onHide(() => {
+  if (timer != null) {
+    clearInterval(timer as number); // 清除定时器
+    timer = null;
+  }
+})
+
+</script>
+
+
+<style scoped lang="scss">
+
+</style>

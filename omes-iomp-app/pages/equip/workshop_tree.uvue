@@ -1,0 +1,98 @@
+<template>
+  <cl-page>
+    <cl-topbar
+        fixed
+        :background-color="isDark? 'black': 'white'"
+        :show-back="true"
+        safe-area-top
+        :height="isMp() ? null : 100"
+        :pt="{
+    				className: '!z-50'
+    			}"
+    >
+      <view class="w-full flex flex-row items-end"
+            :class="{
+    					'pt-0': isMp()
+    				}">
+        <view class="flex flex-row justify-center flex-1">
+          <!-- 当前选择展示 -->
+          <cl-text
+              color="primary"
+              :pt="{
+						className: '!text-xl ml-2'
+					}"
+          >
+            {{ t('选择场景') }}
+          </cl-text>
+        </view>
+        <view
+            class="flex flex-row justify-end"
+            :class="{
+						'mr-32': isMp(),
+						'mr-10': !isMp()
+					}"
+            @tap="confirmSelect"
+        >
+          <cl-text
+              color="primary"
+              :pt="{
+						className: '!text-base ml-2'
+					}"
+          >
+            {{ t('确定') }}
+          </cl-text>
+        </view>
+      </view>
+    </cl-topbar>
+    <view class="tree">
+      <cl-tree
+        :list="workshopTree.tree.value"
+        :checkable="true"
+        :multiple="false"
+        :pt="{ className: 'tree-inner' }"
+      />
+    </view>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import {isDark, isMp, router, useUi} from "@/uni_modules/cool-unix";
+import {t} from "@/locale";
+import {workshopTree} from "@/components/workshop";
+
+const ui = useUi();
+
+function confirmSelect() {
+  ui.showLoading(t('切换中'))
+  workshopTree.selectConfirm();
+  setTimeout(() => {
+    router.back();
+    ui.hideLoading()
+  }, 300)
+}
+
+onLoad(() => {
+  workshopTree.loadWorkshopTree();
+})
+
+</script>
+
+
+<style scoped lang="scss">
+.tree {
+  background: #fff;
+  border: 1rpx solid #ebedf0;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+  border-radius: 24rpx;
+  margin: 16rpx;
+  box-sizing: border-box;
+  min-height: 900rpx;
+  height: 100%;
+  overflow: hidden;
+}
+
+:deep(.tree-inner) {
+  height: 100%;
+}
+
+</style>

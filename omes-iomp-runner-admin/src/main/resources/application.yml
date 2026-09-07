@@ -1,0 +1,205 @@
+server:
+  port: 10010
+  servlet:
+    context-path: /
+spring:
+  autoconfigure:
+    exclude:
+      # 由 RedissonClientConfiguration 基于 RedisConnectionFactory 创建，与 RedisTemplate 同源
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
+  rabbitmq:
+    host: ${RABBITMQ_HOST:127.0.0.1}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:TyY6Df3bZe}
+    # 必须带引号，否则 YAML 会把 `/` 误解析；需与 omes-stream（Flink RMQSource）使用同一 vhost
+    virtual-host: "${RABBITMQ_VHOST:/}"
+  application:
+    name: OMES-ADMIN
+  config:
+    import:
+      - optional:file:config/era-token.yml
+    location: classpath:/,file:config/
+  profiles:
+    include: db-postgres
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: ALWAYS
+    time-zone: GMT+8
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+  cloud:
+    loadbalancer:
+      retry:
+        enabled: true
+    # 多个 Consumer 时必须显式声明 function.definition（见 Spring Cloud Stream 文档）
+    function:
+      definition: equipStreamPersistChange;equipStreamPersistStateSnapshot;equipStreamPersistCollectSnapshot;equipNotifyCreate;workshopStreamPersistCollectSnapshot
+    # 设备侧 RabbitMQ 走 Spring Cloud Stream + rabbit binder；换 Kafka 等 broker 时可改 binder 与中继拓扑（Flink omes-stream 仍为独立 AMQP 客户端）
+    stream:
+      default-binder: rabbit
+      bindings:
+        equipRealtime-out-0:
+          destination: ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
+          # 随生产者声明 TopicExchange + 与 Flink 共用的持久队列（queue-name-group-only 见 rabbit 段）
+          producer:
+            required-groups:
+              - ${OMES_EQUIP_REALTIME_QUEUE:omes.equip.realtime}
+        workshopRealtime-out-0:
+          destination: ${OMES_WORKSHOP_REALTIME_QUEUE:omes.workshop.realtime}
+          producer:
+            required-groups:
+              - ${OMES_WORKSHOP_REALTIME_QUEUE:omes.workshop.realtime}
+        # 仅消费 Flink 桥接 sink 已声明的队列：destination/group 与物理队列名一致
+        equipStreamPersistChange-in-0:
+          destination: ${OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE:omes.equip.stream.persist.change}
+          group: ${OMES_EQUIP_STREAM_PERSIST_CHANGE_QUEUE:omes.equip.stream.persist.change}
+        equipStreamPersistStateSnapshot-in-0:
+          destination: ${OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE:omes.equip.stream.persist.state}
+          group: ${OMES_EQUIP_STREAM_PERSIST_STATE_QUEUE:omes.equip.stream.persist.state}
+        equipStreamPersistCollectSnapshot-in-0:
+          destination: ${OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE:omes.equip.stream.persist.collect}
+          group: ${OMES_EQUIP_STREAM_PERSIST_COLLECT_QUEUE:omes.equip.stream.persist.collect}
+        equipNotifyCreate-in-0:
+          destination: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
+          group: ${OMES_EQUIP_NOTIFY_CREATE_QUEUE:omes.notify.create}
+        workshopStreamPersistCollectSnapshot-in-0:
+          destination: ${OMES_WORKSHOP_STREAM_PERSIST_COLLECT_QUEUE:omes.workshop.stream.persist.collect}
+          group: ${OMES_WORKSHOP_STREAM_PERSIST_COLLECT_QUEUE:omes.workshop.stream.persist.collect}
+      rabbit:
+        bindings:
+          equipRealtime-out-0:
+            producer:
+              queue-name-group-only: true
+          workshopRealtime-out-0:
+            producer:
+              queue-name-group-only: true
+          equipStreamPersistChange-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          equipStreamPersistStateSnapshot-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          equipStreamPersistCollectSnapshot-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          equipNotifyCreate-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+          workshopStreamPersistCollectSnapshot-in-0:
+            consumer:
+              bind-queue: false
+              declare-exchange: false
+              queue-name-group-only: true
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: ${REDIS_TIMEOUT:5s}
+      lettuce:
+        pool:
+          max-active: ${REDIS_POOL_MAX_ACTIVE:50}
+          max-idle: ${REDIS_POOL_MAX_IDLE:20}
+          min-idle: ${REDIS_POOL_MIN_IDLE:5}
+          max-wait: ${REDIS_POOL_MAX_WAIT:2s}
+  cache:
+    type: redis
+
+management:
+  endpoint:
+    health:
+      show-details: never
+    shutdown:
+      access: read_only
+  endpoints:
+    web:
+      base-path: ${server.servlet.context-path}
+      exposure:
+        include:
+          - "health"
+era:
+  authorization:
+    server:
+      # 业务 Admin 仅校验 JWT，OAuth2 签发在 OMES-SAS
+      enabled: false
+  resource:
+    # 用户/权限由 SAS 网关解析后通过内部头传递，Admin 不再读 OAuth2 授权 Redis
+    identity-source: gateway
+    gateway:
+      internal-service-key: ${OMES_INTERNAL_SERVICE_KEY:dev-internal-change-me}
+  log:
+    level: info
+    file:
+      path: log/
+  permission:
+    ignore:
+      auth_check:
+        - /expose/**
+        - /files/**
+        - /authentication/**
+      api_check:
+        - /expose/**
+        - /files/**
+        - /authentication/**
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 20000
+        readTimeout: 10000
+
+logging:
+  level:
+    org:
+      springframework:
+        security: INFO
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
+
+file:
+  storage:
+    root-path: ${FILE_STORAGE_ROOT:file}
+    url-prefix: /localFile/download?path=
+
+liteflow:
+  print-execution-log: false
+  when-max-wait-seconds: 0
+
+process:
+  engine:
+    config-source: file
+  condition:
+    none: "true"
+    time: "elapsed(phaseKey) >= ${durationMs}"
+    manual-confirm: "manualConfirmed(phaseKey)"
+    auto-next: "true"
+
+omes:
+  internal:
+    service-key: ${OMES_INTERNAL_SERVICE_KEY:dev-internal-change-me}
+  equip:
+    # change 消息聚合成批再调 device 批量接口：条数阈值与最大等待（毫秒，防抖）
+    stream-persist-batch-size: ${OMES_EQUIP_STREAM_PERSIST_BATCH_SIZE:32}
+    stream-persist-batch-flush-ms: ${OMES_EQUIP_STREAM_PERSIST_BATCH_FLUSH_MS:200}
+    # stream eventId Redis 幂等键存活时间（小时）；过期后同 eventId 可再次入库
+    stream-persist-idempotent-ttl-hours: ${OMES_EQUIP_STREAM_PERSIST_IDEMPOTENT_TTL_HOURS:168}
+
+

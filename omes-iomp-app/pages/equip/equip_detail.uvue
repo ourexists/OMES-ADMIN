@@ -1,0 +1,890 @@
+<template>
+  <scroll-view
+      :style="{ flex: 1 }"
+      scroll-y="true"
+      scroll-x="false"
+      :scroll-with-animation="true"
+  >
+    <cl-page>
+      <cl-topbar
+          fixed
+          :background-color="isDark? 'black': 'white'"
+          :show-back="true"
+          safe-area-top
+          :height="isMp() ? null : 100"
+          :pt="{
+    				className: '!z-50'
+    			}"
+      >
+        <view
+            class="flex flex-row items-center justify-center p-3 flex-1 w-full"
+            :class="{
+    					'pt-0': isMp()
+    				}"
+        >
+          <!-- 当前选择展示 -->
+          <cl-text
+              color="primary"
+              :pt="{
+						className: '!text-xl ml-2'
+					}"
+          >
+            {{ equip.name }}
+          </cl-text>
+        </view>
+      </cl-topbar>
+      <!-- ① 顶部设备头图 -->
+      <view class="header-card card">
+        <view class="header">
+          <image
+              :src="typeImage(equip)"
+              mode="aspectFill"
+              class="header-img"
+          />
+
+          <!-- 状态角标 -->
+          <equip-badge :equip="equip" class="!text-xl"></equip-badge>
+        </view>
+
+        <!-- 名称 -->
+        <view class="header-info">
+          <text class="device-name">{{ equip!.name }}</text>
+          <view class="header-info-item">
+            <text class="name">{{ t('编号') }}</text>
+            <view class="sn-wrap">
+              <text class="device-sn">{{ equip!.selfCode }}</text>
+              <text class="copy-btn" @tap="copySn">
+                {{ t('复制') }}
+              </text>
+            </view>
+          </view>
+          <view class="header-info-item">
+            <text class="name">{{ t('场景') }}</text>
+            <text class="value">{{ equip!.workshop?.name }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- ② 核心状态卡 -->
+      <view class="status-card card">
+        <view class="status-item">
+          <text class="label">{{ t('在线状态') }}</text>
+          <view class="dot shadow" :class="equip!.onlineState==1 ? 'online' : 'offline'"/>
+        </view>
+
+        <view class="status-item">
+          <text class="label">{{ t('运行状态') }}</text>
+          <view
+              class="dot shadow"
+              :class="equip!.onlineState==0 ? 'offline': equip!.runState == 1 ? 'run' : 'stopped'"
+          />
+        </view>
+
+        <view class="status-item">
+          <text class="label">{{ t('报警状态') }}</text>
+          <view
+              class="dot shadow"
+              :class="equip!.onlineState==0 ? 'offline': equip!.alarmState == 1 ? 'alarm' : 'offline'"
+          />
+        </view>
+      </view>
+      <view class="card attr-card" v-if="equip!.alarmTexts != null && equip!.alarmTexts.length>0">
+        <text class="card-title">{{ t('实时报警') }}</text>
+        <view class="attr-grid">
+          <view
+              v-for="(i2, idx2) in equip!.alarmTexts"
+              :key="idx2"
+              class="alarm-item"
+          >
+            <text class="value">{{ i2 }}</text>
+          </view>
+        </view>
+      </view>
+      <view class="operate-card card">
+        <view class="operate-item"
+              :class="{ disabled: equip!.selfCode == null || equip!.selfCode == '' }"
+              @tap="toEquipRunState">
+          <view class="icon-wrap">
+            <cl-icon name="line-chart-line" class="icon"></cl-icon>
+          </view>
+          <text class="name">{{ t('运行态') }}</text>
+        </view>
+        <view class="operate-item"
+              :class="{ disabled: equip!.attrs == null || equip!.attrs.length<=0 }"
+              @tap="toEquipHistory">
+          <view class="icon-wrap">
+            <cl-icon name="hospital-line" class="icon"></cl-icon>
+          </view>
+          <text class="name">{{ t('历史') }}</text>
+        </view>
+      </view>
+      <!-- ③ 实时属性 -->
+      <view class="attr-card card" v-if="equip!.attrs != null && equip!.attrs.length>0">
+        <text class="card-title">{{ t('实时数据') }}</text>
+        <view class="attr-grid">
+          <view
+              v-for="(i, idx) in equip!.attrs"
+              :key="idx"
+              class="attr-item attr-item-clickable"
+              @tap="openAttrChart(i)"
+          >
+            <cl-icon name="pushpin-line" class="attr-item-pin" color="primary" :pt="{ className: '!text-base' }"/>
+            <text class="value">{{ attrValueWithUnit(i) }}</text>
+            <text class="name">{{ i.name }}</text>
+          </view>
+        </view>
+      </view>
+      <!-- ④ 远程控制 -->
+      <view class="attr-card card ctrl-attr-card" v-if="equip!.controls != null && equip!.controls.length>0">
+        <text class="card-title">{{ t('远程控制') }}</text>
+        <view class="ctrl-grid">
+          <view
+              v-for="(i, idx) in equip!.controls"
+              :key="'ctrl-' + idx"
+              class="ctrl-item"
+              :class="{ 'ctrl-item-clickable': i.type === 1 }"
+              @tap="onControlTap(i)"
+          >
+            <text class="ctrl-item-name">{{ i.name }}</text>
+            <!-- 开关量：下方展示开关 (type 可能为数字 0 或字符串 "0") -->
+            <view v-if="i.type === 0" class="ctrl-item-value ctrl-item-value--switch" @tap.stop>
+              <switch
+                  :checked="isControlOn(i)"
+                  :disabled="controlWritingMap === i.map"
+                  class="ctrl-native-switch"
+                  @change="onSwitchChangeNative(i, $event)"
+              />
+            </view>
+            <!-- 模拟量：下方展示值+单位 -->
+            <text v-else class="ctrl-item-value">{{ controlValueWithUnit(i) }}</text>
+          </view>
+        </view>
+      </view>
+      <!-- 模拟量写入弹窗 -->
+      <cl-popup
+          ref="controlPopupRef"
+          direction="center"
+          :show-header="true"
+          :show-close="true"
+          :show-mask="true"
+          @mask-close="closeControlPopup"
+          :pt="{ className: 'control-popup-wrap' }"
+      >
+        <template #header>
+          <text class="popup-title">{{ editingControl?.name }}</text>
+        </template>
+        <view class="control-popup-inner">
+          <view class="control-popup-body">
+            <text class="control-popup-hint" v-if="editingControl">{{
+                t('请输入数值')
+              }}{{ editingControlRangeText }}
+            </text>
+            <cl-input
+                v-if="editingControl"
+                v-model="controlInputValue"
+                type="digit"
+                :placeholder="editingControlPlaceholder"
+                :pt="{ className: 'control-popup-input' }"
+            />
+          </view>
+          <view class="control-popup-footer">
+            <button class="control-popup-btn control-popup-btn--cancel" @tap="closeControlPopup">{{
+                t('取消')
+              }}
+            </button>
+            <button class="control-popup-btn control-popup-btn--primary" :disabled="controlSubmitting"
+                    @tap="submitControlValue">{{ t('确定') }}
+            </button>
+          </view>
+        </view>
+      </cl-popup>
+      // #ifdef MP
+      <view class="card">
+        <echart-equip-run :equip="equip"></echart-equip-run>
+      </view>
+      // #endif
+    </cl-page>
+  </scroll-view>
+</template>
+
+<script setup lang="ts">
+import {computed, ref} from 'vue'
+import type {Equip, EquipAttr, EquipControl} from "@/core/types";
+import {t} from "@/locale";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {parseData} from "@/core/utils/parse";
+import EquipBadge from "@/pages/index/components/equip-badge.uvue";
+import * as equipParser from '@/core/utils/equipParser';
+import {isDark, isMp, router, useRefs, useUi} from "@/uni_modules/cool-unix";
+// #ifdef MP
+import EchartEquipRun from "@/pages/equip/components/echart-equip-run.uvue";
+// #endif
+const ui = useUi();
+const refs = useRefs();
+type ControlPopupRef = {
+  open: () => void;
+  close: () => void;
+};
+const controlPopupRef = ref<ControlPopupRef | null>(null);
+const editingControl = ref<EquipControl | null>(null);
+const controlInputValue = ref('');
+const controlSubmitting = ref(false);
+/** 正在写入的控制点 map，用于开关 loading */
+const controlWritingMap = ref<string | null>(null);
+const editingControlRangeText = computed(() => {
+  const ctrl = editingControl.value
+  if (ctrl == null || ctrl.min == null || ctrl.max == null) return ''
+  return ` (${ctrl.min} ~ ${ctrl.max})`
+});
+const editingControlPlaceholder = computed(() => {
+  const ctrl = editingControl.value
+  if (ctrl == null || ctrl.value == null || ctrl.value === '') return ''
+  return ctrl.value
+});
+type SwitchChangeDetail = {
+  value?: boolean;
+};
+type SwitchChangeEvent = {
+  detail: SwitchChangeDetail;
+};
+
+let equipId: string = ''
+const equip = ref<Equip>({
+  id: '-1',
+  selfCode: '-1',
+  name: t('无法识别'),
+  type: 0,
+  runState: 0,
+  alarmState: 0,
+  onlineState: 0
+}) // 接接口获取
+
+function attrValueWithUnit(attr: EquipAttr) {
+  const val = attr.value == null ? t("暂未获取") : attr.value;
+  const u = attr.unit;
+  if (u != null && u !== '') return val + ' ' + u;
+  return val;
+}
+
+function controlValueWithUnit(ctrl: EquipControl) {
+  const val = ctrl.value == null ? t("暂未获取") : ctrl.value;
+  const u = ctrl.unit;
+  if (u != null && u !== '') return val + ' ' + u;
+  return val;
+}
+
+/** 开关量当前是否为开 (value 为 '1' 或 'true') */
+function isControlOn(ctrl: EquipControl): boolean {
+  const v = ctrl.value;
+  return v === '1' || v === 'true';
+}
+
+/** 调用写控制接口：equipId, address=ctrl.map, value。request 在 code=200 时只 resolve(data)，不会带 code */
+async function writeControl(ctrl: EquipControl, value: number): Promise<void> {
+  if (equip.value == null || equip.value.id == null) {
+    uni.showToast({title: t('操作失败'), icon: 'none'})
+    throw new Error('equip_id_empty')
+  }
+  try {
+    await request({
+      url: apiPath.equip_write_control as string,
+      method: 'POST',
+      data: {
+        equipId: equip.value.id,
+        address: ctrl.map,
+        value: value
+      }
+    })
+  } catch (_) {
+    uni.showToast({title: t('操作失败'), icon: 'none'})
+    throw new Error('write_control_failed')
+  }
+}
+
+/** 开关量切换时调用 */
+async function onSwitchChange(ctrl: EquipControl, checked: boolean) {
+  if (equip.value == null || equip.value.id == null) return;
+  controlWritingMap.value = ctrl.map;
+  try {
+    await writeControl(ctrl, checked ? 1 : 0);
+  } finally {
+    controlWritingMap.value = null;
+  }
+}
+
+/** 原生 switch 的 change 事件，取出 detail.value 后调用 onSwitchChange */
+function onSwitchChangeNative(ctrl: EquipControl, ev: any) {
+  const eventObj = ev as SwitchChangeEvent
+  const checked = eventObj.detail.value
+  if (checked === true || checked === false) {
+    onSwitchChange(ctrl, checked);
+  }
+}
+
+async function loadDetail() {
+  try {
+    const res = await request({
+    url: apiPath.equip_realtime as string,
+    method: "GET",
+    data: {
+      id: equipId,
+    }
+    });
+    if (res == null) return;
+    const r = parseData<Equip>(res);
+    if (r != null) equip.value = r;
+  } catch (_) {}
+}
+
+function copySn() {
+  if (equip.value?.selfCode == null) {
+    return;
+  }
+
+  uni.setClipboardData({
+    data: equip.value.selfCode,
+    success() {
+      uni.showToast({
+        title: t('已复制'),
+        icon: 'success',
+        duration: 1200
+      });
+    }
+  });
+}
+
+function typeImage(e: Equip | null): string {
+  if (e == null) return '';
+  const image = equipParser.equipImage(e);
+  return image == null ? '' : image;
+}
+
+onLoad((options) => {
+  if (options == null) {
+    return
+  }
+  equipId = options.id as string
+  loadDetail()
+})
+
+function toEquipHistory() {
+  if (equip.value!.attrs == null || equip.value!.attrs.length <= 0) {
+    return;
+  }
+  router.to('/pages/equip/equip_collect?sn=' + equip.value.selfCode)
+}
+
+function toEquipRunState() {
+  const sn = equip.value?.selfCode;
+  if (sn == null || sn === '') {
+    return;
+  }
+  router.to('/pages/equip/equip_run_state?sn=' + encodeURIComponent(sn))
+}
+
+function openAttrChart(attr: EquipAttr) {
+  if (equip.value?.selfCode == null || attr?.name == null) return
+  const url = '/pages/equip/equip_collect?sn=' + encodeURIComponent(equip.value.selfCode) + '&attr=' + encodeURIComponent(attr.name)
+  router.to(url)
+}
+
+/** type=0 开关量，type=1 模拟量 */
+function onControlTap(ctrl: EquipControl) {
+  if (ctrl.type === 0) return
+  if (equip.value == null || equip.value.id == null) return
+  if (ctrl.type === 1) {
+    editingControl.value = ctrl
+    controlInputValue.value = ctrl.value ?? ''
+    if (controlPopupRef.value != null) {
+      controlPopupRef.value.open()
+    }
+  }
+}
+
+function closeControlPopup() {
+  if (controlPopupRef.value != null) {
+    controlPopupRef.value.close()
+  }
+  editingControl.value = null
+  controlInputValue.value = ''
+}
+
+async function submitControlValue() {
+  const ctrl = editingControl.value
+  if (ctrl == null || equip.value == null || equip.value.id == null) {
+    closeControlPopup()
+    return
+  }
+  const val = controlInputValue.value.trim()
+  if (val === '') {
+    uni.showToast({title: t('请输入数值'), icon: 'none'})
+    return
+  }
+  const num = parseFloat(val)
+  if (isNaN(num)) {
+    uni.showToast({title: t('请输入有效数值'), icon: 'none'})
+    return
+  }
+  const min = ctrl.min != null && ctrl.min !== '' ? parseFloat(ctrl.min) : null
+  const max = ctrl.max != null && ctrl.max !== '' ? parseFloat(ctrl.max) : null
+  if (min != null && num < min) {
+    uni.showToast({title: t('不能小于') + ' ' + min, icon: 'none'})
+    return
+  }
+  if (max != null && num > max) {
+    uni.showToast({title: t('不能大于') + ' ' + max, icon: 'none'})
+    return
+  }
+  controlSubmitting.value = true
+  try {
+    await writeControl(ctrl, num)
+    controlSubmitting.value = false
+    closeControlPopup()
+  } catch (_) {
+    controlSubmitting.value = false
+  }
+}
+
+</script>
+
+
+<style scoped lang="scss">
+@import "../../static/equip";
+
+.card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 16px rgba(0, 0, 0, 0.06);
+  padding-top: 24rpx;
+  padding-bottom: 24rpx;
+  margin-left: 16rpx;
+  margin-right: 16rpx;
+  margin-bottom: 16rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.header-card {
+  align-items: stretch;
+  border-radius: 20rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+  margin-top: 8rpx;
+}
+
+/* 顶部 */
+.header {
+  width: 200rpx;
+  height: 200rpx;
+  flex-shrink: 0;
+
+  display: flex;
+  position: relative;
+
+  .header-img {
+    background: #eef2f6;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.header-info {
+  background: #ffffff;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 12rpx 16rpx;
+
+  .device-name {
+    font-size: 36rpx;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16rpx;
+  }
+
+
+  .header-info-item {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 8rpx;
+
+    .name {
+      font-size: 28rpx;
+      color: #475569;
+    }
+
+    .value {
+      font-size: 24rpx;
+      font-weight: 400;
+      color: #94a3b8;
+    }
+  }
+
+  .workshop-name {
+    font-size: 24rpx;
+    color: #64748b;
+  }
+
+  .device-sn {
+    font-size: 24rpx;
+    color: #94a3b8;
+  }
+
+  .sn-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .copy-btn {
+    margin-left: 8rpx;
+    font-size: 22rpx;
+    color: #2563eb;
+    padding: 2rpx 10rpx;
+    border-radius: 12rpx;
+    background: rgba(37, 99, 235, 0.08);
+
+  }
+}
+
+.disabled {
+  opacity: 0.30;
+}
+
+.disabled .icon-wrap {
+  background: #f1f5f9;
+}
+
+.disabled .icon {
+  color: #9ca3af;
+}
+
+.disabled .name {
+  color: #9ca3af;
+}
+
+.operate-card {
+  display: flex;
+  flex-direction: row;
+  padding: 16rpx;
+
+  .operate-item {
+    width: 20%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20rpx;
+    margin-left: 20rpx;
+
+
+    .icon-wrap {
+      background: #f5f5f5;
+      width: 96rpx;
+      height: 96rpx;
+      display: flex;
+      border-radius: 9999rpx;
+      padding: 8rpx;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .name {
+      color: #6b7280;
+      font-size: 26rpx;
+      margin-top: 4rpx;
+    }
+  }
+}
+
+/* 状态卡 */
+.status-card {
+
+  .status-item {
+    display: flex;
+    flex-direction: row;
+    margin: 8rpx;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+
+    .label {
+      margin-left: 16rpx;
+      width: 50%;
+      font-size: 26rpx;
+      color: #475569;
+    }
+
+    .dot {
+      display: flex;
+      width: 24rpx;
+      height: 24rpx;
+      border-radius: 9999rpx;
+      box-sizing: border-box;
+      margin-right: 32rpx;
+    }
+
+  }
+}
+
+/* 属性 */
+.attr-card {
+  padding: 40rpx 40rpx 44rpx;
+
+  /* text 节点不支持 flex-direction，仅保留排版相关属性 */
+  .card-title {
+    font-size: 40rpx;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 28rpx;
+  }
+
+  .attr-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+
+    .alarm-item {
+      background: #ba0404;
+      box-sizing: border-box;
+      border-radius: 8rpx;
+      margin: 8rpx;
+      padding: 8rpx;
+
+      .value {
+        color: #ffffff;
+        font-size: 26rpx;
+      }
+    }
+
+    .attr-item-clickable {
+      opacity: 1;
+    }
+
+    .attr-item-clickable:active {
+      opacity: 0.85;
+    }
+
+    .attr-item {
+      width: 48%;
+      min-height: 140rpx;
+      margin-bottom: 20rpx;
+      background: #f5f6f8;
+      box-sizing: border-box;
+      position: relative;
+      border-radius: 20rpx;
+      padding: 28rpx 52rpx 28rpx 32rpx;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+
+      .attr-item-pin {
+        position: absolute;
+        top: 20rpx;
+        right: 20rpx;
+        opacity: 0.6;
+        font-size: 40rpx;
+      }
+
+      .name {
+        color: #64748b;
+        font-size: 30rpx;
+        padding-right: 32rpx;
+      }
+
+      .control-range {
+        color: #94a3b8;
+        font-size: 24rpx;
+        margin-top: 4rpx;
+      }
+
+      .control-switch-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .control-switch-label {
+        display: flex;
+        flex-direction: column;
+        margin-right: 16rpx;
+      }
+
+      .control-type-tag {
+        color: #94a3b8;
+        font-size: 22rpx;
+      }
+
+      .value {
+        font-weight: 700;
+        line-height: 1.35;
+        color: #0f172a;
+        font-size: 38rpx;
+        padding-right: 32rpx;
+        overflow: hidden;
+        margin-top: 8rpx;
+      }
+    }
+  }
+}
+
+/* 远程控制卡片 */
+.ctrl-attr-card {
+  .ctrl-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ctrl-item {
+    width: 48%;
+    min-height: 160rpx;
+    margin-bottom: 20rpx;
+    background: #f5f6f8;
+    box-sizing: border-box;
+    border-radius: 20rpx;
+    padding: 24rpx 28rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .ctrl-item-clickable {
+    opacity: 1;
+  }
+
+  .ctrl-item-clickable:active {
+    opacity: 0.85;
+  }
+
+  .ctrl-item-name {
+    color: #64748b;
+    font-size: 28rpx;
+    line-height: 1.4;
+    margin-bottom: 16rpx;
+  }
+
+  .ctrl-item-value {
+    font-weight: 700;
+    font-size: 36rpx;
+    color: #0f172a;
+    line-height: 1.3;
+    overflow: hidden;
+  }
+
+  .ctrl-item-value--switch {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    min-height: 48rpx;
+  }
+
+  .ctrl-native-switch {
+    transform: scale(0.72);
+    transform-origin: left center;
+  }
+}
+
+/* 操作 */
+.action-bar {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx;
+
+  .btn {
+    flex: 1;
+    border-radius: 40rpx;
+  }
+
+  .primary {
+    background: #2563eb;
+    border-radius: 32rpx;
+    color: #fff;
+  }
+}
+
+.popup-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.control-popup-wrap {
+  border-radius: 24rpx;
+  overflow: hidden;
+  min-width: 560rpx;
+  max-width: 680rpx;
+}
+
+.control-popup-inner {
+  padding: 0 32rpx 32rpx;
+}
+
+.control-popup-body {
+  padding: 32rpx 0 28rpx;
+}
+
+.control-popup-hint {
+  display: flex;
+  flex-direction: column;
+  font-size: 28rpx;
+  color: #64748b;
+  margin-bottom: 24rpx;
+  line-height: 1.4;
+}
+
+.control-popup-input {
+  width: 100%;
+  font-size: 32rpx;
+  min-height: 80rpx;
+  padding: 20rpx 24rpx;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 16rpx;
+  background: #f8fafc;
+}
+
+.control-popup-footer {
+  display: flex;
+  flex-direction: row;
+  gap: 24rpx;
+  padding-top: 16rpx;
+}
+
+.control-popup-btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 32rpx;
+  border-radius: 16rpx;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.control-popup-btn--cancel {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.control-popup-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.control-popup-btn--primary[disabled] {
+  opacity: 0.6;
+}
+
+</style>

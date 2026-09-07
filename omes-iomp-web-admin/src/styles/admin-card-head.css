@@ -1,0 +1,153 @@
+/**
+ * 管理页卡片标题区：解除 ant-card-head-title 截断；单行裸图标对齐。
+ */
+
+.admin-panel-card > .ant-card-head > .ant-card-head-wrapper,
+.panel-card > .ant-card-head > .ant-card-head-wrapper {
+  align-items: flex-start;
+}
+
+.admin-panel-card > .ant-card-head .ant-card-head-title,
+.panel-card > .ant-card-head .ant-card-head-title {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: unset;
+}
+
+.admin-panel-card > .ant-card-head .ant-card-extra,
+.panel-card > .ant-card-head .ant-card-extra {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+/* 单行标题：图标嵌在 card-title 内（非 AdminPanelTitle 组件） */
+.panel-card .card-title:has(> .card-title__icon),
+.admin-panel-card .card-title:has(> .card-title__icon) {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--omes-color-text);
+  line-height: 1.35;
+}
+
+.panel-card .card-title > .card-title__icon,
+.admin-panel-card .card-title > .card-title__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--omes-radius-md);
+  font-size: 15px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* 无 AdminPanelTitle、图标直接写在 card-title 内的单行标题 */
+.admin-panel-card .card-title > .anticon,
+.panel-card .card-title > .anticon {
+  display: inline-flex;
+  align-items: center;
+  font-size: 15px;
+  line-height: 1;
+  vertical-align: -0.125em;
+}
+
+.card-title__icon .anticon {
+  display: block;
+  line-height: 1;
+}
+
+/* AdminPanelTitle 默认渐变图标盒 */
+.admin-panel-title > .card-title__icon {
+  background: var(--omes-gradient-primary);
+  box-shadow: var(--omes-shadow-primary-icon);
+}
+
+.card-title__icon--purple {
+  background: var(--omes-gradient-accent-purple);
+  box-shadow: var(--omes-shadow-purple-icon);
+}
+
+.card-title__icon--orange {
+  background: var(--omes-gradient-accent-orange);
+  box-shadow: var(--omes-shadow-orange-icon);
+}
+
+.card-title__icon--orange-light {
+  background: var(--omes-gradient-accent-orange-light);
+  box-shadow: var(--omes-shadow-orange-icon);
+}
+
+.card-title__icon--cyan {
+  background: var(--omes-gradient-accent-cyan);
+  box-shadow: var(--omes-shadow-cyan-icon);
+}
+
+.equip-record-page .card-title__icon,
+.realtime-page .card-title__icon,
+.health-indicator-page .card-title__icon {
+  background: var(--omes-gradient-accent-cyan);
+  box-shadow: var(--omes-shadow-cyan-icon);
+}
+
+.health-page .card-title__icon {
+  background: var(--omes-gradient-accent-purple);
+  box-shadow: var(--omes-shadow-purple-icon);
+}
+
+.role-page .card-title__icon,
+.permission-page .card-title__icon,
+.account-page .card-title__icon {
+  background: var(--omes-gradient-accent-purple);
+  box-shadow: var(--omes-shadow-purple-icon);
+}
+
+.gateway-page .card-title__icon,
+.product-page .card-title__icon,
+.gis-page .card-title__icon,
+.equip-page .card-title__icon,
+.workshop-page .card-title__icon,
+.scada-viewer-page .card-title__icon,
+.workshop-report-page .card-title__icon {
+  background: var(--omes-gradient-primary);
+  box-shadow: var(--omes-shadow-primary-icon);
+}
+
+.material-page .card-title__icon--classify,
+.bom-page .card-title__icon--classify {
+  background: var(--omes-gradient-accent-orange);
+  box-shadow: var(--omes-shadow-orange-icon);
+}
+
+.product-page .card-title__icon--product {
+  background: var(--omes-gradient-primary);
+  box-shadow: var(--omes-shadow-primary-icon);
+}
+
+.product-page .card-title__icon--model {
+  background: var(--omes-gradient-accent-purple);
+  box-shadow: var(--omes-shadow-purple-icon);
+}
+
+.inspect-template-page .card-title__icon,
+.inspect-record-page .card-title__icon,
+.inspect-person-page .card-title__icon,
+.inspect-item-page .card-title__icon,
+.inspect-record-detail-page .card-title__icon,
+.file-page .card-title__icon,
+.notify-page .card-title__icon {
+  background: var(--omes-gradient-primary);
+  box-shadow: var(--omes-shadow-primary-icon);
+}
+
+.bom-page .card-title__icon--main {
+  background: var(--omes-gradient-accent-purple);
+  box-shadow: var(--omes-shadow-purple-icon);
+}
+

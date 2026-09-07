@@ -1,0 +1,54 @@
+<template>
+  <text v-if="badge" class="badge" :class="badge.type">
+    {{ badge.text }}
+  </text>
+</template>
+
+<script setup lang="ts">
+
+import {useRefs, useUi} from "@/uni_modules/cool-unix";
+import {Equip} from "@/core/types";
+import {parseType} from "@/core/utils/equipParser";
+
+defineOptions({
+  name: "equip-badge"
+});
+
+const ui = useUi();
+const refs = useRefs();
+
+export type EquipBadgePayload = {
+  equip: Equip;
+}
+
+const props = defineProps<EquipBadgePayload>();
+
+const badge = computed(() => {
+  return parseType(props.equip as Equip);
+})
+
+</script>
+
+
+<style scoped lang="scss">
+.badge {
+  @apply absolute top-1 left-1 py-1 px-2.5 rounded-md text-xs text-white
+}
+
+.badge.offline {
+  background: #bfbfbf;
+}
+
+.badge.alarm {
+  background: #ff4d4f;
+}
+
+.badge.run {
+  background: #52c41a;
+}
+
+.badge.stopped {
+  background: #FAAD14;
+}
+
+</style>

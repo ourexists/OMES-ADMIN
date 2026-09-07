@@ -1,0 +1,1255 @@
+<template>
+  <scroll-view
+      :style="{ flex: 1 }"
+      scroll-y="true"
+      :scroll-with-animation="true"
+      :lower-threshold="120"
+      @scrolltolower="onScrollToLower"
+  >
+    <cl-page>
+      <cl-topbar
+          fixed
+          :background-color="isDark? 'black': 'white'"
+          :show-back="true"
+          safe-area-top
+          :height="isMp() ? null : 100"
+          :pt="{
+    				className: '!z-50'
+    			}"
+      >
+        <view
+            class="flex flex-row items-center justify-center p-3 flex-1 w-full"
+            :class="{
+    					'pt-0': isMp()
+    				}"
+        >
+          <!-- 当前选择展示 -->
+          <cl-text
+              color="primary"
+              :pt="{
+						className: '!text-xl ml-2'
+					}"
+          >
+            {{ pageTitle }}
+          </cl-text>
+        </view>
+      </cl-topbar>
+      <view class="p-3" v-if="attrConfig.length>0">
+        <cl-select-date
+            :ref="selectDateRef"
+            v-model:values="customDate"
+            type="date"
+            title=""
+            :shortcuts="shortcuts"
+            label-format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            @range-change="reloadHistory"
+            :pt="{className: 'text-2xl h-16'}"
+            rangeable></cl-select-date>
+        <view class="view-toggle">
+          <view
+              class="toggle-item"
+              :class="{ active: displayMode === 'chart' }"
+              @tap="displayMode = 'chart'"
+          >
+            <cl-icon
+                name="bar-chart-2-line"
+                :color="displayMode === 'chart' ? 'white' : 'secondary'"
+                :pt="{ className: '!text-base' }"
+            />
+          </view>
+          <view
+              class="toggle-item"
+              :class="{ active: displayMode === 'table' }"
+              @tap="displayMode = 'table'"
+          >
+            <cl-icon
+                name="clipboard-line"
+                :color="displayMode === 'table' ? 'white' : 'secondary'"
+                :pt="{ className: '!text-base' }"
+            />
+          </view>
+        </view>
+        <view class="echart-equip-wrap">
+          <view v-if="loading" class="echart-loading">
+            <cl-loading :pt="{ className: '!text-primary' }"></cl-loading>
+            <text class="loading-text">{{ t('加载中...') }}</text>
+          </view>
+          <view v-if="displayMode === 'chart' && dataDownsampled" class="downsample-hint-wrap">
+            <text class="downsample-hint">{{ t('数据较多已采样展示') }}</text>
+          </view>
+          <view v-if="displayMode === 'chart'" class="echart-equip" :style="'height: '+containerSize+'rpx' ">
+            <l-echart ref="chartRef" @finished="init" style="width: 100%; height: 100%"></l-echart>
+          </view>
+          <view v-else class="table-scroll" :class="{ 'table-scroll--app': isApp() }">
+            <!-- App 端 ucss 不支持后代选择器，聚合区样式须挂在同一节点 class 上 -->
+            <view class="aggregate-bar" :class="{ 'aggregate-bar--app': isApp() }">
+              <text class="aggregate-label">{{ t('聚合') }}</text>
+              <view class="aggregate-chips" :class="{ 'aggregate-chips--app': isApp() }">
+                <view
+                    v-for="opt in aggregateOptions"
+                    :key="opt.value === '' ? 'raw' : opt.value"
+                    class="aggregate-chip"
+                    :class="{
+                      'aggregate-chip--active': aggregateInterval === opt.value,
+                      'aggregate-chip--app': isApp(),
+                    }"
+                    @tap="onAggregateTap(opt.value)"
+                >
+                  <text
+                      class="aggregate-chip-text"
+                      :class="{ 'aggregate-chip-text--active': aggregateInterval === opt.value }"
+                  >{{ opt.label }}
+                  </text>
+                </view>
+              </view>
+            </view>
+            <view class="collect-table">
+              <view
+                  class="table-row"
+                  :class="{ 'table-row-last': index === tableRows.length - 1 }"
+                  v-for="(row, index) in tableRows"
+                  :key="`${index}_${collectRowTime(row)}`"
+              >
+                <view class="table-time-row">
+                  <text class="time-label">{{ aggregateInterval !== '' ? t('时段开始') : t('时间') }}</text>
+                  <text class="time-value">{{ collectRowTime(row) }}</text>
+                </view>
+                <view class="table-attrs">
+                  <view
+                      class="table-kv"
+                      :class="{ 'table-kv--aggregate': aggregateInterval !== '' }"
+                      v-for="item in attrConfig"
+                      :key="`${collectRowTime(row)}_${item.name}`"
+                  >
+                    <text class="kv-label">{{ item.name }}</text>
+                    <text
+                        class="kv-value"
+                        :class="{ 'kv-value--aggregate': aggregateInterval !== '' }"
+                    >{{ formatTableCell(row, item) }}
+                    </text>
+                  </view>
+                </view>
+              </view>
+              <view class="table-empty-wrap" v-if="tableData.length <= 0 && !loading && !tableLoadingMore">
+                <text class="table-empty">{{ t('暂无数据') }}</text>
+              </view>
+              <view class="table-footer-hint" v-if="tableData.length > 0">
+                <text v-if="tableLoadingMore" class="table-footer-text">{{ t('加载中...') }}</text>
+                <text v-else-if="!tableHasMore" class="table-footer-text table-footer-muted">{{
+                    t('已加载全部')
+                  }}
+                </text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <view class="p-3 mt-5" v-if="attrConfig.length<=0">
+        <text class="text-gray-400 text-center">--
+          {{ singleAttrName.length > 0 ? t('该属性暂无历史采集') : t('未对该设备进行数据采集配置') }} --
+        </text>
+      </view>
+    </cl-page>
+  </scroll-view>
+</template>
+
+<script setup lang="ts">
+import {type ClSelectDateShortcut, dayUts, isApp, isDark, isMp, parseToObject} from "@/uni_modules/cool-unix";
+import type {EquipCollect, EquipConfig, EquipConfigAttr} from "@/core/types";
+import {t} from "@/locale";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {formatDate, parseData, parseDataArray} from "@/core/utils/parse";
+import type {LEchartComponentPublicInstance} from "@/uni_modules/lime-echart/components/l-echart/l-echart.uvue";
+import {computed, nextTick, ref, watch} from "vue";
+
+const attrConfig = ref<EquipConfigAttr[]>([]);
+/** 趋势图：与 portal 一致使用 AUTO 聚合 */
+const trendData = ref<EquipCollect[]>([]);
+/** 数据表：可选 MIN30 / HOUR / DAY / MONTH 或原始 */
+const tableData = ref<EquipCollect[]>([]);
+const chartRef = ref<LEchartComponentPublicInstance | null>(null);
+
+const containerSize = ref<number>(800);
+const selectDateRef = ref<ClSelectDateComponentPublicInstance | null>(null);
+const customDate = ref<string[]>(["", ""]);
+const loading = ref<boolean>(false);
+const dataDownsampled = ref<boolean>(false);
+const displayMode = ref<'chart' | 'table'>('chart');
+type AggregateInterval = '' | 'MIN30' | 'HOUR' | 'DAY' | 'MONTH';
+
+type AggregateOptionItem = {
+  value: AggregateInterval;
+  label: string;
+};
+
+/** equip_collect_page POST body（勿用 Record string/unknown，UTS 会映射为抽象 Map） */
+type CollectPageRequestBody = {
+  sn: string;
+  startDate: string | null;
+  endDate: string | null;
+  requirePage: boolean;
+  page: number;
+  pageSize: number;
+  aggregateInterval?: 'MIN30' | 'HOUR' | 'DAY' | 'MONTH';
+};
+
+const aggregateInterval = ref<AggregateInterval>('');
+const aggregateOptions = computed<AggregateOptionItem[]>(() => {
+  const opts: AggregateOptionItem[] = [
+    {value: '', label: t('原始数据')},
+    {value: 'MIN30', label: t('每30分钟')},
+    {value: 'HOUR', label: t('每小时')},
+    {value: 'DAY', label: t('每天')},
+    {value: 'MONTH', label: t('每月')},
+  ];
+  return opts;
+});
+
+/** 表格服务端分页每页条数（与后端 Page 一致） */
+const SERVER_TABLE_PAGE_SIZE = 50;
+
+/** 采集分页数据量大，App 原生请求与解析更慢，适当延长超时；H5/小程序保持默认 */
+const COLLECT_REQUEST_TIMEOUT_MS = 120000;
+
+/** 服务端按 id/time 升序分页；合并后倒序，保证最新在上 */
+const tableRows = computed<EquipCollect[]>(() => {
+  const reversed = tableData.value.slice();
+  reversed.reverse();
+  return reversed;
+});
+
+/** 表格：当前已加载的最后一页页码；0 表示尚未成功拉过第一页 */
+const serverTablePage = ref<number>(0);
+const tableHasMore = ref<boolean>(true);
+const tableLoadingMore = ref<boolean>(false);
+let tableScrollLowerTimer: number | null = null;
+
+let equipSn: string = ''
+let singleAttrName: string = ''
+let collectShowCount = 0
+
+/** 与 pages/index/equip.uvue 的 reloadGeneration 一致：快速改日期/返回时丢弃旧请求的解析结果 */
+let collectReloadGeneration = 0
+
+const pageTitle = ref<string>(t('历史曲线'))
+
+/** 每个属性子图在 rpx 上的高度（纵向单列堆叠，与改前 App 一致） */
+const singleHeight = 600;
+
+/** 单条折线最大点数，超过则降采样以提升渲染性能 */
+const MAX_CHART_POINTS = 400;
+/** 时间跨度超过该天数时提示用户可能较慢（仍会加载，仅做降采样展示） */
+const LARGE_RANGE_DAYS = 90;
+
+/**
+ * 从 UTSJSONObject 取接口/网络错误文案（禁止对 any 用 .msg，编译器不允许）。
+ */
+function pickMsgFromJsonObject(jo: UTSJSONObject): string | null {
+  let m = jo.getString('msg');
+  if (m != null && m.length > 0) {
+    return m;
+  }
+  m = jo.getString('message');
+  if (m != null && m.length > 0) {
+    return m;
+  }
+  m = jo.getString('errMsg');
+  if (m != null && m.length > 0) {
+    return m;
+  }
+  return null;
+}
+
+/**
+ * request() reject 在 App 上常见为 UTSJSONObject；也可能为 HolderUTSError，不能 as 任意结构体。
+ * App：先试原生 UTSJSONObject，失败再 new UTSJSONObject(e)；全程 try/catch 避免 ClassCastException 冒泡。
+ */
+function getErrorMessage(e: any | null): string {
+  const fallback = t('请求失败');
+  if (e == null) {
+    return fallback;
+  }
+  if (typeof e === 'string' && e.length > 0) {
+    return e;
+  }
+  if (typeof e !== 'object') {
+    return fallback;
+  }
+  try {
+    const m = pickMsgFromJsonObject(new UTSJSONObject(e));
+    if (m != null) {
+      return m;
+    }
+  } catch (_err: any) {
+  }
+  return fallback;
+}
+
+/**
+ * 对折线数据做降采样，保留首尾并均匀取点，避免时间跨度大时数据量过多导致卡顿
+ */
+function downsampleSeriesData<T>(arr: T[], maxPoints: number): T[] {
+  if (arr.length <= maxPoints) return arr;
+  const result: T[] = [];
+  result.push(arr[0]);
+  const step = (arr.length - 1) / (maxPoints - 1);
+  for (let i = 1; i < maxPoints - 1; i++) {
+    const idx = Math.min(Math.round(i * step), arr.length - 1);
+    result.push(arr[idx]);
+  }
+  result.push(arr[arr.length - 1]);
+  return result;
+}
+
+const shortcuts = ref<ClSelectDateShortcut[]>([
+  {
+    label: t("今天"),
+    value: [
+      dayUts().format("YYYY-MM-DD"),
+      dayUts().format("YYYY-MM-DD"),
+    ],
+  },
+  {
+    label: t("昨日"),
+    value: [
+      dayUts().subtract(1, "day").format("YYYY-MM-DD"),
+      dayUts().subtract(1, "day").format("YYYY-MM-DD"),
+    ],
+  },
+  {
+    label: t("本周"),
+    value: [
+      dayUts().startOf("week").format("YYYY-MM-DD"),
+      dayUts().endOf("week").format("YYYY-MM-DD"),
+    ],
+  },
+  {
+    label: t("本月"),
+    value: [
+      dayUts().startOf("month").format("YYYY-MM-DD"),
+      dayUts().endOf("month").format("YYYY-MM-DD"),
+    ],
+  },
+]);
+
+const INDUSTRY_THEME = {
+  textPrimary: '#1f2937',
+  textSecondary: '#6b7280',
+  axisLine: '#d1d5db',
+  splitLine: '#e5e7eb',
+
+  line: '#3b82f6',
+  areaFrom: 'rgba(59,130,246,0.25)',
+  areaTo: 'rgba(59,130,246,0.02)',
+
+  tooltipBg: 'rgba(15,23,42,0.9)',
+  tooltipBorder: '#334155',
+}
+
+/**
+ * 读取采集行 `data` 动态键：UTS 禁止任意 `obj[key]`；与 equip_run_state 一致用 UTSJSONObject.getAny。
+ * App：嵌套 data 常为原生 UTSJSONObject，再 new UTSJSONObject(data) 会抛参类型无效，getAny 读不到 _avg 等键，聚合格会退化成标量或「--」。
+ */
+function collectDataField(data: any | null, key: string): any | null {
+  if (data == null) {
+    return null;
+  }
+  try {
+    // #ifdef APP
+    try {
+      return (data as UTSJSONObject).getAny(key);
+    } catch (_inner: any) {
+      return new UTSJSONObject(data).getAny(key);
+    }
+    // #endif
+    // #ifndef APP
+    return new UTSJSONObject(data).getAny(key);
+    // #endif
+  } catch (_e: any) {
+    return null;
+  }
+}
+
+/** 接口偶将 jsonb 整包成字符串返回，需再 parse 才能在 App 上按键取值 */
+function normalizeCollectDataPayload(d: any | null): any | null {
+  if (d == null) {
+    return null;
+  }
+  if (typeof d === "string") {
+    const trimmed = (d as string).trim();
+    if (trimmed.length < 2 || trimmed.charAt(0) !== "{") {
+      return null;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch (_e: any) {
+      return null;
+    }
+  }
+  return d;
+}
+
+function formatCollectTimeValue(raw: any | null): string {
+  if (raw == null) {
+    return "";
+  }
+  if (typeof raw === "string") {
+    return raw.length > 0 ? raw : "";
+  }
+  if (typeof raw === "number") {
+    if (raw != raw) {
+      return "";
+    }
+    const n = raw as number;
+    const ms = n < 1_000_000_000_000 ? n * 1000 : n;
+    return formatDate(new Date(ms));
+  }
+  try {
+    const d = raw as Date;
+    if (d != null && d.getTime() != null) {
+      const tms = d.getTime();
+      if (tms == tms) {
+        return formatDate(new Date(tms));
+      }
+    }
+  } catch (_e: any) {
+  }
+  const s = `${raw}`;
+  return s.length > 0 ? s : "";
+}
+
+/** 表格/图表展示用字符串；聚合接口常返回 number，不能用 .length 判断是否有均值 */
+function formatCollectScalar(raw: any | null): string | null {
+  if (raw == null) {
+    return null;
+  }
+  if (typeof raw === "string") {
+    return raw.length > 0 ? raw : null;
+  }
+  if (typeof raw === "number") {
+    if (raw != raw) {
+      return null;
+    }
+    return `${raw}`;
+  }
+  if (typeof raw === "boolean") {
+    return raw ? "true" : "false";
+  }
+  return `${raw}`;
+}
+
+/**
+ * 采集行时间：未 parse 的可能是 UTSJSONObject；parseObject 后是 EquipCollect，须读类型字段（勿用 any.time，UTS 会报 error18）。
+ */
+function collectRowTime(row: any): string {
+  if (row == null) {
+    return "";
+  }
+  const ec = row as EquipCollect;
+  const s = formatCollectTimeValue(ec.time as any);
+  return s.length > 0 ? s : "";
+}
+
+function collectRowData(row: any): any | null {
+  if (row == null) {
+    return null;
+  }
+  const ec = row as EquipCollect;
+  return normalizeCollectDataPayload(ec.data as any);
+}
+
+function formatTableCell(row: EquipCollect, attr: EquipConfigAttr): string {
+  const d = collectRowData(row as any);
+  if (d == null) {
+    return "--";
+  }
+  const keyCandidates: string[] = [attr.name];
+  if (attr.map != null && attr.map.length > 0 && attr.map !== attr.name) {
+    keyCandidates.push(attr.map);
+  }
+  for (let ki = 0; ki < keyCandidates.length; ki++) {
+    const attrName = keyCandidates[ki];
+    const avgKey = `${attrName}_avg`;
+    const avgStr = formatCollectScalar(collectDataField(d, avgKey));
+    if (avgStr != null) {
+      const minStr = formatCollectScalar(collectDataField(d, `${attrName}_min`)) ?? "--";
+      const maxStr = formatCollectScalar(collectDataField(d, `${attrName}_max`)) ?? "--";
+      const cntStr = formatCollectScalar(collectDataField(d, `${attrName}_count`)) ?? "--";
+      return `${t("均值")} ${avgStr} | ${t("最小")} ${minStr} | ${t("最大")} ${maxStr} | ${t("样本")} ${cntStr}`;
+    }
+    const v = formatCollectScalar(collectDataField(d, attrName));
+    if (v != null) {
+      return v;
+    }
+  }
+  return "--";
+}
+
+/** 趋势图单点取值：与表格一致，兼容 data 中用 map 存键、name 仅展示的情况 */
+function collectSeriesValue(dataObj: any | null, attr: EquipConfigAttr): string | null {
+  if (dataObj == null) {
+    return null;
+  }
+  const keys: string[] = [attr.name];
+  if (attr.map != null && attr.map.length > 0 && attr.map !== attr.name) {
+    keys.push(attr.map);
+  }
+  for (let i = 0; i < keys.length; i++) {
+    const v = formatCollectScalar(collectDataField(dataObj, keys[i]));
+    if (v != null) {
+      return v;
+    }
+  }
+  return null;
+}
+
+/** 属性折线图：纵向单列分布（各占 100%/n 高度带），与改版前 App 一致 */
+function generateOption() {
+  const visualMap: Array<any> = [];
+  const xAxis: Array<any> = [];
+  const yAxis: Array<any> = [];
+  const grid: Array<any> = [];
+  const series: Array<any> = [];
+  const title: Array<any> = [];
+
+  const single = attrConfig.value.length > 0 ? 100 / attrConfig.value.length : 100;
+
+  attrConfig.value.forEach((item, index) => {
+    visualMap.push({
+      show: false,
+      type: 'continuous',
+      seriesIndex: index,
+    });
+
+    title.push({
+      top: `${single / 15 + single * index}%`,
+      left: 'center',
+      text: item.name,
+      textStyle: {
+        fontSize: 12,
+        fontWeight: 500,
+        color: INDUSTRY_THEME.textPrimary,
+      },
+    });
+
+    xAxis.push({
+      gridIndex: index,
+      type: 'time',
+      axisLine: {
+        lineStyle: {
+          color: INDUSTRY_THEME.axisLine,
+        },
+      },
+      axisTick: {show: false},
+      splitLine: {
+        show: false,
+      },
+      axisLabel: {
+        color: INDUSTRY_THEME.textSecondary,
+        fontSize: 11,
+        rotate: 30,
+      },
+    });
+
+    yAxis.push({
+      type: 'value',
+      axisLine: {
+        lineStyle: {
+          color: INDUSTRY_THEME.axisLine,
+        },
+      },
+      axisTick: {show: false},
+      axisLabel: {
+        color: INDUSTRY_THEME.textSecondary,
+        fontSize: 11,
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          color: INDUSTRY_THEME.splitLine,
+          type: 'dashed',
+        },
+      },
+      gridIndex: index,
+    });
+
+    grid.push({
+      top: `${single / 5 + single * index}%`,
+      height: `${(single * 3) / 5}%`,
+    });
+
+    const vList: Array<Array<string | number>> = [];
+    trendData.value.forEach((row) => {
+      const dataObj = collectRowData(row as any);
+      const cell = collectSeriesValue(dataObj, item);
+      const tStr = collectRowTime(row as any);
+      if (cell != null && cell !== "") {
+        vList.push([tStr, cell]);
+      } else {
+        vList.push([tStr, ""]);
+      }
+    });
+    const sampled = downsampleSeriesData(vList, MAX_CHART_POINTS);
+    series.push({
+      type: 'line',
+      smooth: true,
+      showSymbol: false,
+      sampling: 'lttb',
+      lineStyle: {
+        width: 1.5,
+        color: INDUSTRY_THEME.line,
+      },
+      areaStyle: {
+        color: INDUSTRY_THEME.line,
+        opacity: 0.12,
+      },
+      data: sampled,
+      xAxisIndex: index,
+      yAxisIndex: index,
+    });
+  });
+
+  return {
+    visualMap,
+    title,
+    tooltip: {
+      trigger: 'axis',
+    },
+    xAxis,
+    yAxis,
+    grid,
+    series,
+  };
+}
+
+function reloadEChart() {
+  if (displayMode.value !== 'chart') return;
+  if (chartRef.value == null) return;
+  const option = generateOption();
+  nextTick(() => {
+    if (chartRef.value == null) return;
+    // App：l-echart 经 evalJS(JSON.stringify(option)) 下发；非 UTSJSONObject/含不可序列化结构会导致 WebView 里无图
+    // #ifdef APP
+    chartRef.value.setOption(parseToObject(option) as UTSJSONObject);
+    // #endif
+    // #ifndef APP
+    chartRef.value.setOption(option);
+    // #endif
+  });
+}
+
+/**
+ * 采集分页列表：与 pages/index/equip.uvue 的 reloadData 相同——request().then 内用 let r = parseDataArray(...)
+ * @param expectedGen 对应 reloadAllData 里的 collectReloadGeneration，不一致则丢弃结果（同 equip 的 reloadGeneration）
+ */
+/** expectedGen 为 null 时不校验代数（如聚合 chip 只刷表格） */
+function loadTrendData(expectedGen: number | null): Promise<void> {
+  if (attrConfig.value.length <= 0) {
+    return Promise.resolve();
+  }
+  return request({
+    url: apiPath.equip_collect_page as string,
+    method: "POST",
+    timeout: COLLECT_REQUEST_TIMEOUT_MS,
+    data: {
+      sn: equipSn,
+      startDate: customDate.value[0].length == 0 ? null : `${customDate.value[0]} 00:00:00`,
+      endDate: customDate.value[1].length == 0 ? null : `${customDate.value[1]} 23:59:59`,
+      requirePage: false,
+      page: 1,
+      pageSize: 50000,
+      aggregateInterval: 'AUTO',
+    },
+  }).then((res) => {
+    if (expectedGen != null && expectedGen !== collectReloadGeneration) {
+      return;
+    }
+    if (res === null) {
+      trendData.value = [];
+    } else {
+      let r = parseDataArray<EquipCollect>(res);
+      if (r === null) {
+        trendData.value = [];
+      } else {
+        trendData.value = r;
+      }
+    }
+  });
+}
+
+/**
+ * 拉取表格一页：append=true 时拼到 tableData 末尾（更旧的一页）；false 时覆盖
+ */
+function fetchTablePage(expectedGen: number | null, pageNum: number, append: boolean): Promise<void> {
+  if (attrConfig.value.length <= 0) {
+    return Promise.resolve();
+  }
+  const iv = aggregateInterval.value;
+  return request({
+    url: apiPath.equip_collect_page as string,
+    method: "POST",
+    timeout: COLLECT_REQUEST_TIMEOUT_MS,
+    data: {
+      sn: equipSn,
+      startDate: customDate.value[0].length == 0 ? null : `${customDate.value[0]} 00:00:00`,
+      endDate: customDate.value[1].length == 0 ? null : `${customDate.value[1]} 23:59:59`,
+      page: pageNum,
+      pageSize: SERVER_TABLE_PAGE_SIZE,
+      aggregateInterval: iv == null ? '' : iv,
+    },
+  }).then((res) => {
+    if (expectedGen != null && expectedGen !== collectReloadGeneration) {
+      return;
+    }
+    let chunk: EquipCollect[] = [];
+    if (res !== null) {
+      const r = parseDataArray<EquipCollect>(res);
+      if (r !== null) {
+        chunk = r;
+      }
+    }
+    if (append) {
+      if (chunk.length > 0) {
+        const merged = tableData.value.slice();
+        for (let i = 0; i < chunk.length; i++) {
+          merged.push(chunk[i]);
+        }
+        tableData.value = merged;
+      }
+    } else {
+      tableData.value = chunk;
+    }
+    tableHasMore.value = chunk.length >= SERVER_TABLE_PAGE_SIZE;
+    if (chunk.length === 0) {
+      tableHasMore.value = false;
+    }
+    serverTablePage.value = pageNum;
+  });
+}
+
+/** 重置并拉表格第 1 页（日期/聚合/全量刷新时） */
+function loadTableFirstPage(expectedGen: number | null): Promise<void> {
+  serverTablePage.value = 0;
+  tableHasMore.value = true;
+  tableData.value = [];
+  return fetchTablePage(expectedGen, 1, false);
+}
+
+function loadNextTableServerPage(): void {
+  if (displayMode.value !== "table") {
+    return;
+  }
+  if (!tableHasMore.value || tableLoadingMore.value || loading.value) {
+    return;
+  }
+  if (attrConfig.value.length <= 0 || serverTablePage.value < 1) {
+    return;
+  }
+  const next = serverTablePage.value + 1;
+  tableLoadingMore.value = true;
+  fetchTablePage(null, next, true)
+      .catch((e: any | null) => {
+        uni.showToast({
+          title: getErrorMessage(e),
+          icon: "none",
+          duration: 2500,
+        });
+      })
+      .finally(() => {
+        tableLoadingMore.value = false;
+      });
+}
+
+/** 与 equip_run_state：触底防抖后再拉下一页 */
+function onScrollToLower() {
+  if (displayMode.value !== "table") {
+    return;
+  }
+  if (loading.value || !tableHasMore.value || tableLoadingMore.value) {
+    return;
+  }
+  if (tableScrollLowerTimer != null) {
+    return;
+  }
+  tableScrollLowerTimer = setTimeout(() => {
+    tableScrollLowerTimer = null;
+    if (tableHasMore.value && !tableLoadingMore.value && !loading.value) {
+      loadNextTableServerPage();
+    }
+  }, 200) as number;
+}
+
+async function onAggregateTap(value: AggregateInterval) {
+  aggregateInterval.value = value;
+  await nextTick();
+  try {
+    await loadTableFirstPage(null);
+  } catch (e) {
+    tableData.value = [];
+    uni.showToast({
+      title: getErrorMessage(e),
+      icon: 'none',
+      duration: 2500,
+    });
+  }
+}
+
+async function reloadAllData() {
+  if (attrConfig.value.length <= 0) {
+    return;
+  }
+  const tstReload = tableScrollLowerTimer;
+  if (tstReload != null) {
+    clearTimeout(tstReload);
+    tableScrollLowerTimer = null;
+  }
+  const gen = ++collectReloadGeneration;
+  loading.value = true;
+  dataDownsampled.value = false;
+  try {
+    await Promise.all([loadTrendData(gen), loadTableFirstPage(gen)]);
+    if (gen !== collectReloadGeneration) {
+      return;
+    }
+    dataDownsampled.value = trendData.value.length > MAX_CHART_POINTS;
+  } catch (e) {
+    if (gen === collectReloadGeneration) {
+      trendData.value = [];
+      tableData.value = [];
+      uni.showToast({
+        title: getErrorMessage(e),
+        icon: 'none',
+        duration: 2500,
+      });
+    }
+  } finally {
+    if (gen === collectReloadGeneration) {
+      loading.value = false;
+    }
+  }
+  if (gen === collectReloadGeneration) {
+    reloadEChart();
+  }
+}
+
+/** 与 equip.uvue 一致：request().then，配置用 parseData；成功后再 reloadAllData */
+const loadConfig = () => {
+  request({
+    url: apiPath.equip_config as string,
+    method: "GET",
+    data: {
+      equipSn: equipSn,
+    },
+  })
+      .then((res) => {
+        if (res === null) {
+          return;
+        }
+        let r = parseData<EquipConfig>(res);
+        if (r == null || r.config == null) {
+          return;
+        }
+        if (r.config.attrs == null || r.config.attrs.length <= 0) {
+          return;
+        }
+        const allAttrs = r.config.attrs;
+        let rr = [] as EquipConfigAttr[];
+        allAttrs.forEach((item) => {
+          if (item.needCollect != null && item.needCollect) {
+            rr.push(item);
+          }
+        });
+        if (singleAttrName !== '') {
+          const byCollected = rr.filter((item) => item.name === singleAttrName);
+          if (byCollected.length > 0) {
+            rr = byCollected;
+          } else {
+            const byConfig = allAttrs.filter((item) => item.name === singleAttrName);
+            if (byConfig.length > 0) {
+              rr = byConfig;
+            } else {
+              rr = [{name: singleAttrName, map: ''}];
+            }
+          }
+          pageTitle.value = singleAttrName;
+        } else {
+          pageTitle.value = t('历史曲线');
+        }
+        containerSize.value = rr.length * singleHeight;
+        attrConfig.value = rr;
+        void reloadAllData();
+      })
+      .catch((e) => {
+        uni.showToast({
+          title: getErrorMessage(e),
+          icon: 'none',
+          duration: 2500,
+        });
+      });
+};
+
+
+function reloadHistory(s: string[]) {
+  if (s != null && s.length >= 2 && s[0].length > 0 && s[1].length > 0) {
+    const start = new Date(s[0]).getTime();
+    const end = new Date(s[1]).getTime();
+    const days = (end - start) / (24 * 3600 * 1000);
+    if (days > LARGE_RANGE_DAYS) {
+      uni.showToast({
+        title: t('时间跨度较大，已做采样展示'),
+        icon: 'none',
+        duration: 2500
+      });
+    }
+  }
+  void reloadAllData();
+}
+
+function formatDateYmd(date: Date | null): string {
+  if (date == null) {
+    return '';
+  }
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+async function init() {
+  if (chartRef.value == null) {
+    return;
+  }
+  try {
+    await chartRef.value.init(null);
+    reloadEChart();
+  } catch (e) {
+    uni.showToast({
+      title: getErrorMessage(e),
+      icon: 'none',
+      duration: 2500,
+    });
+  }
+}
+
+/** 仅替换数组引用时触发即可；deep 会遍历数万条采集数据，易加重内存与泄漏告警 */
+const stopTrendDataWatch = watch(trendData, () => {
+  reloadEChart();
+});
+
+const stopDisplayModeWatch = watch(displayMode, (mode: 'chart' | 'table') => {
+  if (mode === 'chart') {
+    nextTick(() => {
+      reloadEChart();
+    });
+  }
+});
+
+onUnload(() => {
+  collectReloadGeneration++;
+  const tst = tableScrollLowerTimer;
+  if (tst != null) {
+    clearTimeout(tst);
+    tableScrollLowerTimer = null;
+  }
+  stopTrendDataWatch();
+  stopDisplayModeWatch();
+  const ch = chartRef.value;
+  if (ch != null) {
+    try {
+      ch.dispose();
+    } catch (_e: any) {
+    }
+  }
+  chartRef.value = null;
+  trendData.value = [];
+  tableData.value = [];
+  attrConfig.value = [];
+  serverTablePage.value = 0;
+  tableHasMore.value = true;
+  tableLoadingMore.value = false;
+});
+
+onLoad((options) => {
+  collectShowCount = 0
+  equipSn = ''
+  singleAttrName = ''
+  if (options != null) {
+    const sn = options.sn as string | null
+    if (sn != null) {
+      equipSn = sn
+    }
+  }
+  if (options != null) {
+    const attr = options.attr as string | null
+    if (attr != null) {
+      singleAttrName = attr
+    }
+  }
+  if (singleAttrName.length > 0) {
+    try {
+      const decoded = decodeURIComponent(singleAttrName)
+      if (decoded != null) {
+        singleAttrName = decoded
+      }
+    } catch (_) {
+    }
+  }
+  let current = new Date();
+  customDate.value = [formatDateYmd(current), formatDateYmd(current)]
+  loadConfig()
+})
+
+onShow(() => {
+  collectShowCount += 1
+  if (attrConfig.value.length <= 0) {
+    return
+  }
+  if (collectShowCount <= 1) {
+    return
+  }
+  void reloadAllData()
+})
+</script>
+
+
+<style scoped lang="scss">
+.echart-equip-wrap {
+  position: relative;
+  @apply w-full mt-5;
+}
+
+.echart-loading {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  margin-top: 12rpx;
+  font-size: 28rpx;
+  color: #64748b;
+}
+
+.downsample-hint-wrap {
+  padding: 8rpx 0;
+}
+
+.downsample-hint {
+  font-size: 24rpx;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.echart-equip {
+  overflow: hidden;
+  @apply bg-white w-full;
+}
+
+.view-toggle {
+  margin-top: 24rpx;
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  border: 1px solid #dbe3ee;
+  border-radius: 18rpx;
+  padding: 8rpx;
+  background: #f3f6fb;
+}
+
+.toggle-item {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 56rpx;
+  border-radius: 10rpx;
+  background: transparent;
+}
+
+.toggle-item.active {
+  background: #1ea9f7;
+}
+
+.table-scroll {
+  margin-top: 20rpx;
+  width: 100%;
+}
+
+/* App：uvue 默认 view overflow:hidden，flex-wrap 换行会被裁切；须用单 class，勿用 .parent .child（App 不支持关系选择器） */
+.aggregate-bar--app,
+.aggregate-chips--app,
+.aggregate-chip--app {
+  overflow: visible;
+}
+
+.collect-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.table-row {
+  background: #ffffff;
+  border-bottom: 1px solid #eef2f7;
+  padding: 14rpx 16rpx;
+}
+
+.table-row-last {
+  border-bottom: 0;
+}
+
+.table-time-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10rpx;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.time-label {
+  color: #64748b;
+  font-size: 22rpx;
+  text-align: left;
+  flex: 1;
+}
+
+.time-value {
+  flex: 1;
+  color: #0f172a;
+  font-size: 23rpx;
+  text-align: right;
+}
+
+.table-attrs {
+  margin-top: 8rpx;
+}
+
+.table-kv {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0;
+  width: 100%;
+}
+
+/* 聚合单元格文案较长；App 默认 white-space: keep + kv-value overflow:hidden 会裁掉「最大/样本」等后半段 */
+.table-kv--aggregate {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.kv-label {
+  font-size: 23rpx;
+  color: #64748b;
+  padding-right: 12rpx;
+  flex: 1;
+  text-align: left;
+}
+
+.kv-value {
+  font-size: 24rpx;
+  color: #334155;
+  min-width: 120rpx;
+  flex: 1;
+  text-align: right;
+  overflow: hidden;
+}
+
+.kv-value--aggregate {
+  white-space: normal;
+  overflow: visible;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table-empty-wrap {
+  padding: 20rpx 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.table-empty {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 24rpx;
+}
+
+.table-footer-hint {
+  padding: 20rpx 16rpx 28rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.table-footer-text {
+  font-size: 24rpx;
+  color: #64748b;
+  text-align: center;
+}
+
+.table-footer-muted {
+  color: #94a3b8;
+}
+
+.aggregate-bar {
+  margin-bottom: 16rpx;
+  padding: 12rpx 0 4rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.aggregate-label {
+  font-size: 24rpx;
+  color: #64748b;
+  margin-bottom: 12rpx;
+}
+
+.aggregate-chips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.aggregate-chip {
+  margin-right: 12rpx;
+  margin-bottom: 12rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 10rpx;
+  border: 1px solid #dbe3ee;
+  background: #f8fafc;
+}
+
+/* 复合选择器须同一前缀顺序，与模板 class="aggregate-chip aggregate-chip--active" 一致 */
+.aggregate-chip.aggregate-chip--active {
+  background: #1ea9f7;
+  border-color: #1ea9f7;
+}
+
+.aggregate-chip-text {
+  font-size: 22rpx;
+  color: #334155;
+}
+
+.aggregate-chip-text--active {
+  color: #ffffff;
+}
+</style>

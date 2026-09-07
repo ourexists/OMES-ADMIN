@@ -1,0 +1,28 @@
+/* 百度地图 GL：隐藏左下角 Logo / 版权（scoped 到地图容器，避免影响 layout.logo） */
+.baidu-screen-map .anchorBL,
+.baidu-gis-map .anchorBL,
+.map-picker__canvas .anchorBL,
+.baidu-screen-map .BMap_cpyCtrl,
+.baidu-gis-map .BMap_cpyCtrl,
+.map-picker__canvas .BMap_cpyCtrl,
+.baidu-screen-map [class*='copyright'],
+.baidu-gis-map [class*='copyright'],
+.map-picker__canvas [class*='copyright'],
+.baidu-screen-map [class*='Copyright'],
+.baidu-gis-map [class*='Copyright'],
+.map-picker__canvas [class*='Copyright'] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.baidu-screen-map a[href*='map.baidu.com'],
+.baidu-gis-map a[href*='map.baidu.com'],
+.map-picker__canvas a[href*='map.baidu.com'],
+.baidu-screen-map a[href*='api.map.baidu.com'],
+.baidu-gis-map a[href*='api.map.baidu.com'],
+.map-picker__canvas a[href*='api.map.baidu.com'] {
+  display: none !important;
+  visibility: hidden !important;
+}

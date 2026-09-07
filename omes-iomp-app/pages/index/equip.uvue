@@ -1,0 +1,1035 @@
+<template>
+  <cl-page>
+    <cl-topbar
+        fixed
+        :background-color="isDark? 'black': 'white'"
+        :show-back="false"
+        safe-area-top
+        :height="isMp() ? null : 100"
+        :pt="{
+    				className: '!z-50'
+    			}"
+    >
+      <view
+          class="flex flex-row items-end p-3 flex-1 w-full ml-5"
+          :class="{
+    					'pt-0': isMp(),
+    				}"
+      >
+        <view class="flex flex-row flex-1">
+          <!-- 当前选择展示 -->
+          <cl-text
+              color="primary"
+              :pt="{
+						className: '!text-2xl'
+					}"
+          >
+            {{ t('设备') }}
+          </cl-text>
+        </view>
+        <view class="equip-toolbar-actions flex flex-row items-center">
+          <view
+              class="view-mode-btn flex items-center justify-center w-8 h-8 rounded-lg"
+              :class="isDark ? 'bg-gray-700' : 'bg-gray-200'"
+              @tap="viewMode = viewMode === 'card' ? 'list' : 'card'"
+          >
+            <cl-icon
+                :name="viewMode === 'card' ? 'list-view' : 'apps-line'"
+                color="primary"
+                :pt="{ className: '!text-lg' }"
+            />
+          </view>
+          <view
+              class="flex flex-row justify-end ml-3"
+              :class="{
+    					'mr-32': isMp(),
+    					'mr-3': !isMp()
+    				}"
+              @tap="setWorkshop"
+          >
+            <!-- 当前选择展示 -->
+            <cl-text
+                color="primary"
+                :pt="{
+						className: '!text-base ml-2'
+					}"
+            >
+              {{ workshopTree.selectNode.value.label }}
+            </cl-text>
+            <cl-icon name="arrow-right-s-line"
+                     color="primary"
+                     :pt="{
+						className: '!text-base mb-1'
+					}"></cl-icon>
+          </view>
+        </view>
+      </view>
+    </cl-topbar>
+    <view class="equip-body">
+      <!-- 横向 scroll-view：避免统计项总宽度超出屏宽（含 App 原生 overflow-x 无效的情况） -->
+      <scroll-view
+          class="status-summary-scroll"
+          scroll-x
+          :show-scrollbar="false"
+          enable-flex
+      >
+        <view
+            class="flex flex-row status-summary status-summary--row"
+            :class="{ 'e-ca': isApp(), 'e-cd': isDark }"
+        >
+          <view
+              class="summary-item"
+              :class="{ 'summary-item-active': statusFilter === 'online', 'e-ca': isApp(), 'e-cd': isDark }"
+              @tap="setStatusFilter('online')"
+          >
+            <view class="summary-status-dot status-dot online shadow"></view>
+            <view class="summary-item-col">
+              <text class="summary-item-txt" :class="{ 'e-cd': isDark }">{{ t('在线') }}</text>
+              <text class="summary-item-num" :class="{ 'e-cd': isDark }">{{ equipCount.online }}</text>
+            </view>
+          </view>
+
+          <view
+              class="summary-item"
+              :class="{ 'summary-item-active': statusFilter === 'offline', 'e-ca': isApp(), 'e-cd': isDark }"
+              @tap="setStatusFilter('offline')"
+          >
+            <view class="summary-status-dot status-dot offline shadow"></view>
+            <view class="summary-item-col">
+              <text class="summary-item-txt" :class="{ 'e-cd': isDark }">{{ t('离线') }}</text>
+              <text class="summary-item-num" :class="{ 'e-cd': isDark }">{{ equipCount.offline }}</text>
+            </view>
+          </view>
+
+          <view
+              class="summary-item"
+              :class="{ 'summary-item-active': statusFilter === 'run', 'e-ca': isApp(), 'e-cd': isDark }"
+              @tap="setStatusFilter('run')"
+          >
+            <view class="summary-status-dot status-dot run shadow"></view>
+            <view class="summary-item-col">
+              <text class="summary-item-txt" :class="{ 'e-cd': isDark }">{{ t('运行') }}</text>
+              <text class="summary-item-num" :class="{ 'e-cd': isDark }">{{ equipCount.run }}</text>
+            </view>
+          </view>
+
+          <view
+              class="summary-item"
+              :class="{ 'summary-item-active': statusFilter === 'stopped', 'e-ca': isApp(), 'e-cd': isDark }"
+              @tap="setStatusFilter('stopped')"
+          >
+            <view class="summary-status-dot status-dot stopped shadow"></view>
+            <view class="summary-item-col">
+              <text class="summary-item-txt" :class="{ 'e-cd': isDark }">{{ t('停止') }}</text>
+              <text class="summary-item-num" :class="{ 'e-cd': isDark }">{{ equipCount.stopped }}</text>
+            </view>
+          </view>
+
+          <view
+              class="summary-item"
+              :class="{ 'summary-item-active': statusFilter === 'alarm', 'e-ca': isApp(), 'e-cd': isDark }"
+              @tap="setStatusFilter('alarm')"
+          >
+            <view class="summary-status-dot status-dot alarm shadow"></view>
+            <view class="summary-item-col">
+              <text class="summary-item-txt" :class="{ 'e-cd': isDark }">{{ t('报警') }}</text>
+              <text class="summary-item-num" :class="{ 'e-cd': isDark }">{{ equipCount.alarm }}</text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+      <!-- 卡片展示：左图右基础信息，下方动态采集 -->
+      <view v-if="viewMode === 'card'" class="device-card-list" :class="{ 'e-ca': isApp() }">
+        <view
+            v-for="(item, index) in equipList"
+            :key="index"
+            class="device-card"
+            :class="{
+            'is-run': item.runState == 1 && item.alarmState==0,
+            'is-alarm': item.alarmState == 1,
+            'is-offline': item.onlineState == 0,
+            'device-card--last': index === equipList.length - 1,
+            'e-ca': isApp(),
+            'e-cd': isDark,
+          }"
+            @tap="router.to('/pages/equip/equip_detail?id='+item.id)"
+        >
+          <!-- 上：左侧图片 + 右侧基础信息 -->
+          <view class="card-main" :class="{ 'e-cd': isDark }">
+            <view class="card-img-wrap" :class="{ 'e-cd': isDark }">
+              <image
+                  :src="typeImage(item)"
+                  mode="aspectFill"
+                  class="card-img"
+              />
+              <equip-badge :equip="item"></equip-badge>
+            </view>
+            <view class="card-info">
+              <text class="card-name" :class="{ 'e-cd': isDark }">{{ item.name }}</text>
+              <text class="card-workshop" :class="{ 'e-cd': isDark }">{{ item.workshop?.name }}</text>
+              <text class="card-sn" :class="{ 'e-cd': isDark }">{{ item.selfCode }}</text>
+              <view class="card-status-row" :class="{ 'e-ca': isApp() }">
+                <view
+                    class="status-dot card-dot"
+                    :class="{
+                      online: item.onlineState==1,
+                      offline: item.onlineState!=1,
+                      'e-ca': isApp(),
+                    }"
+                />
+                <text class="card-status-txt" :class="{ 'e-ca': isApp(), 'e-cd': isDark }">{{ item.onlineState == 1 ? t('在线') : t('离线') }}</text>
+                <view
+                    class="status-dot card-dot"
+                    :class="{
+                      offline: item.onlineState == 0,
+                      run: item.onlineState != 0 && item.runState==1,
+                      stopped: item.onlineState != 0 && item.runState!=1,
+                      'e-ca': isApp(),
+                    }"
+                />
+                <text class="card-status-txt" :class="{ 'e-ca': isApp(), 'e-cd': isDark }">
+                  {{ item.onlineState == 0 ? '-' : item.runState == 1 ? t('运行') : t('停止') }}
+                </text>
+                <template v-if="item.alarmState == 1">
+                  <view class="status-dot card-dot alarm" :class="{ 'e-ca': isApp() }"/>
+                  <text class="card-status-txt card-alarm-label" :class="{ 'e-ca': isApp(), 'e-cd': isDark }">{{ t('报警') }}</text>
+                </template>
+              </view>
+            </view>
+          </view>
+          <!-- 下：动态采集信息 -->
+          <view
+              class="card-dynamic"
+              v-if="getAlarmTexts(item).length > 0 || getAttrs(item).length > 0"
+              :class="{ 'e-ca': isApp(), 'e-cd': isDark }"
+          >
+            <view v-for="(i2, idx2) in getAlarmTexts(item)" :key="'alarm-'+idx2" class="card-alarm-row">
+              <text class="card-alarm-txt">{{ i2 }}</text>
+            </view>
+            <view v-for="(i, idx) in getAttrs(item)" :key="'attr-'+idx" class="card-attr-row">
+              <text class="card-attr-label" :class="{ 'e-cd': isDark }">{{ i.name }}</text>
+              <text class="card-attr-value" :class="{ 'e-cd': isDark }">{{
+                  i.value == null ? t("暂未获取") : i.value
+                }}{{ (i.unit != null && i.unit !== '') ? ' ' + i.unit : '' }}
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+      <!-- 列表展示 -->
+      <view v-else class="pb-4 device-list-wrap" :class="{ 'e-ca': isApp() }">
+        <view
+            v-for="(item, index) in equipList"
+            :key="index"
+            class="device-list-item"
+            :class="{
+            'is-run': item.runState == 1 && item.alarmState==0,
+            'is-alarm': item.alarmState == 1,
+            'is-offline': item.onlineState == 0,
+            'device-list-item--last': index === equipList.length - 1,
+            'e-ca': isApp(),
+            'e-cd': isDark,
+          }"
+            @tap="router.to('/pages/equip/equip_detail?id='+item.id)"
+        >
+          <view class="device-list-thumb" :class="{ 'e-cd': isDark }">
+            <image
+                :src="typeImage(item)"
+                mode="aspectFill"
+                class="device-list-image"
+            />
+            <equip-badge :equip="item"></equip-badge>
+          </view>
+          <view class="device-list-body">
+            <text class="device-list-name" :class="{ 'e-cd': isDark }">{{ item.name }}</text>
+            <text class="device-list-meta" :class="{ 'e-cd': isDark }">{{ item.workshop?.name }} · {{ item.selfCode }}</text>
+            <view class="device-list-status">
+              <view
+                  class="status-dot device-list-dot"
+                  :class="item.onlineState==1 ? 'online' : 'offline'"
+              />
+              <text class="device-list-status-label" :class="{ 'e-cd': isDark }">{{ item.onlineState == 1 ? t('在线') : t('离线') }}</text>
+              <view
+                  class="status-dot device-list-dot ml-2"
+                  :class="item.onlineState == 0 ? 'offline' : item.runState==1 ? 'run' : 'stopped'"
+              />
+              <text class="device-list-status-label" :class="{ 'e-cd': isDark }">{{
+                  item.onlineState == 0 ? '-' : item.runState == 1 ? t('运行') : t('停止')
+                }}
+              </text>
+            </view>
+          </view>
+          <cl-icon name="arrow-right-s-line" color="primary" :pt="{ className: '!text-lg flex-shrink-0' }"/>
+        </view>
+      </view>
+      <text class="text-center p-2 loading-hint" v-if="pageloading" :class="{ 'e-cd': isDark }">加载中…</text>
+    </view>
+    <custom-tabbar></custom-tabbar>
+    <!--    <workshop-set :ref="refs.set('workshopSet')"-->
+    <!--                  @change="onWorkshopChange"-->
+    <!--                  @openChange="onWorkshopOpenChange"-->
+    <!--                  class="workshopTree">-->
+    <!--    </workshop-set>-->
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import {isApp, isDark, isMp, router, useRefs, useUi} from "@/uni_modules/cool-unix";
+import type {ClTreeItem} from "@/uni_modules/cool-unix";
+import CustomTabbar from "@/components/tabbar.uvue";
+import {ref, watch} from 'vue';
+import {t} from "@/locale";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import type {Equip, EquipAttr, EquipCount} from "@/core/types";
+import {parseDataArray} from "@/core/utils/parse";
+import equipBadge from "@/pages/index/components/equip-badge.uvue";
+import * as equipParser from '@/core/utils/equipParser';
+import {workshopTree} from "@/components/workshop";
+import {config} from "@/config";
+
+const ui = useUi();
+const refs = useRefs();
+const poupOpen = ref<boolean>(false);
+
+const equipList = ref<Equip[]>([]);
+const sourceList = ref<Equip[]>([]);
+const equipCount = ref<EquipCount>({
+  total: 0,
+  alarm: 0,
+  online: 0,
+  offline: 0,
+  run: 0,
+  stopped: 0,
+});
+
+let currentPage = 1;
+let pageSize = 20;
+let timer: number | null = null;
+/** 递增代数，避免 reloadData 在 loading 时被跳过导致切换场景/再次进入页不刷新 */
+let reloadGeneration = 0;
+
+const loading = ref<boolean>(false);
+const pageloading = ref<boolean>(false);
+
+// 展示模式：card 卡片 | list 列表
+const viewMode = ref<'card' | 'list'>('card');
+
+// 状态筛选：点击 summary-item 筛选设备列表
+type StatusFilterKey = 'online' | 'offline' | 'run' | 'stopped' | 'alarm' | null;
+const statusFilter = ref<StatusFilterKey>(null);
+
+function getFilteredSourceList(): Equip[] {
+  const list = sourceList.value;
+  const f = statusFilter.value;
+  if (f === null) return list;
+  return list.filter(function (item: Equip) {
+    if (f === 'online') return item.onlineState === 1;
+    if (f === 'offline') return item.onlineState === 0;
+    if (f === 'run') return item.onlineState === 1 && item.runState === 1;
+    if (f === 'stopped') return item.onlineState === 1 && item.runState === 0;
+    if (f === 'alarm') return item.alarmState === 1;
+    return true;
+  });
+}
+
+function setWorkshop() {
+  // if (poupOpen.value) {
+  //   refs.close("workshopSet");
+  // } else {
+  //   refs.open("workshopSet");
+  // }
+  router.to("/pages/equip/workshop_tree");
+}
+
+function typeImage(equip: Equip): string {
+  const image = equipParser.equipImage(equip);
+  return image == null ? '' : image;
+}
+
+function getAlarmTexts(item: Equip): string[] {
+  return item.alarmTexts ?? [];
+}
+
+function getAttrs(item: Equip): EquipAttr[] {
+  return item.attrs ?? [];
+}
+
+function loadPage(page: number, isReStart: boolean) {
+  if (pageloading.value) {
+    return
+  }
+  pageloading.value = true;
+
+  function push() {
+    let start = 0;
+    if (!isReStart) {
+      start = (page - 1) * pageSize;
+    }
+    const end = page * pageSize;
+    const list = getFilteredSourceList();
+    const nextPage = list.slice(start, end);
+    if (nextPage.length > 0) {
+      if (isReStart) {
+        equipList.value = nextPage;
+      } else {
+        equipList.value.push(...nextPage);
+      }
+    } else {
+      if (isReStart) {
+        equipList.value = [];
+      }
+    }
+    pageloading.value = false;
+  }
+
+  setTimeout(() => {
+    push();
+  }, 16)
+}
+
+function loadMore() {
+  if (loading.value) {
+    return;
+  }
+
+  const nextPage = currentPage + 1;
+  const start = (nextPage - 1) * pageSize;
+  if (start >= getFilteredSourceList().length) {
+    return;
+  }
+  currentPage = nextPage;
+  loadPage(currentPage, false);
+}
+
+function setStatusFilter(key: StatusFilterKey) {
+  statusFilter.value = statusFilter.value === key ? null : key;
+  currentPage = 1;
+  loadPage(1, true);
+}
+
+const reloadData = async () => {
+  const gen = ++reloadGeneration;
+  loading.value = true;
+  try {
+    await request({
+      url: apiPath.equip_page as string,
+      method: "POST",
+      data: {
+        workshopCode: workshopTree.selectNode.value.id == -1 ? null : workshopTree.selectNode.value.id,
+        needRealtime: true,
+        needWorkshopCascade: true,
+        queryWorkshop: true,
+        queryAttrs: true,
+        limitUserWorkshop: true,
+        requirePage: false
+      }
+    })
+        .then((res) => {
+          if (gen !== reloadGeneration) {
+            return;
+          }
+          const c = {
+            total: 0,
+            alarm: 0,
+            online: 0,
+            offline: 0,
+            run: 0,
+            stopped: 0,
+          } as EquipCount;
+          if (res === null) {
+            sourceList.value = [];
+          } else {
+            let r = parseDataArray<Equip>(res);
+            if (r === null) {
+              sourceList.value = [];
+            } else {
+              sourceList.value = r;
+            }
+          }
+          if (sourceList.value.length > 0) {
+            sourceList.value.forEach(item => {
+              if (item.onlineState == 0) {
+                c.offline++;
+              } else {
+                c.online++;
+                if (item.runState == 1) {
+                  c.run++;
+                } else {
+                  c.stopped++;
+                }
+                if (item.alarmState == 1) {
+                  c.alarm++;
+                }
+              }
+            });
+          }
+          equipCount.value = c;
+
+          // 加载第一页
+          loadPage(currentPage, true);
+
+        });
+  } finally {
+    if (gen === reloadGeneration) {
+      loading.value = false;
+    }
+  }
+}
+
+const reloadAll = async () => {
+  currentPage = 1;
+  await reloadData();
+}
+
+/** 场景（车间）切换后立即拉列表，不依赖返回本页时 onShow 的触发顺序 */
+watch(
+    workshopTree.selectNode,
+    (_val: ClTreeItem) => {
+      reloadAll();
+    }
+);
+
+function onWorkshopChange(payload: boolean) {
+  if (payload) {
+    reloadData();
+  }
+}
+
+function onWorkshopOpenChange(payload: boolean) {
+  poupOpen.value = payload;
+}
+
+
+onReachBottom(() => {
+  loadMore()
+})
+
+function startEquipRefreshTimer() {
+  if (timer != null) {
+    return
+  }
+  timer = setInterval(() => {
+    reloadData();
+  }, config.equipRefreshTime);
+}
+
+onLoad(() => {
+  startEquipRefreshTimer();
+})
+
+onShow(() => {
+  reloadAll();
+  startEquipRefreshTimer();
+});
+
+onHide(() => {
+  if (timer != null) {
+    clearInterval(timer as number); // 清除定时器
+    timer = null;
+  }
+})
+
+</script>
+
+<style scoped lang="scss">
+@import "../../static/equip";
+
+/* 水平留白放在父级，避免子级 width:100% 再叠加 margin 导致横向超屏 */
+.equip-body {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 24rpx;
+}
+
+/* 统计条横向滚动容器（嵌在 cl-page 的 scroll-view 内） */
+.status-summary-scroll {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 12rpx 0;
+  flex-shrink: 0;
+}
+
+/* 视图切换按钮内图标居中 */
+.view-mode-btn {
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+/* cl-icon 根节点是 <text>，不能写 flex / align-items / justify-content；居中由 .view-mode-btn 的 flex 完成 */
+
+/* 卡片列表 */
+.device-card-list {
+  padding: 24rpx 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 32rpx;
+}
+
+.device-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  padding: 12rpx;
+  box-sizing: border-box;
+  margin-bottom: 24rpx;
+}
+
+.device-card.device-card--last {
+  margin-bottom: 0;
+}
+
+.device-card.is-run {
+  border-color: rgba(82, 196, 26, 0.35);
+}
+
+.device-card.is-alarm {
+  border-left: 6rpx solid #f43f5e;
+  padding-left: 6rpx;
+}
+
+.device-card.is-offline {
+  opacity: 0.65;
+}
+
+/* 上：左图右信息 */
+.card-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 160rpx;
+  border-radius: 12rpx;
+  overflow: hidden;
+  background: #fafbfc;
+  flex-shrink: 0;
+}
+
+.card-img-wrap {
+  width: 160rpx;
+  height: 160rpx;
+  flex-shrink: 0;
+  background: #f1f5f9;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-img {
+  width: 100%;
+  height: 100%;
+  opacity: 0.92;
+  display: flex;
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+  padding: 16rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.card-name {
+  color: #1e293b;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-workshop {
+  color: #64748b;
+  font-size: 24rpx;
+  margin-top: 8rpx;
+}
+
+.card-sn {
+  color: #94a3b8;
+  font-size: 22rpx;
+  margin-top: 4rpx;
+}
+
+.card-status-row {
+  margin-top: 12rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.card-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 6rpx;
+  flex-shrink: 0;
+  margin-right: 8rpx;
+}
+
+.card-dot.online {
+  box-shadow: 0 0 4rpx rgba(24, 144, 255, 0.55);
+}
+
+.card-dot.offline {
+  box-shadow: 0 0 4rpx rgba(191, 191, 191, 0.7);
+}
+
+.card-dot.run {
+  box-shadow: 0 0 4rpx rgba(82, 196, 26, 0.55);
+}
+
+.card-dot.stopped {
+  box-shadow: 0 0 4rpx rgba(250, 173, 20, 0.55);
+}
+
+.card-dot.alarm {
+  box-shadow: 0 0 4rpx rgba(255, 77, 79, 0.65);
+}
+
+.card-status-txt {
+  font-size: 22rpx;
+  color: #475569;
+  margin-right: 16rpx;
+  margin-bottom: 4rpx;
+}
+
+.card-alarm-label {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* 下：动态采集信息 */
+.card-dynamic {
+  padding: 12rpx 24rpx 20rpx;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+  max-height: 260rpx;
+  overflow-y: auto;
+  flex-shrink: 1;
+}
+
+.card-alarm-row {
+  margin-bottom: 6rpx;
+}
+
+.card-alarm-txt {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.card-attr-row {
+  margin-top: 10rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-attr-label {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #475569;
+  flex-shrink: 0;
+  margin-right: 12rpx;
+}
+
+.card-attr-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-dot {
+  display: flex;
+  border-radius: 9999px;
+  box-sizing: border-box;
+}
+
+.status-summary {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12rpx;
+  margin: 0;
+  padding: 20rpx 16rpx;
+  box-sizing: border-box;
+  overflow: visible;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+/* 屏宽足够时占满一行，过窄时由外层 scroll-x 滑动 */
+.status-summary--row {
+  min-width: 100%;
+}
+
+.summary-item {
+  flex: 1;
+  flex-basis: 0;
+  min-width: 64rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80rpx;
+  overflow: visible;
+  padding: 16rpx 8rpx;
+  border-radius: 12rpx;
+}
+
+.summary-item-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-item-txt {
+  font-size: 22rpx;
+  color: #334155;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.summary-item-num {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #334155;
+  line-height: 1.3;
+  margin-top: 2rpx;
+  text-align: center;
+}
+
+.summary-status-dot {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  width: 28rpx;
+  height: 28rpx;
+  min-width: 28rpx;
+  min-height: 28rpx;
+  margin-bottom: 6rpx;
+  flex-shrink: 0;
+  overflow: visible;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  display: flex;
+}
+
+.summary-item-active {
+  background: rgba(59, 130, 246, 0.12);
+  border-radius: 12rpx;
+}
+
+/* 列表展示 */
+.device-list-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.device-list-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.device-list-item.device-list-item--last {
+  margin-bottom: 0;
+}
+
+.device-list-item.is-offline {
+  opacity: 0.6;
+}
+
+.device-list-item.is-alarm {
+  border-left: 4rpx solid #f43f5e;
+}
+
+.device-list-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  background: #f1f5f9;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.device-list-image {
+  width: 100%;
+  height: 100%;
+  opacity: 0.9;
+}
+
+.device-list-body {
+  flex: 1;
+  min-width: 0;
+  margin-left: 24rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.device-list-name {
+  color: #1e293b;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.device-list-meta {
+  color: #64748b;
+  font-size: 24rpx;
+  margin-top: 6rpx;
+}
+
+.device-list-status {
+  margin-top: 8rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.device-list-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 6rpx;
+}
+
+.device-list-dot.online {
+  box-shadow: 0 0 4px rgba(24, 144, 255, 0.55);
+}
+
+.device-list-dot.offline {
+  box-shadow: 0 0 4px rgba(191, 191, 191, 0.7);
+}
+
+.device-list-dot.run {
+  box-shadow: 0 0 4px rgba(82, 196, 26, 0.55);
+}
+
+.device-list-dot.stopped {
+  box-shadow: 0 0 4px rgba(250, 173, 20, 0.55);
+}
+
+.device-list-status-label {
+  font-size: 22rpx;
+  color: #64748b;
+  margin-left: 6rpx;
+}
+
+.loading-hint {
+  color: #64748b;
+  font-size: 26rpx;
+}
+
+/* App：用元素上的 e-ca 复合 class，避免 uvue App 关系选择器不生效 */
+.card-dynamic.e-ca {
+  max-height: none;
+  overflow: visible;
+}
+
+.device-card.is-offline.e-ca,
+.device-list-item.is-offline.e-ca {
+  opacity: 0.72;
+}
+
+.summary-item.e-ca {
+  min-width: 88rpx;
+  padding: 16rpx 6rpx;
+}
+
+.card-dot.e-ca {
+  margin-right: 8rpx;
+}
+
+.card-status-txt.e-ca {
+  margin-right: 20rpx;
+  margin-bottom: 4rpx;
+}
+
+.equip-toolbar-app {
+  margin-left: 24rpx;
+  margin-right: 16rpx;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.device-card-list.e-ca,
+.device-list-wrap.e-ca {
+  padding-bottom: 32rpx;
+}
+
+/* 深色：e-cd 打在对应节点上，与 App 无继承样式规则一致 */
+.status-summary.e-cd {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.summary-item-txt.e-cd,
+.summary-item-num.e-cd {
+  color: #e2e8f0;
+}
+
+.summary-item-active.e-cd {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.device-card.e-cd,
+.device-list-item.e-cd {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.25);
+}
+
+.card-main.e-cd {
+  background: #0f172a;
+}
+
+.card-img-wrap.e-cd,
+.device-list-thumb.e-cd {
+  background: #334155;
+}
+
+.card-name.e-cd,
+.device-list-name.e-cd,
+.card-attr-value.e-cd {
+  color: #f1f5f9;
+}
+
+.card-workshop.e-cd,
+.card-sn.e-cd,
+.device-list-meta.e-cd,
+.device-list-status-label.e-cd,
+.card-status-txt.e-cd {
+  color: #94a3b8;
+}
+
+.card-dynamic.e-cd {
+  background: #0f172a;
+  border-top-color: #334155;
+}
+
+.card-attr-label.e-cd {
+  color: #cbd5e1;
+}
+
+.loading-hint.e-cd {
+  color: #94a3b8;
+}
+</style>

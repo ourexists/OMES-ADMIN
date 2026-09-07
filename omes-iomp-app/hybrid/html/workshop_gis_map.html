@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1220;
+      -webkit-overflow-scrolling: touch;
+    }
+    #map {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+    }
+    #gis-fallback {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      padding: 16px;
+      box-sizing: border-box;
+      color: #e2e8f0;
+      font-size: 13px;
+      line-height: 1.5;
+      z-index: 10;
+      background: #0b1220;
+      overflow: auto;
+    }
+    .maplibregl-ctrl-attrib { font-size: 10px; max-width: 45%; }
+    .gis-popup .maplibregl-popup-content {
+      background: rgba(15, 23, 42, 0.96);
+      color: #e2e8f0;
+      border: 1px solid rgba(0, 216, 255, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px 14px;
+      max-width: 300px;
+      font-size: 13px;
+      line-height: 1.5;
+      box-sizing: border-box;
+    }
+    .gis-popup .maplibregl-popup-close-button { color: #94a3b8; font-size: 18px; padding: 4px 8px; }
+    .gis-popup .maplibregl-popup-tip { border-top-color: rgba(15, 23, 42, 0.96); }
+    .popup-title {
+      font-weight: 600;
+      color: #f8fafc;
+      margin: 0 0 10px;
+      padding-bottom: 8px;
+      font-size: 15px;
+      line-height: 1.35;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+      word-break: break-word;
+    }
+    .popup-block.popup-summary {
+      color: #cbd5e1;
+      font-size: 12px;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      background: rgba(30, 41, 59, 0.85);
+      border-radius: 6px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .popup-dev {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(51, 65, 85, 0.9);
+    }
+    .popup-dev:first-of-type { margin-top: 6px; border-top: none; padding-top: 0; }
+    .popup-dev-name {
+      color: #7dd3fc;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .popup-dev-meta {
+      color: #94a3b8;
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .popup-line { color: #cbd5e1; font-size: 12px; margin-top: 6px; word-break: break-word; }
+    .popup-line--section {
+      color: #94a3b8;
+      font-weight: 600;
+      margin-top: 12px;
+      font-size: 12px;
+    }
+    .popup-line--nested {
+      padding-left: 10px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .gis-popup-states {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .gis-popup-slab {
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-right: 16px;
+      margin-bottom: 4px;
+    }
+    .gis-popup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      margin-left: 6px;
+      flex-shrink: 0;
+      border: 1px solid rgba(248, 250, 252, 0.22);
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<pre id="gis-fallback"></pre>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+  (function () {
+    var DEFAULT_CENTER = [121.13, 31.45];
+    var DEFAULT_ZOOM = 11;
+    var STYLE_URL = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+
+    function showFallback(msg) {
+      var el = document.getElementById('gis-fallback');
+      if (!el) return;
+      el.style.display = 'block';
+      el.textContent = msg;
+    }
+
+    function esc(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function parsePayload() {
+      try {
+        var h = window.location.hash || '';
+        var prefix = '#p=';
+        if (h.indexOf(prefix) !== 0) return { points: [], fit: true };
+        var json = decodeURIComponent(h.substring(prefix.length));
+        var o = JSON.parse(json);
+        return {
+          points: Array.isArray(o.points) ? o.points : [],
+          fit: o.fit !== false
+        };
+      } catch (e) {
+        return { points: [], fit: true };
+      }
+    }
+
+    function normalizePinKey(p) {
+      var k = p.pinKey;
+      if (k === 'offline' || k === 'alarm' || k === 'online' || k === 'running' || k === 'stop') return k;
+      var c = String(p.color || '').trim().toLowerCase();
+      if (c === '#ff5a5a') return 'alarm';
+      if (c === '#8a93a1') return 'offline';
+      if (c === '#41d57a') return 'running';
+      if (c === '#ffcc00') return 'stop';
+      return 'online';
+    }
+
+    /** 与 OMES-app 静态图钉同色，canvas → dataURL，避免 hybrid 包内再带三份 png */
+    function makePinDataUrl(fillHex) {
+      var w = 48;
+      var h = 56;
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return '';
+      ctx.clearRect(0, 0, w, h);
+      var cx = w / 2;
+      var r = 14;
+      ctx.beginPath();
+      ctx.arc(cx, 8 + r, r, 0, Math.PI * 2);
+      ctx.moveTo(cx - r * 0.88, 8 + r * 1.55);
+      ctx.lineTo(cx, h - 6);
+      ctx.lineTo(cx + r * 0.88, 8 + r * 1.55);
+      ctx.closePath();
+      ctx.fillStyle = fillHex;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      return canvas.toDataURL('image/png');
+    }
+
+    function addPinImages(map, done) {
+      var defs = [
+        { id: 'pin_online', color: '#00d8ff' },
+        { id: 'pin_offline', color: '#8a93a1' },
+        { id: 'pin_alarm', color: '#ff5a5a' },
+        { id: 'pin_running', color: '#41d57a' },
+        { id: 'pin_stopped', color: '#ffcc00' }
+      ];
+      var left = defs.length;
+      function one() {
+        left--;
+        if (left <= 0) done();
+      }
+      for (var i = 0; i < defs.length; i++) {
+        (function (def) {
+          var url = makePinDataUrl(def.color);
+          if (!url) {
+            one();
+            return;
+          }
+          var img = new Image();
+          img.onload = function () {
+            try {
+              if (typeof map.hasImage === 'function' && map.hasImage(def.id)) {
+                map.removeImage(def.id);
+              }
+              map.addImage(def.id, img);
+            } catch (e1) {
+            }
+            one();
+          };
+          img.onerror = function () {
+            one();
+          };
+          img.src = url;
+        })(defs[i]);
+      }
+    }
+
+    function toFeatures(points) {
+      var feats = [];
+      for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        var lng = Number(p.lng);
+        var lat = Number(p.lat);
+        if (!isFinite(lng) || !isFinite(lat)) continue;
+        var rad = Number(p.radius);
+        if (!isFinite(rad) || rad <= 0) rad = 13;
+        var pinKey = normalizePinKey(p);
+        var equipJson = '';
+        if (p.popupKind === 'equip' && p.equipDetail != null) {
+          try {
+            equipJson = JSON.stringify(p.equipDetail);
+          } catch (e2) {
+            equipJson = '';
+          }
+        }
+        var sceneDevJson = '';
+        if (p.popupKind === 'scene' && Array.isArray(p.sceneDeviceDetails) && p.sceneDeviceDetails.length > 0) {
+          try {
+            sceneDevJson = JSON.stringify(p.sceneDeviceDetails);
+          } catch (e3) {
+            sceneDevJson = '';
+          }
+        }
+        feats.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [lng, lat] },
+          properties: {
+            id: p.id != null ? String(p.id) : ('pt_' + i),
+            color: p.color || '#00d8ff',
+            radius: rad,
+            pinKey: pinKey,
+            title: p.title || '',
+            popupKind: p.popupKind === 'equip' ? 'equip' : 'scene',
+            equipDetailJson: equipJson,
+            sceneDeviceDetailsJson: sceneDevJson,
+            /** GeoJSON 里数组属性易被引擎压平，用 JSON 字符串保证弹窗分行解析 */
+            linesJson: JSON.stringify(Array.isArray(p.lines) ? p.lines : [])
+          }
+        });
+      }
+      return feats;
+    }
+
+    var TC_STATE = {
+      online: '#00d8ff',
+      offline: '#8a93a1',
+      alarm: '#ff5a5a',
+      running: '#41d57a',
+      stopped: '#ffcc00'
+    };
+
+    /** 设备行「在线/运行/告警」用色点替代 是/否 文案（与 OMES-app TECH_COLORS 一致） */
+    function buildDeviceStatesHtml(rest) {
+      var segs = String(rest).split(/[｜|]/);
+      var online = '—';
+      var run = '—';
+      var alarm = '—';
+      for (var i = 0; i < segs.length; i++) {
+        var seg = String(segs[i] || '').trim();
+        if (!seg) continue;
+        if (seg.indexOf('在线') === 0) online = seg.replace(/^在线\s*/, '').trim();
+        else if (seg.indexOf('运行') === 0) run = seg.replace(/^运行\s*/, '').trim();
+        else if (seg.indexOf('告警') === 0) alarm = seg.replace(/^告警\s*/, '').trim();
+      }
+      function ynDot(yn, yc, nc) {
+        if (yn === '是') return yc;
+        if (yn === '否') return nc;
+        return '#94a3b8';
+      }
+      var od = ynDot(online, TC_STATE.online, TC_STATE.offline);
+      var rd = online !== '是' ? TC_STATE.offline : ynDot(run, TC_STATE.running, TC_STATE.stopped);
+      var ad = ynDot(alarm, TC_STATE.alarm, '#94a3b8');
+      function dot(c) {
+        return '<span class="gis-popup-dot" style="background-color:' + esc(c) + '"></span>';
+      }
+      return '<div class="gis-popup-states">' +
+        '<span class="gis-popup-slab">在线' + dot(od) + '</span>' +
+        '<span class="gis-popup-slab">运行' + dot(rd) + '</span>' +
+        '<span class="gis-popup-slab">告警' + dot(ad) + '</span>' +
+        '</div>';
+    }
+
+    function buildEquipGisPopupHtml(d) {
+      var runDot = TC_STATE.offline;
+      if (d.onlineState === 1) {
+        runDot = d.runState === 1 ? TC_STATE.running : TC_STATE.stopped;
+      }
+      var onlineDot = d.onlineState === 1 ? TC_STATE.online : TC_STATE.offline;
+      var alarmDot = d.alarmState === 1 ? TC_STATE.alarm : TC_STATE.offline;
+      function dot(c) {
+        return '<span class="gis-popup-dot" style="background-color:' + esc(c) + ';border:1px solid rgba(0,0,0,0.1)"></span>';
+      }
+      var body = '';
+      body += '<div class="popup-line">场景名称：' + esc(d.workshopName != null ? d.workshopName : '') + '</div>';
+      body += '<div class="popup-line">设备编号：' + esc(d.selfCode != null ? d.selfCode : '') + '</div>';
+      body += '<div class="popup-line">在线：' + dot(onlineDot) + '</div>';
+      body += '<div class="popup-line">运行：' + dot(runDot) + '</div>';
+      body += '<div class="popup-line">告警：' + dot(alarmDot) + '</div>';
+      var alarmTexts = Array.isArray(d.alarmTexts) ? d.alarmTexts : [];
+      if (alarmTexts.length > 0) {
+        body += '<div class="popup-line popup-line--section">实时报警</div>';
+        for (var li = 0; li < alarmTexts.length; li++) {
+          body += '<div class="popup-line popup-line--nested">' + esc(alarmTexts[li]) + '</div>';
+        }
+      }
+      var attrs = Array.isArray(d.attrs) ? d.attrs : [];
+      if (attrs.length > 0) {
+        body += '<div class="popup-line popup-line--section">实时数据</div>';
+        for (var ai = 0; ai < attrs.length; ai++) {
+          var a = attrs[ai];
+          var v = a.value == null ? 'unknow' : String(a.value);
+          var u = a.unit ? ' ' + String(a.unit) : '';
+          var mapRaw = (a.map != null && String(a.map).trim()) ? String(a.map).trim() : '';
+          var lineHtml = mapRaw
+            ? (esc(a.name != null ? a.name : '') + '（参数 ' + esc(mapRaw) + '）：' + esc(v) + esc(u))
+            : (esc(a.name != null ? a.name : '') + '：' + esc(v) + esc(u));
+          body += '<div class="popup-line">' + lineHtml + '</div>';
+        }
+      }
+      var controls = Array.isArray(d.controls) ? d.controls : [];
+      if (controls.length > 0) {
+        body += '<div class="popup-line popup-line--section">远程控制</div>';
+        for (var ci = 0; ci < controls.length; ci++) {
+          var c = controls[ci];
+          var cv = c.value == null ? 'unknow' : String(c.value);
+          if (c.type === 0) {
+            if (c.value === '1' || c.value === 'true') cv = '开';
+            else if (c.value === '0' || c.value === 'false') cv = '关';
+          }
+          var cu = c.unit ? ' ' + String(c.unit) : '';
+          var cmap = (c.map != null && String(c.map).trim()) ? String(c.map).trim() : '';
+          var ch = cmap
+            ? (esc(c.name != null ? c.name : '') + '（参数 ' + esc(cmap) + '）：' + esc(cv) + esc(cu))
+            : (esc(c.name != null ? c.name : '') + '：' + esc(cv) + esc(cu));
+          body += '<div class="popup-line">' + ch + '</div>';
+        }
+      }
+      return '<div class="popup-title">' + esc(d.name != null ? d.name : '') + '</div>' + body;
+    }
+
+    function sceneDeviceRealtimeHtml(row) {
+      if (row == null) return '';
+      var attrs = Array.isArray(row.attrs) ? row.attrs : [];
+      var controls = Array.isArray(row.controls) ? row.controls : [];
+      var frag = '';
+      var alarmTexts = Array.isArray(row.alarmTexts) ? row.alarmTexts : [];
+      if (alarmTexts.length > 0) {
+        frag += '<div class="popup-line popup-line--section">实时报警</div>';
+        for (var ri = 0; ri < alarmTexts.length; ri++) {
+          frag += '<div class="popup-line popup-line--nested">' + esc(alarmTexts[ri]) + '</div>';
+        }
+      }
+      if (attrs.length > 0) {
+        frag += '<div class="popup-line popup-line--section">实时数据</div>';
+        for (var ai = 0; ai < attrs.length; ai++) {
+          var a = attrs[ai];
+          var v = a.value == null ? 'unknow' : String(a.value);
+          var u = a.unit ? ' ' + String(a.unit) : '';
+          var mapRaw = (a.map != null && String(a.map).trim()) ? String(a.map).trim() : '';
+          var lineHtml = mapRaw
+            ? (esc(a.name != null ? a.name : '') + '（参数 ' + esc(mapRaw) + '）：' + esc(v) + esc(u))
+            : (esc(a.name != null ? a.name : '') + '：' + esc(v) + esc(u));
+          frag += '<div class="popup-line popup-line--nested">' + lineHtml + '</div>';
+        }
+      }
+      if (controls.length > 0) {
+        frag += '<div class="popup-line popup-line--section">远程控制</div>';
+        for (var ci = 0; ci < controls.length; ci++) {
+          var c = controls[ci];
+          var cv = c.value == null ? 'unknow' : String(c.value);
+          if (Number(c.type) === 0) {
+            if (c.value === '1' || c.value === 'true') cv = '开';
+            else if (c.value === '0' || c.value === 'false') cv = '关';
+          }
+          var cu = c.unit ? ' ' + String(c.unit) : '';
+          var cmap = (c.map != null && String(c.map).trim()) ? String(c.map).trim() : '';
+          var ch = cmap
+            ? (esc(c.name != null ? c.name : '') + '（参数 ' + esc(cmap) + '）：' + esc(cv) + esc(cu))
+            : (esc(c.name != null ? c.name : '') + '：' + esc(cv) + esc(cu));
+          frag += '<div class="popup-line popup-line--nested">' + ch + '</div>';
+        }
+      }
+      return frag;
+    }
+
+    function buildPopupHtml(props) {
+      if (props.equipDetailJson != null && String(props.equipDetailJson).length > 0) {
+        try {
+          var ed = JSON.parse(String(props.equipDetailJson));
+          return buildEquipGisPopupHtml(ed);
+        } catch (eEquip) {
+        }
+      }
+      var lines = [];
+      try {
+        if (props.linesJson != null && String(props.linesJson).length > 0) {
+          lines = JSON.parse(String(props.linesJson));
+        }
+      } catch (e0) {
+        lines = [];
+      }
+      if (!Array.isArray(lines)) {
+        lines = [];
+      }
+      var sceneDetails = [];
+      try {
+        if (props.sceneDeviceDetailsJson != null && String(props.sceneDeviceDetailsJson).length > 0) {
+          sceneDetails = JSON.parse(String(props.sceneDeviceDetailsJson));
+        }
+      } catch (eSd) {
+        sceneDetails = [];
+      }
+      if (!Array.isArray(sceneDetails)) {
+        sceneDetails = [];
+      }
+      var body = '';
+      if (lines.length > 0) {
+        body += '<div class="popup-block popup-summary">' + esc(lines[0]) + '</div>';
+      }
+      for (var j = 1; j < lines.length; j++) {
+        var raw = lines[j];
+        if (raw == null) continue;
+        var s = String(raw);
+        var colon = s.indexOf('：');
+        if (colon > 0) {
+          var name = s.substring(0, colon + 1).trim();
+          var rest = s.substring(colon + 1).trim();
+          body += '<div class="popup-dev"><div class="popup-dev-name">' + esc(name) + '</div>';
+          body += '<div class="popup-dev-meta">' + buildDeviceStatesHtml(rest) + '</div></div>';
+          var di = j - 1;
+          if (sceneDetails.length > 0 && di >= 0 && di < sceneDetails.length) {
+            body += sceneDeviceRealtimeHtml(sceneDetails[di]);
+          }
+        } else {
+          body += '<div class="popup-line">' + esc(s) + '</div>';
+        }
+      }
+      return '<div class="popup-title">' + esc(props.title) + '</div>' + body;
+    }
+
+    if (typeof maplibregl === 'undefined') {
+      showFallback('地图引擎未加载（请检查网络或 jsdelivr 是否可访问）。');
+      return;
+    }
+
+    var payload = parsePayload();
+    var features = toFeatures(payload.points);
+    var geo = { type: 'FeatureCollection', features: features };
+    var map = null;
+    var activePopup = null;
+
+    function closePopup() {
+      if (activePopup) {
+        activePopup.remove();
+        activePopup = null;
+      }
+    }
+
+    function relayout() {
+      if (map && typeof map.resize === 'function') {
+        map.resize();
+      }
+    }
+
+    /** 三色图钉（icon 底部对齐坐标） */
+    function wireDeviceLayers() {
+      if (map.getSource('devices')) return;
+      addPinImages(map, function () {
+        map.addSource('devices', {
+          type: 'geojson',
+          data: geo
+        });
+        map.addLayer({
+          id: 'devices',
+          type: 'symbol',
+          source: 'devices',
+          layout: {
+            'icon-image': [
+              'match',
+              ['get', 'pinKey'],
+              'offline', 'pin_offline',
+              'alarm', 'pin_alarm',
+              'running', 'pin_running',
+              'stop', 'pin_stopped',
+              'online', 'pin_online',
+              'pin_online'
+            ],
+            'icon-size': 0.95,
+            'icon-anchor': 'bottom',
+            'icon-allow-overlap': true,
+            'icon-ignore-placement': true
+          }
+        });
+
+        map.on('click', 'devices', function (e) {
+          var f = e.features && e.features[0];
+          if (!f || !f.properties) return;
+          closePopup();
+          activePopup = new maplibregl.Popup({ offset: 12, closeButton: true, maxWidth: '300px', className: 'gis-popup' })
+            .setLngLat(e.lngLat)
+            .setHTML(buildPopupHtml(f.properties))
+            .addTo(map);
+        });
+
+        map.on('click', function (e) {
+          var feats = map.queryRenderedFeatures(e.point, { layers: ['devices'] });
+          if (!feats || feats.length === 0) closePopup();
+        });
+
+        if (payload.fit && features.length > 0) {
+          var coords = features.map(function (ft) {
+            return ft.geometry.coordinates;
+          });
+          var b = new maplibregl.LngLatBounds(coords[0], coords[0]);
+          for (var k = 1; k < coords.length; k++) {
+            b.extend(coords[k]);
+          }
+          map.fitBounds(b, { padding: 48, maxZoom: 16, duration: 500 });
+        }
+      });
+    }
+
+    function onMapReady() {
+      relayout();
+      setTimeout(relayout, 50);
+      setTimeout(relayout, 200);
+      setTimeout(relayout, 500);
+      window.addEventListener('resize', relayout);
+      window.addEventListener('orientationchange', function () {
+        setTimeout(relayout, 300);
+      });
+      var mapEl = document.getElementById('map');
+      if (mapEl && typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(function () {
+          relayout();
+        });
+        ro.observe(mapEl);
+      }
+    }
+
+    try {
+      map = new maplibregl.Map({
+        container: 'map',
+        style: STYLE_URL,
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        attributionControl: true,
+        failIfMajorPerformanceCaveat: false
+      });
+    } catch (e) {
+      showFallback('地图初始化失败：' + (e && e.message ? e.message : String(e)));
+      return;
+    }
+
+    map.on('load', function () {
+      onMapReady();
+      try {
+        wireDeviceLayers();
+      } catch (e) {
+        showFallback('设备图层添加失败：' + (e && e.message ? e.message : String(e)));
+      }
+    });
+  })();
+</script>
+</body>
+</html>

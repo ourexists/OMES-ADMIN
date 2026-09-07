@@ -1,0 +1,190 @@
+/*
+ * Copyright (c) 2025. created by ourexists.https://gitee.com/ourexists
+ */
+
+package com.ourexists.omes.mps.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.ourexists.era.framework.core.exceptions.BusinessException;
+import com.ourexists.era.framework.core.utils.CollectionUtil;
+import com.ourexists.era.framework.orm.mybatisplus.service.AbstractMyBatisPlusService;
+import com.ourexists.omes.mps.enums.MPSStatusEnum;
+import com.ourexists.omes.mps.enums.MPSTFStatusEnum;
+import com.ourexists.omes.mps.mapper.MPSTFMapper;
+import com.ourexists.omes.mps.pojo.MPS;
+import com.ourexists.omes.mps.pojo.MPSTF;
+import com.ourexists.omes.mps.service.MPSService;
+import com.ourexists.omes.mps.service.MPSTFService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+@Service
+public class MPSTFServiceImpl extends AbstractMyBatisPlusService<MPSTFMapper, MPSTF> implements MPSTFService {
+
+    @Lazy
+    @Autowired
+    private MPSService mpsService;
+
+//    @Autowired
+//    private QAService qaService;
+
+    @Override
+    public MPSTF selectById(String id) {
+        return getById(id);
+    }
+
+    @Override
+    public List<MPSTF> selectByIds(List<String> ids) {
+        if (CollectionUtil.isBlank(ids)) {
+            return Collections.emptyList();
+        }
+        return this.list(
+                new LambdaQueryWrapper<MPSTF>()
+                        .in(MPSTF::getId, ids)
+                        .orderByAsc(MPSTF::getId));
+    }
+
+    @Override
+    public List<MPSTF> selectByMPSId(String mpsId) {
+        return list(new LambdaUpdateWrapper<MPSTF>().eq(MPSTF::getMpsId, mpsId).orderByAsc(MPSTF::getId));
+    }
+
+    @Override
+    public List<MPSTF> selectByMPSId(List<String> mids) {
+        if (CollectionUtil.isBlank(mids)) {
+            return Collections.emptyList();
+        }
+        return this.list(
+                new LambdaQueryWrapper<MPSTF>()
+                        .in(MPSTF::getMpsId, mids)
+                        .orderByAsc(MPSTF::getId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateStatus(String mpstfId, MPSTFStatusEnum mpstfStatus) {
+        MPSTF mpstf = this.selectById(mpstfId);
+        if (mpstf == null) {
+            return;
+        }
+        //获取所有的流程
+        List<MPSTF> tfs = this.selectByMPSId(mpstf.getMpsId());
+        MPSStatusEnum mpsStatusEnum = null;
+
+        java.util.Map<String, MPSTF> selfCodeToMpstf = new java.util.HashMap<>();
+        for (MPSTF tf : tfs) {
+            if (tf != null && tf.getSelfCode() != null) {
+                selfCodeToMpstf.put(tf.getSelfCode(), tf);
+            }
+        }
+
+        // pre 存储格式：逗号分隔的前置工序 selfCode 列表
+        java.util.List<String> preCodes = new java.util.ArrayList<>();
+        if (mpstf.getPre() != null && !mpstf.getPre().trim().isEmpty()) {
+            String[] parts = mpstf.getPre().split(",");
+            for (String p : parts) {
+                if (p == null) continue;
+                String s = p.trim();
+                if (!s.isEmpty()) {
+                    preCodes.add(s);
+                }
+            }
+        }
+
+        Integer completeCode = MPSTFStatusEnum.COMPLETE.getCode();
+
+        // 并行语义：当前工序必须等待“所有前置”完成(AND)
+        if (mpstfStatus.equals(MPSTFStatusEnum.EXEC) || mpstfStatus.equals(MPSTFStatusEnum.COMPLETE)) {
+            if (preCodes.isEmpty()) {
+                // 起点工序：只在 EXEC 时校验计划状态
+                if (mpstfStatus.equals(MPSTFStatusEnum.EXEC)) {
+                    MPS mps = mpsService.getById(mpstf.getMpsId());
+                    if (mps == null) {
+                        throw new BusinessException("${common.msg.data.error}");
+                    }
+                    if (!mps.getStatus().equals(MPSStatusEnum.WAIT_EXEC.getCode())
+                            && !mps.getStatus().equals(MPSStatusEnum.EXECING.getCode())) {
+                        throw new BusinessException("${mps.msg.status.nomatch}");
+                    }
+                    if (mps.getStatus().equals(MPSStatusEnum.WAIT_EXEC.getCode())) {
+                        mpsStatusEnum = MPSStatusEnum.EXECING;
+                    }
+                }
+            } else {
+                for (String preCode : preCodes) {
+                    MPSTF pre = selfCodeToMpstf.get(preCode);
+                    if (pre == null || !completeCode.equals(pre.getStatus())) {
+                        throw new BusinessException("${mpstf.msg.pre.nocomplete}");
+                    }
+                }
+            }
+        }
+
+        if (mpstfStatus.equals(MPSTFStatusEnum.COMPLETE)) {
+            // 如果其它工序都已经完成，则当前工序完成后，整条工艺完成
+            boolean othersComplete = true;
+            for (MPSTF tf : tfs) {
+                if (tf == null) continue;
+                if (mpstfId.equals(tf.getId())) continue;
+                if (!completeCode.equals(tf.getStatus())) {
+                    othersComplete = false;
+                    break;
+                }
+            }
+            if (othersComplete) {
+                mpsStatusEnum = MPSStatusEnum.COMPLETE;
+            }
+        }
+        boolean r = this.update(new LambdaUpdateWrapper<MPSTF>()
+                .set(MPSTF::getStatus, mpstfStatus.getCode())
+                .set(mpstfStatus.equals(MPSTFStatusEnum.EXEC), MPSTF::getStartTime, new Date())
+                .set(mpstfStatus.equals(MPSTFStatusEnum.COMPLETE), MPSTF::getEndTime, new Date())
+                .eq(MPSTF::getId, mpstfId)
+                .eq(mpstfStatus.getPreCode() != null && !mpstfStatus.equals(MPSTFStatusEnum.COMPLETE), MPSTF::getStatus, mpstfStatus.getPreCode()));
+        if (!r) {
+            throw new BusinessException("${mps.msg.status.nomatch}");
+        }
+        if (mpsStatusEnum != null) {
+            boolean r2 = mpsService.updateStatus(mpstf.getMpsId(), mpsStatusEnum);
+            if (!r2) {
+                throw new BusinessException("${mps.msg.status.nomatch}");
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void forceStopUnstartedByMpsId(String mpsId) {
+        if (StringUtils.isBlank(mpsId)) {
+            return;
+        }
+        this.update(new LambdaUpdateWrapper<MPSTF>()
+                .set(MPSTF::getStatus, MPSTFStatusEnum.STOP.getCode())
+                .set(MPSTF::getEndTime, new Date())
+                .eq(MPSTF::getMpsId, mpsId)
+                .eq(MPSTF::getStatus, MPSTFStatusEnum.COMMON.getCode()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void forceStopByMpsId(String mpsId) {
+        if (StringUtils.isBlank(mpsId)) {
+            return;
+        }
+        this.update(new LambdaUpdateWrapper<MPSTF>()
+                .set(MPSTF::getStatus, MPSTFStatusEnum.STOP.getCode())
+                .set(MPSTF::getEndTime, new Date())
+                .eq(MPSTF::getMpsId, mpsId)
+                .in(MPSTF::getStatus, java.util.Arrays.asList(
+                        MPSTFStatusEnum.COMMON.getCode(),
+                        MPSTFStatusEnum.EXEC.getCode())));
+    }
+}

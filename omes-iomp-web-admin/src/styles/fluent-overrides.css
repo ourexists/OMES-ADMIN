@@ -1,0 +1,276 @@
+/**
+ * 微软风格（Fluent 2 / Windows 11）专属样式。
+ */
+html.theme-fluent {
+  --omes-fluent-divider: rgba(0, 0, 0, 0.04);
+  /* 表格专用：比壳层分割线略深，保证网格可读 */
+  --omes-fluent-table-border: var(--omes-color-border-secondary);
+  --omes-fluent-surface-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --omes-fluent-focus-ring: 0 0 0 2px rgba(0, 120, 212, 0.2);
+  --omes-fluent-mica: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%);
+}
+
+html.theme-fluent,
+html.theme-fluent body,
+html.theme-fluent #app {
+  background: var(--omes-color-bg-layout);
+}
+
+/* Win11 壳层：Mica 层次 + 8px 容器圆角 */
+html.theme-fluent .basic-layout {
+  background: var(--omes-color-bg-layout);
+}
+
+html.theme-fluent .basic-layout .ant-layout-sider {
+  background: var(--omes-fluent-mica) !important;
+  border-right: none;
+  box-shadow: inset -1px 0 0 var(--omes-fluent-divider);
+}
+
+html.theme-fluent .basic-layout .header {
+  background: var(--omes-color-bg-container);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+html.theme-fluent .basic-layout .logo,
+html.theme-fluent .basic-layout .header {
+  border-bottom-color: var(--omes-fluent-divider);
+}
+
+html.theme-fluent .basic-layout .content {
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--omes-fluent-surface-shadow);
+}
+
+/* 卡片：Fluent 2 8px 圆角、无硬边框 */
+html.theme-fluent .ant-card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: var(--omes-fluent-surface-shadow);
+  overflow: hidden;
+}
+
+html.theme-fluent .ant-card-head {
+  border-bottom: 1px solid var(--omes-fluent-divider);
+  min-height: 48px;
+}
+
+html.theme-fluent .panel-card,
+html.theme-fluent .admin-panel-card {
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: var(--omes-fluent-surface-shadow);
+}
+
+/* 表格：表头样式 + 统一边框色，结构由 Ant Design 绘制，避免多层叠线 */
+html.theme-fluent .ant-table-wrapper .ant-table-thead > tr > th {
+  font-weight: var(--omes-font-weight-semibold);
+  color: var(--omes-color-text-secondary);
+  background: var(--omes-color-bg-table-head) !important;
+}
+
+/* 无边框表：单行分隔（Ant 默认 border-top 易与自定义 border 叠加成双线） */
+html.theme-fluent .ant-table-wrapper .ant-table:not(.ant-table-bordered) .ant-table-thead > tr > th {
+  border-bottom: 1px solid var(--omes-fluent-table-border) !important;
+}
+
+html.theme-fluent .ant-table-wrapper .ant-table:not(.ant-table-bordered) .ant-table-tbody > tr > td {
+  border-top: none !important;
+  border-bottom: 1px solid var(--omes-fluent-table-border) !important;
+}
+
+/* bordered 表：不再额外描容器/列线；表头 ::before 保持透明，避免与 cell 右边框叠线 */
+html.theme-fluent .ant-table-wrapper .ant-table-bordered .ant-table-thead > tr > th::before {
+  background-color: transparent !important;
+}
+
+/* 滚动表：Fluent 主题 — 保留右外框，去掉操作列与滚动条之间的竖线 */
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered > .ant-table-container {
+  border-inline-end-color: var(--omes-fluent-table-border);
+}
+
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-cell-scrollbar:not([rowspan]) {
+  box-shadow: 0 1px 0 1px var(--omes-color-bg-table-head) !important;
+}
+
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered > .ant-table-container > .ant-table-body,
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered > .ant-table-container > .ant-table-content {
+  box-shadow: inset 0 -1px 0 0 var(--omes-fluent-table-border);
+  background-image: none;
+}
+
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-body::-webkit-scrollbar-track,
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-content::-webkit-scrollbar-track {
+  border-left: none;
+}
+
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-body::-webkit-scrollbar-corner,
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-content::-webkit-scrollbar-corner {
+  border-top: none;
+  border-left: none;
+}
+
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-thead > tr > th:has(+ .ant-table-cell-scrollbar),
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-tbody > tr > td.ant-table-cell-fix-right-first,
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-tbody > tr > td.ant-table-cell-fix-right-last {
+  border-inline-end-color: transparent !important;
+}
+
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-cell-fix-right-first::after,
+html.theme-fluent .scroll-table.ant-table-wrapper .ant-table-bordered .ant-table-cell-fix-left-last::after {
+  box-shadow: none !important;
+}
+
+html.theme-fluent .ant-table-wrapper .ant-table-cell-fix-right-first::after,
+html.theme-fluent .ant-table-wrapper .ant-table-cell-fix-left-last::after {
+  box-shadow: inset 10px 0 8px -8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* 查询栏 / 工具条 */
+html.theme-fluent .search-toolbar--compact,
+html.theme-fluent .toolbar-strip.search-toolbar--compact,
+html.theme-fluent .tree-toolbar.search-toolbar--compact,
+html.theme-fluent .picker-search-toolbar {
+  border: none;
+  box-shadow: var(--omes-fluent-surface-shadow);
+}
+
+/* 按钮：扁平无描边感 */
+html.theme-fluent .ant-btn-primary,
+html.theme-fluent .ant-btn-primary:not(:disabled):hover {
+  box-shadow: none;
+}
+
+html.theme-fluent .ant-btn-default {
+  box-shadow: none;
+  border-color: var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-btn-default:not(:disabled):hover {
+  border-color: var(--omes-color-border-hover);
+  color: var(--omes-color-primary);
+}
+
+/* 输入框：浅描边 + 柔和聚焦环 */
+html.theme-fluent .ant-input,
+html.theme-fluent .ant-input-affix-wrapper,
+html.theme-fluent .ant-select-selector,
+html.theme-fluent .ant-picker {
+  border-color: var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-input:hover,
+html.theme-fluent .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,
+html.theme-fluent .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+html.theme-fluent .ant-picker:hover {
+  border-color: var(--omes-color-border-hover);
+}
+
+html.theme-fluent .ant-input:focus,
+html.theme-fluent .ant-input-focused,
+html.theme-fluent .ant-input-affix-wrapper:focus,
+html.theme-fluent .ant-input-affix-wrapper-focused,
+html.theme-fluent .ant-select-focused .ant-select-selector,
+html.theme-fluent .ant-picker-focused {
+  border-color: var(--omes-color-primary);
+  box-shadow: var(--omes-fluent-focus-ring);
+}
+
+/* 侧栏菜单：Win11 圆角选中块 */
+html.theme-fluent .basic-layout .ant-layout-sider .ant-menu {
+  background: transparent;
+  padding: 4px 0 8px;
+}
+
+html.theme-fluent .basic-layout .ant-layout-sider .ant-menu-item,
+html.theme-fluent .basic-layout .ant-layout-sider .ant-menu-submenu-title {
+  border-radius: 4px;
+  margin-inline: 8px;
+  width: calc(100% - 16px);
+}
+
+html.theme-fluent .basic-layout .ant-layout-sider .ant-menu-item-selected {
+  font-weight: var(--omes-font-weight-semibold);
+}
+
+/* 控件：Win11 标准 4px 圆角 */
+html.theme-fluent .ant-btn,
+html.theme-fluent .ant-input,
+html.theme-fluent .ant-input-affix-wrapper,
+html.theme-fluent .ant-select-selector,
+html.theme-fluent .ant-picker {
+  border-radius: 4px;
+}
+
+/* 弹窗 / 抽屉 */
+html.theme-fluent .ant-modal .ant-modal-content {
+  border: none;
+  box-shadow: var(--omes-shadow-card), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+html.theme-fluent .ant-modal-header {
+  border-bottom: 1px solid var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-modal-footer {
+  border-top: 1px solid var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-drawer-header {
+  border-bottom: 1px solid var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-drawer-footer {
+  border-top: 1px solid var(--omes-fluent-divider);
+}
+
+/* 标签页 / 分页 / 分割线 */
+html.theme-fluent .ant-tabs .ant-tabs-ink-bar {
+  background: var(--omes-color-primary);
+}
+
+html.theme-fluent .ant-tabs-nav::before {
+  border-bottom-color: var(--omes-fluent-divider) !important;
+}
+
+html.theme-fluent .ant-divider {
+  border-block-start-color: var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-pagination .ant-pagination-item {
+  border-color: var(--omes-fluent-divider);
+}
+
+html.theme-fluent .ant-pagination .ant-pagination-item-active {
+  border-color: var(--omes-color-primary);
+}
+
+html.theme-fluent .ant-pagination .ant-pagination-item-active a {
+  color: var(--omes-color-primary);
+}
+
+/* 工作台概览面板 */
+html.theme-fluent .overview-page .overview-panel {
+  border: none;
+  box-shadow: var(--omes-fluent-surface-shadow);
+}
+
+html.theme-fluent .overview-page .overview-kpi-item.overview-panel:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* 描述列表 / 折叠面板 */
+html.theme-fluent .ant-descriptions-bordered .ant-descriptions-item-label,
+html.theme-fluent .ant-descriptions-bordered .ant-descriptions-item-content {
+  border-color: var(--omes-fluent-divider) !important;
+}
+
+html.theme-fluent .ant-collapse {
+  border-color: var(--omes-fluent-divider);
+  background: var(--omes-color-bg-container);
+}
+
+html.theme-fluent .ant-collapse > .ant-collapse-item {
+  border-bottom-color: var(--omes-fluent-divider);
+}

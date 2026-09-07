@@ -1,0 +1,7 @@
+**
+!docker/
+!docker/web/
+!docker/web/nginx.conf
+!omes-iomp-web-admin/
+!omes-iomp-web-admin/dist/
+!omes-iomp-web-admin/dist/**

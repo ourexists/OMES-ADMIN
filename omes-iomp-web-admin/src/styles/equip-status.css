@@ -1,0 +1,428 @@
+/**
+ * 设备状态色板 — 在线 / 离线 / 运行 / 停止 / 告警 等统一在此维护。
+ * 组件通过 CSS 变量或 .equip-status-* 工具类引用，勿在业务样式中硬编码状态色。
+ */
+:root {
+  /* 状态灯 / 药丸文字色（偏深，保证文字可读） */
+  --equip-status-online-fg: #0369a1;
+  --equip-status-offline-fg: #64748b;
+  --equip-status-run-fg: #047857;
+  --equip-status-stop-fg: #a16207;
+  --equip-status-alarm-fg: #b91c1c;
+  --equip-status-ok-fg: #047857;
+  --equip-status-muted-fg: #94a3b8;
+  --equip-status-unknown-fg: #94a3b8;
+
+  /* 指示灯亮色（列表状态点、卡片药丸内 LED） */
+  --equip-status-online-led: #38bdf8;
+  --equip-status-offline-led: #94a3b8;
+  --equip-status-run-led: #10b981;
+  --equip-status-stop-led: #fbbf24;
+  --equip-status-alarm-led: #f87171;
+  --equip-status-ok-led: #34d399;
+  --equip-status-muted-led: #cbd5e1;
+  --equip-status-unknown-led: #cbd5e1;
+
+  /* 药丸 / 标签背景与边框 */
+  --equip-status-online-bg: #f0f9ff;
+  --equip-status-online-border: #bae6fd;
+  --equip-status-offline-bg: #f1f5f9;
+  --equip-status-offline-border: #e2e8f0;
+  --equip-status-run-bg: #ecfdf5;
+  --equip-status-run-border: #a7f3d0;
+  --equip-status-stop-bg: #fffbeb;
+  --equip-status-stop-border: #fde68a;
+  --equip-status-alarm-bg: #fef2f2;
+  --equip-status-alarm-border: #fecaca;
+  --equip-status-ok-bg: #f0fdf4;
+  --equip-status-ok-border: #bbf7d0;
+  --equip-status-muted-bg: #f8fafc;
+  --equip-status-muted-border: #e2e8f0;
+
+  /* 卡片顶条 / KPI 条等强调色 */
+  --equip-status-all-accent: #0ea5e9;
+  --equip-status-online-accent: #0ea5e9;
+  --equip-status-offline-accent: #94a3b8;
+  --equip-status-run-accent: #10b981;
+  --equip-status-stop-accent: #eab308;
+  --equip-status-alarm-accent: #ef4444;
+
+  /* 告警区块 */
+  --equip-status-alarm-surface: #fef2f2;
+  --equip-status-alarm-surface-strong: #fee2e2;
+  --equip-status-alarm-text: #b91c1c;
+
+  /* 详情页图标渐变（起止色） */
+  --equip-status-online-icon-from: #0ea5e9;
+  --equip-status-online-icon-to: #38bdf8;
+  --equip-status-offline-icon-from: #94a3b8;
+  --equip-status-offline-icon-to: #cbd5e1;
+  --equip-status-run-icon-from: #10b981;
+  --equip-status-run-icon-to: #34d399;
+  --equip-status-stop-icon-from: #f59e0b;
+  --equip-status-stop-icon-to: #fbbf24;
+  --equip-status-alarm-icon-from: #ef4444;
+  --equip-status-alarm-icon-to: #f87171;
+  --equip-status-unknown-icon-from: #64748b;
+  --equip-status-unknown-icon-to: #94a3b8;
+
+  /* ECharts 甘特图填色 */
+  --equip-status-chart-online-on: #38bdf8;
+  --equip-status-chart-online-off: #94a3b8;
+  --equip-status-chart-run-on: #10b981;
+  --equip-status-chart-run-off: #eab308;
+  --equip-status-chart-alarm: #ef4444;
+}
+
+/* ---------- 状态灯 ---------- */
+.equip-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, currentColor 30%, transparent),
+    0 0 8px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.equip-status-dot--online {
+  color: var(--equip-status-online-led);
+}
+
+.equip-status-dot--offline {
+  color: var(--equip-status-offline-led);
+}
+
+.equip-status-dot--run {
+  color: var(--equip-status-run-led);
+}
+
+.equip-status-dot--stop {
+  color: var(--equip-status-stop-led);
+}
+
+.equip-status-dot--alarm {
+  color: var(--equip-status-alarm-led);
+}
+
+.equip-status-dot--ok {
+  color: var(--equip-status-ok-led);
+}
+
+.equip-status-dot--muted {
+  color: var(--equip-status-muted-led);
+}
+
+.equip-status-dot--unknown {
+  color: var(--equip-status-unknown-led);
+}
+
+.equip-status-dot--sm {
+  width: 7px;
+  height: 7px;
+}
+
+/* ---------- 状态药丸 ---------- */
+.equip-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: var(--equip-status-muted-bg);
+  color: #475569;
+}
+
+.equip-status-pill__led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, currentColor 30%, transparent),
+    0 0 8px color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.equip-status-pill--online .equip-status-pill__led {
+  color: var(--equip-status-online-led);
+}
+
+.equip-status-pill--offline .equip-status-pill__led {
+  color: var(--equip-status-offline-led);
+}
+
+.equip-status-pill--run .equip-status-pill__led {
+  color: var(--equip-status-run-led);
+}
+
+.equip-status-pill--stop .equip-status-pill__led {
+  color: var(--equip-status-stop-led);
+}
+
+.equip-status-pill--alarm .equip-status-pill__led {
+  color: var(--equip-status-alarm-led);
+}
+
+.equip-status-pill--ok .equip-status-pill__led {
+  color: var(--equip-status-ok-led);
+}
+
+.equip-status-pill--muted .equip-status-pill__led {
+  color: var(--equip-status-muted-led);
+}
+
+.equip-status-pill--online {
+  color: var(--equip-status-online-fg);
+  background: var(--equip-status-online-bg);
+  border-color: var(--equip-status-online-border);
+}
+
+.equip-status-pill--offline {
+  color: var(--equip-status-offline-fg);
+  background: var(--equip-status-offline-bg);
+  border-color: var(--equip-status-offline-border);
+}
+
+.equip-status-pill--run {
+  color: var(--equip-status-run-fg);
+  background: var(--equip-status-run-bg);
+  border-color: var(--equip-status-run-border);
+}
+
+.equip-status-pill--stop {
+  color: var(--equip-status-stop-fg);
+  background: var(--equip-status-stop-bg);
+  border-color: var(--equip-status-stop-border);
+}
+
+.equip-status-pill--alarm {
+  color: var(--equip-status-alarm-fg);
+  background: var(--equip-status-alarm-bg);
+  border-color: var(--equip-status-alarm-border);
+}
+
+.equip-status-pill--ok {
+  color: var(--equip-status-ok-fg);
+  background: var(--equip-status-ok-bg);
+  border-color: var(--equip-status-ok-border);
+}
+
+.equip-status-pill--muted {
+  color: var(--equip-status-muted-fg);
+  background: var(--equip-status-muted-bg);
+  border-color: var(--equip-status-muted-border);
+}
+
+/* ---------- 卡片顶条色调 ---------- */
+.equip-card-tone {
+  --equip-card-accent: var(--equip-status-offline-accent);
+}
+
+.equip-card-tone--online {
+  --equip-card-accent: var(--equip-status-online-accent);
+}
+
+.equip-card-tone--run {
+  --equip-card-accent: var(--equip-status-run-accent);
+}
+
+.equip-card-tone--stop {
+  --equip-card-accent: var(--equip-status-stop-accent);
+}
+
+.equip-card-tone--offline {
+  --equip-card-accent: var(--equip-status-offline-accent);
+}
+
+.equip-card-tone--alarm {
+  --equip-card-accent: var(--equip-status-alarm-accent);
+}
+
+/* ---------- KPI 左侧色条 ---------- */
+.equip-kpi-accent--all {
+  --equip-kpi-accent: var(--equip-status-all-accent);
+}
+
+.equip-kpi-accent--online {
+  --equip-kpi-accent: var(--equip-status-online-accent);
+}
+
+.equip-kpi-accent--offline {
+  --equip-kpi-accent: var(--equip-status-offline-accent);
+}
+
+.equip-kpi-accent--run {
+  --equip-kpi-accent: var(--equip-status-run-accent);
+}
+
+.equip-kpi-accent--stop {
+  --equip-kpi-accent: var(--equip-status-stop-accent);
+}
+
+.equip-kpi-accent--alarm {
+  --equip-kpi-accent: var(--equip-status-alarm-accent);
+}
+
+/* ---------- 详情页状态标签 ---------- */
+.equip-status-tag {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.equip-status-tag--offline {
+  background: var(--equip-status-offline-bg);
+  color: var(--equip-status-offline-fg);
+  border-color: var(--equip-status-offline-border);
+}
+
+.equip-status-tag--alarm {
+  background: var(--equip-status-alarm-bg);
+  color: var(--equip-status-alarm-fg);
+  border-color: var(--equip-status-alarm-border);
+}
+
+.equip-status-tag--run {
+  background: var(--equip-status-run-bg);
+  color: var(--equip-status-run-fg);
+  border-color: var(--equip-status-run-border);
+}
+
+.equip-status-tag--stop {
+  background: var(--equip-status-stop-bg);
+  color: var(--equip-status-stop-fg);
+  border-color: var(--equip-status-stop-border);
+}
+
+.equip-status-tag--online,
+.equip-status-tag--unknown {
+  background: var(--equip-status-online-bg);
+  color: var(--equip-status-online-fg);
+  border-color: var(--equip-status-online-border);
+}
+
+/* ---------- 详情页图标 ---------- */
+.equip-status-icon {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--equip-status-online-icon-from) 0%,
+    var(--equip-status-online-icon-to) 100%
+  );
+}
+
+.equip-status-icon--offline {
+  background: linear-gradient(
+    135deg,
+    var(--equip-status-offline-icon-from) 0%,
+    var(--equip-status-offline-icon-to) 100%
+  );
+}
+
+.equip-status-icon--alarm {
+  background: linear-gradient(
+    135deg,
+    var(--equip-status-alarm-icon-from) 0%,
+    var(--equip-status-alarm-icon-to) 100%
+  );
+}
+
+.equip-status-icon--run {
+  background: linear-gradient(
+    135deg,
+    var(--equip-status-run-icon-from) 0%,
+    var(--equip-status-run-icon-to) 100%
+  );
+}
+
+.equip-status-icon--stop {
+  background: linear-gradient(
+    135deg,
+    var(--equip-status-stop-icon-from) 0%,
+    var(--equip-status-stop-icon-to) 100%
+  );
+}
+
+.equip-status-icon--unknown {
+  background: linear-gradient(
+    135deg,
+    var(--equip-status-unknown-icon-from) 0%,
+    var(--equip-status-unknown-icon-to) 100%
+  );
+}
+
+/* ---------- 列表行告警 / 离线 ---------- */
+.equip-list-row--offline {
+  border-color: #d1d5db;
+}
+
+.equip-list-row--alarm {
+  background: var(--equip-status-alarm-surface);
+  border-color: var(--equip-status-alarm-border);
+}
+
+.equip-list-row--alarm:hover {
+  background: var(--equip-status-alarm-surface);
+}
+
+.equip-list-alarm-badge {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--equip-status-alarm-text);
+  background: var(--equip-status-alarm-surface-strong);
+  border-radius: 50%;
+}
+
+/* ---------- 实时卡片告警条（全局，供卡片组件引用） ---------- */
+.equip-card-alarm-panel {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--equip-status-alarm-surface) 0%, #fff1f2 100%);
+  border: 1px solid var(--equip-status-alarm-border);
+}
+
+.equip-card-alarm-panel__icon {
+  color: var(--equip-status-alarm-accent);
+  font-size: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.equip-card-alarm-panel__text {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--equip-status-alarm-text);
+}
+
+.equip-card-alarm-panel__text + .equip-card-alarm-panel__text {
+  margin-top: 4px;
+}
+
+/* ---------- 实时徽章（LIVE 等） ---------- */
+.equip-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--equip-status-online-fg);
+  background: var(--equip-status-online-bg);
+  border: 1px solid var(--equip-status-online-border);
+}

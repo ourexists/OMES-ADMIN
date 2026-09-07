@@ -1,0 +1,53 @@
+/* 紧凑查询栏：占位符 + 小尺寸控件 + 图标优先操作 */
+.search-toolbar--compact,
+.picker-search-toolbar,
+.toolbar-strip.search-toolbar--compact,
+.tree-toolbar.search-toolbar--compact {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+}
+
+.search-toolbar--compact .search-form .ant-form-item-label,
+.picker-search-toolbar .picker-search-form .ant-form-item-label,
+.toolbar-strip.search-toolbar--compact .search-form .ant-form-item-label {
+  display: none !important;
+}
+
+.search-toolbar--compact .search-input,
+.search-toolbar--compact .search-select,
+.picker-search-toolbar .picker-search-input {
+  width: 132px;
+}
+
+.search-toolbar--compact .search-range-picker {
+  width: 320px;
+}
+
+.compact-search-actions {
+  margin-inline-start: 2px;
+}
+
+.compact-search-actions .ant-btn.ant-btn-sm {
+  width: 28px;
+  padding-inline: 0;
+}
+
+.compact-search-actions .ant-btn.ant-btn-sm .anticon {
+  margin-inline-end: 0;
+}
+
+.records-search.search-toolbar--compact,
+.plan-tasks-search.search-toolbar--compact {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+}
+
+.realtime-tab .toolbar.search-toolbar--compact,
+.log-tab .toolbar.search-toolbar--compact {
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.search-toolbar--compact .search-select-sm {
+  width: 132px;
+}

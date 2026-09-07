@@ -1,0 +1,306 @@
+// #ifdef MP
+<template>
+  <view class="echart-equip-run">
+    <l-echart ref="chartRef" @finished="init"></l-echart>
+  </view>
+</template>
+// #endif
+<script setup lang="ts">
+// #ifdef MP
+import type {LEchartComponentPublicInstance} from "@/uni_modules/lime-echart/components/l-echart/l-echart.uvue";
+import * as echarts from "@/uni_modules/lime-echart/static/web/echarts.esm.min.js";
+import type {Equip, EquipRecord} from "@/core/types";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {formatDate, parseDataArray, parseDate} from "@/core/utils/parse";
+import {t} from "@/locale";
+import {config} from "@/config";
+import {onMounted, ref, watch} from "vue";
+
+defineOptions({
+  name: "echart-equip-run",
+});
+
+/** 与 portal equip_collect_echarts.html / theme.js 语义对齐 */
+const RUN_THEME = {
+  textSub: "#6b7280",
+  online: "#1890ff",
+  offline: "#bfbfbf",
+  running: "#52c41a",
+  stopped: "#FAAD14",
+  alarm: "#ff4d4f",
+};
+
+const chartRef = ref<LEchartComponentPublicInstance | null>(null);
+
+type RunSegment = [number, Date, Date, number];
+
+const runSegments = ref<RunSegment[]>([]);
+const startDateX = ref<Date | null>(null);
+const endDateX = ref<Date | null>(null);
+
+let loading = false;
+
+export type Payload = {
+  equip: Equip;
+};
+
+const props = defineProps<Payload>();
+
+let timer: number | null = null;
+
+/** portal：结束时间若晚于当前则截断 */
+function capEndDateToNow(d: Date | null): Date | null {
+  if (d == null || isNaN(d.getTime())) {
+    return d;
+  }
+  const n = new Date();
+  return d.getTime() > n.getTime() ? n : d;
+}
+
+/** 与 equip_collect_echarts.html parseColor 一致：报警轨统一用 alarm 色 */
+function parseRunColor(api: {value: (i: number) => number}) {
+  const type = api.value(0);
+  const state = api.value(3);
+  if (type === 0) {
+    return state === 1 ? RUN_THEME.online : RUN_THEME.offline;
+  }
+  if (type === 1) {
+    return state === 1 ? RUN_THEME.running : RUN_THEME.stopped;
+  }
+  if (type === 2) {
+    return RUN_THEME.alarm;
+  }
+  return RUN_THEME.offline;
+}
+
+/** portal equip_collect_echarts：[type,start,end,state]，同轨 type 且同 state 合并 */
+function mergeRecords(segments: RunSegment[]): RunSegment[] {
+  const copy = segments.slice();
+  copy.sort((a, b) => {
+    if (a[0] !== b[0]) {
+      return a[0] - b[0];
+    }
+    if (a[3] !== b[3]) {
+      return a[3] - b[3];
+    }
+    return a[1].getTime() - b[1].getTime();
+  });
+  const mergedData: RunSegment[] = [];
+  for (let i = 0; i < copy.length; i++) {
+    const current = copy[i];
+    if (mergedData.length === 0) {
+      mergedData.push(current);
+      continue;
+    }
+    const last = mergedData[mergedData.length - 1];
+    if (last[0] === current[0] && last[3] === current[3] && last[2].getTime() >= current[1].getTime()) {
+      last[2] = last[2].getTime() > current[2].getTime() ? last[2] : current[2];
+    } else {
+      mergedData.push(current);
+    }
+  }
+  return mergedData;
+}
+
+/** 与 equip_collect_echarts.html calcRecord：报警轨仅保留 state===1 的段，无整段底色 */
+async function calcRecord(type: number, startDate: Date, endDate: Date): Promise<RunSegment[]> {
+  const r: RunSegment[] = [];
+  let url: string;
+  if (type === 1) {
+    url = apiPath.equip_run_count as string;
+  } else if (type === 0) {
+    url = apiPath.equip_online_count as string;
+  } else {
+    url = apiPath.equip_alarm_count as string;
+  }
+  const res = await request({
+    url,
+    method: "POST",
+    data: {
+      sn: props.equip.selfCode,
+      startDate: formatDate(startDate),
+      endDate: formatDate(endDate),
+      requirePage: false,
+    },
+  });
+  if (res === null) {
+    return mergeRecords(r);
+  }
+  const d = parseDataArray<EquipRecord>(res);
+  if (d != null && d.length > 0) {
+    d.forEach((item) => {
+      if (item.startTime == null || item.endTime == null) {
+        return;
+      }
+      if (type === 2 && item.state !== 1) {
+        return;
+      }
+      r.push([type, parseDate(item.startTime), parseDate(item.endTime), item.state]);
+    });
+  }
+  return mergeRecords(r);
+}
+
+const reloadData = async (startDate: Date, endDate: Date) => {
+  if (loading) {
+    return;
+  }
+  loading = true;
+  try {
+    const endCapped = capEndDateToNow(endDate);
+    if (endCapped == null) {
+      runSegments.value = [];
+      return;
+    }
+    const r1 = await calcRecord(1, startDate, endCapped);
+    const r0 = await calcRecord(0, startDate, endCapped);
+    const r2 = await calcRecord(2, startDate, endCapped);
+    const r: RunSegment[] = [];
+    if (r0.length > 0) {
+      r.push(...r0);
+    }
+    if (r1.length > 0) {
+      r.push(...r1);
+    }
+    if (r2.length > 0) {
+      r.push(...r2);
+    }
+    startDateX.value = startDate;
+    endDateX.value = endCapped;
+    runSegments.value = r;
+  } finally {
+    loading = false;
+  }
+};
+
+function buildBaseOption(): Record<string, unknown> {
+  return {
+    title: {
+      text: t("设备运行趋势"),
+      textStyle: {
+        fontSize: 18,
+        fontWeight: 400,
+        color: RUN_THEME.textSub,
+        lineHeight: 16,
+      },
+    },
+    tooltip: {
+      confine: true,
+      formatter: (params: {data: RunSegment}) => {
+        const type = params.data[0];
+        const state = params.data[3];
+        let desc = "";
+        if (type === 0) {
+          desc = state === 1 ? t("在线") : t("离线");
+        } else if (type === 1) {
+          desc = state === 1 ? t("运行") : t("停止");
+        } else if (type === 2) {
+          desc = t("报警");
+        }
+        const start = formatDate(params.data[1]);
+        const end = formatDate(params.data[2]);
+        return `${desc}\r\n${start}~${end}`;
+      },
+    },
+    xAxis: {
+      type: "time",
+      axisLabel: {
+        fontSize: 10,
+      },
+    },
+    yAxis: {type: "category", data: [t("在线"), t("运行"), t("报警")]},
+    series: [
+      {
+        type: "custom",
+        renderItem: (params: unknown, api: {value: (i: number) => number; coord: (v: unknown[]) => number[]}) => {
+          const yIndex = api.value(0);
+          const start = api.coord([api.value(1), yIndex]);
+          const end = api.coord([api.value(2), yIndex]);
+          return {
+            type: "rect",
+            shape: {
+              x: start[0],
+              y: start[1] - 10,
+              width: end[0] - start[0],
+              height: 20,
+            },
+            style: {
+              fill: parseRunColor(api),
+            },
+          };
+        },
+        encode: {x: [1, 2], y: 0},
+        data: [] as RunSegment[],
+      },
+    ],
+  };
+}
+
+let baseOption: Record<string, unknown> = {};
+
+const init = async () => {
+  if (chartRef.value == null) {
+    return;
+  }
+  await chartRef.value.init(echarts, null);
+  baseOption = buildBaseOption();
+  chartRef.value.setOption(baseOption);
+};
+
+const reloadEChart = async () => {
+  if (chartRef.value == null) {
+    return;
+  }
+  chartRef.value.setOption(
+      {
+        xAxis: {
+          min: startDateX.value,
+          max: endDateX.value,
+        },
+        series: [{data: runSegments.value}],
+      },
+      false,
+  );
+  chartRef.value.resize();
+};
+
+watch(runSegments, () => {
+  void reloadEChart();
+}, {deep: true});
+
+onMounted(() => {
+  timer = setInterval(() => {
+    const end = new Date();
+    const start = new Date(end);
+    start.setHours(end.getHours() - 1);
+    void reloadData(start, end);
+  }, config.equipRefreshTime * 6);
+});
+
+onShow(() => {
+  setTimeout(() => {
+    const end = new Date();
+    const start = new Date(end);
+    start.setHours(end.getHours() - 1);
+    void reloadData(start, end);
+  }, 500);
+});
+
+onHide(() => {
+  if (timer != null) {
+    clearInterval(timer as number);
+    timer = null;
+  }
+});
+
+//#endif
+</script>
+
+<style scoped lang="scss">
+.echart-equip-run {
+  height: 450rpx;
+
+  @apply flex flex-col p-2 rounded-2xl w-full;
+}
+</style>

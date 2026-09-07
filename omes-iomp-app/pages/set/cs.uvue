@@ -1,0 +1,39 @@
+<template>
+	<cl-page>
+		<view class="p-10 flex flex-col items-center justify-center">
+			<cl-text :pt="{ className: 'text-center mb-5' }"
+				>专注工业控制解决方案</cl-text
+			>
+
+			<view class="p-2 bg-white mb-5 rounded-xl">
+				<cl-image
+					src="/static/cs.png"
+					:height="320"
+					:width="320"
+					show-menu-by-longpress
+				></cl-image>
+			</view>
+
+			<!-- #ifndef H5 -->
+			<cl-button type="light" icon="download-line" @tap="saveImage">保存图片</cl-button>
+			<!-- #endif -->
+		</view>
+	</cl-page>
+</template>
+
+<script setup lang="ts">
+import { useUi }  from "@/uni_modules/cool-unix";
+
+const ui = useUi();
+
+function saveImage() {
+	uni.saveImageToPhotosAlbum({
+		filePath: "/static/cs.png",
+		success: () => {
+			ui.showToast({
+				message: "保存成功"
+			});
+		}
+	});
+}
+</script>

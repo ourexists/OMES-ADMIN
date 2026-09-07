@@ -15,7 +15,8 @@
           </list>
         </option>
         <option name="showCommandPreview" value="true" />
-        <option name="sourceFilePath" value="omes-iomp-runner-admin/Dockerfile" />
+        <option name="contextFolderPath" value="$PROJECT_DIR$" />
+        <option name="sourceFilePath" value="docker/admin/Dockerfile" />
         <option name="volumeBindings">
           <list>
             <DockerVolumeBindingImpl>

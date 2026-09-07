@@ -1,0 +1,69 @@
+<template>
+  <view class="message-set" :class="{ 'is-dark': isDark }">
+    <cl-select
+        ref="selectRef"
+        v-model="selectStatus"
+        :options="statusOptions"
+        :show-trigger="false"
+        :title="t('已读状态')"
+        :cancel-text="t('取消')"
+        :confirm-text="t('确定')"
+        @change="emitFilter"
+    ></cl-select>
+  </view>
+</template>
+
+<script setup lang="ts">
+import {type ClSelectOption, isDark, useUi} from "@/uni_modules/cool-unix";
+import {t} from "@/locale";
+import {ref} from "vue";
+
+const ui = useUi();
+
+const statusOptions = [
+  {label: "全部", value: -1},
+  {label: "未读", value: 0},
+  {label: "已读", value: 1}
+] as ClSelectOption[];
+
+export type MessageSetPayload = {
+  status: number | null
+}
+
+const selectRef = ref<ClSelectComponentPublicInstance | null>(null);
+const selectStatus = ref<number>(-1);
+
+const props = defineProps<MessageSetPayload>();
+
+const emit = defineEmits<{
+  (e: "change", payload: MessageSetPayload): void;
+}>();
+
+
+// 统一派发事件
+function emitFilter() {
+  const status: number | null = selectStatus.value == -1 ? null : selectStatus.value;
+  emit('change', {status} as MessageSetPayload)
+}
+
+// 打开
+function open() {
+  selectStatus.value = props.status == null ? -1 : props.status;
+  selectRef.value!.open((value) => {
+    ui.showLoading(t("切换中"));
+    setTimeout(() => {
+      ui.hideLoading();
+    }, 500);
+  });
+}
+
+// 关闭
+function close() {
+  selectRef.value!.close();
+}
+
+defineExpose({
+  open,
+  close
+});
+</script>

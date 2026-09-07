@@ -1,0 +1,1760 @@
+<template>
+  <cl-page>
+    <cl-topbar
+        fixed
+        :background-color="isDark? 'black': 'white'"
+        :show-back="true"
+        safe-area-top
+        :height="isMp() ? null : 100"
+        :pt="{
+    				className: '!z-50'
+    			}"
+    >
+      <view
+          class="flex flex-row items-center justify-center p-3 flex-1 w-full"
+          :class="{
+    					'pt-0': isMp()
+    				}"
+      >
+        <!-- 当前选择展示 -->
+        <cl-text
+            color="primary"
+            :pt="{
+						className: '!text-xl ml-2'
+					}"
+        >
+          {{ displayWorkshopTitle }}
+        </cl-text>
+      </view>
+    </cl-topbar>
+
+    <!-- 中间：图例 + 设备地图（样式用 rpx + 显式 flex，避免 APP 上 gap/部分原子类兼容问题） -->
+    <view
+        class="gis-page"
+        :class="{ 'gis-page--dark': isDark }"
+        :style="gisPageOuterStyle"
+    >
+      <view class="gis-map-wrap">
+        <!-- 小程序：web-view 仅能打开已配置 HTTPS 业务域名，本地 hybrid 无法加载 MapLibre；改用原生 map -->
+        <map
+            v-if="isMp()"
+            id="workshopGisMap"
+            class="gis-native-map"
+            :latitude="mpLat"
+            :longitude="mpLng"
+            :scale="mpScale"
+            :markers="mpMarkers"
+            :show-location="false"
+            :enable-scroll="true"
+            :enable-zoom="true"
+            :style="{ width: '100%', height: '100%' }"
+            @markertap="onMpMarkerTap"
+        />
+        <web-view
+            v-else-if="mapWebSrc.length > 0"
+            :key="mapWebKey"
+            :src="mapWebSrc"
+            class="gis-webview"
+            :style="{ width: '100%', height: '100%' }"
+            @load="onMapWebviewLoad"
+        />
+      </view>
+
+      <view v-if="mapHint.length > 0" class="gis-hint">
+        <cl-text :pt="{ className: isDark ? '!text-sm !text-slate-400' : '!text-sm !text-slate-500' }">{{
+            mapHint
+          }}
+        </cl-text>
+      </view>
+    </view>
+
+    <!-- 小程序：showModal 正文无法分段排版，点位详情用弹层组件 -->
+    <cl-popup
+        v-if="isMp()"
+        ref="mpDetailPopupRef"
+        direction="center"
+        :show-header="true"
+        :show-close="true"
+        :show-mask="true"
+        @mask-close="closeMpDetailPopup"
+        :pt="{ className: 'gis-detail-popup-pt' }"
+    >
+      <template #header>
+        <text class="gis-detail-header-title" :class="{ 'gis-detail-header-title--dark': isDark }">{{
+            mpDetailParsed.title
+          }}
+        </text>
+      </template>
+      <scroll-view scroll-y class="gis-detail-scroll">
+        <view class="gis-detail-inner" :class="{ 'gis-detail-inner--dark': isDark }">
+          <view v-if="mpDetailParsed.mode === 'equip'" class="gis-detail-section">
+            <view
+                v-for="(vmRow, ridx) in mpEquipRowsVm"
+                :key="ridx"
+                class="gis-detail-equip-row"
+            >
+              <text v-if="vmRow.rowKind === 0 && vmRow.summaryBody.length > 0" class="gis-detail-summary-text">{{
+                  vmRow.summaryBody
+                }}
+              </text>
+              <view v-if="vmRow.rowKind === 1" class="gis-detail-tag-row gis-detail-tag-row--equip">
+                <text class="gis-detail-tag-k">{{ vmRow.tagTitle }}</text>
+                <view class="gis-detail-state-dot" :style="{ backgroundColor: vmRow.tagDotHex }"></view>
+              </view>
+            </view>
+          </view>
+          <template v-else>
+            <view class="gis-detail-section">
+              <view class="gis-detail-summary-box">
+                <text class="gis-detail-summary-text">{{
+                    mpDetailParsed.summary.length > 0 ? mpDetailParsed.summary : '暂无'
+                  }}
+                </text>
+              </view>
+            </view>
+            <view v-if="mpDetailParsed.devices.length > 0" class="gis-detail-section">
+              <text class="gis-detail-section-label">设备明细</text>
+              <view
+                  v-for="(d, idx) in mpDetailParsed.devices"
+                  :key="idx"
+                  class="gis-detail-dev-card"
+              >
+                <text class="gis-detail-dev-name">{{ d.name }}</text>
+                <view class="gis-detail-tag-row">
+                  <view class="gis-detail-tag">
+                    <text class="gis-detail-tag-k">在线</text>
+                    <view class="gis-detail-state-dot" :style="{ backgroundColor: d.onlineDot }"></view>
+                  </view>
+                  <view class="gis-detail-tag">
+                    <text class="gis-detail-tag-k">运行</text>
+                    <view class="gis-detail-state-dot" :style="{ backgroundColor: d.runDot }"></view>
+                  </view>
+                  <view class="gis-detail-tag">
+                    <text class="gis-detail-tag-k">告警</text>
+                    <view class="gis-detail-state-dot" :style="{ backgroundColor: d.alarmDot }"></view>
+                  </view>
+                </view>
+                <view v-if="d.alarmLines.length > 0" class="gis-detail-dev-realtime">
+                  <text class="gis-detail-sublabel">{{ t('实时报警') }}</text>
+                  <text
+                      v-for="(alr, alri) in d.alarmLines"
+                      :key="'r' + idx + '-' + alri"
+                      class="gis-detail-attr-line"
+                  >{{ alr }}
+                  </text>
+                </view>
+                <view v-if="d.attrLines.length > 0" class="gis-detail-dev-realtime">
+                  <text class="gis-detail-sublabel">{{ t('实时数据') }}</text>
+                  <text
+                      v-for="(al, ali) in d.attrLines"
+                      :key="'a' + idx + '-' + ali"
+                      class="gis-detail-attr-line"
+                  >{{ al }}
+                  </text>
+                </view>
+                <view v-if="d.controlLines.length > 0" class="gis-detail-dev-realtime">
+                  <text class="gis-detail-sublabel">{{ t('远程控制') }}</text>
+                  <text
+                      v-for="(cl, cli) in d.controlLines"
+                      :key="'c' + idx + '-' + cli"
+                      class="gis-detail-attr-line"
+                  >{{ cl }}
+                  </text>
+                </view>
+              </view>
+            </view>
+          </template>
+        </view>
+      </scroll-view>
+      <view class="gis-detail-footer">
+        <cl-button type="primary" class="gis-detail-footer-btn" @tap="closeMpDetailPopup">{{ t('确定') }}</cl-button>
+      </view>
+    </cl-popup>
+
+    <custom-tabbar></custom-tabbar>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import type {ClTreeItem} from "@/uni_modules/cool-unix";
+import {getSafeAreaHeight, isDark, isMp} from "@/uni_modules/cool-unix";
+import CustomTabbar from "@/components/tabbar.uvue";
+import {clFooterOffset} from "@/uni_modules/cool-unix/components/cl-footer/offset";
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
+import {t} from "@/locale";
+import {workshopTree} from "@/components/workshop";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {parseData, parseDataArray} from "@/core/utils/parse";
+import type {Equip} from "@/core/types";
+
+/**
+ * 与 omes-portal equip_screen_tech / equip_gis 状态色一致（图钉与弹窗色点）
+ */
+type TechColorHex = {
+  online: string;
+  offline: string;
+  alarm: string;
+  running: string;
+  stopped: string;
+};
+
+const TECH_COLORS: TechColorHex = {
+  online: '#00d8ff',
+  offline: '#8a93a1',
+  alarm: '#ff5a5a',
+  running: '#41d57a',
+  stopped: '#ffcc00',
+};
+
+/** 场景聚合：三色；单场景单设备：与 equip_gis.html calcStatus 一致 */
+type MapPinKey = 'online' | 'offline' | 'alarm' | 'running' | 'stop';
+
+type EquipGisAttrRow = {
+  name: string;
+  map?: string | null;
+  value?: string | null;
+  unit?: string | null;
+};
+
+type EquipGisControlRow = {
+  name: string;
+  map: string;
+  type: number;
+  value?: string | null;
+  unit?: string | null;
+};
+
+type EquipGisDetail = {
+  workshopName: string;
+  selfCode: string;
+  name: string;
+  onlineState: number;
+  runState: number;
+  alarmState: number;
+  /** 与设备详情页一致，有则展示「实时报警」文案列表 */
+  alarmTexts?: string[];
+  attrs?: EquipGisAttrRow[];
+  /** 列表接口常不带 controls，小程序弹层打开后会用 selectRealtimeById 补全 */
+  controls?: EquipGisControlRow[];
+};
+
+/** 场景聚合弹窗：单机台实时属性/控制（与 lines 设备行顺序一致） */
+type SceneDeviceDetailItem = {
+  equipId: string;
+  attrs: EquipGisAttrRow[];
+  controls: EquipGisControlRow[];
+  alarmTexts?: string[];
+};
+
+type MapPointPayload = {
+  id: string;
+  lng: number;
+  lat: number;
+  color: string;
+  radius: number;
+  pinKey: MapPinKey;
+  /** scene：场景聚合弹窗；equip：单设备，与 equip_gis.html createPopupHtml 一致 */
+  popupKind: 'scene' | 'equip';
+  equipDetail?: EquipGisDetail;
+  /**
+   * 场景聚合：与 lines[1..] 设备行顺序一致，每项为该机台实时属性/控制（来自列表 needRealtime）
+   */
+  sceneDeviceDetails?: SceneDeviceDetailItem[];
+  title: string;
+  lines: string[];
+};
+
+type SceneStats = {
+  total: number;
+  online: number;
+  offline: number;
+  running: number;
+  stopped: number;
+  alarm: number;
+};
+
+type SceneAggDeviceRow = {
+  name: string;
+  onlineState: number;
+  runState: number;
+  alarmState: number;
+  equipId: string;
+  alarmTexts?: string[];
+  attrs: EquipGisAttrRow[];
+  controls: EquipGisControlRow[];
+};
+
+type SceneAggRow = {
+  name: string;
+  lng: number;
+  lat: number;
+  sceneCode: string;
+  sceneName: string;
+  sceneStats: SceneStats;
+  devices: SceneAggDeviceRow[];
+  isSceneAggregate: boolean;
+  offsetLng?: number;
+  offsetLat?: number;
+};
+
+/** aggregateByScene 内按场景码分组的累计结构 */
+type SceneGroupBucket = {
+  sceneCode: string;
+  sceneName: string;
+  items: Equip[];
+  lng: number;
+  lat: number;
+  sceneStats: SceneStats;
+};
+
+type LngLatPoint = {
+  lng: number;
+  lat: number;
+};
+
+type BuildMapPointsResult = {
+  points: MapPointPayload[];
+  truncated: boolean;
+};
+
+const mapWebSrc = ref<string>('');
+const mapWebKey = ref<number>(0);
+const mapHint = ref<string>('');
+/** 地图区域最小高度（px），用于在 flex 未撑开时仍占满可视区；避免与 cl-footer 占位重复扣减 */
+const gisPageMinHeightPx = ref<number>(400);
+let refreshTimer: number | null = null;
+/** 地图设备数据轮询间隔（毫秒）；页面隐藏时暂停，回到前台再启动 */
+const GIS_MAP_REFRESH_INTERVAL_MS = 3000;
+/** 合并首帧 onMounted + onShow 的重复请求（仅合并一次调度） */
+const MAP_INIT_DEBOUNCE_MS = 80;
+let mapInitDebounceTimer: number | null = null;
+let pendingInitFitBounds = false;
+/** 与上次成功绘制的点位快照一致时跳过 apply/rebuild，减轻 web-view 整页重载与原生 marker 抖动 */
+let lastMapPayloadFingerprint = '';
+
+function cancelDebouncedInitialLoad() {
+  const prev = mapInitDebounceTimer;
+  if (prev != null) {
+    clearTimeout(prev);
+    mapInitDebounceTimer = null;
+  }
+  pendingInitFitBounds = false;
+}
+
+/**
+ * 按 id 排序后序列化，避免接口返回顺序波动导致误判为数据变化。
+ */
+function fingerprintMapPayload(points: MapPointPayload[]): string {
+  const sorted = points.slice().sort((a, b) => {
+    const sa = `${a.id}`;
+    const sb = `${b.id}`;
+    if (sa < sb) {
+      return -1;
+    }
+    if (sa > sb) {
+      return 1;
+    }
+    return 0;
+  });
+  return JSON.stringify(sorted);
+}
+
+/** 路由 ?workshopLabel= 传入的场景名（编码由 encodeURIComponent 处理） */
+const routeSceneLabel = ref<string>('');
+
+function decodeRouteParam(raw: string): string {
+  if (raw == null || raw.length === 0) {
+    return '';
+  }
+  try {
+    const decoded = decodeURIComponent(raw.replace(/\+/g, ' '));
+    if (decoded != null) {
+      return decoded;
+    }
+    return raw;
+  } catch {
+    return raw;
+  }
+}
+
+const displayWorkshopTitle = computed(() => {
+  if (routeSceneLabel.value.length > 0) {
+    return routeSceneLabel.value;
+  }
+  return workshopTree.selectNode.value.label;
+});
+
+onLoad((query) => {
+  if (query == null) {
+    return;
+  }
+  const rawLabel = query.workshopLabel;
+  if (rawLabel != null) {
+    const labelStr = `${rawLabel}`;
+    if (labelStr.length > 0) {
+      routeSceneLabel.value = decodeRouteParam(labelStr);
+    }
+  }
+  const rawCode = query.workshopCode;
+  if (rawCode != null) {
+    const codeStr = `${rawCode}`;
+    if (codeStr.length > 0) {
+      const isAll = codeStr === '-1';
+      const sid: string | number = isAll ? -1 : codeStr;
+      const lab =
+          routeSceneLabel.value.length > 0
+              ? routeSceneLabel.value
+              : isAll
+                  ? t('全部场景')
+                  : workshopTree.selectNode.value.label;
+      workshopTree.selectNode.value = {
+        id: sid,
+        label: lab,
+        isExpand: true,
+      } as ClTreeItem;
+    }
+  }
+});
+
+/** 小程序原生 map（与 web-view 方案数据源一致） */
+const MP_DEFAULT_LAT = 31.45;
+const MP_DEFAULT_LNG = 121.13;
+const mpLat = ref<number>(MP_DEFAULT_LAT);
+const mpLng = ref<number>(MP_DEFAULT_LNG);
+const mpScale = ref<number>(11);
+/** 小程序原生 map：三色图钉（锚点底部居中） */
+const mpMarkers = ref<any[]>([]);
+const mpLastPoints = ref<MapPointPayload[]>([]);
+
+type MpDetailDeviceRow = {
+  name: string;
+  equipId: string;
+  /** 与 TECH_COLORS 一致，用于状态圆点 */
+  onlineDot: string;
+  runDot: string;
+  alarmDot: string;
+  alarmLines: string[];
+  attrLines: string[];
+  controlLines: string[];
+};
+
+type MpEquipDetailLineRow = {
+  /** 勿命名 line：uvue 模板中易被解析异常 */
+  summaryText: string;
+};
+
+type MpEquipDetailTagRow = {
+  label: string;
+  dot: string;
+};
+
+type MpEquipDetailRow = MpEquipDetailLineRow | MpEquipDetailTagRow;
+
+type MpDetailParsed = {
+  mode: 'scene' | 'equip';
+  title: string;
+  summary: string;
+  devices: MpDetailDeviceRow[];
+  equipRows: MpEquipDetailRow[];
+};
+
+/** 小程序 equip 弹层列表：扁平字段，uvue 模板不支持 union 上的 equipRow.xxx 成员访问 */
+type MpEquipRowVm = {
+  rowKind: 0 | 1;
+  summaryBody: string;
+  tagTitle: string;
+  tagDotHex: string;
+};
+
+type MpDetailPopupRef = {
+  open: () => void;
+  close: () => void;
+};
+
+const mpDetailPopupRef = ref<MpDetailPopupRef | null>(null);
+const mpDetailPoint = ref<MapPointPayload | null>(null);
+
+function formatGisAttrLine(a: EquipGisAttrRow): string {
+  const v = a.value == null ? 'unknow' : `${a.value}`;
+  const u = a.unit != null && `${a.unit}`.length > 0 ? ` ${a.unit}` : '';
+  const mapRaw = a.map != null ? `${a.map}`.trim() : '';
+  if (mapRaw.length > 0) {
+    return `${a.name}：${v}${u}`;
+  }
+  return `${a.name}：${v}${u}`;
+}
+
+function formatGisControlLine(c: EquipGisControlRow): string {
+  let v = c.value == null ? 'unknow' : `${c.value}`;
+  if (c.type === 0) {
+    if (c.value === '1' || c.value === 'true') {
+      v = '开';
+    } else if (c.value === '0' || c.value === 'false') {
+      v = '关';
+    }
+  }
+  const u = c.unit != null && `${c.unit}`.length > 0 ? ` ${c.unit}` : '';
+  const mapRaw = c.map != null ? `${c.map}`.trim() : '';
+  if (mapRaw.length > 0) {
+    return `${c.name}：${v}${u}`;
+  }
+  return `${c.name}：${v}${u}`;
+}
+
+function buildMpEquipRows(d: EquipGisDetail): MpEquipDetailRow[] {
+  const rows: MpEquipDetailRow[] = [];
+  rows.push({summaryText: `场景名称：${d.workshopName}`});
+  rows.push({summaryText: `设备编号：${d.selfCode}`});
+  const onlineDot = d.onlineState === 1 ? TECH_COLORS.online : TECH_COLORS.offline;
+  let runDot = TECH_COLORS.offline;
+  if (d.onlineState === 1) {
+    runDot = d.runState === 1 ? TECH_COLORS.running : TECH_COLORS.stopped;
+  }
+  const alarmDot = d.alarmState === 1 ? TECH_COLORS.alarm : TECH_COLORS.offline;
+  rows.push({label: '在线', dot: onlineDot});
+  rows.push({label: '运行', dot: runDot});
+  rows.push({label: '告警', dot: alarmDot});
+  const alarmTexts = d.alarmTexts ?? [];
+  if (alarmTexts.length > 0) {
+    rows.push({summaryText: t('实时报警')});
+    for (let ai = 0; ai < alarmTexts.length; ai++) {
+      rows.push({summaryText: `${alarmTexts[ai]}`});
+    }
+  }
+  const attrs = d.attrs ?? [];
+  const controls = d.controls ?? [];
+  if (attrs.length > 0) {
+    rows.push({summaryText: t('实时数据')});
+    for (let i = 0; i < attrs.length; i++) {
+      rows.push({summaryText: formatGisAttrLine(attrs[i])});
+    }
+  }
+  if (controls.length > 0) {
+    rows.push({summaryText: t('远程控制')});
+    for (let j = 0; j < controls.length; j++) {
+      rows.push({summaryText: formatGisControlLine(controls[j])});
+    }
+  }
+  return rows;
+}
+
+function parseMpDetailFromPayload(p: MapPointPayload | null): MpDetailParsed {
+  if (p == null) {
+    return {mode: 'scene', title: '', summary: '', devices: [], equipRows: []};
+  }
+  if (p.popupKind === 'equip' && p.equipDetail != null) {
+    return {
+      mode: 'equip',
+      title: p.equipDetail.name,
+      summary: '',
+      devices: [],
+      equipRows: buildMpEquipRows(p.equipDetail),
+    };
+  }
+  const summary = p.lines.length > 0 ? p.lines[0] : '';
+  const devices: MpDetailDeviceRow[] = [];
+  for (let i = 1; i < p.lines.length; i++) {
+    const raw = p.lines[i];
+    const colon = raw.indexOf('：');
+    const name = colon >= 0 ? raw.substring(0, colon).trim() : raw.trim();
+    const rest = colon >= 0 ? raw.substring(colon + 1) : '';
+    const segs = rest.split(/[｜|]/);
+    let online = '—';
+    let run = '—';
+    let alarm = '—';
+    for (let s = 0; s < segs.length; s++) {
+      const seg = segs[s].trim();
+      if (seg.length === 0) {
+        continue;
+      }
+      if (seg.indexOf('在线') === 0) {
+        online = seg.replace(/^在线\s*/, '').trim();
+      } else if (seg.indexOf('运行') === 0) {
+        run = seg.replace(/^运行\s*/, '').trim();
+      } else if (seg.indexOf('告警') === 0) {
+        alarm = seg.replace(/^告警\s*/, '').trim();
+      }
+    }
+    const neutral = '#94a3b8';
+    const ynDot = (yn: string, yesC: string, noC: string): string => {
+      if (yn === '是') {
+        return yesC;
+      }
+      if (yn === '否') {
+        return noC;
+      }
+      return neutral;
+    };
+    const onlineDot = ynDot(online, TECH_COLORS.online, TECH_COLORS.offline);
+    const runDot =
+        online !== '是' ? TECH_COLORS.offline : ynDot(run, TECH_COLORS.running, TECH_COLORS.stopped);
+    const alarmDot = ynDot(alarm, TECH_COLORS.alarm, neutral);
+    const devIdx = i - 1;
+    const ex =
+        p.sceneDeviceDetails != null &&
+        devIdx >= 0 &&
+        devIdx < p.sceneDeviceDetails.length
+            ? p.sceneDeviceDetails[devIdx]
+            : null;
+    const attrRows = ex != null ? (ex.attrs ?? []) : [];
+    const ctrlRows = ex != null ? (ex.controls ?? []) : [];
+    const attrLines = attrRows.map((a) => formatGisAttrLine(a));
+    const controlLines = ctrlRows.map((c) => formatGisControlLine(c));
+    const equipId = ex != null && ex.equipId.length > 0 ? ex.equipId : '';
+    const alarmLines =
+        ex != null && ex.alarmTexts != null
+            ? ex.alarmTexts.filter((x) => x != null && `${x}`.length > 0).map((x) => `${x}`)
+            : [];
+    devices.push({name, equipId, onlineDot, runDot, alarmDot, alarmLines, attrLines, controlLines});
+  }
+  return {mode: 'scene', title: p.title, summary, devices, equipRows: []};
+}
+
+const mpDetailParsed = computed(() => parseMpDetailFromPayload(mpDetailPoint.value));
+
+function mapEquipRowsToVm(rows: MpEquipDetailRow[]): MpEquipRowVm[] {
+  const out: MpEquipRowVm[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const line = r as MpEquipDetailLineRow;
+    if (line.summaryText != null && line.summaryText.length > 0) {
+      out.push({
+        rowKind: 0,
+        summaryBody: line.summaryText,
+        tagTitle: '',
+        tagDotHex: '',
+      });
+      continue;
+    }
+    const tag = r as MpEquipDetailTagRow;
+    out.push({
+      rowKind: 1,
+      summaryBody: '',
+      tagTitle: tag.label,
+      tagDotHex: tag.dot,
+    });
+  }
+  return out;
+}
+
+const mpEquipRowsVm = computed<MpEquipRowVm[]>(() => {
+  const p = mpDetailParsed.value;
+  if (p.mode !== 'equip') {
+    return [];
+  }
+  return mapEquipRowsToVm(p.equipRows);
+});
+
+const gisPageOuterStyle = computed(() => ({
+  minHeight: `${gisPageMinHeightPx.value}px`,
+}));
+
+/**
+ * 整页可滚动区域高度 ≈ windowHeight；底栏为 fixed + 占位，地图区用 min-height 拉满中间空白。
+ * 不再在「占位」之外再减一遍 tab 高度，避免地图比可视区矮一截。
+ */
+function syncGisPageMinHeight() {
+  const sys = uni.getSystemInfoSync();
+  const whRaw = sys.windowHeight != null ? parseFloat(`${sys.windowHeight}`) : 640;
+  const wh = Number.isFinite(whRaw) ? whRaw : 640;
+  /** 与 cl-topbar-placeholder：safe-top + 内容高（MP 默认 44，App/H5 本页 100） */
+  const topBarInner = isMp() ? 44 : 100;
+  const topReserve = getSafeAreaHeight("top") + topBarInner;
+  const fh = clFooterOffset.get();
+  let safeBottom = 0;
+  if (sys.safeAreaInsets != null && sys.safeAreaInsets.bottom != null) {
+    const b = parseFloat(`${sys.safeAreaInsets.bottom}`);
+    safeBottom = Number.isFinite(b) ? b : 0;
+  }
+  const footerReserve = fh > 20 ? fh : 60 + safeBottom;
+  const next = Math.floor(wh - topReserve - footerReserve);
+  gisPageMinHeightPx.value = next < 280 ? 280 : next;
+}
+
+/**
+ * 与 equip_screen_tech.html 中 mapDotFillColor(d) 的 sceneStats 分支一致：
+ * 有告警 → alarm；全离线 → offline；否则 → online（聚合点不区分运行/停止配色）
+ */
+function mapDotFillColorScene(st: SceneStats): string {
+  const total = st.total ?? 0;
+  const offline = st.offline ?? 0;
+  if ((st.alarm ?? 0) > 0) {
+    return TECH_COLORS.alarm;
+  }
+  if (total > 0 && offline >= total) {
+    return TECH_COLORS.offline;
+  }
+  return TECH_COLORS.online;
+}
+
+function scenePinKey(st: SceneStats): MapPinKey {
+  const total = st.total ?? 0;
+  const offline = st.offline ?? 0;
+  if ((st.alarm ?? 0) > 0) {
+    return 'alarm';
+  }
+  if (total > 0 && offline >= total) {
+    return 'offline';
+  }
+  return 'online';
+}
+
+function pinIconPathForKey(key: MapPinKey): string {
+  if (key === 'offline') {
+    return '/static/map/pin_offline.png';
+  }
+  if (key === 'alarm') {
+    return '/static/map/pin_alarm.png';
+  }
+  if (key === 'running') {
+    return '/static/map/pin_running.png';
+  }
+  if (key === 'stop') {
+    return '/static/map/pin_stopped.png';
+  }
+  return '/static/map/pin_online.png';
+}
+
+/** 与 omes-portal equip_gis.html calcStatus 判定顺序一致 */
+function gisStatusForEquip(e: Equip): MapPinKey {
+  if (e.onlineState === 0) {
+    return 'offline';
+  }
+  if ((e.alarmState ?? 0) >= 1) {
+    return 'alarm';
+  }
+  if (e.runState === 1) {
+    return 'running';
+  }
+  if (e.runState === 0) {
+    return 'stop';
+  }
+  if (e.onlineState === 1) {
+    return 'online';
+  }
+  return 'offline';
+}
+
+function gisPinColorForKey(k: MapPinKey): string {
+  if (k === 'offline') {
+    return TECH_COLORS.offline;
+  }
+  if (k === 'alarm') {
+    return TECH_COLORS.alarm;
+  }
+  if (k === 'running') {
+    return TECH_COLORS.running;
+  }
+  if (k === 'stop') {
+    return TECH_COLORS.stopped;
+  }
+  return TECH_COLORS.online;
+}
+
+/** 大屏聚合公式 4.2+c*0.38 基础上略放大，便于 App 地图辨认 */
+function mapDotRadiusScene(total: number): number {
+  const raw = total;
+  const safeTotal = Number.isFinite(raw) ? raw : 0;
+  const c = Math.max(1, safeTotal);
+  const r = 4.2 + c * 0.38;
+  const scaled = r * 2.05;
+  if (scaled > 24) {
+    return 24;
+  }
+  if (scaled < 13) {
+    return 13;
+  }
+  return scaled;
+}
+
+function readLngLat(item: Equip): LngLatPoint | null {
+  const workshop = item.workshop;
+  if (workshop == null) {
+    return null;
+  }
+  const lng = parseFloat(`${workshop.lng}`);
+  const lat = parseFloat(`${workshop.lat}`);
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+    return null;
+  }
+  if (lng === 0 && lat === 0) {
+    return null;
+  }
+  return { lng, lat };
+}
+
+function buildEquipGisDetailFromEquip(e: Equip): EquipGisDetail {
+  const name = e.name != null && e.name.length > 0 ? e.name : (e.selfCode != null ? `${e.selfCode}` : '-');
+  const detail: EquipGisDetail = {
+    workshopName: e.workshop != null ? (e.workshop.name ?? '') : '',
+    selfCode: e.selfCode != null ? `${e.selfCode}` : '',
+    name,
+    onlineState: e.onlineState,
+    runState: e.runState,
+    alarmState: e.alarmState ?? 0,
+  };
+  if (e.alarmTexts != null && e.alarmTexts.length > 0) {
+    detail.alarmTexts = e.alarmTexts;
+  }
+  if (e.attrs != null) {
+    detail.attrs = e.attrs.map((a): EquipGisAttrRow => ({
+      name: a.name,
+      map: a.map,
+      value: a.value,
+      unit: a.unit,
+    }));
+  }
+  if (e.controls != null) {
+    detail.controls = e.controls.map((c): EquipGisControlRow => ({
+      name: c.name,
+      map: c.map,
+      type: c.type,
+      value: c.value,
+      unit: c.unit,
+    }));
+  }
+  return detail;
+}
+
+function aggregateByScene(items: Equip[]): SceneAggRow[] {
+  const groups = new Map<string, SceneGroupBucket>();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const pos = readLngLat(item);
+    if (pos == null) {
+      continue;
+    }
+    const wk = item.workshop;
+    const lng = pos.lng;
+    const lat = pos.lat;
+    let sceneCode: string;
+    if (wk != null) {
+      const code = wk.selfCode != null && `${wk.selfCode}`.length > 0
+          ? `${wk.selfCode}`
+          : (wk.code != null && `${wk.code}`.length > 0 ? `${wk.code}` : '');
+      sceneCode = code.length > 0 ? code : `scene_${lng.toFixed(4)}_${lat.toFixed(4)}`;
+    } else {
+      sceneCode = `scene_${lng.toFixed(4)}_${lat.toFixed(4)}`;
+    }
+    const sceneName = wk != null ? wk.name : '未命名场景';
+
+    if (!groups.has(sceneCode)) {
+      groups.set(sceneCode, {
+        sceneCode,
+        sceneName,
+        items: [],
+        lng,
+        lat,
+        sceneStats: {total: 0, online: 0, offline: 0, running: 0, stopped: 0, alarm: 0},
+      });
+    }
+    const g = groups.get(sceneCode)!;
+    g.items.push(item);
+    g.sceneStats.total += 1;
+    if (item.onlineState === 1) {
+      g.sceneStats.online += 1;
+    } else {
+      g.sceneStats.offline += 1;
+    }
+    if (item.runState === 1) {
+      g.sceneStats.running += 1;
+    }
+    if (item.runState === 0) {
+      g.sceneStats.stopped += 1;
+    }
+    if ((item.alarmState ?? 0) >= 1) {
+      g.sceneStats.alarm += 1;
+    }
+  }
+
+  const result: SceneAggRow[] = [];
+  const aggEntries = Array.from(groups.entries());
+  for (let ei = 0; ei < aggEntries.length; ei++) {
+    const pair = aggEntries[ei];
+    const g = pair[1];
+    const devices: SceneAggDeviceRow[] = g.items.map((d: Equip) => {
+      const gis = buildEquipGisDetailFromEquip(d);
+      const row: SceneAggDeviceRow = {
+        name: d.name != null && d.name.length > 0 ? d.name : (d.selfCode != null ? `${d.selfCode}` : '-'),
+        onlineState: d.onlineState,
+        runState: d.runState,
+        alarmState: d.alarmState ?? 0,
+        equipId: d.id != null ? `${d.id}` : '',
+        attrs: gis.attrs ?? [],
+        controls: gis.controls ?? [],
+      };
+      if (d.alarmTexts != null && d.alarmTexts.length > 0) {
+        row.alarmTexts = d.alarmTexts;
+      }
+      return row;
+    });
+    result.push({
+      name: g.sceneName,
+      lng: g.lng,
+      lat: g.lat,
+      sceneCode: g.sceneCode,
+      sceneName: g.sceneName,
+      sceneStats: g.sceneStats,
+      devices,
+      isSceneAggregate: true,
+    });
+  }
+  return result;
+}
+
+function applyMapPointOffset(items: SceneAggRow[]): SceneAggRow[] {
+  const groups = new Map<string, SceneAggRow[]>();
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const lng = item.lng;
+    const lat = item.lat;
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+      continue;
+    }
+    const key = `${lng.toFixed(5)}_${lat.toFixed(5)}`;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key)!.push(item);
+  }
+
+  const result: SceneAggRow[] = [];
+  const mapEntries = Array.from(groups.entries());
+  for (let ei = 0; ei < mapEntries.length; ei++) {
+    const group = mapEntries[ei][1];
+    if (group.length === 1) {
+      result.push(group[0]);
+      continue;
+    }
+    const baseLng = group[0].lng;
+    const baseLat = group[0].lat;
+    const latRad = baseLat * Math.PI / 180;
+    const lngMeter = Math.max(1, 111320 * Math.cos(latRad));
+    const latMeter = 110540;
+    const stepMeter = 36;
+    for (let idx = 0; idx < group.length; idx++) {
+      const item = group[idx];
+      const ring = Math.floor(idx / 8) + 1;
+      const angle = (idx % 8) * (Math.PI / 4) + ring * 0.25;
+      const meter = stepMeter * ring;
+      const lngOffset = (Math.cos(angle) * meter) / lngMeter;
+      const latOffset = (Math.sin(angle) * meter) / latMeter;
+      const copy: SceneAggRow = {
+        name: item.name,
+        lng: item.lng,
+        lat: item.lat,
+        sceneCode: item.sceneCode,
+        sceneName: item.sceneName,
+        sceneStats: item.sceneStats,
+        devices: item.devices,
+        isSceneAggregate: item.isSceneAggregate,
+        offsetLng: baseLng + lngOffset,
+        offsetLat: baseLat + latOffset,
+      };
+      result.push(copy);
+    }
+  }
+  return result;
+}
+
+function sceneRowToPayload(item: SceneAggRow): MapPointPayload {
+  const lat = item.offsetLat != null ? item.offsetLat : item.lat;
+  const lng = item.offsetLng != null ? item.offsetLng : item.lng;
+  const st = item.sceneStats;
+  const lines: string[] = [];
+  lines.push(
+      `概览：共 ${st.total} 台 · 在线 ${st.online} · 离线 ${st.offline} · 告警 ${st.alarm}`,
+  );
+  for (let d = 0; d < item.devices.length; d++) {
+    const dev = item.devices[d];
+    const on = dev.onlineState === 1 ? '是' : '否';
+    const run = dev.runState === 1 ? '是' : '否';
+    const alm = dev.alarmState >= 1 ? '是' : '否';
+    lines.push(`${dev.name}：在线 ${on} ｜ 运行 ${run} ｜ 告警 ${alm}`);
+  }
+  const key =
+      item.sceneCode != null && item.sceneCode.length > 0
+          ? item.sceneCode
+          : `sc_${lng.toFixed(5)}_${lat.toFixed(5)}`;
+  const pinKey = scenePinKey(st);
+  const sceneDeviceDetails: SceneDeviceDetailItem[] = item.devices.map((d): SceneDeviceDetailItem => ({
+    equipId: d.equipId,
+    attrs: d.attrs ?? [],
+    controls: d.controls ?? [],
+    alarmTexts: d.alarmTexts ?? [],
+  }));
+  return {
+    id: key,
+    lng,
+    lat,
+    color: mapDotFillColorScene(st),
+    radius: mapDotRadiusScene(st.total),
+    pinKey,
+    popupKind: 'scene',
+    sceneDeviceDetails,
+    title: item.sceneName != null && item.sceneName.length > 0 ? item.sceneName : key,
+    lines,
+  };
+}
+
+type EquipPos = {
+  equip: Equip;
+  lng: number;
+  lat: number;
+};
+
+/** 同坐标多设备时散开，与场景聚合 applyMapPointOffset 一致 */
+function applyEquipPointOffset(items: Equip[]): EquipPos[] {
+  const withPos: EquipPos[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const e = items[i];
+    const p = readLngLat(e);
+    if (p == null) {
+      continue;
+    }
+    withPos.push({equip: e, lng: p.lng, lat: p.lat});
+  }
+  const groups = new Map<string, EquipPos[]>();
+  for (let i = 0; i < withPos.length; i++) {
+    const row = withPos[i];
+    const key = `${row.lng.toFixed(5)}_${row.lat.toFixed(5)}`;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key)!.push(row);
+  }
+  const result: EquipPos[] = [];
+  const equipEntries = Array.from(groups.entries());
+  for (let ei = 0; ei < equipEntries.length; ei++) {
+    const group = equipEntries[ei][1];
+    if (group.length === 1) {
+      result.push(group[0]);
+      continue;
+    }
+    const baseLng = group[0].lng;
+    const baseLat = group[0].lat;
+    const latRad = baseLat * Math.PI / 180;
+    const lngMeter = Math.max(1, 111320 * Math.cos(latRad));
+    const latMeter = 110540;
+    const stepMeter = 36;
+    for (let idx = 0; idx < group.length; idx++) {
+      const item = group[idx];
+      const ring = Math.floor(idx / 8) + 1;
+      const angle = (idx % 8) * (Math.PI / 4) + ring * 0.25;
+      const meter = stepMeter * ring;
+      const lngOffset = (Math.cos(angle) * meter) / lngMeter;
+      const latOffset = (Math.sin(angle) * meter) / latMeter;
+      result.push({
+        equip: item.equip,
+        lng: baseLng + lngOffset,
+        lat: baseLat + latOffset,
+      });
+    }
+  }
+  return result;
+}
+
+function equipToMapPayload(e: Equip, lng: number, lat: number): MapPointPayload {
+  const pinKey = gisStatusForEquip(e);
+  const equipDetail = buildEquipGisDetailFromEquip(e);
+  const idRaw = e.id != null ? `${e.id}` : '';
+  const id = idRaw.length > 0 ? idRaw : `eq_${lng.toFixed(5)}_${lat.toFixed(5)}`;
+  return {
+    id,
+    lng,
+    lat,
+    color: gisPinColorForKey(pinKey),
+    radius: 13,
+    pinKey,
+    popupKind: 'equip',
+    equipDetail,
+    title: equipDetail.name,
+    lines: [],
+  };
+}
+
+const MAX_MAP_POINTS = 200;
+
+function buildMapPoints(list: Equip[]): BuildMapPointsResult {
+  const filtered: Equip[] = [];
+  for (let i = 0; i < list.length; i++) {
+    const e = list[i];
+    if (readLngLat(e) != null) {
+      filtered.push(e);
+    }
+  }
+  const scenePoints = aggregateByScene(filtered);
+  const out: MapPointPayload[] = [];
+  if (scenePoints.length === 1) {
+    const positioned = applyEquipPointOffset(filtered);
+    for (let i = 0; i < positioned.length; i++) {
+      const ep = positioned[i];
+      out.push(equipToMapPayload(ep.equip, ep.lng, ep.lat));
+    }
+  } else {
+    const pointSource = applyMapPointOffset(scenePoints);
+    for (let i = 0; i < pointSource.length; i++) {
+      out.push(sceneRowToPayload(pointSource[i]));
+    }
+  }
+  if (out.length > MAX_MAP_POINTS) {
+    return {points: out.slice(0, MAX_MAP_POINTS), truncated: true};
+  }
+  return {points: out, truncated: false};
+}
+
+function computeMpScale(points: MapPointPayload[]): number {
+  if (points.length <= 1) {
+    return 14;
+  }
+  const lats = points.map((p) => p.lat);
+  const lngs = points.map((p) => p.lng);
+  const dLat = Math.max(...lats) - Math.min(...lats);
+  const dLng = Math.max(...lngs) - Math.min(...lngs);
+  const d = Math.max(dLat, dLng, 0.0008);
+  if (d > 0.35) {
+    return 9;
+  }
+  if (d > 0.15) {
+    return 11;
+  }
+  if (d > 0.05) {
+    return 13;
+  }
+  if (d > 0.015) {
+    return 14;
+  }
+  return 16;
+}
+
+function buildMpMarkers(points: MapPointPayload[]): any[] {
+  const out: any[] = [];
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    out.push({
+      id: i + 1,
+      latitude: p.lat,
+      longitude: p.lng,
+      iconPath: pinIconPathForKey(p.pinKey),
+      width: 48,
+      height: 56,
+      anchor: {x: 0.5, y: 1},
+    });
+  }
+  return out;
+}
+
+function applyMpMarkers(points: MapPointPayload[], fitBounds: boolean) {
+  mpLastPoints.value = points;
+  if (points.length === 0) {
+    mpMarkers.value = [];
+    mpLat.value = MP_DEFAULT_LAT;
+    mpLng.value = MP_DEFAULT_LNG;
+    mpScale.value = 11;
+    return;
+  }
+  mpMarkers.value = buildMpMarkers(points);
+  const lats = points.map((p) => p.lat);
+  const lngs = points.map((p) => p.lng);
+  mpLat.value = (Math.min(...lats) + Math.max(...lats)) / 2;
+  mpLng.value = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+  if (fitBounds) {
+    mpScale.value = computeMpScale(points);
+  }
+}
+
+function closeMpDetailPopup() {
+  if (mpDetailPopupRef.value != null) {
+    mpDetailPopupRef.value.close();
+  }
+  mpDetailPoint.value = null;
+}
+
+function enrichEquipDetailFromRealtime(equipId: string, markerIndex: number) {
+  request({
+    url: apiPath.equip_realtime as string,
+    method: 'GET',
+    data: {id: equipId},
+  }).then((res) => {
+    if (res == null) {
+      return;
+    }
+    const r = parseData<Equip>(res);
+    if (r == null) {
+      return;
+    }
+    const pts = mpLastPoints.value;
+    if (markerIndex < 0 || markerIndex >= pts.length) {
+      return;
+    }
+    const cur = pts[markerIndex];
+    if (cur.id !== equipId || cur.popupKind !== 'equip') {
+      return;
+    }
+    const mergedDetail = buildEquipGisDetailFromEquip(r);
+    const updated: MapPointPayload = {
+      id: cur.id,
+      lng: cur.lng,
+      lat: cur.lat,
+      color: cur.color,
+      radius: cur.radius,
+      pinKey: cur.pinKey,
+      popupKind: cur.popupKind,
+      equipDetail: mergedDetail,
+      title: mergedDetail.name,
+      lines: cur.lines,
+    };
+    if (cur.sceneDeviceDetails != null) {
+      updated.sceneDeviceDetails = cur.sceneDeviceDetails;
+    }
+    const next = pts.slice();
+    next[markerIndex] = updated;
+    mpLastPoints.value = next;
+    if (mpDetailPoint.value != null && mpDetailPoint.value.id === equipId) {
+      mpDetailPoint.value = updated;
+    }
+  });
+}
+
+function onMpMarkerTap(e: any) {
+  if (e == null) {
+    return;
+  }
+  const raw = e as any;
+  let midAny: any = null;
+  const d = raw.detail;
+  if (d != null) {
+    midAny = d.markerId;
+  }
+  if (midAny == null && typeof raw.getAny === 'function') {
+    const detailAny = (raw as UTSJSONObject).getAny('detail');
+    if (detailAny != null && typeof (detailAny as any).getAny === 'function') {
+      midAny = (detailAny as UTSJSONObject).getAny('markerId');
+    }
+  }
+  if (midAny == null) {
+    return;
+  }
+  const mid = midAny;
+  const idxRaw = parseFloat(`${mid}`);
+  const idx = idxRaw - 1;
+  const pts = mpLastPoints.value;
+  if (!Number.isFinite(idx) || idx < 0 || idx >= pts.length) {
+    return;
+  }
+  mpDetailPoint.value = pts[idx];
+  nextTick(() => {
+    if (mpDetailPopupRef.value != null) {
+      mpDetailPopupRef.value.open();
+    }
+    const p = pts[idx];
+    if (p.popupKind === 'equip' && p.id != null) {
+      const pid = `${p.id}`;
+      if (pid.length > 0) {
+        enrichEquipDetailFromRealtime(pid, idx);
+      }
+    }
+  });
+}
+
+function rebuildMapWebSrc(points: MapPointPayload[], fitBounds: boolean) {
+  const payload = JSON.stringify({points: points, fit: fitBounds});
+  /** APP 端 web-view 加载本地页应使用 hybrid/html（/static 下 html 在真机常无法展示） */
+  mapWebSrc.value = `/hybrid/html/workshop_gis_map.html#p=${encodeURIComponent(payload)}`;
+  mapWebKey.value = mapWebKey.value + 1;
+}
+
+/** 内核就绪后再算一次高度，避免首帧 web-view 高度为 0 导致 MapLibre 画布全黑 */
+function onMapWebviewLoad() {
+  syncGisPageMinHeight();
+}
+
+let mapLoading = false;
+/** 当前请求进行中时合并后续刷新，避免丢一次轮询；任一为 true 则补拉时带 fit */
+let mapLoadQueuedFit: boolean | null = null;
+
+function loadEquipForMap(fitBounds: boolean) {
+  if (mapLoading) {
+    if (mapLoadQueuedFit == null) {
+      mapLoadQueuedFit = fitBounds;
+    } else {
+      mapLoadQueuedFit = mapLoadQueuedFit === true || fitBounds === true;
+    }
+    return;
+  }
+  mapLoading = true;
+  request({
+    url: apiPath.equip_page as string,
+    method: 'POST',
+    data: {
+      workshopCode: workshopTree.selectNode.value.id === -1 ? null : workshopTree.selectNode.value.id,
+      needRealtime: true,
+      needWorkshopCascade: true,
+      queryWorkshop: true,
+      queryAttrs: true,
+      limitUserWorkshop: true,
+      requirePage: false,
+    },
+  })
+      .then((res) => {
+        let points: MapPointPayload[] = [];
+        if (res === null) {
+          mapHint.value = '';
+        } else {
+          const r = parseDataArray<Equip>(res);
+          if (r == null) {
+            mapHint.value = '';
+          } else {
+            const built = buildMapPoints(r);
+            points = built.points;
+            if (points.length === 0) {
+              mapHint.value = '当前场景下暂无带坐标的设备';
+            } else if (built.truncated) {
+              mapHint.value = `点位较多，地图最多展示 ${MAX_MAP_POINTS} 个`;
+            } else {
+              mapHint.value = '';
+            }
+          }
+        }
+        const fp = fingerprintMapPayload(points);
+        if (fp === lastMapPayloadFingerprint) {
+          return;
+        }
+        lastMapPayloadFingerprint = fp;
+        if (isMp()) {
+          applyMpMarkers(points, fitBounds);
+        } else {
+          rebuildMapWebSrc(points, fitBounds);
+        }
+      })
+      .finally(() => {
+        mapLoading = false;
+        const q = mapLoadQueuedFit;
+        mapLoadQueuedFit = null;
+        if (q !== null) {
+          loadEquipForMap(q);
+        }
+      });
+}
+
+function stopMapDataRefreshTimer() {
+  const rt = refreshTimer;
+  if (rt != null) {
+    clearInterval(rt);
+    refreshTimer = null;
+  }
+}
+
+function startMapDataRefreshTimer() {
+  stopMapDataRefreshTimer();
+  refreshTimer = setInterval(() => {
+    loadEquipForMap(false);
+  }, GIS_MAP_REFRESH_INTERVAL_MS) as number;
+}
+
+function scheduleDebouncedInitialLoad(fitBounds: boolean) {
+  pendingInitFitBounds = pendingInitFitBounds || fitBounds;
+  const prev = mapInitDebounceTimer;
+  if (prev != null) {
+    clearTimeout(prev);
+  }
+  mapInitDebounceTimer = setTimeout(() => {
+    mapInitDebounceTimer = null;
+    const fb = pendingInitFitBounds;
+    pendingInitFitBounds = false;
+    loadEquipForMap(fb);
+  }, MAP_INIT_DEBOUNCE_MS) as number;
+}
+
+watch(workshopTree.selectNode, () => {
+  lastMapPayloadFingerprint = '';
+  cancelDebouncedInitialLoad();
+  syncGisPageMinHeight();
+  loadEquipForMap(true);
+});
+
+onMounted(() => {
+  syncGisPageMinHeight();
+  setTimeout(() => {
+    syncGisPageMinHeight();
+  }, 200);
+  setTimeout(() => {
+    syncGisPageMinHeight();
+  }, 500);
+  if (!isMp()) {
+    rebuildMapWebSrc([], true);
+  } else {
+    applyMpMarkers([], true);
+  }
+  scheduleDebouncedInitialLoad(true);
+  startMapDataRefreshTimer();
+});
+
+onShow(() => {
+  syncGisPageMinHeight();
+  setTimeout(() => {
+    syncGisPageMinHeight();
+  }, 120);
+  scheduleDebouncedInitialLoad(false);
+  startMapDataRefreshTimer();
+});
+
+onHide(() => {
+  cancelDebouncedInitialLoad();
+  stopMapDataRefreshTimer();
+});
+
+onUnload(() => {
+  cancelDebouncedInitialLoad();
+  stopMapDataRefreshTimer();
+});
+</script>
+
+<style scoped lang="scss">
+
+/* 整页内容区：宽度与盒模型在 APP 原生渲染上更稳 */
+.gis-page {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+  padding-left: 16rpx;
+  padding-right: 16rpx;
+  padding-top: 8rpx;
+  /* 底栏安全区由 cl-footer / 占位处理，此处不再叠加 env(safe-area)，避免地图区被多挤一截 */
+  padding-bottom: 8rpx;
+}
+
+.gis-page--dark {
+  background-color: transparent;
+}
+
+/* 不用 gap：部分 Android 原生 flex 对 gap 支持不完整，改用子项 margin */
+.gis-legend {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 12rpx;
+  padding-bottom: 12rpx;
+}
+
+.gis-legend-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-right: 28rpx;
+  margin-bottom: 12rpx;
+}
+
+.gis-legend-text {
+  font-size: 22rpx;
+  color: #64748b;
+  margin-left: 8rpx;
+  line-height: 32rpx;
+}
+
+.gis-page--dark .gis-legend-text {
+  color: #94a3b8;
+}
+
+.gis-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 9999rpx;
+  flex-shrink: 0;
+}
+
+.gis-dot-online {
+  background-color: #00d8ff;
+}
+
+.gis-dot-offline {
+  background-color: #8a93a1;
+}
+
+.gis-dot-running {
+  background-color: #41d57a;
+}
+
+.gis-dot-stopped {
+  background-color: #ffcc00;
+}
+
+.gis-dot-alarm {
+  background-color: #ff5a5a;
+}
+
+/* 地图容器：rpx 圆角 + 边框，避免依赖 Tailwind 在 APP 上的差异 */
+.gis-map-wrap {
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  background-color: #0b1220;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #e2e8f0;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.gis-page--dark .gis-map-wrap {
+  border-color: #334155;
+}
+
+/* 小程序原生 map / web-view：在 flex 容器内占满剩余高度 */
+.gis-native-map {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+
+.gis-top-actions {
+  margin-left: 8rpx;
+}
+
+.gis-webview {
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+
+.gis-hint {
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding-top: 16rpx;
+  padding-left: 8rpx;
+  padding-right: 8rpx;
+}
+
+/* 小程序点位详情弹层（替代 showModal，可正常分段） */
+.gis-detail-popup-pt {
+  border-radius: 24rpx;
+  overflow: hidden;
+  min-width: 560rpx;
+  max-width: 680rpx;
+}
+
+.gis-detail-header-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  text-align: center;
+  padding: 0 48rpx 0 16rpx;
+  box-sizing: border-box;
+}
+
+.gis-detail-header-title--dark {
+  color: #f8fafc;
+}
+
+.gis-detail-scroll {
+  max-height: 800rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gis-detail-inner {
+  padding: 8rpx 28rpx 24rpx;
+  box-sizing: border-box;
+}
+
+.gis-detail-inner--dark .gis-detail-section-label {
+  color: #94a3b8;
+}
+
+.gis-detail-inner--dark .gis-detail-summary-text {
+  color: #e2e8f0;
+}
+
+.gis-detail-inner--dark .gis-detail-summary-box {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.gis-detail-inner--dark .gis-detail-dev-name {
+  color: #7dd3fc;
+}
+
+.gis-detail-inner--dark .gis-detail-tag {
+  background: #334155;
+}
+
+.gis-detail-inner--dark .gis-detail-tag-k {
+  color: #94a3b8;
+}
+
+.gis-detail-section {
+  margin-bottom: 28rpx;
+}
+
+.gis-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.gis-detail-section-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 2rpx;
+  margin-bottom: 12rpx;
+}
+
+.gis-detail-summary-box {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 16rpx;
+  padding: 20rpx 22rpx;
+  box-sizing: border-box;
+}
+
+.gis-detail-summary-text {
+  font-size: 28rpx;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.gis-detail-dev-card {
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.gis-detail-dev-card:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.gis-detail-inner--dark .gis-detail-dev-card {
+  border-bottom-color: #334155;
+}
+
+.gis-detail-dev-name {
+  display: flex;
+  flex-direction: column;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0369a1;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+}
+
+.gis-detail-dev-realtime {
+  margin-top: 16rpx;
+  padding-top: 12rpx;
+  border-top: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gis-detail-inner--dark .gis-detail-dev-realtime {
+  border-top-color: #334155;
+}
+
+.gis-detail-sublabel {
+  display: flex;
+  flex-direction: column;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 8rpx;
+}
+
+.gis-detail-inner--dark .gis-detail-sublabel {
+  color: #94a3b8;
+}
+
+.gis-detail-attr-line {
+  display: flex;
+  flex-direction: column;
+  font-size: 24rpx;
+  color: #475569;
+  line-height: 1.45;
+  margin-bottom: 6rpx;
+  padding-left: 8rpx;
+  box-sizing: border-box;
+}
+
+.gis-detail-inner--dark .gis-detail-attr-line {
+  color: #cbd5e1;
+}
+
+.gis-detail-tag-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.gis-detail-equip-row {
+  margin-bottom: 14rpx;
+}
+
+.gis-detail-tag-row--equip {
+  margin-bottom: 8rpx;
+}
+
+.gis-detail-tag {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 12rpx;
+  padding: 10rpx 18rpx;
+  margin-right: 16rpx;
+  margin-bottom: 12rpx;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+.gis-detail-tag-k {
+  font-size: 24rpx;
+  color: #64748b;
+  margin-right: 10rpx;
+}
+
+.gis-detail-state-dot {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 9999rpx;
+  flex-shrink: 0;
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.18);
+  box-sizing: border-box;
+}
+
+.gis-detail-inner--dark .gis-detail-state-dot {
+  border-color: rgba(248, 250, 252, 0.22);
+}
+
+.gis-detail-footer {
+  padding: 16rpx 28rpx 28rpx;
+  box-sizing: border-box;
+  border-top: 1px solid #f1f5f9;
+}
+
+.gis-detail-inner--dark .gis-detail-footer {
+  border-top-color: #334155;
+}
+
+.gis-detail-footer-btn {
+  width: 100%;
+}
+
+</style>

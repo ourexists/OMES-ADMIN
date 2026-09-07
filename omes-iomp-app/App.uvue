@@ -1,0 +1,79 @@
+<script lang="ts">
+import {useStore} from "@/core/store";
+import {router} from '@/uni_modules/cool-unix'
+import {connectMessage, disconnectMessage} from "@/components/msg-notifier";
+
+const USER_GET_MIN_INTERVAL_MS = 25000;
+let lastUserGetAt = 0;
+
+// #ifdef H5
+import TouchEmulator from "hammer-touchemulator";
+// 模拟移动端调试的触摸事件
+TouchEmulator();
+// #endif
+
+
+export default {
+  onLaunch: function () {
+    console.log("App Launch");
+    if (router.isLoginPage(router.path())) return;
+
+    const {user} = useStore()
+    if (user.isUnLogin()) {
+      console.log("未登陆");
+      user.logout();
+      return;
+    }
+    connectMessage();
+  },
+  onShow: function () {
+    console.log("App Show");
+    // 根据业务情况判断是否要预先调用
+    if (router.isLoginPage(router.path())) return;
+
+    const {user} = useStore();
+    if (user.isUnLogin()) {
+      console.log("未登陆");
+      user.logout();
+      return;
+    }
+    const now = Date.now();
+    if (now - lastUserGetAt >= USER_GET_MIN_INTERVAL_MS) {
+      lastUserGetAt = now;
+      user.get();
+    }
+    connectMessage()
+  },
+  onHide: function () {
+    disconnectMessage();
+  },
+  onExit: function () {
+    disconnectMessage();
+  },
+};
+</script>
+
+<style lang="scss">
+// [cool-unix]需添加
+@import url("@/uni_modules/cool-unix/tailwindcss.scss");
+@import url("@/uni_modules/cool-unix/index.scss");
+
+.safe-area-top {
+  margin-top: env(safe-area-inset-top);
+}
+
+.uni-tabbar {
+  // #ifdef H5
+  display: none;
+  // #endif
+
+  .uni-tabbar__icon {
+    margin-top: 0;
+  }
+}
+
+.uni-toast {
+  border-radius: 32rpx;
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+</style>

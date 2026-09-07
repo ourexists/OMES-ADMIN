@@ -1,0 +1,234 @@
+<template>
+  <cl-page>
+    <!-- 顶部栏 -->
+    <cl-topbar
+        fixed
+        :show-back="true"
+        safe-area-top
+        :background-color="isDark ? 'black' : 'white'"
+    >
+      <cl-text
+          :pt="{ className: '!text-xl font-bold' }"
+          :title="t('消息详情')"
+      >
+        消息详情
+      </cl-text>
+    </cl-topbar>
+
+    <!-- 内容区 -->
+    <scroll-view scroll-y class="p-4 content-wrapper">
+      <view
+          class="detail-card"
+          :class="{ 'card-type1': message?.type === 1, 'detail-card--dark': isDark }"
+      >
+        <!-- 头部 -->
+        <view class="detail-header">
+          <cl-image
+              :src="`/static/icon/message/type_${message==null?0:message.type}.svg`"
+              class="detail-icon"
+          />
+          <view class="detail-meta">
+            <text class="detail-title">{{ message?.title }}</text>
+            <text class="detail-time">{{ message?.createdTime }}</text>
+          </view>
+        </view>
+        <view v-if="sourceTitle!=null" class="message-source" @tap="toOther">
+          <cl-image
+              class="message-source-left"
+              :src="`/static/icon/source.svg`"
+          />
+          <view class="message-source-middle">
+            <text class="text-lg text-gray-600">{{ sourceTitle }}</text>
+            <text class="text-xs text-gray-500">{{ sourceSubTitle }}</text>
+            <text class="text-base text-gray-400">{{ sourceId }}</text>
+          </view>
+          <cl-icon
+              class="message-source-right"
+              name="arrow-right-s-line"
+              :pt="{
+						className: '!text-lg text-gray-400'
+					}"></cl-icon>
+
+        </view>
+        <!-- 正文 -->
+        <view class="detail-content">
+          <text class="pb-2 text-base text-gray-500">[{{ t('报警内容') }}]:</text>
+          <text>{{ message?.context }}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import {ref} from "vue";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {isDark, router, useUi} from "@/uni_modules/cool-unix";
+import type {Equip, Message} from "@/core/types";
+import {t} from "@/locale";
+import {userInfo} from "@/core/store";
+import {parseData} from "@/core/utils/parse";
+
+const ui = useUi();
+const message = ref<Message | null>(null);
+const sourceTitle = ref<String | null>(null);
+const sourceId = ref<String | null>(null);
+const sourceSubTitle = ref<String | null>(null);
+
+const emit = defineEmits<{
+  (e: "maskAsRead", payload: boolean): void;
+}>();
+
+const markAsRead = async (id: string) => {
+  await request({
+    url: apiPath.message_read as string,
+    method: "GET",
+    data: {messageId: id}
+  }).then((res) => {
+    uni.$emit('maskAsRead', id)
+  });
+};
+
+const equipQuery = async (id: string) => {
+  await request({
+    url: apiPath.equip_id as string,
+    method: "GET",
+    data: {id: id}
+  }).then((res) => {
+    if (res == null) {
+      return;
+    }
+    const r = parseData<Equip>(res);
+    if (r == null) {
+      return;
+    }
+    sourceTitle.value = r.name;
+    sourceId.value = r.selfCode;
+    sourceSubTitle.value = r.workshop?.name
+  });
+}
+
+const loadDetail = async (id: string) => {
+  await request({
+    url: apiPath.message_detail as string,
+    method: "GET",
+    data: {
+      id,
+      accId: userInfo.value?.id,
+    }
+  })
+      .then((res) => {
+        if (res == null) {
+          return;
+        }
+        const r = parseData<Message>(res);
+        if (r == null) {
+          return;
+        }
+        message.value = r;
+        // 进入即标记为已读（幂等）
+        if (r.readStatus == 0) {
+          markAsRead(r.id);
+        }
+        if (r.source == "Equip" && r.sourceId != null) {
+          equipQuery(r.sourceId)
+        }
+      })
+};
+
+function toOther() {
+  if (message.value == null || message.value.source == null || message.value.sourceId == null) {
+    return;
+  }
+
+  if (message.value.source == "Equip") {
+    router.to('/pages/equip/equip_detail?id=' + message.value.sourceId)
+  }
+}
+
+onLoad((options) => {
+  if (options == null) {
+    return
+  }
+  let id = options.id as string
+  loadDetail(id);
+});
+</script>
+
+<style scoped lang="scss">
+.content-wrapper {
+  min-height: 1000rpx;
+}
+
+.detail-card {
+  @apply bg-white rounded-lg shadow-sm p-4;
+  border: 1px solid #eef2f7;
+}
+
+.detail-card--dark {
+  @apply bg-black;
+  border-color: #111827;
+}
+
+.card-type1 {
+  border: 1px solid rgba(186, 4, 4, 0.45);
+}
+
+.detail-card--dark .detail-title {
+  color: #e5e7eb;
+}
+
+.detail-card--dark .detail-time {
+  color: #9ca3af;
+}
+
+.detail-card--dark .detail-content {
+  color: #d1d5db;
+}
+
+.detail-header {
+  @apply flex items-center mb-4;
+}
+
+.detail-icon {
+  @apply w-10 h-10 mr-4 items-center;
+}
+
+.detail-meta {
+  @apply flex flex-col mt-0;
+}
+
+.detail-title {
+  @apply text-xl font-bold mb-1 w-full text-center;
+}
+
+.message-source {
+  @apply flex w-full flex-row p-3 mb-4 items-center border-gray-200 border-solid bg-gray-50 rounded-lg;
+}
+
+.message-source-middle {
+  @apply flex-1 pr-2 pl-2;
+}
+
+.message-source-left {
+  flex: 0 0 auto;
+
+  @apply w-4 h-full items-center justify-center p-3;
+}
+
+.message-source-right {
+  flex: 0 0 auto;
+
+  @apply h-full w-5;
+}
+
+.detail-time {
+  @apply flex text-xs text-gray-500 text-center;
+}
+
+.detail-content {
+  @apply text-sm leading-relaxed whitespace-pre-wrap;
+}
+</style>
+

@@ -1,0 +1,4 @@
+**
+!omes-iomp-runner-admin/
+!omes-iomp-runner-admin/target/
+!omes-iomp-runner-admin/target/*.jar

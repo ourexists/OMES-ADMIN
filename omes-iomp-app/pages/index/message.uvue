@@ -1,0 +1,278 @@
+<template>
+  <cl-page>
+    <cl-topbar
+        fixed
+        :background-color="isDark? 'black': 'white'"
+        :show-back="false"
+        safe-area-top
+        :height="isMp() ? null : 100"
+        :pt="{
+				className: '!z-50'
+			}"
+    >
+      <view
+          class="flex flex-row items-center justify-center p-3 w-full"
+          :class="{
+					'pt-0': isMp()
+				}"
+          @tap="setMessage"
+      >
+        <cl-text
+            color="primary"
+            :pt="{
+						className: '!text-xl'
+					}"
+            :title="t('消息')"
+        >
+          {{ t('消息') }}
+        </cl-text>
+        <cl-icon name="bar-chart-horizontal-line" color="primary"></cl-icon>
+      </view>
+    </cl-topbar>
+    <view class="p-3">
+      <view
+          v-for="item in list"
+          :key="item.id"
+          class="swipe-wrapper"
+          @tap="router.to('/pages/message/message_detail?id=' + item.id)"
+      >
+
+        <view
+            class="card"
+            :class="{
+							'card-type1': item.type == 1,
+							'card--dark': isDark
+						}"
+        >
+          <view class="message-icon">
+            <cl-image
+                :src="`/static/icon/message/type_${item?.type}.svg`"
+                class="detail-icon"
+            />
+          </view>
+          <view class="message-content">
+            <text class="card-title">{{ item.title }}</text>
+            <text class="card-time">{{ item.createdTime }}</text>
+            <text class="card-content">{{ item.context }}</text>
+          </view>
+          <view v-if="item.readStatus == 0" class="dot"></view>
+        </view>
+      </view>
+      <text class="text-center p-2 text-gray-300" v-if="loading">加载中…</text>
+    </view>
+    <!-- 自定义底部导航栏 -->
+    <custom-tabbar></custom-tabbar>
+    <message-set :ref="refs.set('messageSet')"
+                 :status="readStatus"
+                 @change="onMessageChange">
+    </message-set>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+
+import CustomTabbar from "@/components/tabbar.uvue";
+import type {MessageSetPayload} from "@/pages/index/components/message-set.uvue";
+import MessageSet from "@/pages/index/components/message-set.uvue";
+import {t} from "@/locale";
+import {ref} from "vue";
+import {request} from "@/core/service";
+import {apiPath} from "@/core/apiRouter/path";
+import {userInfo} from "@/core/store";
+import {config} from "@/config";
+import {isDark, isMp, router, useRefs, useUi} from "@/uni_modules/cool-unix";
+import type {Message} from "@/core/types";
+import {parseDataArray} from "@/core/utils/parse";
+
+const refs = useRefs();
+const page = ref(1)
+const pageSize = 10
+const list = ref<Message[]>([])
+const loading = ref(false)
+const hasMore = ref(true)
+// 跟踪当前已展开的卡片 id
+const readStatus = ref<number | null>(null)
+
+const ui = useUi();
+
+function setMessage() {
+  refs.open("messageSet");
+}
+
+const loadData = async (isClear: boolean) => {
+  if (loading.value) {
+    return
+  }
+  loading.value = true
+  // 这里可以替换成你的实际接口请求
+  try {
+    await request({
+      url: apiPath.message_page as string,
+      method: "POST",
+      data: {
+        page: page.value,
+        pageSize: pageSize,
+        accId: userInfo.value?.id,
+        platform: config.platform,
+        readStatus: readStatus.value == -1 ? null : readStatus.value
+      }
+    })
+        .then((res) => {
+          if (res === null) {
+            if (isClear) {
+              list.value = [];
+            }
+            return;
+          }
+          const r = parseDataArray<Message>(res);
+          if (r === null) {
+            if (isClear) {
+              list.value = [];
+            }
+            return
+          }
+          if (isClear) {
+            list.value = r;
+          } else {
+            list.value.push(...r);
+          }
+          if (r.length < pageSize) {
+            hasMore.value = false
+          } else {
+            hasMore.value = true
+            page.value++
+          }
+        })
+        .catch((err) => {
+          hasMore.value = true;
+          page.value = 1;
+          list.value = [];
+        });
+  } finally {
+    loading.value = false
+  }
+}
+
+const reloadData = async () => {
+  page.value = 1;
+  await loadData(true);
+}
+
+const loadMore = async () => {
+  if (!hasMore.value) {
+    return
+  }
+  await loadData(false);
+}
+
+onLoad(() => {
+  reloadData();
+  uni.$on("maskAsRead", (id: string) => {
+    const index = list.value.findIndex(item => item.id == id);
+    if (index !== -1) {
+      list.value[index].readStatus = 1;
+      list.value = [...list.value];
+    }
+  })
+})
+
+// 监听页面滚动到底（uni-app写法）
+onReachBottom(() => {
+  loadMore()
+})
+
+onPullDownRefresh(() => {
+  reloadData();
+  uni.stopPullDownRefresh();
+})
+
+function onMessageChange(payload: MessageSetPayload) {
+  if (readStatus.value === payload.status) {
+    return
+  }
+  readStatus.value = payload.status;
+  reloadData();
+}
+</script>
+
+
+<style scoped lang="scss">
+.card {
+  height: 280rpx;
+
+  @apply bg-white rounded-lg shadow-sm mb-4 p-3 flex flex-wrap;
+  border: 1px solid #eef2f7;
+}
+
+.message-icon {
+  width: 30%;
+
+  @apply flex h-full items-center justify-center;
+}
+
+.message-content {
+  width: 70%;
+
+  @apply flex h-full;
+}
+
+.detail-icon {
+  width: 64rpx;
+  height: 64rpx;
+  opacity: 0.95;
+}
+
+.card-title {
+  @apply font-bold text-lg mb-1;
+}
+
+.card-time {
+  font-size: 24rpx;
+  font-weight: 400;
+  color: #6b7280;
+  margin-bottom: 16rpx;
+}
+
+/* text 不支持 flex；多行截断用 line-clamp 类或父 view 包一层 */
+.card-content {
+  font-size: 28rpx;
+  font-weight: 400;
+  color: #4b5563;
+  overflow: hidden;
+  line-height: 1.35;
+  max-height: 120rpx;
+}
+
+.card-type1 {
+  border: 1px solid rgba(186, 4, 4, 0.45);
+}
+
+.card-icon {
+  @apply w-full mr-4 w-1/2;
+}
+
+.swipe-wrapper {
+  @apply relative;
+}
+
+.dot {
+  @apply absolute w-2 h-2 right-6 top-6 bg-red-500 rounded-full;
+}
+
+.card--dark {
+  @apply bg-black;
+  border-color: #111827;
+}
+
+.card--dark .card-title {
+  color: #e5e7eb;
+}
+
+.card--dark .card-time {
+  color: #9ca3af;
+}
+
+.card--dark .card-content {
+  color: #d1d5db;
+}
+</style>

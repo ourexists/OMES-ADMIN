@@ -1,0 +1,217 @@
+﻿/* 系统模块：数据同步、任务管理等 */
+
+.system-module-page .panel-card {
+  border-radius: var(--omes-radius-lg);
+  border: 1px solid var(--omes-color-border-secondary);
+  box-shadow: var(--omes-shadow-card);
+}
+
+.system-module-page .panel-card .ant-card-head {
+  min-height: 52px;
+  padding-inline: 16px;
+  border-bottom: 1px solid var(--omes-color-border-secondary);
+  background: var(--omes-gradient-card-head);
+}
+
+.system-module-page .panel-card .ant-card-body {
+  padding: 14px 16px 16px;
+}
+
+.system-module-page--sync .card-title__icon {
+  background: var(--omes-gradient-accent-purple);
+  box-shadow: var(--omes-shadow-purple-icon);
+}
+
+.system-module-page--task .card-title__icon {
+  background: var(--omes-gradient-accent-orange);
+  box-shadow: var(--omes-shadow-orange-icon);
+}
+
+.system-module-page--config .card-title__icon {
+  background: linear-gradient(
+    135deg,
+    var(--omes-color-accent-cyan-from),
+    var(--omes-color-accent-cyan-to)
+  );
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--omes-color-accent-cyan-from) 28%, transparent);
+}
+
+
+.system-module-page .extra-tags .ant-tag {
+  margin: 0;
+  border-radius: var(--omes-radius-sm);
+  font-size: 12px;
+}
+
+.system-module-page .search-toolbar {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: var(--omes-gradient-toolbar);
+  border: 1px solid var(--omes-color-border-tertiary);
+  border-radius: var(--omes-radius-lg);
+}
+
+.system-module-page .search-form {
+  margin-bottom: 0;
+  row-gap: 8px;
+}
+
+.system-module-page .search-form .ant-form-item {
+  margin-bottom: 0;
+}
+
+.system-module-page .search-select {
+  width: 180px;
+}
+
+.system-module-page .search-select-sm {
+  width: 132px;
+}
+
+.system-module-page .input-prefix-icon {
+  color: var(--omes-color-text-placeholder);
+}
+
+.system-module-page .table-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--omes-color-border-tertiary);
+}
+
+.system-module-page .system-module-table .ant-table-thead > tr > th {
+  background: var(--omes-color-bg-table-head) !important;
+  font-weight: 600;
+  color: var(--omes-color-text-label);
+}
+
+.system-module-page .system-module-table .ant-table-tbody > tr:hover > td {
+  background: var(--omes-color-bg-table-hover-alt) !important;
+}
+
+.system-module-page .name-cell {
+  font-weight: 500;
+  color: var(--omes-color-text);
+}
+
+.system-module-page .muted-cell {
+  color: var(--omes-color-text-tertiary);
+  font-size: 13px;
+}
+
+.system-module-page .time-cell {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--omes-color-text-secondary);
+}
+
+.system-module-page .action-group {
+  gap: 2px 0 !important;
+}
+
+.system-module-page .action-group .ant-btn-link {
+  padding-inline: 6px;
+  height: 24px;
+  font-size: 13px;
+}
+
+.system-module-page .action-group .ant-btn-link .anticon {
+  margin-inline-end: 4px;
+  font-size: 13px;
+}
+
+.system-module-page .action-group .ant-btn-link.action-link--accent {
+  color: var(--omes-color-primary);
+}
+
+.system-module-page .action-group .ant-btn-link.action-link--warn {
+  color: var(--omes-color-accent-orange-from);
+}
+
+/* 表单弹窗 */
+.system-form-modal .ant-modal-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--omes-color-border-secondary);
+  background: var(--omes-gradient-card-head);
+}
+
+.system-form-modal .ant-modal-title {
+  font-weight: 600;
+}
+
+.system-form-modal .ant-modal-body {
+  padding: 16px 20px 8px;
+  max-height: min(72vh, 640px);
+  overflow-y: auto;
+}
+
+.system-form-modal .ant-modal-footer {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--omes-color-border-secondary);
+}
+
+.system-form-modal .modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-form-modal .modal-title__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.system-form-modal .modal-title__icon--sync {
+  background: var(--omes-gradient-accent-purple);
+}
+
+.system-form-modal .modal-title__icon--task {
+  background: var(--omes-gradient-accent-orange);
+}
+
+.system-form-section {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--omes-color-bg-muted);
+  border: 1px solid var(--omes-color-border-secondary);
+  border-radius: var(--omes-radius-lg);
+}
+
+.system-form-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--omes-color-text-heading);
+}
+
+.system-form-section__title .anticon {
+  color: var(--omes-color-accent-purple-from);
+  font-size: 14px;
+}
+
+.system-form-modal .system-form-section__title .anticon {
+  color: var(--omes-color-accent-orange-from);
+}
+
+.system-form-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--omes-color-text-quaternary);
+}
+
+.sync-resource-modal .ant-modal-body {
+  padding-top: 12px;
+}

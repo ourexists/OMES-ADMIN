@@ -1,0 +1,32 @@
+<template>
+  <cl-page>
+    <view class="p-3">
+      <view class="flex flex-col items-center justify-center py-10">
+        <view class="p-3">
+          <cl-image src="/static/logo.png" :height="120" :width="120"></cl-image>
+        </view>
+        <cl-text :pt="{ className: 'mt-3 mb-1' }">{{ config.name }}</cl-text>
+        <cl-text
+            color="info"
+            :pt="{
+						className: '!text-xs'
+					}"
+        >version {{ config.version }}
+        </cl-text
+        >
+      </view>
+    </view>
+  </cl-page>
+</template>
+
+<script setup lang="ts">
+import {config} from "@/config";
+import {t} from "@/locale";
+
+onReady(() => {
+  uni.setNavigationBarTitle({
+    title: t("关于")
+  });
+});
+
+</script>
