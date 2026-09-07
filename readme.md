@@ -1,4 +1,4 @@
-OMES 工业设备管理平台
+omes-iomp 工业设备管理平台
 ===============
 
 [![AUR](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)]()
@@ -19,17 +19,17 @@ OMES 工业设备管理平台
 平台生态
 -----------------------------------
 
-* **omes-runner-sas（OMES-SAS）**：统一 API 网关 + OAuth2 认证（默认端口 `9400`）。`/oauth2/**`、`/open/**` 由 SAS 本地处理，其余 API 转发至 Admin；**不托管前端静态资源**。
+* **omes-iomp-runner-sas（OMES-SAS）**：统一 API 网关 + OAuth2 认证（默认端口 `9400`）。`/oauth2/**`、`/open/**` 由 SAS 本地处理，其余 API 转发至 Admin；**不托管前端静态资源**。
 
-* **omes-runner-admin**：管理端 API 服务（Spring Boot，应用名 `OMES-ADMIN`，默认内网端口 `10010`），聚合各业务域服务；生产环境建议仅内网暴露。
+* **omes-iomp-runner-admin**：管理端 API 服务（Spring Boot，应用名 `OMES-ADMIN`，默认内网端口 `10010`），聚合各业务域服务；生产环境建议仅内网暴露。
 
-* **omes-web-admin**：管理端 Vue 前端，独立构建部署（Nginx 等），经 `VITE_SAS_BASE_URL` 访问 SAS 网关。
+* **omes-iomp-web-admin**：管理端 Vue 前端，独立构建部署（Nginx 等），经 `VITE_SAS_BASE_URL` 访问 SAS 网关。
 
-* **omes-runner-control**：设备控制侧进程（默认端口 `10015`，应用名 `OMES-CONTROL`）。
+* **omes-iomp-runner-control**：设备控制侧进程（默认端口 `10015`，应用名 `OMES-CONTROL`）。
 
-* **omes-flinker-equip**：设备实时流（Spring Boot 内嵌 Flink），消费 RabbitMQ 并与管理端队列协同。
+* **omes-iomp-flinker-equip**：设备实时流（Spring Boot 内嵌 Flink），消费 RabbitMQ 并与管理端队列协同。
 
-* **omes-ai / omes-ai-web**：AI 相关能力与前端（详见各子目录说明）。
+* **omes-iomp-ai / omes-iomp-ai-web**：AI 相关能力与前端（详见各子目录说明）。
 
 交流与支持
 -----------------------------------
@@ -51,7 +51,7 @@ OMES 工业设备管理平台
 
 ### 1. 环境要求
 
-- **JDK 21**（与版本表一致；Flink 作业模块单独要求 JDK 17，见 `omes-flinker-equip/README.md`）。
+- **JDK 21**（与版本表一致；Flink 作业模块单独要求 JDK 17，见 `omes-iomp-flinker-equip/README.md`）。
 
 - **Maven 3.8+**（构建）。
 
@@ -82,14 +82,14 @@ git submodule update --init --recursive
 
 - `db_host`、`db_schema`、`db_username`、`db_password`
 
-- 按需覆盖 **Redis**、**RabbitMQ** 等（亦可通过同名环境变量注入，见 `omes-runner-admin/src/main/resources/application.yml`）
+- 按需覆盖 **Redis**、**RabbitMQ** 等（亦可通过同名环境变量注入，见 `omes-iomp-runner-admin/src/main/resources/application.yml`）
 
 **运行时的当前工作目录**需能解析到上述 `config` 路径（一般在仓库根目录启动，或将 `config` 目录拷到与进程一致的位置）。
 
 **认证安全（升级后必做）**：
 
 1. 配置 `config/config.properties`（数据库等）与 `config/era-token.yml`（见 `era-token.yml.example`）。
-2. **管理端前端**：在 `omes-web-admin` 执行 `npm run build`，将 `dist/` 部署到 Nginx 等静态服务器；`.env.production` 中配置 `VITE_SAS_BASE_URL` 指向 SAS 网关（如 `http://127.0.0.1:9400`）。
+2. **管理端前端**：在 `omes-iomp-web-admin` 执行 `npm run build`，将 `dist/` 部署到 Nginx 等静态服务器；`.env.production` 中配置 `VITE_SAS_BASE_URL` 指向 SAS 网关（如 `http://127.0.0.1:9400`）。
 3. 设置环境变量（生产环境请使用强随机值）：
    - `OMES_INTERNAL_SERVICE_KEY` — Admin 与 SAS 内部服务调用密钥（一致）
    - `AI_BRIDGE_INTERNAL_KEY` — AI Bridge 解析密钥
@@ -105,10 +105,10 @@ psql -h <host> -U <user> -d omes -f omes/scripts/oauth2-mes-public-client.sql
 # SAS 网关 + 认证
 OMES_GATEWAY_PORT=9400
 OMES_ADMIN_URL=http://127.0.0.1:10010
-java -jar omes-runner-sas/target/omes-runner-sas-*.jar
+java -jar omes-iomp-runner-sas/target/omes-iomp-runner-sas-*.jar
 
 # Admin（内网，不对外）
-java -jar omes-runner-admin/target/omes-runner-admin-*.jar
+java -jar omes-iomp-runner-admin/target/omes-iomp-runner-admin-*.jar
 ```
 
 浏览器访问管理端：**前端静态站点**（Nginx 等）；API 网关：**http://127.0.0.1:9400**。关闭网关转发：`OMES_GATEWAY_ENABLED=false`（SAS 仅认证、Admin 直连）。
@@ -123,9 +123,9 @@ mvn clean package -DskipTests
 
 ```
 
-管理端可执行包路径：`omes-runner-admin/target/omes-runner-admin-*.jar`（具体文件名以构建输出为准）。
+管理端可执行包路径：`omes-iomp-runner-admin/target/omes-iomp-runner-admin-*.jar`（具体文件名以构建输出为准）。
 
-### 5. 启动管理端（omes-runner-admin）
+### 5. 启动管理端（omes-iomp-runner-admin）
 
 - **默认端口**：`10010`（可通过 `-Dserver.port=` 或环境变量覆盖）。
 
@@ -138,7 +138,7 @@ mvn clean package -DskipTests
 
 ```bash
 
-java -jar omes-runner-admin/target/omes-runner-admin-1.0.1-SNAPSHOT.jar
+java -jar omes-iomp-runner-admin/target/omes-iomp-runner-admin-1.0.1-SNAPSHOT.jar
 
 ```
 
@@ -146,15 +146,15 @@ java -jar omes-runner-admin/target/omes-runner-admin-1.0.1-SNAPSHOT.jar
 
 ```bash
 
-mvn -pl omes-runner-admin spring-boot:run
+mvn -pl omes-iomp-runner-admin spring-boot:run
 
 ```
 
-管理端页面由 **omes-web-admin** 独立部署；API 网关 **http://127.0.0.1:9400**；Admin API 内网调试 **http://127.0.0.1:10010**。
+管理端页面由 **omes-iomp-web-admin** 独立部署；API 网关 **http://127.0.0.1:9400**；Admin API 内网调试 **http://127.0.0.1:10010**。
 
 ### 6. Flink 实时作业（可选）
 
-设备实时流由 **`omes-flinker-equip`** 以 Spring Boot 可执行 JAR 运行（内嵌 Flink），与 RabbitMQ、管理端配置的队列名需一致。详见 **`omes-flinker-equip/README.md`**。
+设备实时流由 **`omes-iomp-flinker-equip`** 以 Spring Boot 可执行 JAR 运行（内嵌 Flink），与 RabbitMQ、管理端配置的队列名需一致。详见 **`omes-iomp-flinker-equip/README.md`**。
 
 ### 7. Docker 部署
 
@@ -178,5 +178,4 @@ Web 镜像只拷贝 `dist/`，由 Nginx 同源反代 SAS。
 
 
 > 项目依赖个人私有的框架包，无法下载直接运行。仅供开源功能参考，如需定制可联系我。
-
 

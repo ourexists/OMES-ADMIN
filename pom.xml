@@ -23,27 +23,29 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ourexists.omes</groupId>
-    <artifactId>omes</artifactId>
+    <artifactId>omes-iomp</artifactId>
     <packaging>pom</packaging>
     <version>1.0.1-SNAPSHOT</version>
     <modules>
-        <module>omes-ai</module>
-        <module>omes-device</module>
-        <module>omes-inspection</module>
-        <module>omes-line</module>
-        <module>omes-mat</module>
-        <module>omes-mo</module>
-        <module>omes-mps</module>
-        <module>omes-sync</module>
-        <module>omes-task</module>
-        <module>omes-ucenter</module>
-        <module>omes-message</module>
-        <module>omes-process</module>
-        <module>omes-runner-admin</module>
-        <module>omes-flinker-equip</module>
-        <module>omes-flinker-workshop</module>
-        <module>omes-runner-control</module>
-        <module>omes-runner-sas</module>
+        <module>omes-iomp-app</module>
+        <module>omes-iomp-ai</module>
+        <module>omes-iomp-device</module>
+        <module>omes-iomp-inspection</module>
+        <module>omes-iomp-line</module>
+        <module>omes-iomp-mat</module>
+        <module>omes-iomp-mo</module>
+        <module>omes-iomp-mps</module>
+        <module>omes-iomp-sync</module>
+        <module>omes-iomp-task</module>
+        <module>omes-iomp-ucenter</module>
+        <module>omes-iomp-message</module>
+        <module>omes-iomp-process</module>
+        <module>omes-iomp-runner-admin</module>
+        <module>omes-iomp-flinker-equip</module>
+        <module>omes-iomp-flinker-workshop</module>
+        <module>omes-iomp-runner-control</module>
+        <module>omes-iomp-runner-sas</module>
+        <module>omes-iomp-web-admin</module>
     </modules>
 
     <parent>

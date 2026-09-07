@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
-WEB_ROOT="$(cd "$ROOT/.." && pwd)/omes-web-admin"
+WEB_ROOT="$(cd "$ROOT/.." && pwd)/omes-iomp-web-admin"
 
 [[ -f .env ]] || { cp .env.example .env; echo "Created .env from .env.example"; }
 
@@ -17,10 +17,10 @@ case "$cmd" in
     [[ -f config/config.properties && -f config/era-token.yml ]] || { echo "Missing config/*"; exit 1; }
     if [[ "${SKIP_MVN:-0}" != "1" ]]; then
       echo "==> mvn package"
-      mvn -pl omes-runner-admin,omes-runner-sas -am clean package -DskipTests
+      mvn -pl omes-iomp-runner-admin,omes-iomp-runner-sas -am clean package -DskipTests
     fi
-    ls omes-runner-admin/target/omes-runner-admin-*.jar >/dev/null 2>&1
-    ls omes-runner-sas/target/omes-runner-sas-*.jar >/dev/null 2>&1
+    ls omes-iomp-runner-admin/target/omes-iomp-runner-admin-*.jar >/dev/null 2>&1
+    ls omes-iomp-runner-sas/target/omes-iomp-runner-sas-*.jar >/dev/null 2>&1
 
     if [[ "${SKIP_WEB:-0}" != "1" ]]; then
       [[ -d "$WEB_ROOT" ]] || { echo "Missing $WEB_ROOT"; exit 1; }

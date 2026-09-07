@@ -64,7 +64,7 @@ services:
 
   admin:
     build:
-      context: ./omes-runner-admin
+      context: ./omes-iomp-runner-admin
       dockerfile: Dockerfile
     image: omes-admin:${OMES_IMAGE_TAG:-latest}
     container_name: omes-admin
@@ -105,7 +105,7 @@ services:
 
   sas:
     build:
-      context: ./omes-runner-sas
+      context: ./omes-iomp-runner-sas
       dockerfile: Dockerfile
     image: omes-sas:${OMES_IMAGE_TAG:-latest}
     container_name: omes-sas
@@ -144,7 +144,7 @@ services:
 
   web:
     build:
-      context: ../omes-web-admin
+      context: ../omes-iomp-web-admin
       dockerfile: Dockerfile
     image: omes-web:${OMES_IMAGE_TAG:-latest}
     container_name: omes-web

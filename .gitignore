@@ -131,4 +131,4 @@ config/config.properties
 **/.env.production.local
 
 # SAS 不再内嵌 Vue 构建产物
-omes-runner-sas/src/main/resources/static/vue/
+omes-iomp-runner-sas/src/main/resources/static/vue/

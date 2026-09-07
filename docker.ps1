@@ -25,7 +25,7 @@ Usage: .\docker.ps1 <build|up|down> [infra]
 
 $Root = $PSScriptRoot
 Set-Location $Root
-$WebRoot = Join-Path (Split-Path $Root -Parent) "omes-web-admin"
+$WebRoot = Join-Path (Split-Path $Root -Parent) "omes-iomp-web-admin"
 
 if (-not (Test-Path ".env")) {
     Copy-Item ".env.example" ".env"
@@ -44,12 +44,12 @@ switch ($Command) {
         }
         if (-not $SkipMaven) {
             Write-Host "==> mvn package"
-            mvn -pl omes-runner-admin,omes-runner-sas -am clean package -DskipTests
+            mvn -pl omes-iomp-runner-admin,omes-iomp-runner-sas -am clean package -DskipTests
             if ($LASTEXITCODE -ne 0) { throw "Maven failed" }
         }
         $ok = @(
-            (Get-ChildItem "omes-runner-admin\target\omes-runner-admin-*.jar" -EA SilentlyContinue | Where-Object Name -notlike "*.original"),
-            (Get-ChildItem "omes-runner-sas\target\omes-runner-sas-*.jar" -EA SilentlyContinue | Where-Object Name -notlike "*.original")
+            (Get-ChildItem "omes-iomp-runner-admin\target\omes-iomp-runner-admin-*.jar" -EA SilentlyContinue | Where-Object Name -notlike "*.original"),
+            (Get-ChildItem "omes-iomp-runner-sas\target\omes-iomp-runner-sas-*.jar" -EA SilentlyContinue | Where-Object Name -notlike "*.original")
         ) | Where-Object { $_ }
         if ($ok.Count -lt 2) { throw "Fat JARs missing" }
 

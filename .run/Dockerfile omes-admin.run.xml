@@ -15,7 +15,7 @@
           </list>
         </option>
         <option name="showCommandPreview" value="true" />
-        <option name="sourceFilePath" value="omes-runner-admin/Dockerfile" />
+        <option name="sourceFilePath" value="omes-iomp-runner-admin/Dockerfile" />
         <option name="volumeBindings">
           <list>
             <DockerVolumeBindingImpl>
@@ -28,7 +28,7 @@
       </settings>
     </deployment>
     <method v="2">
-      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="-pl omes-runner-admin -am package -DskipTests" />
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/pom.xml" goal="-pl omes-iomp-runner-admin -am package -DskipTests" />
     </method>
   </configuration>
 </component>
